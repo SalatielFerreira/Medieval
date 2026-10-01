@@ -1780,4 +1780,5 @@ const Game = {
   },
 };
 
-window.addEventListener('load', () => Game.boot());
+// os scripts podem chegar depois do evento load (carregador com versão), então inicia de qualquer jeito
+if (document.readyState === 'complete') Game.boot(); else window.addEventListener('load', () => Game.boot());

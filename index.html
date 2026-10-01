@@ -7,7 +7,7 @@
   <title>MEDIEVAL — Os Sete Reinos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <style>.hidden { display: none !important; } html, body { margin: 0; height: 100%; overflow: hidden; background: #120c06; }</style>
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -30,30 +30,31 @@
   <div id="birth" class="hidden"></div>
   <div id="menu" class="hidden"></div>
 
-  <script src="js/util.js"></script>
-  <script src="js/icons.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/world.js"></script>
-  <script src="js/people.js"></script>
-  <script src="js/entities.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/dungeon.js"></script>
-  <script src="js/features.js"></script>
-  <script src="js/diplomacy.js"></script>
-  <script src="js/farming.js"></script>
-  <script src="js/combat2.js"></script>
-  <script src="js/life.js"></script>
-  <script src="js/progress.js"></script>
-  <script src="js/families.js"></script>
-  <script src="js/court.js"></script>
-  <script src="js/market.js"></script>
-  <script src="js/siege.js"></script>
-  <script src="js/arena.js"></script>
-  <script src="js/faith.js"></script>
-  <script src="js/input.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/mapview.js"></script>
-  <script src="js/menu.js"></script>
-  <script src="js/game.js"></script>
+
+  <script>
+  // Carregador do jogo: lê a versão publicada (version.json) e carrega o CSS e os scripts com "?v=versão",
+  // assim o navegador nunca usa arquivos antigos guardados no cache depois de uma atualização.
+  (function () {
+    var FILES = ['util', 'icons', 'data', 'world', 'people', 'entities', 'audio', 'dungeon', 'features', 'diplomacy', 'farming', 'combat2', 'life', 'progress', 'families', 'court', 'market', 'siege', 'arena', 'faith', 'input', 'ui', 'mapview', 'menu', 'game'];
+    var base = window.GAME_BASE || '';
+    function load(v) {
+      window.GAME_VERSION = v;
+      var q = v === 'local' ? '' : '?v=' + encodeURIComponent(v);
+      var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = base + 'css/style.css' + q;
+      var started = false;
+      function scripts() {
+        if (started) return; started = true;
+        FILES.forEach(function (f) { var sc = document.createElement('script'); sc.src = base + 'js/' + f + '.js' + q; sc.async = false; document.body.appendChild(sc); });
+      }
+      css.onload = scripts; css.onerror = scripts; setTimeout(scripts, 4000);
+      document.head.appendChild(css);
+    }
+    if (location.protocol === 'file:') { load('local'); return; }
+    fetch(base + 'version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { load(j && j.version ? j.version : 'local'); })
+      .catch(function () { load('local'); });
+  })();
+  </script>
 </body>
 </html>

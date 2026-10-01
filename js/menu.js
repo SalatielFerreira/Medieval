@@ -19,25 +19,31 @@ const Menu = {
     if (!this.built) this.build();
     this.mainCard();
     if (!this.running) { this.running = true; this.t0 = performance.now(); requestAnimationFrame(t => this.loop(t)); }
+    this.checkUpdate(false);
+    clearInterval(this.updTimer);
+    this.updTimer = setInterval(() => { if (G.state === 'menu') this.checkUpdate(false); }, 60000);
   },
   hide() {
     document.getElementById('menu').classList.add('hidden');
     this.running = false;
+    clearInterval(this.updTimer);
   },
   build() {
     const m = document.getElementById('menu');
     m.innerHTML = `<canvas id="menuBg"></canvas>
-      <div class="menu-wrap">
-        <div class="menu-title"><div class="mt-orn">⚜</div><h1>MEDIEVAL</h1><div class="mt-line"></div><h4>Os Sete Reinos</h4></div>
+      <div class="menu-wrap" id="menuWrap">
+        <div class="menu-title"><div class="mt-orn">⚜</div><h1>MED<span class="mt-i">I</span>EVAL</h1><div class="mt-line"></div><h4>Os Sete Reinos</h4></div>
         <div class="menu-card" id="menuCard"></div>
       </div>
-      <div class="menu-foot">Feito com HTML5 · Clique para começar sua lenda</div>`;
+      <div class="upd-modal hidden" id="updModal"></div>`;
     m.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (b) this.act(b.dataset.m, b.dataset); });
     m.addEventListener('input', e => {
-      if (e.target.id === 'heroName') this.hero.name = e.target.value;
-      if (e.target.id === 'heroSurname') this.hero.surname = e.target.value;
+      if (e.target.id === 'heroName') { this.hero.name = e.target.value; this.nameTag(); }
+      if (e.target.id === 'heroSurname') { this.hero.surname = e.target.value; this.nameTag(); }
       if (e.target.id === 'heroAge') { this.hero.age = +e.target.value; document.getElementById('ageVal').textContent = this.hero.age + ' anos'; this.ageNote(); }
     });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && G.state === 'menu') this.checkUpdate(false); });
+    window.addEventListener('resize', () => { if (G.state === 'menu') this.fit(); });
     this.bg = document.getElementById('menuBg');
     // estrelas e montanhas fixas
     const r = U.mulberry32(777);
@@ -50,73 +56,163 @@ const Menu = {
     this.embers = [];
     this.built = true;
   },
+  // cada cartão define o tamanho da janela; o título encolhe nas telas maiores (criador, ajuda)
+  setCard(html, kind) {
+    const card = document.getElementById('menuCard'), wrap = document.getElementById('menuWrap');
+    card.className = 'menu-card mc-' + kind;
+    wrap.className = 'menu-wrap ' + (kind === 'main' ? '' : 'compact');
+    card.style.zoom = '';
+    card.innerHTML = html;
+    this.fit();
+  },
+  // nunca rolar: se a tela for pequena demais, a janela inteira é reduzida para caber
+  fit() {
+    const card = document.getElementById('menuCard'), wrap = document.getElementById('menuWrap');
+    if (!card) return;
+    const measure = () => {
+      card.style.zoom = '';
+      const title = wrap.querySelector('.menu-title');
+      const gap = parseFloat(getComputedStyle(wrap).rowGap) || 0, pad = 32;
+      const avail = window.innerHeight - (title ? title.getBoundingClientRect().height : 0) - gap - pad - 10, availW = window.innerWidth - 24;
+      const r = card.getBoundingClientRect();
+      const z = Math.min(1, avail / r.height, availW / r.width);
+      if (z < 0.999) card.style.zoom = Math.max(0.3, z).toFixed(3);
+    };
+    requestAnimationFrame(measure);
+    clearTimeout(this.fitT); this.fitT = setTimeout(measure, 350);
+    if (document.fonts && !this.fontHook) { this.fontHook = true; document.fonts.ready.then(() => this.fit()); }
+  },
+  versionText() { const v = window.GAME_VERSION || 'local'; return v === 'local' ? 'versão local' : 'versão ' + v; },
 
   // ------------------------------------------------------------ cartões
   mainCard() {
     const info = Game.saveInfo();
-    document.getElementById('menuCard').innerHTML = `
-      <p class="mc-intro">Sete reinos disputam estas terras. Você começa com uma cabana e nada mais.<br>Colete, crie, ame, lute... e funde uma dinastia.</p>
-      <div class="mc-btns">
-        ${info ? `<button class="mc-main" data-m="load" data-n="${info.slot}">▶ Continuar — ${UI.esc(info.name)}${info.age ? `, ${info.age} anos` : ''} · dia ${info.day}</button>` : ''}
-        <button class="${info ? '' : 'mc-main'}" data-m="create">⚔️ Novo jogo</button>
-        <button data-m="slots">📜 Jogos salvos · importar e exportar</button>
-        <button data-m="help">❓ Como jogar</button>
-      </div>`;
+    const opt = (m, ic, title, sub, cls, extra) => `<button class="mc-opt ${cls || ''}" data-m="${m}" ${extra || ''}><span class="mo-ic">${ic}</span><span class="mo-tx"><b>${title}</b><small>${sub}</small></span><span class="mo-go">›</span></button>`;
+    this.setCard(`
+      <div class="mc-orn"><span></span>⚜<span></span></div>
+      <p class="mc-intro">Sete reinos disputam estas terras. Você começa com uma cabana e nada mais.<br><em>Colete, crie, ame, lute... e funde uma dinastia.</em></p>
+      <div class="mc-opts">
+        ${info ? opt('load', '▶', 'Continuar a jornada', `${UI.esc(info.name)}${info.age ? ` · ${info.age} anos` : ''} · dia ${info.day} · nível ${info.level || 1}`, 'main', `data-n="${info.slot}"`) : ''}
+        ${opt('create', '⚔️', 'Novo jogo', 'Crie seu herói e comece do zero', info ? '' : 'main')}
+        ${opt('slots', '📜', 'Jogos salvos', 'Carregar, importar e exportar · 3 espaços')}
+        ${opt('help', '❓', 'Como jogar', 'Controles, primeiros passos e dicas')}
+      </div>
+      <div class="mc-foot"><span>${this.versionText()}</span><button class="mc-link" data-m="checkupd">🔄 Procurar atualização</button></div>`, 'main');
   },
   slotsCard() {
     const fmt = t => t ? new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
     const rows = Saves.list().map((inf, i) => {
       const n = i + 1;
       return `<div class="slotrow ${inf ? '' : 'empty'}"><div class="sr-n">${n}</div>
-        <div class="sr-info">${inf ? `<b>${UI.esc(inf.name)}</b><small>${inf.sex === 'f' ? 'Heroína' : 'Herói'} · ${inf.age} anos · nível ${inf.level || 1} · dia ${inf.day}${inf.ruled ? ` · 👑 ${inf.ruled} reino(s)` : ''}<br>salvo em ${fmt(inf.savedAt)}</small>` : '<b>Espaço vazio</b><small>Comece um novo jogo ou importe um arquivo</small>'}</div>
-        <div class="sr-acts">${inf ? `<button class="mc-main" data-m="load" data-n="${n}">Carregar</button><button data-m="export" data-n="${n}" title="Baixar arquivo">⬇️</button><button data-m="del" data-n="${n}" title="Apagar">🗑️</button>`
-          : ''}<button data-m="import" data-n="${n}" title="Importar arquivo para este espaço">⬆️</button></div></div>`;
+        <div class="sr-info">${inf ? `<b>${UI.esc(inf.name)}</b><small>${inf.sex === 'f' ? 'Heroína' : 'Herói'} · ${inf.age} anos · nível ${inf.level || 1} · dia ${inf.day}${inf.ruled ? ` · 👑 ${inf.ruled} reino(s)` : ''} · salvo em ${fmt(inf.savedAt)}${Saves.size(n) ? ` · ${Saves.size(n)} KB` : ''}</small>` : '<b>Espaço vazio</b><small>Comece um novo jogo ou importe um arquivo</small>'}</div>
+        <div class="sr-acts">${inf ? `<button class="mc-main" data-m="load" data-n="${n}">▶ Carregar</button><button data-m="export" data-n="${n}" title="Baixar arquivo">⬇️ Exportar</button><button data-m="del" data-n="${n}" title="Apagar">🗑️</button>`
+          : ''}<button data-m="import" data-n="${n}" title="Importar arquivo para este espaço">⬆️ Importar</button></div></div>`;
     }).join('');
-    document.getElementById('menuCard').innerHTML = `<h2 class="mc-h">Jogos salvos</h2><div class="slotlist">${rows}</div>
-      <p class="mc-note">⬇️ exporta para um arquivo .json · ⬆️ importa um arquivo para o espaço · Dormir em casa salva automaticamente.</p>
-      <div class="mc-btns row"><button data-m="back">← Voltar</button></div>`;
+    this.setCard(`<h2 class="mc-h">📜 Jogos salvos</h2><div class="slotlist">${rows}</div>
+      <p class="mc-note">Exportar baixa um arquivo .json (bom para guardar ou levar para outro computador) · Importar coloca um arquivo no espaço · Dormir em casa salva automaticamente.</p>
+      <div class="mc-btns row"><button data-m="back">← Voltar</button></div>`, 'slots');
   },
   createCard() {
-    if (this.hero.surname === undefined) this.hero.surname = U.pick(SURNAMES);
     const h = this.hero;
+    if (h.surname === undefined) h.surname = U.pick(SURNAMES);
     const sw = (key, list) => list.map(([v, label]) => `<button class="sw ${h[key] === v ? 'on' : ''}" data-m="set" data-k="${key}" data-v="${v}" title="${label}" style="background:${v}"></button>`).join('');
-    document.getElementById('menuCard').innerHTML = `
-      <h2 class="mc-h">Crie seu herói</h2>
-      <div class="creator">
-        <div class="cr-prev"><canvas id="heroPrev" width="180" height="220"></canvas><div class="cr-note" id="ageNote"></div></div>
-        <div class="cr-form">
-          <div class="cr-names"><label>Nome do herói<input id="heroName" maxlength="18" value="${UI.esc(h.name)}"></label>
-          <label>Sobrenome da família<input id="heroSurname" maxlength="16" value="${UI.esc(h.surname || '')}"></label></div>
-          <label>Sexo</label>
-          <div class="seg"><button class="${h.sex === 'm' ? 'on' : ''}" data-m="set" data-k="sex" data-v="m">♂ Masculino</button><button class="${h.sex === 'f' ? 'on' : ''}" data-m="set" data-k="sex" data-v="f">♀ Feminino</button></div>
-          <label>Idade <b id="ageVal">${h.age} anos</b><input type="range" id="heroAge" min="16" max="80" value="${h.age}"></label>
-          <label>Cor do cabelo</label><div class="swatches">${sw('hair', Object.entries(HAIR_COLORS).map(([n, c]) => [c, n]))}</div>
-          <label>Tom de pele</label><div class="swatches">${sw('skin', SKIN_TONES.map(c => [c, 'pele']))}</div>
-          <div class="cr-pick"><label>Cabelo</label><div class="picker"><button data-m="cyc" data-k="hairStyle" data-d="-1">‹</button><b id="pk_hairStyle">${HAIR_STYLES.find(x => x[0] === h.hairStyle)[1]}</b><button data-m="cyc" data-k="hairStyle" data-d="1">›</button></div></div>
-          <div class="cr-pick" ${h.sex === 'f' ? 'style="display:none"' : ''} id="beardRow"><label>Barba</label><div class="picker"><button data-m="cyc" data-k="beardStyle" data-d="-1">‹</button><b id="pk_beardStyle">${BEARD_STYLES.find(x => x[0] === h.beardStyle)[1]}</b><button data-m="cyc" data-k="beardStyle" data-d="1">›</button></div></div>
-          <label>Cor da túnica</label><div class="swatches">${sw('tunic', TUNIC_COLORS.map(c => [c, 'túnica']))}</div>
-          <label>Cor da calça</label><div class="swatches">${sw('pants', PANTS_COLORS.map(c => [c, 'calça']))}</div>
-          <label>Dificuldade</label><div class="seg">${Object.entries(DIFFICULTY).map(([k, d]) => `<button class="${h.diff === k ? 'on' : ''}" data-m="set" data-k="diff" data-v="${k}" title="${d.desc}">${d.name}</button>`).join('')}</div>
-          <small class="cr-diff" id="diffNote">${DIFFICULTY[h.diff].desc}</small>
-          <label>Espaço de salvamento</label><div class="seg">${Saves.list().map((inf, i) => `<button class="${(this.hero.slot || Saves.firstFree() || 1) === i + 1 ? 'on' : ''}" data-m="set" data-k="slot" data-v="${i + 1}" title="${inf ? 'Ocupado: ' + UI.esc(inf.name) : 'Vazio'}">${i + 1}${inf ? ' ●' : ''}</button>`).join('')}</div>
+    const picker = (key, list, label, id) => `<div class="cr-row" ${id ? `id="${id}"` : ''}><label>${label}</label><div class="picker"><button data-m="cyc" data-k="${key}" data-d="-1">‹</button><b id="pk_${key}">${list.find(x => x[0] === h[key])[1]}</b><button data-m="cyc" data-k="${key}" data-d="1">›</button></div></div>`;
+    const slot = h.slot || Saves.firstFree() || 1;
+    this.setCard(`
+      <h2 class="mc-h">⚔️ Crie seu herói</h2>
+      <div class="cr3">
+        <div class="cr-prev">
+          <canvas id="heroPrev" width="220" height="260"></canvas>
+          <div class="cr-tag" id="heroTag"></div>
+          <div class="cr-note" id="ageNote"></div>
+        </div>
+        <div class="cr-col">
+          <div class="cr-sec">📜 Identidade</div>
+          <div class="cr-names"><label>Nome<input id="heroName" maxlength="18" value="${UI.esc(h.name)}"></label>
+            <label>Sobrenome da família<input id="heroSurname" maxlength="16" value="${UI.esc(h.surname || '')}"></label></div>
+          <div class="cr-row"><label>Sexo</label><div class="seg"><button class="${h.sex === 'm' ? 'on' : ''}" data-m="set" data-k="sex" data-v="m">♂ Masculino</button><button class="${h.sex === 'f' ? 'on' : ''}" data-m="set" data-k="sex" data-v="f">♀ Feminino</button></div></div>
+          <div class="cr-row"><label>Idade <b id="ageVal">${h.age} anos</b></label><input type="range" id="heroAge" min="16" max="80" value="${h.age}"></div>
+          <div class="cr-row"><label>Dificuldade</label><div class="seg">${Object.entries(DIFFICULTY).map(([k, d]) => `<button class="${h.diff === k ? 'on' : ''}" data-m="set" data-k="diff" data-v="${k}">${d.name}</button>`).join('')}</div>
+            <small class="cr-diff" id="diffNote">${DIFFICULTY[h.diff].desc}</small></div>
+          <div class="cr-row"><label>Espaço de salvamento</label><div class="seg">${Saves.list().map((inf, i) => `<button class="${slot === i + 1 ? 'on' : ''}" data-m="set" data-k="slot" data-v="${i + 1}" title="${inf ? 'Ocupado: ' + UI.esc(inf.name) : 'Vazio'}">${i + 1}${inf ? ' · ocupado' : ' · livre'}</button>`).join('')}</div></div>
+        </div>
+        <div class="cr-col">
+          <div class="cr-sec">🎨 Aparência</div>
+          <div class="cr-row"><label>Cor do cabelo</label><div class="swatches">${sw('hair', Object.entries(HAIR_COLORS).map(([n, c]) => [c, n]))}</div></div>
+          ${picker('hairStyle', HAIR_STYLES, 'Penteado')}
+          ${h.sex === 'f' ? '' : picker('beardStyle', BEARD_STYLES, 'Barba', 'beardRow')}
+          <div class="cr-row"><label>Tom de pele</label><div class="swatches">${sw('skin', SKIN_TONES.map(c => [c, 'pele']))}</div></div>
+          <div class="cr-row"><label>Cor da túnica</label><div class="swatches">${sw('tunic', TUNIC_COLORS.map(c => [c, 'túnica']))}</div></div>
+          <div class="cr-row"><label>Cor da calça</label><div class="swatches">${sw('pants', PANTS_COLORS.map(c => [c, 'calça']))}</div></div>
         </div>
       </div>
-      <div class="mc-btns row"><button data-m="back">← Voltar</button><button class="mc-main" data-m="start">⚔️ Começar a jornada</button></div>`;
-    this.ageNote();
+      <div class="mc-btns row"><button data-m="back">← Voltar</button><button class="mc-main" data-m="start">⚔️ Começar a jornada</button></div>`, 'create');
+    this.ageNote(); this.nameTag();
+  },
+  nameTag() {
+    const el = document.getElementById('heroTag');
+    if (el) el.textContent = `${(this.hero.name || '').trim() || 'Sem nome'} ${(this.hero.surname || '').trim()}`;
   },
   ageNote() {
     const a = this.hero.age, el = document.getElementById('ageNote');
     if (!el) return;
     el.textContent = a < 25 ? 'Jovem e cheio de energia' : a < 40 ? 'No auge da vida' : a < 55 ? 'Os primeiros fios brancos aparecem' : a < 68 ? 'Cabelos grisalhos de experiência' : 'Cabelos brancos de um ancião';
   },
-  helpCard() {
-    document.getElementById('menuCard').innerHTML = `<div class="mc-help">${HELP_HTML}</div><div class="mc-btns"><button data-m="back">← Voltar</button></div>`;
+  // ajuda em abas: cada aba cabe inteira na janela
+  helpCard(tab) {
+    const div = document.createElement('div'); div.innerHTML = HELP_HTML;
+    const rows = [...div.querySelectorAll('table tr')].map(tr => [...tr.children].map(td => td.innerHTML));
+    const steps = [...div.querySelectorAll('li')].map(li => li.innerHTML);
+    const paras = [...div.querySelectorAll('p')].map(x => x.innerHTML);
+    const per = Math.ceil(steps.length / 3);
+    const tabs = [['keys', '🎮 Controles'], ['s1', '🌱 Primeiros passos'], ['s2', '🏡 Vida e família'], ['s3', '👑 Reinos e mais']];
+    tab = tab || 'keys';
+    let body;
+    if (tab === 'keys') body = `<div class="hk-grid">${rows.map(([k, v]) => `<div class="hk"><kbd>${k}</kbd><span>${v}</span></div>`).join('')}</div>`;
+    else {
+      const n = +tab[1] - 1, part = steps.slice(n * per, n * per + per);
+      body = `<ol class="hs-list" start="${n * per + 1}">${part.map(x => `<li>${x}</li>`).join('')}</ol>${n === 2 ? paras.map(x => `<p class="mc-note">${x}</p>`).join('') : ''}`;
+    }
+    this.setCard(`<h2 class="mc-h">❓ Como jogar</h2>
+      <div class="mtabs">${tabs.map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-m="htab" data-t="${k}">${l}</button>`).join('')}</div>
+      <div class="mc-help">${body}</div>
+      <div class="mc-btns row"><button data-m="back">← Voltar</button></div>`, 'help');
   },
+
+  // ------------------------------------------------------------ atualização (GitHub Pages)
+  checkUpdate(manual) {
+    const cur = window.GAME_VERSION || 'local';
+    if (location.protocol === 'file:' || cur === 'local') { if (manual) this.showUpdate(null, 'Você está jogando a partir dos arquivos do computador. A atualização automática funciona quando o jogo é aberto pelo GitHub Pages.'); return; }
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => {
+      if (j && j.version && j.version !== cur) this.showUpdate(j.version);
+      else if (manual) this.showUpdate(null, `Você já está na versão mais recente (${cur}).`);
+    }).catch(() => { if (manual) this.showUpdate(null, 'Não foi possível verificar agora. Confira sua conexão.'); });
+  },
+  showUpdate(v, text) {
+    const el = document.getElementById('updModal');
+    if (!el || (v && this.dismissed === v)) return;
+    el.innerHTML = `<div class="upd-box"><div class="upd-ic">${v ? '🔄' : '✔'}</div>
+      <h3>${v ? 'Nova versão disponível!' : 'Atualização'}</h3>
+      <p>${v ? `O jogo foi atualizado. Clique em <b>Atualizar o jogo</b> para carregar a versão nova, sem nada guardado do cache.<br><small>Seus jogos salvos continuam intactos.</small>` : text}</p>
+      <div class="upd-vers">${v ? `<span>Aberta: ${UI.esc(window.GAME_VERSION)}</span><span>Nova: ${UI.esc(v)}</span>` : ''}</div>
+      <div class="mc-btns row">${v ? `<button data-m="upddismiss" data-v="${UI.esc(v)}">Depois</button><button class="mc-main" data-m="updnow" data-v="${UI.esc(v)}">🔄 Atualizar o jogo</button>` : '<button class="mc-main" data-m="upddismiss">OK</button>'}</div></div>`;
+    el.classList.remove('hidden');
+  },
+  // recarrega a página com a versão no endereço: o navegador busca tudo de novo
+  updateNow(v) {
+    try { if (window.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k))); } catch (e) { /* sem cache de service worker */ }
+    location.replace(location.pathname + '?v=' + encodeURIComponent(v) + location.hash);
+  },
+
   act(a, d) {
     if (a === 'create') this.createCard();
     else if (a === 'back') this.mainCard();
     else if (a === 'help') this.helpCard();
+    else if (a === 'htab') this.helpCard(d.t);
     else if (a === 'slots') this.slotsCard();
+    else if (a === 'checkupd') this.checkUpdate(true);
+    else if (a === 'updnow') this.updateNow(d.v);
+    else if (a === 'upddismiss') { if (d.v) this.dismissed = d.v; document.getElementById('updModal').classList.add('hidden'); }
     else if (a === 'export') Saves.exportSlot(+d.n);
     else if (a === 'del') { if (confirm(`Apagar o jogo salvo do espaço ${d.n}? Isso não pode ser desfeito.`)) { Saves.remove(+d.n); this.slotsCard(); } }
     else if (a === 'import') {
@@ -134,7 +230,6 @@ const Menu = {
       for (const b of card.querySelectorAll(`[data-k="${d.k}"]`)) b.classList.toggle('on', b.dataset.v === d.v);
       if (d.k === 'diff') document.getElementById('diffNote').textContent = DIFFICULTY[d.v].desc;
       if (d.k === 'sex') {
-        document.getElementById('beardRow').style.display = d.v === 'f' ? 'none' : '';
         if (d.v === 'f' && this.hero.tunic === '#3d6b8f') this.hero.tunic = '#8f3d5e';
         if (d.v === 'm' && this.hero.tunic === '#8f3d5e') this.hero.tunic = '#3d6b8f';
         if (d.v === 'f' && this.hero.hairStyle === 'short') this.hero.hairStyle = 'long';
@@ -172,13 +267,13 @@ const Menu = {
   drawHero(cv, t) {
     const g = cv.getContext('2d'), h = this.hero;
     g.clearRect(0, 0, cv.width, cv.height);
-    const grd = g.createRadialGradient(90, 200, 10, 90, 200, 90);
+    const grd = g.createRadialGradient(cv.width / 2, cv.height - 30, 10, cv.width / 2, cv.height - 30, cv.width / 2);
     grd.addColorStop(0, 'rgba(255,200,120,0.35)'); grd.addColorStop(1, 'rgba(255,200,120,0)');
     g.fillStyle = grd; g.fillRect(0, 0, cv.width, cv.height);
     g.imageSmoothingEnabled = false;
     const female = h.sex === 'f';
-    drawHuman(g, 90, 206 + Math.sin(t * 2) * 1.5, {
-      scale: 4.2, body: h.tunic, legs: h.pants, skin: h.skin,
+    drawHuman(g, cv.width / 2, cv.height - 22 + Math.sin(t * 2) * 1.5, {
+      scale: 5, body: h.tunic, legs: h.pants, skin: h.skin,
       hair: People.hairAt(h.hair, h.age), hairStyle: h.hairStyle, beardStyle: female ? 'none' : h.beardStyle, skirt: female,
       dir: 1, moving: false, swing: 0, aim: 0, anim: t,
     });
