@@ -1,0 +1,1690 @@
+'use strict';
+// Interface: HUD, mensagens e painéis (HTML sobre o canvas).
+
+const TRADE_GOODS = ['wood', 'stone', 'clay', 'coal', 'copper_ore', 'tin_ore', 'iron_ore', 'fiber', 'rope', 'leather', 'iron_bar', 'bronze_bar',
+  'wheat', 'berries', 'meat', 'cooked_meat', 'bread', 'cooked_fish', 'fishing_rod'];
+
+const PANEL_ICONS = {
+  showInventory: 'backpack', showCrafting: 'hammer', showBuild: 'build', showKingdom: 'crown', showSettings: 'gear', showHelp: 'star',
+  showTalk: 'chat', showGift: 'star', showEquipC: 'shield', showShop: 'coin', showTavern: 'users', showCastle: 'castle',
+  showRest: 'build', showFarm: 'food', showBarracks: 'shield', showChest: 'backpack', showStable: 'users',
+  showBiz: 'coin', showFamily: 'users', showHire: 'coin', showChapel: 'star', showArena: 'sword', showJoust: 'sword', showTree: 'users', showMatch: 'users',
+  showAnimals: 'food', showPTavern: 'coin', showCaravan: 'coin', showBattle: 'sword', showDiary: 'book', showProf: 'star',
+};
+const WIDE_PANELS = ['showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree'];
+
+const UI = {
+  cur: null,
+  kTab: -1,
+  sel: { inv: null, cat: 'Todos', craft: 0, st: 'all', can: false, build: 'cabin', ksub: 'resumo' },
+
+  init() {
+    this.panel = document.getElementById('panel');
+    this.log = document.getElementById('log');
+    this.promptEl = document.getElementById('prompt');
+    this.bannerEl = document.getElementById('banner');
+    this.panel.addEventListener('click', e => {
+      const b = e.target.closest('[data-act]');
+      if (!b || b.disabled) return;
+      this.act(b.dataset.act, b.dataset);
+    });
+    this.panel.addEventListener('change', e => {
+      const el = e.target.closest('[data-set]');
+      if (el) Game.setSetting(el.dataset.set, el.type === 'checkbox' ? el.checked : el.value);
+    });
+    this.buildHud();
+    this.initDrag();
+    this.talkEl = document.getElementById('talkBtn');
+    this.talkEl.innerHTML = `${icon('chat')}<span>Conversar</span><kbd>E</kbd>`;
+    this.talkEl.addEventListener('click', () => { if (this.talkEl.dataset.id) this.showTalk(+this.talkEl.dataset.id); });
+    document.getElementById('gameover').addEventListener('click', e => {
+      const b = e.target.closest('[data-go]');
+      if (!b) return;
+      if (b.dataset.go === 'heir') Game.continueAs(+b.dataset.id);
+      else if (b.dataset.go === 'load') { this.hideGameOver(); this.loading('Carregando sua jornada...', async prog => { if (!(await Game.load(G.slot, prog))) { alert('Não há jogo salvo neste espaço.'); this.showGameOver(this.goCause); } }); }
+      else if (b.dataset.go === 'menu') { this.hideGameOver(); Game.toMenu(); }
+    });
+    document.getElementById('birth').addEventListener('click', e => {
+      if (!e.target.closest('[data-birth]')) return;
+      const inp = document.getElementById('babyName');
+      const name = inp.value.trim();
+      if (!name) { inp.focus(); return; }
+      document.getElementById('birth').classList.add('hidden');
+      this.modal = false; G.paused = !!this.cur;
+      Game.birth(name, this.babySex);
+    });
+  },
+
+  // ------------------------------------------------------------ HUD
+  buildHud() {
+    const stat = (id, cls, ic, tip) => `<div class="stat ${cls}" id="${id}" title="${tip}">${icon(ic)}<div class="track"><em></em><i></i><span></span></div></div>`;
+    const hud = document.getElementById('hud');
+    hud.classList.add('glass');
+    hud.innerHTML = `
+      <div class="hud-card">
+        <div class="portrait"><canvas id="portrait" width="60" height="60"></canvas><div class="lvl" id="hudLvl">1</div></div>
+        <div class="hud-main">
+          <div class="hud-name" id="hudName"></div>
+          <div class="hud-title" id="hudTitle"></div>
+          <div class="xpbar"><i id="hudXp"></i></div>
+          <div class="xptext" id="hudXpT"></div>
+        </div>
+      </div>
+      ${stat('hpBar', 'hp', 'heart', 'Vida')}
+      ${stat('stBar', 'st', 'bolt', 'Energia')}
+      ${stat('huBar', 'hu', 'food', 'Fome')}
+      <div class="hud-res">
+        <div class="gold" title="Ouro pessoal">${icon('coin')}<b id="hudGold">0</b></div>
+        <div title="Seguidores">${icon('users')}<b id="hudFol">0/2</b></div>
+        <div title="Dano">${icon('sword')}<b id="hudAtk">0</b></div>
+        <div title="Defesa">${icon('shield')}<b id="hudDef">0</b></div>
+      </div>
+      <div class="hud-buffs" id="hudBuffs"></div>`;
+    const clock = document.getElementById('clock');
+    clock.classList.add('glass');
+    clock.innerHTML = `
+      <div class="clk-top"><span id="clkIcon"></span><div><b id="clkDay">Dia 1</b><small id="clkPhase">Manhã</small></div><span class="clk-time" id="clkTime">06:00</span></div>
+      <div class="clk-bar"><i id="clkProg"></i></div>
+      <div class="clk-zone" id="clkZone"></div>`;
+    const quick = document.getElementById('quick');
+    quick.classList.add('glass');
+    quick.innerHTML = `<div class="q-tool" data-qt="1" title="Trocar ferramenta (Q)">
+        <span class="q-ic" id="qToolIc"></span><div><small>FERRAMENTA <span class="k">Q</span></small><b id="qToolName"></b><em id="qToolSub"></em></div></div>
+      <div class="q-ord" data-qo="1" title="Ordem aos capangas (T)"><small>ORDEM <span class="k">T</span></small><b id="qOrder"></b></div>
+      <div class="q-load"><small>CARGA</small><span id="qLoadT"></span><div class="q-lbar"><i id="qLoad"></i></div></div>
+      <div class="q-bag"><small>ALGIBEIRA</small><div class="q-slots">${[0, 1, 2, 3].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span><span class="k">${q + 1}</span></div>`).join('')}</div></div>`;
+    quick.addEventListener('click', e => {
+      if (G.state !== 'play' || G.paused) return;
+      if (e.target.closest('[data-qt]')) Game.cycleTool();
+      if (e.target.closest('[data-qo]')) Orders.cycle();
+      const qs = e.target.closest('[data-qs]');
+      if (qs) Game.useQuick(+qs.dataset.qs);
+    });
+    const tb = document.getElementById('toolbar');
+    tb.classList.add('glass');
+    const btn = (fn, ic, label, key) => `<button data-tb="${fn}" title="${label} (${key})">${icon(ic)}<small>${label}</small><span class="k">${key}</span></button>`;
+    tb.innerHTML = btn('showInventory', 'backpack', 'Mochila', 'I') + btn('showCrafting', 'hammer', 'Criar', 'C') +
+      btn('showBuild', 'build', 'Construir', 'B') + btn('showKingdom', 'crown', 'Reino', 'K') +
+      btn('showMap', 'map', 'Mapa', 'M') + btn('showDiary', 'book', 'Diário', 'J') + '<span class="sep"></span>' + btn('showSettings', 'gear', 'Ajustes', 'Esc');
+    tb.addEventListener('click', e => {
+      const b = e.target.closest('[data-tb]');
+      if (!b || G.state !== 'play') return;
+      this.toggle(b.dataset.tb);
+    });
+    this.portraitKey = '';
+  },
+  toggle(fn) {
+    if (this.cur && this.cur.fn === fn) { this.close(); return; }
+    if (this.cur) this.close();
+    G.placing = null;
+    this[fn]();
+  },
+  showGameUI(on) {
+    for (const id of ['hud', 'rightcol', 'toolbar']) document.getElementById(id).classList.toggle('hidden', !on);
+    if (!on) { document.getElementById('keys').classList.add('hidden'); MapView.hide(); Touch.show(false); }
+    else Game.applySettings();
+  },
+
+  // ------------------------------------------------------------ utilidades
+  esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); },
+  fmtCost(cost, have) {
+    have = have || (k => k === 'gold' ? P.gold : Inv.count(k));
+    return Object.entries(cost).map(([k, n]) => {
+      const ok = have(k) >= n;
+      const info = k === 'gold' ? { icon: '🪙', name: 'ouro' } : (ITEMS[k] || GROUP_INFO[k]);
+      const ic = info.icon, nm = info.name;
+      return `<span class="c ${ok ? '' : 'bad'}" title="${nm}">${ic} ${n}</span>`;
+    }).join(' ');
+  },
+  itemDesc(it) {
+    const p = [];
+    if (it.dmg) p.push(`Dano ${it.dmg}`);
+    if (it.def) p.push(`Defesa ${it.def}`);
+    if (it.food) p.push(`+${it.food} fome${it.heal ? `, +${it.heal} vida` : ''}`);
+    if (it.tool) p.push(`${TOOL_NAMES[it.tool]} · ${TIER_NAMES[it.tier]}${it.tool !== 'rod' ? ` (força ${it.power})` : ''}`);
+    if (it.fish) p.push('peixe cru — asse na fogueira');
+    if (it.block) p.push(`bloqueia ${Math.round(it.block * 100)}%`);
+    if (it.buff) p.push(`${BUFFS[it.buff].icon} ${BUFFS[it.buff].desc}`);
+    if (it.seed) p.push(`plante com a enxada · ${CROPS[it.seed].days} dias`);
+    return p.join(' · ');
+  },
+  bar(v, max, cls) { return `<div class="mbar ${cls || ''}"><i style="width:${U.clamp(v / max * 100, 0, 100)}%"></i></div>`; },
+
+  open(title, body, fn, args, sub) {
+    // guarda a rolagem das áreas internas para a janela não "pular" ao atualizar
+    const scrolls = {};
+    if (this.cur && this.cur.fn === fn) for (const el of this.panel.querySelectorAll('[data-scroll], .pb')) scrolls[el.dataset.scroll || 'pb'] = el.scrollTop;
+    this.cur = { fn, args: args || [] };
+    const clean = String(title).replace(/^[^\p{L}\p{N}]+/u, '');
+    const ic = PANEL_ICONS[fn] || 'star';
+    this.panel.className = WIDE_PANELS.includes(fn) ? 'wide' : '';
+    this.panel.innerHTML = `<div class="ph"><div class="ph-ic">${icon(ic)}</div><div class="ph-t"><h2>${clean}</h2>${sub ? `<small>${sub}</small>` : ''}</div>
+      <button class="x" data-act="close" title="Fechar (Esc)">${icon('x')}</button></div><div class="pb">${body}</div>`;
+    this.panel.classList.remove('hidden');
+    for (const el of this.panel.querySelectorAll('[data-scroll], .pb')) { const k = el.dataset.scroll || 'pb'; if (scrolls[k]) el.scrollTop = scrolls[k]; }
+    G.paused = true;
+  },
+  close() { this.panel.classList.add('hidden'); MapView.hide(); this.cur = null; G.paused = false; },
+  isOpen() { return !!this.cur; },
+  refresh() { if (this.cur) this[this.cur.fn](...this.cur.args); },
+
+  msg(text, cls) {
+    const d = document.createElement('div');
+    d.className = 'm ' + (cls || '');
+    d.textContent = text;
+    this.log.appendChild(d);
+    while (this.log.children.length > 7) this.log.removeChild(this.log.firstChild);
+    setTimeout(() => d.classList.add('fade'), 7000);
+    setTimeout(() => d.remove(), 8500);
+  },
+  banner(text) {
+    this.bannerEl.textContent = text;
+    this.bannerEl.classList.remove('show'); void this.bannerEl.offsetWidth;
+    this.bannerEl.classList.add('show');
+  },
+  prompt(text) {
+    if (this.lastPrompt === text) return;
+    this.lastPrompt = text;
+    this.promptEl.innerHTML = text || '';
+    this.promptEl.style.display = text ? 'block' : 'none';
+  },
+
+  updateHUD() {
+    const $ = id => document.getElementById(id);
+    const txt = (id, v) => { const el = $(id); if (el.textContent !== String(v)) el.textContent = v; };
+    const html = (id, v) => { const el = $(id); if (el._h !== v) { el._h = v; el.innerHTML = v; } };
+    const setBar = (id, v, max) => {
+      const el = $(id), pct = U.clamp(v / max * 100, 0, 100) + '%';
+      el.querySelector('i').style.width = pct;
+      el.querySelector('em').style.width = pct;
+      el.querySelector('span').textContent = Math.ceil(Math.max(0, v)) + ' / ' + max;
+      el.classList.toggle('low', v / max < 0.25);
+    };
+    setBar('hpBar', P.hp, P.maxHp); setBar('stBar', P.stamina, 100); setBar('huBar', P.hunger, 100);
+    txt('hudName', G.name + (G.surname ? ' ' + G.surname : ''));
+    txt('hudLvl', P.level);
+    const title = Game.playerTitle();
+    html('hudTitle', (title.king ? icon('crown') : '') + this.esc(title.text));
+    $('hudXp').style.width = U.clamp(P.xp / Game.xpNext() * 100, 0, 100) + '%';
+    txt('hudXpT', `Nível ${P.level} · ${P.xp} / ${Game.xpNext()} XP`);
+    txt('hudGold', P.gold);
+    txt('hudFol', Game.allies().length + '/' + Game.followerCap());
+    txt('hudAtk', Math.round(Game.pDmg()));
+    txt('hudDef', Game.pDef());
+    Game.drawPortrait($('portrait'));
+
+    const h = Game.hour();
+    const hh = String(Math.floor(h)).padStart(2, '0'), mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
+    const night = G.darkness > 0.3;
+    html('clkIcon', night ? icon('moon', 'moon') : icon('sun', 'sun'));
+    txt('clkDay', 'Dia ' + G.day);
+    const se = Season.cur();
+    txt('clkPhase', `${se.icon} ${se.name} · ` + (h >= 4.5 && h < 7 ? 'Amanhecer' : h >= 7 && h < 12 ? 'Manhã' : h >= 12 && h < 18 ? 'Tarde' : h >= 18 && h < 20.5 ? 'Entardecer' : 'Noite'));
+    txt('clkTime', hh + ':' + mm);
+    $('clkProg').style.width = (G.time / DAY_LEN * 100) + '%';
+    const zc = G.zone >= 0 ? Game.civColor(G.zone) : '#9ad65a';
+    const zone = G.dungeon ? '🕯️ ' + G.dungeon.name : G.zone >= 0 ? CIV_DEFS[G.zone].name : 'Terras Selvagens';
+    html('clkZone', `${icon('compass')}<span style="color:${zc}">${zone}</span>` +
+      (G.zone >= 0 && G.civs[G.zone].ruler === 'player' ? ' <span class="badge" style="background:#a8791a">SEU REINO</span>' : '') +
+      (G.zone >= 0 && G.civs[G.zone].atWar ? ' <span class="badge">GUERRA</span>' : '') +
+      (G.siege ? ' <span class="badge">CERCO</span>' : ''));
+
+    const now = G.realTime;
+    html('hudBuffs', Farm.active().map(k => { const b = BUFFS[k], left = Math.ceil((P.buffs[k] - now) / 60 * 10) / 10;
+      return `<span class="buff" title="${b.name}: ${b.desc}">${b.icon}<small>${Math.max(1, Math.ceil(P.buffs[k] - now))}s</small></span>`; }).join(''));
+    const al = Game.allies().length;
+    txt('qOrder', al ? `${ORDERS[G.order || 'follow'].icon} ${ORDERS[G.order || 'follow'].name}` : '— sem capangas');
+    for (const b of document.querySelectorAll('#toolbar [data-tb]')) b.classList.toggle('on', !!(this.cur && this.cur.fn === b.dataset.tb));
+    const tk = P.equip.tool, tit = tk && ITEMS[tk];
+    const wt = Store.weight(), cap = Store.capacity();
+    $('qLoad').style.width = U.clamp(wt / cap * 100, 0, 100) + '%';
+    $('qLoad').classList.toggle('over', wt > cap);
+    txt('qLoadT', `${wt} / ${cap}${P.horse ? (P.mounted ? ' · 🐴 montado' : ' · 🐴 R monta') : ''}`);
+    html('qToolIc', tit ? tit.icon : '✋');
+    txt('qToolName', tit ? tit.name : 'Mãos livres');
+    txt('qToolSub', tit ? `${TOOL_NAMES[tit.tool]} · ${TIER_NAMES[tit.tier]}` : 'Sem ferramenta');
+    for (let q = 0; q < 4; q++) {
+      const k = P.quick[q];
+      html('qs' + q, k ? ITEMS[k].icon : '');
+      txt('qn' + q, k ? Inv.count(k) : '');
+      $('qs' + q).parentNode.classList.toggle('empty', !k || Inv.count(k) <= 0);
+    }
+  },
+
+  // ------------------------------------------------------------ painéis
+  // ============================================================ janelas principais (padrão único)
+  // Mochila: ficha do personagem + grade de itens + detalhes do item selecionado
+  showInventory() {
+    const S = this.sel;
+    const order = ['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos'];
+    const keys = this.invKeys(order);
+    const counts = {};
+    for (const k of keys) counts[ITEMS[k].cat] = (counts[ITEMS[k].cat] || 0) + 1;
+    if (S.cat !== 'Todos' && !counts[S.cat]) S.cat = 'Todos';
+    const shown = keys.filter(k => S.cat === 'Todos' || ITEMS[k].cat === S.cat);
+    if (!S.inv || !P.inv[S.inv]) S.inv = shown[0] || null;
+    const eqOf = k => Object.keys(P.equip).find(s => P.equip[s] === k);
+    const glyph = { weapon: '⚔️', tool: '⛏️', head: '🪖', torso: '👕', legs: '👖', feet: '🥾', shield: '🛡️' };
+    const slot = key => {
+      const sl = EQUIP_SLOTS.find(x => x.key === key), k = P.equip[key], it = k && ITEMS[k];
+      return `<div class="pd-slot ${it ? 'full' : ''} ${it && S.inv === k ? 'on' : ''}" data-drop="equip" data-slot="${key}" ${it ? `data-drag="eq" data-k="${k}" data-act="isel"` : ''} title="${sl.name} — ${sl.sub}${it ? ': ' + it.name + ' (arraste para fora para tirar)' : ' (arraste um item para cá)'}">
+        <span class="pd-ic">${it ? it.icon : `<i class="pd-empty">${glyph[key]}</i>`}</span><small>${sl.name}</small></div>`;
+    };
+    const t = Game.playerTitle(), w = Store.weight(), cap = Store.capacity(), bag = Store.bag(), nb = Store.nextBag();
+    const left = `<div class="col inv-left">
+      <div class="card">
+        <div class="paperdoll">
+          <div class="pd-col">${slot('head')}${slot('torso')}${slot('legs')}${slot('feet')}</div>
+          <div class="pd-mid"><canvas id="invDoll" width="120" height="170"></canvas><div class="pd-name">${this.esc(G.name)}</div><small>${this.esc(t.text)} · ${P.age} anos</small></div>
+          <div class="pd-col">${slot('weapon')}${slot('shield')}${slot('tool')}</div>
+        </div>
+        <div class="tiles">
+          <div class="stile"><small>Vida</small><b>${Math.ceil(P.hp)}/${P.maxHp}</b></div>
+          <div class="stile"><small>Dano</small><b>${Math.round(Game.pDmg())}</b></div>
+          <div class="stile"><small>Defesa</small><b>${Game.pDef()}</b></div>
+        </div>
+      </div>
+      <div class="card bagcard"><div class="sec">🎒 ${this.esc(bag.name)} <span>nível ${Store.bagLvl()}/10</span></div>
+        <div class="q-lbar"><i class="${w > cap ? 'over' : ''}" style="width:${U.clamp(w / cap * 100, 0, 100)}%"></i></div>
+        <small class="muted">Carga ${w} / ${cap}${nb ? ` · próximo: ${nb.cap} (na Bancada)` : ' · nível máximo!'}</small></div>
+      <div class="card"><div class="sec">Algibeira <span>teclas 1 a 4 · arraste comida para cá</span></div><div class="bag4">${[0, 1, 2, 3].map(q => {
+        const k = P.quick[q], it = k && ITEMS[k];
+        return `<div class="tile qtile ${it && S.inv === k ? 'on' : ''}" data-drop="quick" data-q="${q}" ${it ? `data-drag="quick" data-k="${k}" data-act="isel"` : ''} title="${it ? it.name + ' (arraste para fora para tirar)' : 'Vazio — arraste uma comida para cá'}">
+          <span class="tk">${q + 1}</span>${it ? `${it.icon}<span class="tn">${Inv.count(k)}</span>` : '<span class="muted">+</span>'}</div>`;
+      }).join('')}</div></div></div>`;
+    const tabs = ['Todos', ...order].filter(c => c === 'Todos' || counts[c])
+      .map(c => `<button class="tab ${S.cat === c ? 'on' : ''}" data-act="icat" data-c="${c}">${c}<span class="cnt">${c === 'Todos' ? keys.length : counts[c]}</span></button>`).join('');
+    const grid = shown.length ? shown.map(k => {
+      const it = ITEMS[k];
+      return `<div class="tile ${S.inv === k ? 'on' : ''}" data-act="isel" data-k="${k}" data-drag="inv" data-drop="tile" title="${it.name}">${it.icon}<span class="tn">${P.inv[k]}</span>${eqOf(k) ? '<span class="te">EQ</span>' : ''}</div>`;
+    }).join('') : '<p class="muted">Sua mochila está vazia. Colete recursos em árvores, rochas, plantas, animais e na água.</p>';
+    const mid = `<div class="col inv-mid"><div class="tabs">${tabs}</div>
+      <div class="scroll" data-scroll="inv" data-drop="grid"><div class="tile-grid">${grid}</div></div>
+      <div class="inv-tools"><div class="trash" data-drop="trash">🗑️ Arraste aqui para descartar</div><button data-act="isort" title="Volta a ordenar por categoria">↺ Organizar</button></div></div>`;
+    const right = `<div class="card detail inv-detail">${S.inv ? this.itemDetail(S.inv) : '<p class="muted">Clique num item para ver os detalhes.</p>'}</div>`;
+    this.open('Mochila', `<div class="inv3">${left}${mid}${right}</div>`, 'showInventory', [], `${keys.length} tipos de item · ${P.gold} 🪙 · carga <b class="${w > cap ? 'bad' : ''}">${w} / ${cap}</b>${w > cap ? ' — sobrecarregado!' : ''} · arraste os itens para equipar, guardar na algibeira ou reorganizar`);
+    const cv = document.getElementById('invDoll');
+    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+    drawHuman(g, 60, 158, Object.assign(playerLook(), { scale: 3.3, dir: 1, moving: false, swing: 0, rod: false }));
+  },
+  // itens na ordem escolhida pelo jogador (arrastando); os novos vão para o fim, por categoria
+  invKeys(order) {
+    const byCat = (a, b) => order.indexOf(ITEMS[a].cat) - order.indexOf(ITEMS[b].cat) || ITEMS[a].name.localeCompare(ITEMS[b].name);
+    const keys = Object.keys(P.inv).filter(k => P.inv[k] > 0);
+    const ord = P.invOrder || [];
+    return keys.sort((a, b) => {
+      const ia = ord.indexOf(a), ib = ord.indexOf(b);
+      if (ia >= 0 && ib >= 0) return ia - ib;
+      if (ia >= 0) return -1;
+      if (ib >= 0) return 1;
+      return byCat(a, b);
+    });
+  },
+  // ------------------------------------------------------------ arrastar e soltar na mochila
+  initDrag() {
+    const pan = this.panel;
+    let drag = null;
+    const start = (e, el) => {
+      drag = { el, kind: el.dataset.drag, k: el.dataset.k, slot: el.dataset.slot, q: el.dataset.q, x: e.clientX, y: e.clientY, on: false, touch: e.pointerType === 'touch', t0: performance.now(), id: e.pointerId, scroller: el.closest('.scroll') };
+    };
+    pan.addEventListener('pointerdown', e => {
+      const el = e.target.closest('[data-drag]');
+      if (!el || !this.cur || this.cur.fn !== 'showInventory' || e.button > 0) return;
+      start(e, el);
+    });
+    window.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y, dist = Math.hypot(dx, dy);
+      if (!drag.on) {
+        // no toque: segure um instante para arrastar; deslizar logo rola a lista
+        if (drag.touch && performance.now() - drag.t0 < 220) { if (dist > 8 && drag.scroller) { drag.scroll = true; } }
+        if (drag.scroll) { drag.scroller.scrollTop -= e.clientY - (drag.ly === undefined ? drag.y : drag.ly); drag.ly = e.clientY; return; }
+        if (dist < 7) return;
+        drag.on = true;
+        const g = document.createElement('div');
+        g.className = 'drag-ghost';
+        g.textContent = ITEMS[drag.k] ? ITEMS[drag.k].icon : '?';
+        document.body.appendChild(g); drag.ghost = g;
+        document.body.classList.add('dragging');
+        drag.el.classList.add('drag-src');
+      }
+      drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+      const over = document.elementFromPoint(e.clientX, e.clientY);
+      const tg = over && over.closest('[data-drop]');
+      for (const x of pan.querySelectorAll('.drop-over')) x.classList.remove('drop-over');
+      if (tg) tg.classList.add('drop-over');
+      e.preventDefault();
+    }, { passive: false });
+    const end = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const d = drag; drag = null;
+      if (!d.on) return;
+      d.ghost.remove(); document.body.classList.remove('dragging');
+      this.suppressClick = true; setTimeout(() => { this.suppressClick = false; }, 60);
+      const over = document.elementFromPoint(e.clientX, e.clientY);
+      const tg = over && over.closest('[data-drop]');
+      this.dropItem(d, tg ? tg.dataset : null);
+    };
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', e => { if (drag && drag.ghost) { drag.ghost.remove(); document.body.classList.remove('dragging'); } drag = null; });
+    pan.addEventListener('click', e => { if (this.suppressClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+  },
+  dropItem(d, t) {
+    const k = d.k, it = ITEMS[k];
+    const where = t ? t.drop : null;
+    if (d.kind === 'inv') {
+      if (where === 'equip') {
+        if (it.slot === t.slot) { Game.equip(k); Sound.play('ui'); }
+        else this.msg(it.slot ? `${it.name} vai no espaço ${EQUIP_SLOTS.find(x => x.key === it.slot).name}.` : `${it.name} não é equipável.`, 'bad');
+      } else if (where === 'quick') {
+        if (it.food || it.heal) Game.setQuick(+t.q, k); else this.msg('Na algibeira só vão comidas e remédios.', 'bad');
+      } else if (where === 'trash') this.discard(k);
+      else if (where === 'tile' && t.k !== k) {
+        const order = this.invKeys(['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos']).filter(x => x !== k);
+        order.splice(order.indexOf(t.k), 0, k);
+        P.invOrder = order;
+      }
+    } else if (d.kind === 'eq') {
+      if (where === 'trash') this.discard(k);
+      else if (where !== 'equip') { const sl = Object.keys(P.equip).find(s => P.equip[s] === k); if (sl) { P.equip[sl] = null; this.msg(`Você tirou ${it.name}.`); } }
+    } else if (d.kind === 'quick') {
+      const from = P.quick.indexOf(k);
+      if (where === 'quick') { const to = +t.q, other = P.quick[to]; P.quick[to] = k; P.quick[from] = other || null; }
+      else if (from >= 0) P.quick[from] = null;
+    }
+    this.sel.inv = k;
+    this.refresh();
+  },
+  discard(k) {
+    const it = ITEMS[k], n = Inv.count(k);
+    if (!n || !confirm(`Descartar ${n}× ${it.name}?`)) return;
+    for (const s in P.equip) if (P.equip[s] === k) P.equip[s] = null;
+    for (let q = 0; q < 4; q++) if (P.quick[q] === k) P.quick[q] = null;
+    Inv.add(k, -n);
+    this.msg(`Você descartou ${n}× ${it.name}.`);
+  },
+  // de onde vem um item (para a pessoa saber como conseguir)
+  sourcesOf(k) {
+    const out = [];
+    const objs = OBJ.filter(o => o && o.drops[k]).map(o => o.name);
+    if (objs.length) out.push('Coleta: ' + [...new Set(objs)].slice(0, 4).join(', '));
+    const mobs = Object.values(CREATURES).filter(c => c.drops && c.drops[k]).map(c => c.name);
+    if (mobs.length) out.push('Caça: ' + mobs.join(', '));
+    const r = RECIPES.find(x => x.out === k);
+    if (r) out.push('Criação: ' + (r.station ? STATIONS[r.station].name : 'feito à mão'));
+    const shops = Object.values(SHOPS).filter(sh => sh.sells.includes(k)).map(sh => sh.name);
+    if (shops.length) out.push('À venda em: ' + shops.join(', '));
+    if (ITEMS[k].fish || k === 'goldfish' || k === 'old_boot') out.push('Pesca');
+    return out;
+  },
+  itemDetail(k) {
+    const it = ITEMS[k], eq = Object.keys(P.equip).find(s => P.equip[s] === k);
+    const kv = [];
+    if (it.dmg) kv.push(['Dano', it.dmg]);
+    if (it.def) kv.push(['Defesa', '+' + it.def]);
+    if (it.block) kv.push(['Bloqueio', Math.round(it.block * 100) + '%']);
+    if (it.tool) kv.push(['Ferramenta', `${TOOL_NAMES[it.tool]} · ${TIER_NAMES[it.tier]}`]);
+    if (it.food) kv.push(['Fome', '+' + it.food]);
+    if (it.heal) kv.push(['Vida', '+' + it.heal]);
+    if (it.seed) kv.push(['Colheita', `${CROPS[it.seed].days} dias`]);
+    kv.push(['Quantidade', Inv.count(k)], ['Valor', '~' + it.price + ' 🪙'], ['Peso', Math.round(itemWeight(k) * 10) / 10]);
+    let acts = '';
+    if (it.slot) acts += eq ? `<button data-act="unequip" data-k="${eq}">Tirar</button>` : `<button class="primary" data-act="equip" data-k="${k}">${it.slot === 'tool' ? 'Empunhar' : 'Equipar'}</button>`;
+    if (it.food || it.heal) acts += `<button class="primary" data-act="eat" data-k="${k}">${it.food ? 'Comer' : 'Usar'}</button>`;
+    if (it.seed) acts += Farm.seed() === k ? '<span class="chip">🌱 Semente escolhida</span>' : `<button class="primary" data-act="setseed" data-k="${k}">🌱 Plantar esta</button>`;
+    const uses = RECIPES.filter(r => r.cost[k] || (it.fish && r.cost.fish)).map(r => ITEMS[r.out]);
+    const src = this.sourcesOf(k).slice(0, 3);
+    return `<div class="dt-head"><div class="dt-ic">${it.icon}</div><div><div class="dt-name">${it.name}</div><div class="dt-cat">${it.cat}${eq ? ' · equipado' : ''}</div></div></div>
+      ${it.buff ? `<div class="dt-buff">${BUFFS[it.buff].icon} ${BUFFS[it.buff].name}: ${BUFFS[it.buff].desc}</div>` : ''}
+      <div class="kv kv3">${kv.map(([a, b]) => `<div>${a}<b>${b}</b></div>`).join('')}</div>
+      ${acts ? `<div class="act-row">${acts}</div>` : ''}
+      ${uses.length ? `<div><div class="sec">Usado para criar</div><div class="chips dense">${uses.slice(0, 8).map(o => `<span class="chip" title="${o.name}">${o.icon} ${o.name}</span>`).join('')}${uses.length > 8 ? `<span class="chip">+${uses.length - 8}</span>` : ''}</div></div>` : ''}
+      ${src.length ? `<div><div class="sec">Como conseguir</div><div class="src">${src.map(x => `<div>• ${x}</div>`).join('')}</div></div>` : ''}`;
+  },
+
+  // Criar: filtros por estação, lista de receitas e painel com ingredientes
+  // criação: a janela C mostra só o que se faz à mão; cada estação (fogueira, bancada, forja...) mostra só as suas receitas
+  showCrafting(station) {
+    const S = this.sel, st = station || null;
+    const near = {};
+    for (const k in STATIONS) near[k] = Game.nearStation(k);
+    const stOk = r => r.station === null || near[r.station];
+    const maxOf = r => Math.min(...Object.entries(r.cost).map(([k, n]) => Math.floor(Inv.count(k) / n)));
+    const list = RECIPES.map((r, i) => ({ r, i })).filter(({ r }) => r.station === st && (!S.can || (stOk(r) && maxOf(r) > 0)));
+    if (!list.some(x => x.i === S.craft)) S.craft = list.length ? list[0].i : RECIPES.findIndex(r => r.station === st);
+    const stIcon = { fogueira: '🔥', bancada: '🪚', forja: '⚒️', cozinha: '🥖', cervejaria: '🍺' };
+    const others = Object.keys(STATIONS).map(k => `<span class="chip">${stIcon[k]} ${STATIONS[k].name.split(' /')[0]}: ${RECIPES.filter(r => r.station === k).length}</span>`).join('');
+    const tabs = st ? `<div class="st-head">${stIcon[st]} <b>${STATIONS[st].name}</b> ${near[st] ? '<span class="ok">● por perto</span>' : '<span class="bad">● longe — volte para perto dela</span>'}</div>`
+      : `<div class="st-head">✋ <b>Criação à mão</b> <small class="muted">— o resto se faz nas estações:</small></div><div class="chips">${others}</div>`;
+    const cats = ['Ferramentas', 'Armas', 'Armaduras', 'Materiais', 'Comida', 'Diversos'];
+    let rows = '';
+    for (const cat of cats) {
+      const inCat = list.filter(({ r }) => ITEMS[r.out].cat === cat);
+      if (!inCat.length) continue;
+      rows += `<div class="grp">${cat}</div>`;
+      for (const { r, i } of inCat) {
+        const it = ITEMS[r.out], can = maxOf(r) > 0, so = stOk(r);
+        const st = so && can ? ['ok', 'Pode criar'] : !so ? ['st', STATIONS[r.station].name.split(' ')[0]] : ['mat', 'Falta material'];
+        rows += `<button class="rrow ${S.craft === i ? 'on' : ''}" data-act="csel" data-r="${i}"><span class="ri">${it.icon}</span>
+          <span><b>${it.name}${r.n > 1 ? ' ×' + r.n : ''}</b><small>${this.itemDesc(it) || it.cat}</small></span><span class="rs ${st[0]}">${st[1]}</span></button>`;
+      }
+    }
+    if (!rows) rows = '<p class="muted">Nenhuma receita com esses filtros.</p>';
+    const r = RECIPES[S.craft], it = ITEMS[r.out], so = stOk(r), mx = maxOf(r);
+    const req = Object.entries(r.cost).map(([k, n]) => {
+      const info = ITEMS[k] || GROUP_INFO[k], have = Inv.count(k);
+      return `<div class="req-row"><span>${info.icon}</span><span>${info.name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;
+    }).join('');
+    const detail = `<div class="dt-head"><div class="dt-ic">${it.icon}</div><div><div class="dt-name">${it.name}${r.n > 1 ? ' ×' + r.n : ''}</div><div class="dt-cat">${it.cat}</div></div></div>
+      ${this.itemDesc(it) ? `<div class="chips"><span class="chip">${this.itemDesc(it)}</span></div>` : ''}
+      <div><div class="sec">Onde criar</div><div class="req-row"><span>${r.station ? { fogueira: '🔥', bancada: '🪚', forja: '⚒️', cozinha: '🥖', cervejaria: '🍺' }[r.station] : '✋'}</span>
+        <span>${r.station ? STATIONS[r.station].name : 'À mão, em qualquer lugar'}</span><b class="${so ? 'ok' : 'bad'}">${so ? '✔ ok' : '✖ longe'}</b></div>
+        ${!so ? `<small class="muted">Construa uma (tecla B) e fique perto dela para criar.</small>` : ''}</div>
+      <div><div class="sec">Ingredientes</div><div class="req">${req}</div></div>
+      <div class="act-row"><button class="primary" data-act="craft" data-r="${S.craft}" data-n="1" ${so && mx > 0 ? '' : 'disabled'}>Criar</button>
+        <button data-act="craft" data-r="${S.craft}" data-n="5" ${so && mx > 1 ? '' : 'disabled'}>×5</button>
+        <button data-act="craft" data-r="${S.craft}" data-n="${Math.max(1, mx)}" ${so && mx > 0 ? '' : 'disabled'}>Máximo (${so ? mx : 0})</button></div>`;
+    const bagCard = st === 'bancada' && Store.nextBag() ? `<div class="card bagup"><div class="sec">🎒 Melhorar mochila <span>nível ${Store.bagLvl()} → ${Store.bagLvl() + 1}</span></div>
+      <div class="kv"><div>Agora<b>${Store.bag().cap}</b></div><div>Depois<b class="ok">${Store.nextBag().cap}</b></div></div><div class="cost">${this.fmtCost(Store.nextBag().cost)}</div>
+      <button class="primary" data-act="bagup" ${Inv.has(Store.nextBag().cost) && near.bancada ? '' : 'disabled'}>Melhorar para ${Store.nextBag().name}</button></div>` : '';
+    const body = `<div class="split"><div class="col">${tabs}${bagCard}
+        <label class="chk"><input type="checkbox" data-act="ccan" ${S.can ? 'checked' : ''}> Mostrar só o que posso criar agora</label>
+        <div class="scroll" data-scroll="craft">${rows}</div></div>
+      <div class="card detail">${detail}</div></div>`;
+    this.open(st ? STATIONS[st].name.split(' /')[0] : 'Criação', body, 'showCrafting', [st], st ? 'Receitas desta estação' : 'Itens que você faz com as próprias mãos');
+  },
+
+  // Construir: lista agrupada e detalhes com custo
+  showBuild() {
+    const S = this.sel;
+    const groups = [['Moradia', ['cabin', 'house', 'manor']], ['Produção', ['campfire', 'workbench', 'forge', 'oven', 'brewery']],
+      ['Fazenda e animais', ['farm', 'coop', 'pen', 'beehive']], ['Empreendimentos (contrate funcionários)', ['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop', 'ptavern']],
+      ['Guarda', ['chest', 'stable']], ['Defesa e exército', ['barracks', 'wall_wood', 'wall_stone']]].map(([g, ks]) => [g, ks.filter(k => BUILDINGS[k])]);
+    if (!BUILDINGS[S.build]) S.build = 'cabin';
+    const owned = k => World.structs.filter(s => s.owner === 'player' && s.type === k).length;
+    let rows = '';
+    for (const [g, ks] of groups) {
+      rows += `<div class="grp">${g}</div>`;
+      for (const k of ks) {
+        const b = BUILDINGS[k], can = Inv.has(b.cost);
+        rows += `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${Game.buildIcon(k)}</span>
+          <span><b>${b.name}</b><small>${b.w}×${b.h} · ${owned(k) ? `você tem ${owned(k)}` : 'nenhuma ainda'}</small></span><span class="rs ${can ? 'ok' : 'mat'}">${can ? 'Disponível' : 'Falta material'}</span></button>`;
+      }
+    }
+    const b = BUILDINGS[S.build], can = Inv.has(b.cost);
+    const req = Object.entries(b.cost).map(([k, n]) => {
+      const have = Inv.count(k);
+      return `<div class="req-row"><span>${ITEMS[k].icon}</span><span>${ITEMS[k].name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;
+    }).join('');
+    const detail = `<div class="dt-head"><div class="dt-ic">${Game.buildIcon(S.build)}</div><div><div class="dt-name">${b.name}</div><div class="dt-cat">${b.w}×${b.h} espaços · ${b.blocks ? 'sólida' : 'pode-se andar por cima'}</div></div></div>
+      <p class="dt-desc">${b.desc}</p>
+      <div class="kv"><div>Você possui<b>${owned(S.build)}</b></div><div>Tamanho<b>${b.w}×${b.h}</b></div></div>
+      <div><div class="sec">Custo</div><div class="req">${req}</div></div>
+      <div class="act-row"><button class="primary" data-act="build" data-k="${S.build}" ${can ? '' : 'disabled'}>📍 Posicionar no mapa</button></div>
+      <small class="muted">Depois de clicar, escolha o local perto de você. Botão direito ou Esc cancela. Não dá para construir sobre estradas, água ou dentro das cidades.</small>`;
+    this.open('Construção', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail">${detail}</div></div>`,
+      'showBuild', [], 'Erga sua base, estações de trabalho e defesas');
+  },
+
+  // Reino: abas por reino governado e seções organizadas
+  showKingdom(ci) {
+    const S = this.sel;
+    const ruled = G.civs.filter(c => c.ruler === 'player');
+    S.kview = S.kview || 'meu';
+    if (S.kview !== 'meu') { this.showKingdomInfo(); return; }
+    if (!ruled.length) {
+      const rows = G.civs.map(c => {
+        const d = CIV_DEFS[c.id], r = Math.round(c.relation);
+        return `<div class="relrow"><span class="cdot" style="background:${Game.civColor(c.id)}"></span>
+          <span><b>${d.name}</b><small>${this.esc(c.rulerName)} · guarnição ${c.garrison} · população ${c.pop}</small></span>
+          <span class="pbar"><i style="left:50%;width:${Math.abs(r) / 2}%;${r < 0 ? 'transform:translateX(-100%);background:#c0392b' : 'background:#5fd35f'}"></i><em></em></span>
+          <span class="rlab">${r} · ${Game.relationText(c)}${c.atWar ? ' <span class="badge">GUERRA</span>' : ''}</span>
+          <button data-act="kping" data-c="${c.id}" title="Marcar o castelo como destino">📍</button></div>`;
+      }).join('');
+      this.open('Reino', `${this.kviewTabs()}<div class="card hero-card"><div class="hc-ic">👑</div><div><b>Você ainda não governa nenhum reino.</b><br><span class="muted">Escolha seu caminho para a coroa:</span></div></div>
+        <div class="kgrid two">
+          <div class="card"><div class="sec">⚔️ Pela força</div><ol class="steps"><li>Reúna capangas e equipe-os bem.</li><li>No castelo, declare guerra.</li><li>Derrote toda a guarnição.</li><li>Vença o soberano diante dos portões.</li></ol></div>
+          <div class="card"><div class="sec">📜 Pela diplomacia</div><ol class="steps"><li>Venda nas lojas, pague tributos e caçe bandidos.</li><li>Alcance relação 75 ou mais.</li><li>Junte 1500 moedas.</li><li>Reivindique o trono no castelo.</li></ol></div>
+        </div>
+        <div class="sec" style="margin-top:14px">Relações com os ${G.civs.length} reinos</div><div class="rels">${rows}</div>
+        ${this.newsHtml()}`, 'showKingdom', [ci], 'Conquiste terras e governe a economia');
+      return;
+    }
+    if (ci === undefined || ci < 0 || G.civs[ci].ruler !== 'player') ci = this.kTab >= 0 && G.civs[this.kTab] && G.civs[this.kTab].ruler === 'player' ? this.kTab : ruled[0].id;
+    this.kTab = ci;
+    const c = G.civs[ci], d = CIV_DEFS[ci], fc = Game.civForecast(c);
+    const have = k => k === 'gold' ? c.treasury : (c.stock[k] || 0);
+    const net = fc.income - fc.upkeep, wheatNet = fc.wheat - fc.need;
+    const kt = ruled.map(r => `<button class="tab ${r.id === ci ? 'on' : ''}" data-act="ktab" data-c="${r.id}"><span class="cdot" style="background:${Game.civColor(r.id)}"></span>${CIV_DEFS[r.id].short}</button>`).join('');
+    const subs = [['resumo', 'Resumo'], ['conselho', 'Conselho'], ['economia', 'Economia'], ['obras', 'Obras'], ['exercito', 'Exército e povo'], ['diplo', 'Diplomacia'], ['cronicas', 'Crônicas']];
+    const st = subs.map(([k, lab]) => `<button class="tab ${S.ksub === k ? 'on' : ''}" data-act="ksub" data-s="${k}">${lab}</button>`).join('');
+    let sec = '';
+    if (S.ksub === 'resumo') {
+      sec = `<div class="tiles big">
+          <div class="stile"><small>População</small><b>${c.pop} / ${Game.popCap(c)}</b></div>
+          <div class="stile"><small>Felicidade</small><b class="${c.happy < 30 ? 'bad' : ''}">${Math.round(c.happy)}%</b><span class="pbar"><i style="width:${c.happy}%;background:${c.happy < 30 ? '#c0392b' : '#5fd35f'}"></i></span></div>
+          <div class="stile"><small>Tesouro do reino</small><b>${c.treasury} 🪙</b></div>
+          <div class="stile"><small>Saldo por dia</small><b class="${net < 0 ? 'bad' : 'ok'}">${net >= 0 ? '+' : ''}${net} 🪙</b></div>
+          <div class="stile"><small>Guarnição</small><b>${c.garrison} / ${Game.maxGarrison(c)}</b></div>
+          <div class="stile"><small>Trigo por dia</small><b class="${wheatNet < 0 ? 'bad' : 'ok'}">${wheatNet >= 0 ? '+' : ''}${wheatNet} 🌾</b></div>
+        </div>
+        ${c.rebel > 0 ? `<div class="alert">⚠️ O povo está à beira da revolta (${c.rebel}/3 dias). Baixe impostos ou faça um festival.</div>` : ''}
+        ${wheatNet < 0 ? '<div class="alert">⚠️ Falta trigo: o povo vai passar fome. Invista em Fazendas Reais ou deposite trigo.</div>' : ''}
+        <div class="card"><div class="sec">Impostos</div><div class="taxbox">
+          <button data-act="tax" data-c="${ci}" data-d="-0.05" ${c.tax <= 0 ? 'disabled' : ''}>−5%</button><div class="val">${Math.round(c.tax * 100)}%</div>
+          <button data-act="tax" data-c="${ci}" data-d="0.05" ${c.tax >= 0.5 ? 'disabled' : ''}>+5%</button>
+          <div class="muted">Arrecadação: <b>${fc.income} 🪙/dia</b> · soldos da guarnição: −${fc.upkeep} 🪙/dia.<br>Cada +5% rende ~${Math.round(c.pop * 0.1)} 🪙/dia, mas reduz a felicidade em cerca de 8 pontos.</div></div></div>`;
+    } else if (S.ksub === 'economia') {
+      sec = `<div class="kgrid two"><div class="card"><div class="sec">Tesouro do reino</div><div class="bignum">${c.treasury} 🪙</div>
+          <div class="act-row"><button data-act="kgold" data-c="${ci}" data-n="-100" ${c.treasury >= 100 ? '' : 'disabled'}>Sacar 100</button><button data-act="kgold" data-c="${ci}" data-n="-all" ${c.treasury > 0 ? '' : 'disabled'}>Sacar tudo</button></div></div>
+        <div class="card"><div class="sec">Seu ouro pessoal</div><div class="bignum">${P.gold} 🪙</div>
+          <div class="act-row"><button data-act="kgold" data-c="${ci}" data-n="100" ${P.gold >= 100 ? '' : 'disabled'}>Depositar 100</button><button data-act="kgold" data-c="${ci}" data-n="all" ${P.gold > 0 ? '' : 'disabled'}>Depositar tudo</button></div></div></div>
+        <div class="card"><div class="sec">Armazéns do reino</div><table class="trade"><tr><th>Recurso</th><th>Estoque</th><th>Produção/dia</th><th>Você tem</th><th></th></tr>${KINGDOM_RES.map(k => `<tr>
+          <td>${ITEMS[k].icon} ${ITEMS[k].name}</td><td><b>${c.stock[k] || 0}</b></td><td class="ok">+${fc.prod[k]}</td><td>${Inv.count(k)}</td>
+          <td><button data-act="kres" data-c="${ci}" data-k="${k}" data-n="-10" ${(c.stock[k] || 0) >= 10 ? '' : 'disabled'}>Retirar 10</button><button data-act="kres" data-c="${ci}" data-k="${k}" data-n="10" ${Inv.count(k) >= 10 ? '' : 'disabled'}>Depositar 10</button></td></tr>`).join('')}</table></div>`;
+    } else if (S.ksub === 'diplo') {
+      sec = `<p class="muted">Relações de ${d.short} com os outros reinos. Os custos saem do tesouro do reino (${c.treasury} 🪙).</p><div class="rels">` + G.civs.filter(o => o.id !== ci).map(o => {
+        const r = Math.round(Diplo.rel(ci, o.id)), war = Diplo.atWar(ci, o.id), al = Diplo.allied(ci, o.id);
+        return `<div class="relrow dip"><span class="cdot" style="background:${Game.civColor(o.id)}"></span>
+          <span><b>${CIV_DEFS[o.id].name}</b><small>${this.esc(o.rulerName)} · guarnição ${o.garrison}</small></span>
+          <span class="pbar"><i style="left:50%;width:${Math.abs(r) / 2}%;${r < 0 ? 'transform:translateX(-100%);background:#c0392b' : 'background:#5fd35f'}"></i><em></em></span>
+          <span class="rlab">${r} ${war ? '<span class="badge">GUERRA</span>' : al ? '<span class="tag">ALIADO</span>' : ''}</span>
+          <span class="act-row">${o.ruler === 'player' ? '<small class="muted">seu reino</small>' : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="gift" ${c.treasury >= 100 ? '' : 'disabled'} title="Presentes: +12 de relação">🎁 100</button>
+            ${war ? `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="peace" ${c.treasury >= 300 ? '' : 'disabled'}>🕊️ Paz 300</button>`
+              : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="ally" ${!al && r >= 40 && c.treasury >= 200 ? '' : 'disabled'} title="Exige relação 40+">🤝 Aliança 200</button>
+                 <button class="danger" data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="war">⚔️ Guerra</button>`}`}</span></div>`;
+      }).join('') + '</div>';
+    } else if (S.ksub === 'cronicas') {
+      sec = this.newsHtml(40);
+    } else if (S.ksub === 'conselho') {
+      sec = this.councilHtml(ci);
+    } else if (S.ksub === 'obras') {
+      sec = `<p class="muted">As obras são pagas com o tesouro e os armazéns do reino, não com o seu bolso.</p><div class="kgrid">${Object.entries(INVESTMENTS).map(([k, inv]) => {
+        const can = Object.entries(inv.cost).every(([r, n]) => have(r) >= n);
+        return `<div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">${inv.icon}</div><div><b>${inv.name}</b><div class="dt-cat">Nível ${c.invest[k]}</div></div></div>
+          <p class="dt-desc">${inv.desc}</p><div class="cost">${this.fmtCost(inv.cost, have)}</div>
+          <button class="primary" data-act="invest" data-c="${ci}" data-k="${k}" ${can ? '' : 'disabled'}>Investir</button></div>`;
+      }).join('')}</div>`;
+    } else {
+      const capOk = Game.allies().length < Game.followerCap();
+      sec = `<div class="kgrid">
+        <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🛡️</div><div><b>Recrutar guarnição</b><div class="dt-cat">${c.garrison} / ${Game.maxGarrison(c)} soldados</div></div></div>
+          <p class="dt-desc">Soldados defendem o castelo e as vilas.</p><div class="cost">${this.fmtCost({ gold: 40, wheat: 5 }, have)}</div>
+          <button class="primary" data-act="krecruit" data-c="${ci}" ${have('gold') >= 40 && have('wheat') >= 5 && c.garrison < Game.maxGarrison(c) ? '' : 'disabled'}>Recrutar +1</button></div>
+        <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">⚔️</div><div><b>Convocar escolta</b><div class="dt-cat">Seguidores ${Game.allies().length} / ${Game.followerCap()}</div></div></div>
+          <p class="dt-desc">Um soldado da guarnição passa a seguir você como capanga.</p>
+          <button class="primary" data-act="kescort" data-c="${ci}" ${c.garrison > 1 && capOk ? '' : 'disabled'}>Convocar</button></div>
+        <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🎉</div><div><b>Festival</b><div class="dt-cat">Felicidade atual ${Math.round(c.happy)}%</div></div></div>
+          <p class="dt-desc">Uma grande festa: +10 de felicidade agora e mais no próximo dia.</p><div class="cost">${this.fmtCost({ gold: 100, wheat: 40 }, have)}</div>
+          <button class="primary" data-act="kfest" data-c="${ci}" ${have('gold') >= 100 && have('wheat') >= 40 ? '' : 'disabled'}>Realizar festival</button></div></div>`;
+    }
+    this.open(d.name, `${this.kviewTabs()}<div class="tabs ktabs">${kt}</div><div class="tabs subtabs">${st}</div><div class="kbody">${sec}</div>`, 'showKingdom', [ci], `Governado por ${this.esc(G.name)} · ${d.desc}`);
+  },
+
+  kviewTabs() {
+    const S = this.sel, ruled = G.civs.some(c => c.ruler === 'player');
+    return `<div class="tabs kview">${[['meu', ruled ? '👑 Seus reinos' : '👑 Caminho da coroa'], ['atlas', '🗺️ Os 7 reinos'], ['familias', '🏛️ Famílias'], ['casa', '🏠 Sua casa'], ['mercado', '📈 Mercado'], ['linhagens', '🌳 Linhagens']]
+      .map(([k, l]) => `<button class="tab ${S.kview === k ? 'on' : ''}" data-act="kview" data-v="${k}">${l}</button>`).join('')}</div>`;
+  },
+  personLine(p, extra) {
+    if (!p) return '<span class="muted">—</span>';
+    if (p === 'player') return `<b>${this.esc(G.name + ' ' + G.surname)}</b> <small class="muted">(você)</small>`;
+    return `<b>${this.esc(People.full(p))}</b> <small class="muted">${People.title(p)}, ${p.age} anos${extra ? ' · ' + extra : ''}</small>`;
+  },
+  famRow(x, i, showCiv) {
+    const f = x.f, mem = Families.members(f), rv = Families.activeRevoltOf(f);
+    const status = f.player ? '<span class="tag">SUA CASA</span>' : f.noble ? '<span class="tag gold">REAL</span>' : rv ? '<span class="badge">EM REVOLTA</span>' : '';
+    return `<div class="famrow ${showCiv ? '' : 'compact'}"><span class="fr-n">${i + 1}º</span><span class="fr-dot" style="background:${f.color}"></span>
+      <span><b>${this.esc(Families.name(f))}</b> ${status}<small>${showCiv && f.civ >= 0 ? CIV_DEFS[f.civ].short + ' · ' : ''}${this.esc(Families.seatName(f))} · ${mem.length} membros${f.player ? '' : ` · ${f.wealth} 🪙`} · ${f.player ? Biz.list().length : f.biz.length} empreend.${f.founded !== null && World.villages[f.founded] ? ' · fundou ' + this.esc(World.villages[f.founded].name) : ''}</small></span>
+      <span class="fr-inf" title="Influência">⭐ ${x.inf}</span>
+      ${f.player || f.noble ? '<span></span>' : `<span class="pbar" title="Lealdade à coroa: ${Math.round(f.loyalty)}"><i style="width:${f.loyalty}%;background:${f.loyalty < 25 ? '#c0392b' : f.loyalty < 50 ? '#d6ae60' : '#5fd35f'}"></i></span>`}
+      ${f.player ? '<span></span>' : `<button data-act="famview" data-f="${f.id}">Ver</button>`}</div>`;
+  },
+  // atlas dos reinos, ranking das famílias e a casa do jogador
+  showKingdomInfo() {
+    const S = this.sel;
+    let body = '';
+    if (S.kview === 'mercado') { this.open('Reino', this.kviewTabs() + this.marketHtml(), 'showKingdom', [], 'Preços dos sete reinos e suas caravanas'); return; }
+    if (S.kview === 'linhagens') { this.showTree(G.playerFam, true); return; }
+    if (S.kview === 'atlas') {
+      const ci = S.atlas !== undefined ? S.atlas : (G.zone >= 0 ? G.zone : 0);
+      const c = G.civs[ci], d = CIV_DEFS[ci];
+      const tabs = G.civs.map(o => `<button class="tab ${o.id === ci ? 'on' : ''}" data-act="atlasciv" data-c="${o.id}"><span class="cdot" style="background:${Game.civColor(o.id)}"></span>${CIV_DEFS[o.id].short}</button>`).join('');
+      const ppl = Families.civPeople(ci), fams = Families.ranking(ci).filter(x => !x.f.player);
+      const court = G.people.filter(p => p.alive && p.home.type === 'castle' && p.home.civ === ci && NOBLE_RANKS.includes(p.rank)).sort((a, b) => RANKS[a.rank].order - RANKS[b.rank].order || b.age - a.age);
+      const vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci);
+      const rv = (G.revolts || []).filter(r => !r.done && r.civ === ci);
+      body = `<div class="tabs ktabs">${tabs}</div>
+        <div class="atlas-head" style="border-color:${Game.civColor(ci)}"><b style="color:${Game.civColor(ci)}">${d.name}</b><small>${this.esc(d.desc)}</small></div>
+        ${rv.map(r => `<div class="alert">🔥 A ${this.esc(Families.name(Families.get(r.fam)))} está em revolta contra a coroa (dia ${r.days + 1}, força ${r.str}). <button data-act="famview" data-f="${r.fam}">Ver</button></div>`).join('')}
+        <div class="tiles big">
+          <div class="stile"><small>Pessoas</small><b>${ppl.length}</b></div>
+          <div class="stile"><small>Crianças</small><b>${ppl.filter(p => p.age < 14).length}</b></div>
+          <div class="stile"><small>Famílias</small><b>${fams.length}</b></div>
+          <div class="stile"><small>Vilas</small><b>${vills.length}</b></div>
+          <div class="stile"><small>Nascimentos no ano</small><b>${(G.births || {})[ci] || 0}</b><small>ano passado: ${(G.lastBirths || {})[ci] || 0}</small></div>
+          <div class="stile"><small>Guarnição</small><b>${c.garrison}</b></div>
+          <div class="stile"><small>Felicidade</small><b>${Math.round(c.happy)}%</b></div>
+          <div class="stile"><small>Tesouro</small><b>${c.treasury} 🪙</b></div>
+        </div>
+        <div class="kgrid two">
+          <div class="card"><div class="sec">👑 Corte real</div>
+            ${c.ruler === 'player' ? `<div class="crow2">${this.personLine('player')} <span class="tag gold">SOBERANO</span></div>` : ''}
+            ${court.map(p => `<div class="crow2">${this.personLine(p, Families.of(p) ? 'Casa ' + Families.of(p).surname : '')}</div>`).join('') || (c.ruler === 'player' ? '' : '<p class="muted">Sem corte.</p>')}</div>
+          <div class="card"><div class="sec">🏛️ Famílias mais influentes</div>${fams.slice(0, 6).map((x, i) => this.famRow(x, i, false)).join('') || '<p class="muted">Nenhuma.</p>'}</div>
+        </div>
+        <div class="card" style="margin-top:10px"><div class="sec">🏘️ Vilas e seus chefes</div>
+          <table class="trade vtable"><tr><th>Vila</th><th>Nível</th><th>Moradores</th><th>Chefe</th><th>Senhor</th></tr>${vills.map(({ v, i }) => {
+            const ch = Families.chiefOf(v), res = People.residents(i).length;
+            const lord = v.lord === 'player' ? '<b class="ok">Você</b>' : v.lordFam !== undefined && Families.get(v.lordFam) ? 'Casa ' + this.esc(Families.get(v.lordFam).surname) : '<span class="muted">a coroa</span>';
+            return `<tr><td><b>${this.esc(v.name)}</b>${v.founded ? ' <small class="tag">nova</small>' : ''}${v.ruin ? ' <small class="bad">ruínas</small>' : ''}</td><td>${v.level || 1}</td><td>${res} / ${Families.vcap(v)}</td>
+              <td>${ch === 'player' ? 'Você' : ch ? `${this.esc(People.full(ch))}<small class="muted"> · ${ch.age} anos</small>` : '<span class="muted">—</span>'}</td><td>${lord}</td></tr>`;
+          }).join('')}</table></div>`;
+      this.open('Reino', this.kviewTabs() + body, 'showKingdom', [], 'Informações dos reinos, cortes, vilas e famílias');
+      return;
+    }
+    if (S.kview === 'familias') {
+      const all = Families.ranking();
+      const total = G.people.filter(p => p.alive).length;
+      body = `<p class="muted">${all.length} famílias e ${total} pessoas vivas no mundo. A influência soma riqueza, membros, empreendimentos, títulos e vilas. Famílias com pouca lealdade e muita riqueza podem declarar guerra à coroa.</p>
+        <div class="famlist">${all.slice(0, 40).map((x, i) => this.famRow(x, i, true)).join('')}</div>`;
+      this.open('Reino', this.kviewTabs() + body, 'showKingdom', [], 'As casas mais poderosas dos sete reinos');
+      return;
+    }
+    // sua casa
+    const f = Families.ensurePlayer(), mem = Families.members(f).filter(p => p.alive);
+    const biz = Biz.list(), mine = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.lord === 'player');
+    const site = Families.playerSite(), have = k => k === 'gold' ? P.gold : Inv.count(k);
+    const kids = mem.filter(p => p.kin === 'child' && p.age >= 16 && p.spouse === null);
+    body = `<div class="card hero-card"><div class="hc-ic">🏛️</div><div><b>Casa ${this.esc(G.surname)}</b><br><span class="muted">Influência ⭐ ${Families.influence(f)} · ${mem.length + 1} membros · capangas ${Game.allies().length}/${Game.followerCap()} · ${biz.length} empreendimentos · ${mine.length} vila(s)</span>
+      <br><span class="muted">${Court.title() ? Court.title().icon + ' ' + this.esc(Court.titleName()) : 'Sem título de nobreza'} · 🌟 fama ${Court.fame()} · 🙏 devoção ${Faith.piety()}</span></div></div>
+      ${kids.length ? `<div class="card"><div class="sec">💒 Casamentos arranjados</div>${kids.map(k => `<div class="crow2">${this.personLine(k)} <button data-act="match" data-id="${k.id}">Arranjar casamento</button></div>`).join('')}
+        <small class="muted">Case seus filhos com herdeiros de outros reinos (alianças) ou com as famílias mais poderosas (lealdade e fim de rivalidades).</small></div>` : ''}
+      <div class="kgrid two">
+        <div class="card"><div class="sec">👪 Família</div>
+          <div class="crow2">${this.personLine('player')}</div>
+          ${mem.map(p => `<div class="crow2">${this.personLine(p, p.spouse === 'player' ? 'cônjuge' : p.kin === 'child' ? (p.prof ? PROFESSIONS[p.prof].icon + ' ' + (p.sex === 'f' ? PROFESSIONS[p.prof].f : PROFESSIONS[p.prof].name) : 'filh' + (p.sex === 'f' ? 'a' : 'o')) : p.kin || '')}</div>`).join('') || '<p class="muted">Case-se e tenha filhos para a sua casa crescer.</p>'}</div>
+        <div class="card"><div class="sec">💼 Empreendimentos <span>construa em B → Empreendimentos</span></div>
+          ${biz.map(s => { const fc = Biz.forecast(s); return `<div class="famrow biz"><span class="fr-n">${Game.buildIcon(s.type)}</span><span></span><span><b>${BUILDINGS[s.type].name}</b><small>${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários · salários ${fc.wages} 🪙/dia</small></span><span></span><span></span><button data-act="bizopen" data-s="${s.id}">Abrir</button></div>`; }).join('') || '<p class="muted">Nenhum ainda. Construa uma Fazenda Comercial, Serraria, Mina, Empório... e contrate moradores das vilas.</p>'}</div>
+      </div>
+      <div class="card" style="margin-top:10px"><div class="sec">🏘️ Fundar a Vila ${this.esc(G.surname)}</div>
+        ${mine.map(({ v, i }) => `<div class="crow2"><b>${this.esc(v.name)}</b> <small class="muted">${CIV_DEFS[v.civ].short} · nível ${v.level || 1} · ${People.residents(i).length} moradores · rende ${People.residents(i).length * 2} 🪙/dia</small></div>`).join('')}
+        <p class="dt-desc">Escolha um lugar aberto (longe de outras vilas e castelos), fique no centro dele e funde uma vila com o nome da sua família. Colonos se mudam para lá, a vila cresce e paga impostos para você todos os dias.</p>
+        <div class="cost">${this.fmtCost(FOUND_COST, have)}</div>
+        <div class="act-row"><button class="primary" data-act="found" ${site.ok === true && Inv.has(FOUND_COST) ? '' : 'disabled'}>🏘️ Fundar aqui</button>
+          <small class="${site.ok === true ? 'ok' : 'bad'}">${site.ok === true ? `✔ Este lugar serve (território de ${CIV_DEFS[site.civ].short}).` : '✖ ' + this.esc(site.ok)}</small></div></div>`;
+    this.open('Reino', this.kviewTabs() + body, 'showKingdom', [], 'Sua família, seus negócios e suas vilas');
+  },
+
+  // ------------------------------------------------------------ uma família
+  showFamily(fid) {
+    const f = Families.get(fid);
+    if (!f) return;
+    if (f.player) { this.sel.kview = 'casa'; this.showKingdom(); return; }
+    const mem = Families.members(f).sort((a, b) => b.age - a.age), h = Families.head(f), rv = Families.activeRevoltOf(f);
+    const ruler = G.civs[f.civ] && G.civs[f.civ].ruler === 'player';
+    const bizs = World.structs.filter(s => s.fam === f.id && FAMILY_BIZ[s.type]);
+    const body = `<div class="card hero-card" style="border-color:${f.color}"><div class="hc-ic" style="color:${f.color}">🏛️</div><div><b>${this.esc(Families.name(f))}</b>${f.noble ? ' <span class="tag gold">CASA REAL</span>' : ''}<br>
+        <span class="muted">${f.civ >= 0 ? CIV_DEFS[f.civ].name : 'Sem reino'} · sede: ${this.esc(Families.seatName(f))} · desde o dia ${f.since}</span></div></div>
+      ${rv ? `<div class="alert">🔥 Em guerra contra a coroa de ${CIV_DEFS[rv.civ].short}! Dia ${rv.days + 1} da revolta · força rebelde ${rv.str} · guarnição real ${G.civs[rv.civ].garrison}.
+        ${rv.side ? `<b>Você apoia ${rv.side === 'rebel' ? 'os rebeldes' : 'a coroa'}.</b>` : ruler ? '<b>É o seu reino: vá até a vila e derrote os rebeldes!</b>' : `<div class="act-row"><button class="danger" data-act="revside" data-r="${rv.id}" data-side="rebel">🔥 Apoiar a revolta</button><button class="primary" data-act="revside" data-r="${rv.id}" data-side="crown">🛡️ Defender a coroa</button></div>`}</div>` : ''}
+      <div class="tiles big">
+        <div class="stile"><small>Influência</small><b>⭐ ${Families.influence(f)}</b></div>
+        <div class="stile"><small>Riqueza</small><b>${f.wealth} 🪙</b></div>
+        <div class="stile"><small>Membros</small><b>${mem.length}</b></div>
+        <div class="stile"><small>Empreendimentos</small><b>${bizs.length}</b></div>
+        <div class="stile"><small>Lealdade à coroa</small><b class="${f.loyalty < 25 ? 'bad' : ''}">${f.noble ? '—' : Math.round(f.loyalty)}</b></div>
+        <div class="stile"><small>Vila fundada</small><b>${f.founded !== null && World.villages[f.founded] ? this.esc(World.villages[f.founded].name) : '—'}</b></div>
+      </div>
+      <div class="kgrid two">
+        <div class="card"><div class="sec">👪 Membros <span>chefe: ${h ? this.esc(h.name) : '—'}</span></div><div class="scroll" style="max-height:260px">
+          ${mem.map(p => `<div class="crow2">${this.personLine(p, p.maiden && p.maiden !== p.surname ? 'nascid' + (p.sex === 'f' ? 'a ' : 'o ') + p.maiden : '')}${p === h ? ' <span class="tag">chefe</span>' : ''}${Families.isChief(p) ? ' <span class="tag gold">chefe da vila</span>' : ''}</div>`).join('')}</div></div>
+        <div class="card"><div class="sec">🏗️ Empreendimentos</div>
+          ${bizs.map(s => `<div class="crow2">${FAMILY_BIZ[s.type].icon} <b>${FAMILY_BIZ[s.type].name}</b> <small class="muted">rende ${FAMILY_BIZ[s.type].income} 🪙/dia</small></div>`).join('') || '<p class="muted">Ainda nenhum. Famílias ricas abrem moinhos, empórios, oficinas, quintas e vinhedos.</p>'}
+          <div class="act-row" style="margin-top:8px"><button data-act="tree" data-f="${f.id}">🌳 Árvore e relações</button>${typeof f.seat === 'number' ? `<button data-act="fping" data-f="${f.id}">📍 Marcar a sede no mapa</button>` : ''}
+            ${ruler && !f.noble ? `<button class="primary" data-act="famfavor" data-f="${f.id}" ${P.gold >= 200 ? '' : 'disabled'} title="Aumenta a lealdade e evita revoltas">🎁 Conceder favores — 200 🪙</button>` : ''}</div></div>
+      </div>`;
+    this.open('Família', body, 'showFamily', [fid], `${f.civ >= 0 ? CIV_DEFS[f.civ].short : ''} · ${mem.length} membros`);
+  },
+
+  // ------------------------------------------------------------ empreendimento do jogador
+  showHire(id) {
+    const p = People.get(id);
+    const rows = Biz.list().map(s => {
+      const full = Biz.workerCount(s) >= BIZ_TYPES[s.type].slots, sk = Biz.skilled(p, s);
+      return `<button class="rrow" data-act="tk" data-op="hire" data-s="${s.id}" data-id="${id}" ${full || P.gold < 15 ? 'disabled' : ''}><span class="ri">${Game.buildIcon(s.type)}</span>
+        <span><b>${BUILDINGS[s.type].name}</b><small>${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários · salário ${Biz.wage(p, s)} 🪙/dia${sk ? ' · ⭐ especialista (+50%)' : ''}</small></span><span class="rs ${full ? 'mat' : 'ok'}">${full ? 'Lotado' : 'Contratar'}</span></button>`;
+    }).join('');
+    this.open('💼 Contratar ' + this.esc(p.name), `<p>Em qual empreendimento ${this.esc(p.name)} vai trabalhar? O contrato custa 15 🪙 de adiantamento, e o salário é pago todo amanhecer.</p>
+      <div class="list">${rows}</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`, 'showHire', [id]);
+  },
+  showBiz(sid) {
+    const s = World.structs[sid], d = BIZ_TYPES[s.type], fc = Biz.forecast(s), ws = Biz.workers(s);
+    const near = U.dist(P.x / TILE, P.y / TILE, s.x + s.w / 2, s.y + s.h / 2) < 6;
+    const goods = Object.keys(s.goods || {}).filter(k => s.goods[k] > 0);
+    const cands = Biz.candidates(s);
+    const outTxt = Object.entries(fc.out).filter(([, n]) => n > 0).map(([k, n]) => `${ITEMS[k].icon} ${n} ${ITEMS[k].name}`).join(', ') + (fc.gold ? ` 🪙 ${fc.gold}` : '');
+    const body = `<div class="kgrid two">
+      <div class="card"><div class="sec">👷 Funcionários <span>${ws.length}/${d.slots}</span></div>
+        ${ws.map(p => `<div class="crow"><span class="ri">${p.sex === 'm' ? '👨' : '👩'}</span><span><b>${this.esc(People.full(p))}</b><small>${People.title(p)} · ${Biz.wage(p, s)} 🪙/dia${Biz.skilled(p, s) ? ' · ⭐ especialista' : ''} · humor ${Math.round(p.aff)}</small></span>
+          <span class="act-row"><button data-act="bizfire2" data-s="${sid}" data-id="${p.id}">Demitir</button></span></div>`).join('') || '<p class="muted">Ninguém trabalhando ainda.</p>'}
+        <div class="sec" style="margin-top:10px">Candidatos <span>vilas próximas · contrato 15 🪙</span></div>
+        ${cands.map(({ p, d: dd }) => `<div class="crow"><span class="ri">${p.sex === 'm' ? '👨' : '👩'}</span><span><b>${this.esc(People.full(p))}</b><small>${People.title(p)}, ${p.age} anos · ${this.esc(People.homeName(p))} · ${Math.round(dd)} passos${Biz.skilled(p, s) ? ' · ⭐ especialista' : ''}</small></span>
+          <span class="act-row"><button class="primary" data-act="bizhire" data-s="${sid}" data-id="${p.id}" ${ws.length < d.slots && P.gold >= 15 ? '' : 'disabled'}>Contratar</button></span></div>`).join('') || '<p class="muted">Ninguém disponível por perto. Converse com moradores e use “Contratar para trabalhar”.</p>'}</div>
+      <div class="card"><div class="sec">📦 Produção</div>
+        <div class="kv"><div>Produz por dia<b>${outTxt || '—'}</b></div><div>Salários por dia<b>${fc.wages} 🪙</b></div>${d.season ? `<div>Estação<b>${Season.winter() ? '❄️ metade no inverno' : 'normal'}</b></div>` : ''}${s.type === 'ptavern' ? `<div>Vendas extras/dia<b>+${ws.length * d.sales}</b></div>` : ''}</div>
+        <div class="sec" style="margin-top:10px">Guardado</div>
+        <div class="chips">${goods.map(k => `<span class="chip">${ITEMS[k].icon} ${s.goods[k]} ${ITEMS[k].name}</span>`).join('')}${s.till ? `<span class="chip">🪙 ${s.till}</span>` : ''}${!goods.length && !s.till ? '<span class="muted">Nada ainda.</span>' : ''}</div>
+        <label class="chk"><input type="checkbox" data-act="bizauto" data-s="${sid}" ${s.autosell ? 'checked' : ''}> Vender a produção automaticamente (60% do preço, vai para o caixa)</label>
+        <div class="act-row"><button class="primary" data-act="bizcollect" data-s="${sid}" ${near && (goods.length || s.till) ? '' : 'disabled'}>🧺 Recolher tudo</button>${near ? '' : '<small class="muted">Vá até o empreendimento para recolher.</small>'}</div></div></div>`;
+    this.open('💼 ' + BUILDINGS[s.type].name, body, 'showBiz', [sid], 'Seu empreendimento');
+  },
+
+  // guerras, alianças e acontecimentos recentes do mundo
+  newsHtml(n) {
+    const D = Diplo.D();
+    const wars = D.wars.map(w => `<span class="chip">⚔️ ${Diplo.name(w.a)} × ${Diplo.name(w.b)} <small>desde o dia ${w.since}</small></span>`).join('') || '<span class="muted">Nenhuma guerra no momento.</span>';
+    const allies = D.allies.map(k => { const [a, b] = k.split('-').map(Number); return `<span class="chip">🤝 ${Diplo.name(a)} e ${Diplo.name(b)}</span>`; }).join('') || '<span class="muted">Nenhuma aliança.</span>';
+    const log = D.log.slice(0, n || 10).map(e => `<div class="logrow"><span>Dia ${e.day}</span>${this.esc(e.text)}</div>`).join('') || '<p class="muted">Nada aconteceu ainda. Os reinos observam uns aos outros...</p>';
+    return `<div class="kgrid two" style="margin-top:12px"><div class="card"><div class="sec">Guerras</div><div class="chips">${wars}</div></div>
+      <div class="card"><div class="sec">Alianças</div><div class="chips">${allies}</div></div></div>
+      <div class="card" style="margin-top:12px"><div class="sec">Crônicas dos reinos</div><div class="chron">${log}</div></div>`;
+  },
+
+  showSettings() {
+    const s = G.settings;
+    const sw = (key, label, sub) => `<div class="set-row"><div><b>${label}</b><small>${sub}</small></div>
+      <label class="switch"><input type="checkbox" data-set="${key}" ${s[key] ? 'checked' : ''}><span></span></label></div>`;
+    const sel = (key, label, sub, opts) => `<div class="set-row"><div><b>${label}</b><small>${sub}</small></div>
+      <select data-set="${key}">${opts.map(([v, t]) => `<option value="${v}" ${String(s[key]) === String(v) ? 'selected' : ''}>${t}</option>`).join('')}</select></div>`;
+    this.open('Ajustes', `
+      <div class="card"><div class="sec">Interface</div>
+        ${sel('uiScale', 'Escala da interface', 'Automática se ajusta ao tamanho da tela (celular, notebook, monitor)', [['auto', 'Automática'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']])}
+        ${sel('touch', 'Controles de toque', 'Joystick e botões na tela para celular e tablet', [['auto', 'Automático'], ['on', 'Sempre'], ['off', 'Nunca']])}
+        ${sw('minimap', 'Minimapa', 'Mapa pequeno no canto superior direito')}
+        ${sel('miniSize', 'Tamanho do minimapa', 'Clique no minimapa para abrir o mapa completo', [[140, 'Pequeno'], [180, 'Médio'], [230, 'Grande']])}
+        ${sw('numbers', 'Números nas barras', 'Mostra os valores de vida, energia e fome')}
+        ${sw('keysbar', 'Barra de atalhos no rodapé', 'Lista de teclas na parte de baixo da tela')}</div>
+      <div class="card" style="margin-top:12px"><div class="sec">Som</div>
+        ${sel('music', 'Volume da música', 'Trilha medieval que muda de dia, à noite, nas cavernas e em batalha', [[0, 'Desligada'], [0.25, '25%'], [0.5, '50%'], [0.75, '75%'], [1, '100%']])}
+        ${sel('sfx', 'Volume dos efeitos', 'Passos, golpes, machado, picareta, fogueira, chuva...', [[0, 'Desligados'], [0.35, '35%'], [0.7, '70%'], [1, '100%']])}
+        ${sw('mute', 'Silenciar tudo', 'Desliga todo o áudio do jogo')}</div>
+      <div class="card" style="margin-top:12px"><div class="sec">Jogo</div>
+        <div class="set-row"><div><b>Salvar o jogo agora</b><small>Grava no espaço ${G.slot}. Não funciona dentro de cavernas nem durante um cerco.</small></div>
+          <button class="primary" data-act="savenow" ${G.dungeon || G.siege ? 'disabled' : ''}>💾 Salvar</button></div>
+        <div class="set-row"><div><b>Dificuldade</b><small>${DIFFICULTY[G.diff || 'normal'].desc}</small></div>
+          <select data-set="diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}" ${G.diff === k ? 'selected' : ''}>${d.name}</option>`).join('')}</select></div>
+        <div class="set-row"><div><b>Exportar o jogo atual</b><small>Baixa um arquivo .json com o progresso de agora (pode ser importado no menu principal).</small></div><button data-act="export">⬇️ Exportar</button></div>
+        <div class="act-row"><button class="primary" data-act="close">▶ Continuar jogando</button><button data-act="open" data-fn="showHelp">❓ Como jogar</button>
+          <button class="danger" data-act="quit">Sair para o menu</button></div>
+        <small class="muted">Ao sair para o menu, o progresso desde o último salvamento é perdido.</small></div>`, 'showSettings', [], 'Personalize a interface');
+  },
+
+  showRest(sid) {
+    const s = World.structs[sid];
+    const slots = Saves.list().map((inf, i) => `<button class="slotbtn ${G.slot === i + 1 ? 'on' : ''}" data-act="setslot" data-n="${i + 1}" title="${inf ? this.esc(inf.name) + ', dia ' + inf.day : 'vazio'}">
+      <b>Espaço ${i + 1}</b><small>${inf ? `${this.esc(inf.name)} · dia ${inf.day}` : 'vazio'}</small></button>`).join('');
+    const h = `<p>Um lugar seguro para descansar. ${s.type === 'cabin' ? 'O fogo da lareira ainda crepita.' : 'Sua casa está aquecida e arrumada.'}</p>
+      <div class="kgrid two">
+        <div class="card"><div class="sec">Descanso</div><div class="btns col">
+          <button class="primary" data-act="sleep" data-s="${sid}">🛏️ Dormir até o amanhecer</button>
+          <button data-act="chest" data-s="${sid}">📦 Abrir o baú da ${s.type === 'cabin' ? 'cabana' : 'casa'}</button>
+          <button data-act="craftat" data-st="fogueira">🔥 Cozinhar na lareira</button></div>
+          <small class="muted">Dormir recupera a vida, avança para o próximo dia e salva automaticamente.</small></div>
+        <div class="card"><div class="sec">Salvar jogo <span>espaço atual: ${G.slot}</span></div>
+          <div class="slots3">${slots}</div>
+          <div class="btns"><button class="primary" data-act="save" data-s="${sid}">💾 Salvar no espaço ${G.slot}</button>
+          <button data-act="export">⬇️ Exportar para arquivo</button></div></div>
+      </div>`;
+    this.open(s.type === 'cabin' ? 'Cabana' : s.type === 'manor' ? 'Casarão' : 'Casa', h, 'showRest', [sid], 'Seu lar: salve, descanse e guarde itens');
+  },
+
+  showChest(sid) {
+    const s = World.structs[sid], box = Store.box(s);
+    const row = (k, n, to) => `<div class="crow"><span class="ri">${ITEMS[k].icon}</span><span><b>${ITEMS[k].name}</b><small>×${n} · peso ${Math.round(itemWeight(k) * n * 10) / 10}</small></span>
+      <span class="act-row">${['1', '10', 'all'].map(q => `<button data-act="cmove" data-s="${sid}" data-k="${k}" data-q="${q}" data-to="${to}">${to === '1' ? '→' : '←'} ${q === 'all' ? 'Tudo' : q}</button>`).join('')}</span></div>`;
+    const inv = Object.keys(P.inv).filter(k => !Object.values(P.equip).includes(k) || P.inv[k] > 1).sort((x, y) => ITEMS[x].cat.localeCompare(ITEMS[y].cat));
+    const stored = Object.keys(box).sort((x, y) => ITEMS[x].cat.localeCompare(ITEMS[y].cat));
+    const w = Store.weight(), cap = Store.capacity();
+    const h = `<div class="chest-layout">
+      <div class="card col"><div class="sec">Mochila <span class="${w > cap ? 'bad' : ''}">carga ${w} / ${cap}</span></div>
+        <div class="scroll" data-scroll="cinv">${inv.length ? inv.map(k => row(k, P.inv[k], '1')).join('') : '<p class="muted">Mochila vazia.</p>'}</div></div>
+      <div class="card col"><div class="sec">Baú <span>${stored.length} tipos de item</span></div>
+        <div class="scroll" data-scroll="cbox">${stored.length ? stored.map(k => row(k, box[k], '0')).join('') : '<p class="muted">O baú está vazio.</p>'}</div></div></div>
+      <div class="act-row" style="margin-top:10px"><button class="primary" data-act="cstash" data-s="${sid}">📦 Guardar todos os recursos e materiais</button>
+      <small class="muted">Itens no baú não pesam na mochila. Cada baú guarda o seu próprio conteúdo.</small></div>`;
+    this.open('Baú', h, 'showChest', [sid], `${s.type === 'chest' ? 'Baú' : 'Baú da casa'} em ${s.x}, ${s.y}`);
+  },
+
+  showStable() {
+    const h = `<div class="kgrid two">
+      <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🐴</div><div><b>Cavalo</b><div class="dt-cat">${P.horse ? 'Você tem: ' + this.esc(P.horse.name) : 'Você não tem cavalo'}</div></div></div>
+        <p class="dt-desc">Quase o dobro da velocidade (tecla R para montar). Os alforjes carregam +${HORSE_CARRY} de peso.</p>
+        <button class="primary" data-act="buyride" data-k="horse" data-p="220" ${!P.horse && P.gold >= 220 ? '' : 'disabled'}>Comprar — 220 🪙</button></div>
+      <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🛒</div><div><b>Carroça</b><div class="dt-cat">${P.cart ? 'Você tem uma carroça' : 'Precisa de um cavalo para puxar'}</div></div></div>
+        <p class="dt-desc">Seu cavalo puxa a carroça e você carrega +${CART_CARRY} de peso.</p>
+        <button class="primary" data-act="buyride" data-k="cart" data-p="160" ${P.horse && !P.cart && P.gold >= 160 ? '' : 'disabled'}>Comprar — 160 🪙</button></div></div>`;
+    this.open('Estábulo', h, 'showStable', [], 'Cavalos e carroças para viajar mais rápido');
+  },
+
+  showFarm() {
+    const n = World.structs.filter(s => s.owner === 'player' && s.type === 'farm').length;
+    this.open('🌾 Fazenda', `<p>Suas plantações de trigo estão crescendo.</p><p>Você possui <b>${n}</b> fazenda(s), que produzem <b>${n * 6}</b> de trigo a cada amanhecer.</p><p class="muted">Use o trigo para assar pão na fogueira ou venda nos mercados.</p>`, 'showFarm');
+  },
+
+  showBarracks() {
+    const cap = Game.followerCap(), n = Game.allies().length;
+    const cost = { gold: 35, wheat: 5 };
+    const can = Inv.has(cost) && n < cap;
+    this.open('🛡️ Quartel', `<p>Recrutas treinam com espadas de madeira no pátio.</p>
+      <p>Seguidores: <b>${n}/${cap}</b> · Cada soldado cobra 4 🪙 por dia.</p>
+      <div class="btns"><button data-act="train" ${can ? '' : 'disabled'}>Treinar soldado — ${this.fmtCost(cost)}</button></div>`, 'showBarracks');
+  },
+
+  // ------------------------------------------------------------ lojas especializadas
+  showShop(type, vi, npcId) {
+    const sh = SHOPS[type];
+    const owner = npcId != null ? People.get(npcId) : People.shopkeeper(vi, sh.rank);
+    const v = vi >= 0 ? World.villages[vi] : null;
+    const title = `${sh.icon} ${sh.name}${v ? ' de ' + v.name : ''}`;
+    if (!owner || !owner.alive) { this.open(title, `<p class="bad">Fechado. ${type === 'hunter' ? 'O caçador' : 'O dono'} morreu sem deixar herdeiros para o ofício.</p>`, 'showShop', [type, vi, npcId]); return; }
+    const civ = owner.civ >= 0 ? owner.civ : (v ? v.civ : 0);
+    const c = G.civs[civ];
+    this.shopCtx = { civ, owner: owner.id };
+    if (c.atWar || owner.hostile || owner.aff <= -60) {
+      this.open(title, `<p class="bad">${UI.esc(owner.name)} cruza os braços: "Não faço negócio com ${c.atWar ? 'inimigos do reino' : 'gente como você'}!"</p>`, 'showShop', [type, vi, npcId]);
+      return;
+    }
+    const rel = People.relation(owner);
+    const disc = Math.round(owner.aff / 4);
+    let h = `<div class="shopowner"><canvas class="mini-portrait" data-pid="${owner.id}" width="44" height="44"></canvas>
+      <div><b>${UI.esc(People.full(owner))}</b> · ${People.title(owner)} · <span style="color:${rel.col}">${rel.text}</span><br>
+      <small>Tesouro do reino: ${c.treasury} 🪙 · Seu ouro: ${P.gold} 🪙 · ${disc > 0 ? `Desconto de amizade: ${disc}%` : disc < 0 ? `Preços ${-disc}% mais caros (não gosta de você)` : 'Seja amigo do dono para ganhar desconto'}</small></div>
+      <button data-act="tk" data-op="open" data-id="${owner.id}">💬 Conversar</button></div>
+      <h3>À venda</h3><table class="trade"><tr><th>Item</th><th>Você tem</th><th>Estoque</th><th>Preço</th><th></th></tr>`;
+    for (const k of sh.sells) {
+      const it = ITEMS[k], pr = Game.priceFor(civ, k, owner);
+      const raw = c.stock[k] !== undefined;
+      const can = P.gold >= pr.buy && (!raw || c.stock[k] > 0);
+      h += `<tr><td>${it.icon} ${it.name}</td><td>${Inv.count(k)}</td><td>${raw ? c.stock[k] : '∞'}</td><td>${pr.buy} 🪙${this.trendIcon(civ, k)}</td>
+        <td><button data-act="trade2" data-k="${k}" data-n="1" data-m="buy" ${can ? '' : 'disabled'}>Comprar 1</button><button data-act="trade2" data-k="${k}" data-n="10" data-m="buy" ${can ? '' : 'disabled'}>10</button></td></tr>`;
+    }
+    h += '</table><h3>Vender para esta loja</h3>';
+    const mine = Object.keys(P.inv).filter(k => sh.buys(ITEMS[k]));
+    if (!mine.length) h += `<p class="muted">Você não tem nada que interesse ${type === 'hunter' ? 'ao caçador' : 'a esta loja'}.</p>`;
+    else {
+      h += '<table class="trade"><tr><th>Item</th><th>Você tem</th><th>Paga</th><th></th></tr>';
+      for (const k of mine) {
+        const it = ITEMS[k], pr = Game.priceFor(civ, k, owner);
+        const can = c.treasury >= pr.sell;
+        h += `<tr><td>${it.icon} ${it.name}${Object.values(P.equip).includes(k) ? ' <small class="muted">(equipado)</small>' : ''}</td><td>${Inv.count(k)}</td><td>${pr.sell} 🪙${this.trendIcon(civ, k)}</td>
+          <td><button data-act="trade2" data-k="${k}" data-n="1" data-m="sell" ${can ? '' : 'disabled'}>Vender 1</button><button data-act="trade2" data-k="${k}" data-n="10" data-m="sell" ${can ? '' : 'disabled'}>10</button></td></tr>`;
+      }
+      h += '</table>';
+    }
+    this.open(title, h, 'showShop', [type, vi, npcId]);
+    this.drawMiniPortraits();
+  },
+
+  // ------------------------------------------------------------ conversa com NPCs
+  drawPersonPortrait(cv, p, scale) {
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    g.imageSmoothingEnabled = false;
+    const lk = People.look(p);
+    if (p.capanga && !p.equip.torso) lk.body = PLAYER_COLOR;
+    drawHuman(g, cv.width / 2, cv.height * 0.92 + (scale > 2.5 ? 0 : 18), Object.assign(lk, { scale: (lk.scale || 1) * scale, dir: 1, moving: false, swing: 0, aim: 0, weapon: null, shield: null }));
+  },
+  drawMiniPortraits() {
+    for (const cv of this.panel.querySelectorAll('canvas[data-pid]')) this.drawPersonPortrait(cv, People.get(+cv.dataset.pid), 1.6);
+  },
+  showTalk(id, res) {
+    const p = People.get(id);
+    if (!p || !p.alive) { this.close(); return; }
+    p.met = true;
+    const rel = People.relation(p), t = TRAITS[p.trait];
+    const adult = People.isAdult(p);
+    const affBar = `<div class="rbar"><span>Amizade</span><div class="rt"><i style="left:50%;width:${Math.abs(p.aff) / 2}%;${p.aff < 0 ? 'transform:translateX(-100%);background:#c0392b' : 'background:#5a9a2a'}"></i><em></em></div><b>${Math.round(p.aff)}</b></div>`;
+    const romBar = People.canRomance(p) || p.rom > 0 ? `<div class="rbar"><span>Romance</span><div class="rt"><i style="width:${p.rom}%;background:#d0508a"></i></div><b>${Math.round(p.rom)}</b></div>` : '';
+    const text = res ? res.text : People.say(p);
+    const shop = RANKS[p.rank].shop;
+    const acts = [['talk', '💬 Conversar'], ['compliment', '😊 Elogiar'], ['giftmenu', '🎁 Presentear']];
+    if (People.canRomance(p)) {
+      acts.push(['flirt', '💘 Paquerar']);
+      if (!p.dating && p.spouse !== 'player') acts.push(['date', '💕 Pedir em namoro']);
+    }
+    if (p.dating) acts.push(['propose', '💍 Pedir em casamento']);
+    if (p.spouse === 'player') acts.push(['child', G.family.dueDay ? '👶 O bebê está a caminho!' : G.family.tryChild ? '👶 Planejando um filho...' : '👶 Ter um filho']);
+    if (p.dating || p.spouse === 'player') acts.push(['breakup', '💔 Terminar']);
+    if (shop && shop !== 'tavern' && p.age >= 14 && (shop === 'hunter' || p.home.type === 'village')) acts.push(['shopnpc', '⚖️ Negociar']);
+    if (p.job !== undefined && p.job !== null) acts.push(['bizfire', '📤 Demitir do empreendimento']);
+    else if (Biz.can(p) === true && Biz.list().length) acts.push(['hiremenu', '💼 Contratar para trabalhar']);
+    if (p.capanga) acts.push(['equipc', '🛡️ Equipar capanga'], ['dismiss', '🏠 Dispensar']);
+    else if (People.canRecruit(p)) acts.push(['recruit', `🤝 Recrutar como capanga — ${People.recruitCost(p)} 🪙`]);
+    if (adult && !p.kin && p.spouse !== 'player') acts.push(['insult', '😠 Insultar']);
+    if (p.rank === 'priest') acts.push(['church', '⛪ Assuntos da igreja']);
+    if (p.kin === 'child' && p.age >= 12) acts.push(['profmenu', p.prof ? `${PROFESSIONS[p.prof].icon} Mudar profissão` : '🎓 Escolher profissão']);
+    const st = p.capanga ? People.capangaStats(p) : null;
+    const h = `<div class="talk">
+        <div class="tk-left"><canvas id="tkPortrait" width="128" height="150"></canvas><div class="tk-rel" style="color:${rel.col}">${rel.text}</div></div>
+        <div class="tk-right">
+          <div class="tk-name">${UI.esc(People.full(p))}${p.maiden && p.maiden !== p.surname ? ` <small class="muted">(nascid${p.sex === 'f' ? 'a' : 'o'} ${UI.esc(p.maiden)})</small>` : ''}</div>
+          <div class="tk-sub">${People.title(p)} · ${p.age} ${p.age === 1 ? 'ano' : 'anos'} · ${p.sex === 'm' ? 'Homem' : 'Mulher'} · ${People.homeName(p)}</div>
+          <div class="tk-tags">${Families.of(p) ? `<span class="famchip" data-act="famview" data-f="${p.fam}" style="border-color:${Families.of(p).color}">🏛️ ${UI.esc(Families.name(Families.of(p)))}</span>` : ''}
+            ${Families.isChief(p) ? `<span class="tag">Chefe de ${UI.esc(World.villages.find(v => v.chief === p.id).name)}</span>` : ''}
+            ${p.job !== undefined && p.job !== null && World.structs[p.job] ? `<span>💼 Trabalha no seu <b>${UI.esc(BUILDINGS[World.structs[p.job].type].name)}</b></span>` : ''}
+            <span>Personalidade: <b>${t.name}</b></span><span>Gosta de: <b>${p.aff >= 35 || p.kin ? ITEMS[p.fav].icon + ' ' + ITEMS[p.fav].name : '???'}</b></span>
+            ${st ? `<span>⚔️ Dano <b>${st.dmg}</b> · 🛡️ Defesa <b>${st.def}</b></span>` : ''}${p.hostile ? '<span class="bad">Hostil!</span>' : ''}</div>
+          ${affBar}${romBar}
+          <div class="speech">“${UI.esc(text)}”</div>
+          ${res && res.note ? `<div class="tk-note">${UI.esc(res.note)}</div>` : ''}
+        </div></div>
+      <div class="tk-acts">${acts.map(([op, lab]) => `<button data-act="tk" data-op="${op}" data-id="${p.id}">${lab}</button>`).join('')}</div>`;
+    this.open('💬 Conversa', h, 'showTalk', [id, res]);
+    this.drawPersonPortrait(document.getElementById('tkPortrait'), p, 3);
+  },
+  showGift(id) {
+    const p = People.get(id);
+    const keys = Object.keys(P.inv).filter(k => !Object.values(P.equip).includes(k) || P.inv[k] > 1)
+      .sort((a, b) => (b === p.fav) - (a === p.fav) || ITEMS[b].price - ITEMS[a].price);
+    let h = `<p>O que você quer dar para <b>${UI.esc(p.name)}</b>? Presentes valiosos agradam mais, e o favorito agrada muito mais.</p>
+      <div class="btns"><button data-act="tk" data-op="gold" data-n="10" data-id="${id}" ${P.gold >= 10 ? '' : 'disabled'}>🪙 10 moedas</button>
+      <button data-act="tk" data-op="gold" data-n="50" data-id="${id}" ${P.gold >= 50 ? '' : 'disabled'}>🪙 50 moedas</button>
+      <button data-act="tk" data-op="gold" data-n="100" data-id="${id}" ${P.gold >= 100 ? '' : 'disabled'}>🪙 100 moedas</button></div><div class="list">`;
+    if (!keys.length) h += '<p class="muted">Sua mochila está vazia.</p>';
+    for (const k of keys) {
+      const it = ITEMS[k];
+      h += `<div class="item"><span class="ic">${it.icon}</span><div class="info"><b>${it.name}</b> ×${P.inv[k]}${k === p.fav && (p.aff >= 35 || p.kin) ? ' <span class="tag">favorito!</span>' : ''}<small>vale ${it.price} 🪙</small></div>
+        <div class="acts"><button data-act="tk" data-op="gift" data-k="${k}" data-id="${id}">Dar</button></div></div>`;
+    }
+    h += `</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`;
+    this.open('🎁 Presentear ' + UI.esc(p.name), h, 'showGift', [id]);
+  },
+  showEquipC(id) {
+    const p = People.get(id), st = People.capangaStats(p);
+    let h = `<p>Entregue armas e armaduras da sua mochila para <b>${UI.esc(People.full(p))}</b>. Itens removidos voltam para você.</p>
+      <div class="stats"><div>⚔️ Dano <b>${st.dmg}</b></div><div>🛡️ Defesa <b>${st.def}</b></div></div><div class="equip6">`;
+    for (const sl of EQUIP_SLOTS) {
+      if (sl.key === 'tool') continue;
+      const k = p.equip[sl.key], it = k && ITEMS[k];
+      h += `<div class="eslot ${it ? 'full' : ''}"><span class="eic">${it ? it.icon : '·'}</span><div class="info"><small>${sl.name}</small><b>${it ? it.name : 'Nada'}</b><small>${it ? (it.dmg ? 'Dano ' + it.dmg : 'Defesa +' + it.def) : ''}</small></div>
+        ${it ? `<button data-act="tk" data-op="cun" data-k="${sl.key}" data-id="${id}">✕</button>` : ''}</div>`;
+    }
+    h += '</div><h3>Da sua mochila</h3><div class="list">';
+    const keys = Object.keys(P.inv).filter(k => ITEMS[k].slot && ITEMS[k].slot !== 'tool');
+    if (!keys.length) h += '<p class="muted">Você não tem armas nem armaduras para entregar.</p>';
+    for (const k of keys) {
+      const it = ITEMS[k];
+      h += `<div class="item"><span class="ic">${it.icon}</span><div class="info"><b>${it.name}</b> ×${P.inv[k]}<small>${this.itemDesc(it)}</small></div>
+        <div class="acts"><button data-act="tk" data-op="ceq" data-k="${k}" data-id="${id}">Entregar</button></div></div>`;
+    }
+    h += `</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`;
+    this.open('🛡️ Equipar ' + UI.esc(p.name), h, 'showEquipC', [id]);
+  },
+  talkAct(d) {
+    const p = People.get(+d.id);
+    if (!p) return;
+    let r = null;
+    switch (d.op) {
+      case 'open': this.showTalk(p.id); return;
+      case 'talk': r = People.talk(p); break;
+      case 'compliment': r = People.compliment(p); break;
+      case 'giftmenu': this.showGift(p.id); return;
+      case 'gift': r = People.gift(p, d.k); break;
+      case 'gold': r = People.giveGold(p, +d.n); break;
+      case 'flirt': r = People.flirt(p); break;
+      case 'date': r = People.date(p); break;
+      case 'propose': r = People.propose(p); break;
+      case 'breakup': if (!confirm('Terminar o relacionamento?')) return; r = People.breakUp(p); break;
+      case 'child':
+        if (!G.family.dueDay) { G.family.tryChild = true; r = { text: 'Sim... vamos aumentar a nossa família! ❤', note: 'Durmam em casa (Cabana, Casa ou Casarão) para tentar ter um filho.' }; }
+        else r = { text: 'Falta pouco para o bebê chegar!', note: '' };
+        break;
+      case 'shopnpc': this.showShop(RANKS[p.rank].shop, p.home.type === 'village' ? p.home.idx : -1, p.id); return;
+      case 'recruit': r = People.recruit(p); break;
+      case 'dismiss': r = People.dismiss(p); break;
+      case 'equipc': this.showEquipC(p.id); return;
+      case 'ceq': {
+        const it = ITEMS[d.k];
+        if (Inv.count(d.k) <= 0) return;
+        if (p.equip[it.slot]) Inv.add(p.equip[it.slot], 1);
+        Inv.add(d.k, -1); p.equip[it.slot] = d.k;
+        Game.refreshCapanga(p); this.showEquipC(p.id); return;
+      }
+      case 'cun': if (p.equip[d.k]) { Inv.add(p.equip[d.k], 1); p.equip[d.k] = null; Game.refreshCapanga(p); } this.showEquipC(p.id); return;
+      case 'insult': r = People.insult(p); break;
+      case 'profmenu': this.showProf(p.id); return;
+      case 'hiremenu': this.showHire(p.id); return;
+      case 'church': { const ch = World.villages[p.home.idx] && World.villages[p.home.idx].chapel; if (ch) this.showChapel(ch.id); return; }
+      case 'hire': { const s = World.structs[+d.s]; if (Biz.hire(p, s)) { this.showTalk(p.id, { text: 'Pode contar comigo, patrão! Começo amanhã cedo.', note: `Salário: ${Biz.wage(p, s)} 🪙 por dia.` }); return; } break; }
+      case 'bizfire': Biz.fire(p); this.showTalk(p.id, { text: 'Tudo bem... boa sorte com os negócios.', note: '' }); return;
+      case 'setprof': Progress.setProf(p, d.k); this.showTalk(p.id, { text: 'Vou dar o meu melhor para honrar a família!', note: PROFESSIONS[d.k].desc }); return;
+    }
+    if (r && Farm.has('charm') && ['talk', 'compliment', 'flirt'].includes(d.op)) p.aff = Math.min(100, p.aff + 1);
+    if (r && r.fight) {
+      this.close();
+      const e = G.spawned.get(p.id);
+      if (e) e.target = P;
+      UI.msg(r.note, 'bad');
+      return;
+    }
+    this.showTalk(p.id, r);
+  },
+
+  // ------------------------------------------------------------ botão de conversa sobre o NPC
+  talkButton(e, cx, cy) {
+    const el = this.talkEl;
+    if (!e) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    el.dataset.id = e.npc.id;
+    el.style.left = Math.round(e.x - cx) + 'px';
+    el.style.top = Math.round(e.y - cy - (e.npc.age < 14 ? 70 : 86)) + 'px';
+  },
+
+  // ------------------------------------------------------------ fim de jogo e nascimento
+  showGameOver(cause) {
+    this.goCause = cause;
+    const heirs = Game.heirs();
+    const el = document.getElementById('gameover');
+    el.innerHTML = `<div class="gobox">
+      <div class="go-skull">☠</div><h1>FIM DE JOGO</h1>
+      <p class="go-cause"><b>${UI.esc(G.name)}</b> morreu ${UI.esc(cause)} aos ${P.age} anos, no dia ${G.day}.</p>
+      ${heirs.length ? '<h3>Continue a sua linhagem</h3><div class="go-heirs">' + heirs.map(h => `<button data-go="heir" data-id="${h.id}">
+          <canvas data-pid="${h.id}" width="56" height="56"></canvas><span><b>${UI.esc(h.name)}</b><small>${h.sex === 'm' ? 'Filho' : 'Filha'} · ${h.age} anos${h.age < 16 ? ` (assume aos 16)` : ''}</small></span></button>`).join('') + '</div>'
+        : '<p class="muted2">Você não deixou herdeiros. Case-se e tenha filhos para continuar sua linhagem numa próxima vez.</p>'}
+      <div class="go-btns"><button data-go="load">📜 Carregar último jogo salvo</button><button data-go="menu">🏰 Voltar ao menu</button></div></div>`;
+    el.classList.remove('hidden');
+    for (const cv of el.querySelectorAll('canvas[data-pid]')) this.drawPersonPortrait(cv, People.get(+cv.dataset.pid), 1.9);
+  },
+  hideGameOver() { document.getElementById('gameover').classList.add('hidden'); },
+  showBirth() {
+    this.babySex = Math.random() < 0.5 ? 'm' : 'f';
+    const sp = G.family.spouse !== null ? People.get(G.family.spouse) : null;
+    const el = document.getElementById('birth');
+    el.innerHTML = `<div class="birthbox"><div class="go-skull">👶</div><h2>${this.babySex === 'm' ? 'É um menino!' : 'É uma menina!'}</h2>
+      <p>${sp ? UI.esc(sp.name) + ' e ' : ''}${UI.esc(G.name)} receberam ${this.babySex === 'm' ? 'um filho' : 'uma filha'} saudável.</p>
+      <label>Escolha o nome <input id="babyName" maxlength="18" placeholder="${U.pick(this.babySex === 'm' ? NAMES_M : NAMES_F)}"></label>
+      <button data-birth="1">Dar o nome</button></div>`;
+    el.classList.remove('hidden');
+    this.modal = true; G.paused = true;
+    const inp = document.getElementById('babyName');
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') el.querySelector('[data-birth]').click(); });
+    setTimeout(() => inp.focus(), 50);
+  },
+
+  showTavern(sid, rumor) {
+    const s = World.structs[sid];
+    const v = World.villages[s.village];
+    const c = G.civs[s.owner];
+    if (c.atWar) { this.open('🍺 Taverna de ' + v.name, '<p class="bad">O taverneiro aponta para a porta: "Aqui não servimos inimigos do reino!"</p>', 'showTavern', [sid]); return; }
+    const cap = Game.followerCap(), n = Game.allies().length;
+    const r = rumor || U.pick(RUMORS);
+    const keeper = People.shopkeeper(s.village, 'innkeeper');
+    if (!keeper) { this.open('🍺 Taverna de ' + v.name, '<p class="bad">A taverna está fechada. O taverneiro morreu sem herdeiros.</p>', 'showTavern', [sid]); return; }
+    const h = `<div class="shopowner"><canvas class="mini-portrait" data-pid="${keeper.id}" width="44" height="44"></canvas><div><b>${UI.esc(People.full(keeper))}</b> · ${People.title(keeper)}<br><small>“${UI.esc(TRAITS[keeper.trait].line)}”</small></div>
+      <button data-act="tk" data-op="open" data-id="${keeper.id}">💬 Conversar</button></div>
+      <p>O cheiro de cerveja e ensopado enche o salão. Mercenários jogam dados num canto.</p>
+      <blockquote>“${r}”</blockquote>
+      <p>Seguidores: <b>${n}/${cap}</b> · Cada soldado cobra 4 🪙 por dia.</p>
+      <div class="btns col">
+        <button data-act="hire" data-s="${sid}" ${P.gold >= 60 && n < cap ? '' : 'disabled'}>⚔️ Contratar mercenário — 60 🪙</button>
+        <button data-act="buyride" data-k="horse" data-p="250" ${!P.horse && P.gold >= 250 ? '' : 'disabled'}>🐴 ${P.horse ? 'Você já tem ' + this.esc(P.horse.name) : 'Comprar um cavalo — 250 🪙'}</button>
+        <button data-act="buyride" data-k="cart" data-p="180" ${P.horse && !P.cart && P.gold >= 180 ? '' : 'disabled'}>🛒 ${P.cart ? 'Você já tem uma carroça' : 'Comprar uma carroça — 180 🪙 (precisa de cavalo)'}</button>
+        <button data-act="buyfood" data-s="${sid}" data-k="bread" data-p="8" ${P.gold >= 8 ? '' : 'disabled'}>🍞 Comprar pão — 8 🪙</button>
+        <button data-act="buyfood" data-s="${sid}" data-k="cooked_meat" data-p="12" ${P.gold >= 12 ? '' : 'disabled'}>🍖 Comprar carne assada — 12 🪙</button>
+        <button data-act="rumor" data-s="${sid}">👂 Ouvir outro boato</button>
+      </div>`;
+    this.open('🍺 Taverna de ' + v.name, h, 'showTavern', [sid, r]);
+    this.drawMiniPortraits();
+  },
+
+  showCastle(ci) {
+    const c = G.civs[ci], d = CIV_DEFS[ci];
+    if (c.ruler === 'player') { this.showKingdom(ci); return; }
+    const need = Game.claimNeeds(ci), canClaim = c.relation >= need.rel && P.gold >= need.gold && !c.atWar;
+    let h = `<p><i>${d.desc}</i></p>
+      <div class="stats">
+        <div>👑 Soberano: <b>${this.esc(c.rulerName)}</b></div><div>👥 População: <b>${c.pop}</b></div>
+        <div>🛡️ Guarnição: <b>${c.garrison}</b> soldados</div><div>💰 Tesouro: <b>${c.treasury}</b> 🪙</div>
+        <div>🤝 Relação: ${this.relBar(c)}</div><div>${c.atWar ? '<span class="bad">⚔️ EM GUERRA com você</span>' : '🕊️ Em paz'}</div>
+      </div><div class="btns col">`;
+    if (!c.atWar) {
+      h += `<button data-act="tribute" data-c="${ci}" ${P.gold >= 100 ? '' : 'disabled'}>🎁 Oferecer tributo — 100 🪙 (+8 relação)</button>
+        <button data-act="claim" data-c="${ci}" ${canClaim ? '' : 'disabled'}>📜 Reivindicar o trono pela diplomacia — ${need.gold} 🪙 (exige relação ${need.rel}+)</button>
+        <button class="danger" data-act="war" data-c="${ci}">⚔️ Declarar guerra e sitiar o castelo</button>`;
+    } else {
+      h += `<button data-act="peace" data-c="${ci}" ${P.gold >= 300 ? '' : 'disabled'}>🕊️ Propor paz — 300 🪙</button>`;
+      if (!G.siege) h += `<button class="danger" data-act="siege" data-c="${ci}">⚔️ Iniciar o cerco</button>`;
+      else h += `<button data-act="deploy" data-k="ram" ${Inv.count('ram') ? '' : 'disabled'}>🪵 Montar aríete (${Inv.count('ram')}) — tecla G</button>
+        <button data-act="deploy" data-k="catapult" ${Inv.count('catapult') ? '' : 'disabled'}>🏹 Montar catapulta (${Inv.count('catapult')})</button>
+        <small class="muted">Derrube o portão (${Math.ceil(G.siege.gate || 0)} de resistência) com aríetes, catapultas ou golpes. Enquanto ele estiver de pé, arqueiros atiram das muralhas e o soberano não sai.</small>`;
+    }
+    h += this.titleCard(ci);
+    const court = G.people.filter(q => q.alive && q.home.type === 'castle' && q.home.civ === ci).sort((a, b) => RANKS[a.rank].order - RANKS[b.rank].order);
+    h += '</div><h3>Corte real</h3><div class="list">' + court.map(q => { const rl = People.relation(q); return `<div class="item"><canvas class="mini-portrait" data-pid="${q.id}" width="44" height="44"></canvas>
+      <div class="info"><b>${UI.esc(People.full(q))}</b><small>${People.title(q)} · ${q.age} anos · <span style="color:${rl.col}">${rl.text}</span></small></div>
+      <div class="acts"><button data-act="tk" data-op="open" data-id="${q.id}">💬 Falar</button></div></div>`; }).join('') + '</div>';
+    h += `<p class="muted">Para conquistar pela força, derrote toda a guarnição (${c.garrison} soldados) e depois o próprio soberano diante dos portões. Leve seguidores!</p>`;
+    this.open(`🏰 Castelo — ${d.name}`, h, 'showCastle', [ci]);
+    this.drawMiniPortraits();
+  },
+  relBar(c) { return `<b>${Math.round(c.relation)}</b> ${Game.relationText(c)}`; },
+
+  showMap() {
+    if (G.dungeon) { this.msg('O mapa não funciona dentro das cavernas.', 'bad'); return; }
+    this.panel.classList.add('hidden');
+    this.cur = { fn: 'showMap', args: [] };
+    G.paused = true;
+    MapView.show();
+  },
+
+  showHelp() { this.open('❓ Como jogar', HELP_HTML, 'showHelp'); },
+
+  // ------------------------------------------------------------ ações
+  // ------------------------------------------------------------ escolha de profissão dos filhos
+  showProf(id) {
+    const p = People.get(id);
+    const rows = Object.entries(PROFESSIONS).map(([k, pr]) => {
+      const no = k === 'governor' && !G.civs.some(c => c.ruler === 'player');
+      return `<button class="rrow ${p.prof === k ? 'on' : ''}" data-act="tk" data-op="setprof" data-k="${k}" data-id="${id}" ${no ? 'disabled title="Você precisa governar um reino"' : ''}>
+        <span class="ri">${pr.icon}</span><span><b>${p.sex === 'f' ? pr.f : pr.name}</b><small>${pr.desc}</small></span><span class="rs ${no ? 'mat' : 'ok'}">${p.prof === k ? 'Atual' : no ? 'Sem reino' : 'Escolher'}</span></button>`;
+    }).join('');
+    this.open('🎓 Profissão de ' + this.esc(p.name), `<p>Que caminho ${this.esc(p.name)} deve seguir? Cada profissão ajuda a família de um jeito.</p>
+      <div class="list">${rows}</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`, 'showProf', [id]);
+  },
+
+  // ------------------------------------------------------------ galinheiro, curral e colmeia
+  showAnimals(sid) {
+    const s = World.structs[sid], cap = Farm.cap(s), a = s.animals || {}, g = s.goods || {};
+    const names = { chicken: ['🐔', 'Galinha', 'põe 1 ovo por dia'], cow: ['🐄', 'Vaca', 'dá 1 leite por dia'], sheep: ['🐑', 'Ovelha', 'dá 2 lãs a cada 2 dias'] };
+    const animals = Object.keys(cap).map(k => `<div class="crow"><span class="ri">${names[k][0]}</span><span><b>${names[k][1]} — ${a[k] || 0}/${cap[k]}</b><small>${names[k][2]}</small></span>
+      <span class="act-row"><button class="primary" data-act="buyanimal" data-s="${sid}" data-k="${k}" ${P.gold >= ANIMAL_PRICES[k] && (a[k] || 0) < cap[k] ? '' : 'disabled'}>Comprar — ${ANIMAL_PRICES[k]} 🪙</button></span></div>`).join('');
+    const goods = Object.keys(g).filter(k => g[k] > 0);
+    const title = { coop: '🐔 Galinheiro', pen: '🐄 Curral', beehive: '🐝 Colmeia' }[s.type];
+    this.open(title, `${s.type === 'beehive' ? '<p>As abelhas produzem 1 mel por dia (menos no inverno).</p>' : `<div class="list">${animals}</div>`}
+      <div class="card" style="margin-top:10px"><div class="sec">Produção guardada</div>
+        <div class="chips">${goods.length ? goods.map(k => `<span class="chip">${ITEMS[k].icon} ${g[k]} ${ITEMS[k].name}</span>`).join('') : '<span class="muted">Nada ainda — volte amanhã.</span>'}</div>
+        <div class="act-row" style="margin-top:8px"><button class="primary" data-act="collect" data-s="${sid}" ${goods.length ? '' : 'disabled'}>🧺 Recolher tudo</button></div></div>
+      <small class="muted">${Season.winter() ? '❄️ No inverno os animais produzem menos.' : 'A produção acontece a cada amanhecer.'}</small>`, 'showAnimals', [sid], 'Sua criação de animais');
+  },
+
+  // ------------------------------------------------------------ taverna do jogador
+  ptStock(s, k, q) {
+    s.stock = s.stock || {};
+    const n = q === 'all' ? Inv.count(k) : Math.min(+q, Inv.count(k));
+    if (n <= 0) return;
+    Inv.add(k, -n); s.stock[k] = (s.stock[k] || 0) + n;
+  },
+  showPTavern(sid) {
+    const s = World.structs[sid], st = s.stock || {};
+    const sellable = Object.keys(P.inv).filter(k => ITEMS[k].cat === 'Comida' && (ITEMS[k].buff || ['bread', 'cooked_meat', 'cooked_fish', 'veg_soup'].includes(k)));
+    const row = k => `<div class="crow"><span class="ri">${ITEMS[k].icon}</span><span><b>${ITEMS[k].name}</b><small>×${P.inv[k]} · rende ~${Math.round(ITEMS[k].price * (ITEMS[k].buff ? 1.5 : 1.2))} 🪙 cada</small></span>
+      <span class="act-row">${['1', '5', 'all'].map(q => `<button data-act="ptstock" data-s="${sid}" data-k="${k}" data-q="${q}">→ ${q === 'all' ? 'Tudo' : q}</button>`).join('')}</span></div>`;
+    const stocked = Object.keys(st).filter(k => st[k] > 0);
+    const civ = World.terr[World.idx(s.x, s.y)];
+    this.open('🍻 Sua Taverna', `<div class="chest-layout">
+      <div class="card col"><div class="sec">Da mochila <span>comidas e bebidas</span></div>
+        <div class="scroll" data-scroll="ptinv">${sellable.length ? sellable.map(row).join('') : '<p class="muted">Cozinhe pratos no Forno ou fabrique cerveja, hidromel e vinho na Cervejaria.</p>'}</div></div>
+      <div class="card col"><div class="sec">No balcão <span>${stocked.reduce((a, k) => a + st[k], 0)} itens</span></div>
+        <div class="scroll">${stocked.length ? stocked.map(k => `<div class="crow"><span class="ri">${ITEMS[k].icon}</span><span><b>${ITEMS[k].name}</b><small>×${st[k]}</small></span></div>`).join('') : '<p class="muted">Balcão vazio.</p>'}</div>
+        <div class="kv"><div>Caixa<b>${s.till || 0} 🪙</b></div><div>Fregueses/dia<b>${civ >= 0 ? 8 : 4}</b></div></div>
+        <div class="act-row"><button class="primary" data-act="ptcollect" data-s="${sid}" ${(s.till || 0) > 0 ? '' : 'disabled'}>🪙 Recolher o caixa</button></div></div></div>
+      <small class="muted">A cada amanhecer os fregueses compram o que está no balcão (os itens mais caros primeiro). Tavernas dentro de um reino vendem o dobro e melhoram a relação com ele.</small>`, 'showPTavern', [sid], 'Venda seus pratos e bebidas');
+  },
+
+  // ------------------------------------------------------------ caravana de comércio
+  showCaravan(e) {
+    const c = e.car;
+    if (!c) return;
+    this.open('🐫 Caravana de ' + Diplo.name(c.from), `<p>Uma caravana mercante de <b>${Diplo.name(c.from)}</b> segue pela estrada rumo a <b>${Diplo.name(c.to)}</b>.</p>
+      <div class="card"><div class="sec">Carga</div><div class="chips">${c.goods.map(x => `<span class="chip">${ITEMS[x.k].icon} ${x.n} ${ITEMS[x.k].name}</span>`).join('')}</div></div>
+      <div class="kgrid two" style="margin-top:10px">
+        <div class="card"><div class="sec">🛡️ Escoltar</div><p class="dt-desc">Acompanhe a caravana de perto. Se bandidos atacarem e ela chegar ao destino em segurança, o reino paga uma recompensa.</p>
+          <small class="muted">Tempo escoltando: ${Math.floor(c.escort)} s</small>
+          <div class="act-row"><button class="primary" data-act="close">Vou proteger vocês!</button></div></div>
+        <div class="card"><div class="sec">🏴 Assaltar</div><p class="dt-desc">Ataque os guardas e saqueie a carga e o ouro. A relação com ${Diplo.name(c.from)} cai muito.</p>
+          <div class="act-row"><button class="danger" data-act="carrob" data-c="${c.id}">Assaltar a caravana</button></div></div></div>`, 'showCaravan', [e], 'Comércio entre os reinos');
+  },
+
+  // ------------------------------------------------------------ batalha em campo aberto
+  showBattle(b) {
+    const side = (c, opp) => `<div class="card"><div class="sec" style="color:${Game.civColor(c)}">${Diplo.name(c)}</div>
+      <p class="dt-desc">${b.size[c]} soldados · relação com você: <b>${G.civs[c].ruler === 'player' ? 'seu reino' : Math.round(G.civs[c].relation)}</b></p>
+      <div class="act-row"><button class="primary" data-act="batjoin" data-b="${b.id}" data-side="${c}">⚔️ Lutar por ${CIV_DEFS[c].short}</button></div>
+      <small class="muted">Se vencer: ouro, experiência e +15 de relação. ${Diplo.name(opp)} perde 20 de relação com você.</small></div>`;
+    this.open('⚔️ Batalha em campo aberto', `<p>Os exércitos de <b>${Diplo.name(b.a)}</b> e <b>${Diplo.name(b.b)}</b> estão prestes a se enfrentar aqui perto!</p>
+      <div class="kgrid two">${side(b.a, b.b)}${side(b.b, b.a)}</div>
+      <p class="muted">Seus capangas lutam com você. Use <b>T</b> para mudar a ordem (seguir, atacar, aguardar), clique com o botão direito para <b>bloquear</b>, <b>Z</b> para esquivar e segure o clique para um <b>golpe forte</b>.</p>
+      <div class="act-row"><button data-act="batjoin" data-b="${b.id}" data-side="none">Ficar de fora</button></div>`, 'showBattle', [b], 'Escolha um lado ou fique neutro');
+  },
+
+  // ------------------------------------------------------------ diário do herói
+  showDiary() {
+    const S = this.sel, tab = S.dtab || 'ach', st = G.stats || {};
+    const tabs = [['ach', '🏆 Conquistas'], ['stats', '📊 Estatísticas'], ['dyn', '🌳 Dinastia'], ['log', '📜 Diário']]
+      .map(([k, l]) => `<button class="tab ${tab === k ? 'on' : ''}" data-act="dtab" data-t="${k}">${l}</button>`).join('');
+    let body = '';
+    if (tab === 'ach') {
+      const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
+      body = `<div class="sec">Desbloqueadas <span>${got} de ${ACHIEVEMENTS.length}</span></div>${this.bar(got, ACHIEVEMENTS.length)}
+        <div class="ach-grid">${ACHIEVEMENTS.map(a => `<div class="ach ${G.ach[a.id] ? 'got' : ''}"><span>${a.icon}</span><div><b>${a.name}</b><small>${a.desc}</small>${G.ach[a.id] ? `<em>Dia ${G.ach[a.id]}</em>` : ''}</div></div>`).join('')}</div>`;
+    } else if (tab === 'stats') {
+      const kills = Object.keys(st).filter(k => k.startsWith('kill_')).reduce((a, k) => a + st[k], 0);
+      const rows = [['🪓', 'Árvores cortadas', st.trees], ['⛏️', 'Rochas quebradas', st.ores], ['🌿', 'Plantas colhidas', st.plants], ['🎣', 'Peixes pescados', st.fish],
+        ['🌱', 'Sementes plantadas', st.planted], ['🌾', 'Alimentos colhidos', st.harvested], ['🔨', 'Itens criados', st.crafted], ['🏗️', 'Construções', st.built],
+        ['⚔️', 'Inimigos e animais abatidos', kills], ['🗡️', 'Bandidos derrotados', st.kill_bandit], ['☠️', 'Chefes derrotados', st.bosses], ['🏕️', 'Acampamentos destruídos', st.camps],
+        ['🛡️', 'Golpes bloqueados', st.blocks], ['🏆', 'Batalhas vencidas', st.battlesWon], ['🐫', 'Caravanas salvas', st.caravansSaved], ['🏴', 'Caravanas saqueadas', st.caravansRobbed],
+        ['💰', 'Baús abertos', st.chests], ['🍺', 'Bebidas tomadas', st.drinks], ['🍻', 'Lucro da taverna', st.tavernGold], ['💍', 'Casamentos', st.marriages], ['👶', 'Filhos', st.children]];
+      body = `<div class="kv stats-kv">${rows.map(([i, n, v]) => `<div>${i} ${n}<b>${v || 0}</b></div>`).join('')}</div>`;
+    } else if (tab === 'dyn') {
+      const kids = G.people.filter(p => p.kin === 'child');
+      const heroes = [...(G.dynasty || []), { name: G.name, sex: P.sex, age: P.age, day: G.day, level: P.level, cur: true, kingdoms: G.civs.filter(c => c.ruler === 'player').map(c => CIV_DEFS[c.id].short) }];
+      body = `<div class="sec">Gerações <span>${heroes.length}</span></div><div class="dyn">${heroes.map((h, i) => `<div class="dyn-row ${h.cur ? 'cur' : ''}"><span class="dyn-n">${i + 1}ª</span>
+          <div><b>${this.esc(h.name)}</b><small>${h.cur ? 'Herói atual' : `Morreu ${this.esc(h.cause)} aos ${h.age} anos, no dia ${h.day}`} · nível ${h.level}${h.kingdoms && h.kingdoms.length ? ' · 👑 ' + h.kingdoms.join(', ') : ''}</small></div></div>`).join('')}</div>
+        <div class="sec" style="margin-top:12px">Filhos <span>${kids.filter(k => k.alive).length} vivos</span></div>
+        <div class="list">${kids.length ? kids.map(k => `<div class="item"><span class="ic">${k.sex === 'm' ? '👦' : '👧'}</span><div class="info"><b>${this.esc(k.name)}</b> · ${k.age} anos${k.alive ? '' : ' · ✝'}
+          <small>${k.prof ? PROFESSIONS[k.prof].icon + ' ' + (k.sex === 'f' ? PROFESSIONS[k.prof].f : PROFESSIONS[k.prof].name) : k.age >= 12 ? 'Sem profissão — converse para escolher' : 'Ainda é criança'}</small></div></div>`).join('') : '<p class="muted">Nenhum filho ainda.</p>'}</div>
+        <div class="kv" style="margin-top:12px"><div>Dias de história<b>${G.day}</b></div><div>Reinos governados<b>${G.civs.filter(c => c.ruler === 'player').length}</b></div><div>Ouro<b>${P.gold}</b></div><div>Dificuldade<b>${DIFFICULTY[G.diff || 'normal'].name}</b></div></div>`;
+    } else {
+      body = (G.diary || []).length ? `<div class="diary">${G.diary.map(e => `<div><em>Dia ${e.day}</em><span>${this.esc(e.text)}</span></div>`).join('')}</div>` : '<p class="muted">Nada escrito ainda.</p>';
+    }
+    this.open('Diário do Herói', `<div class="tabs">${tabs}</div><div class="scroll" data-scroll="diary">${body}</div>`, 'showDiary', [], `${this.esc(G.name)} · ${Object.keys(G.ach || {}).length} conquistas · ${(G.dynasty || []).length + 1}ª geração`);
+  },
+
+  trendIcon(ci, k) { const t = Market.trend(ci, k); return t === 'up' ? ' <span class="bad" title="Preço alto: escassez">▲</span>' : t === 'down' ? ' <span class="ok" title="Preço baixo: fartura">▼</span>' : ''; },
+
+  // ------------------------------------------------------------ títulos de nobreza (no castelo)
+  titleCard(ci) {
+    const t = Court.T(), r = Court.nextReq(ci);
+    const cur = t.lvl >= 0 ? `${Court.title().icon} Você é <b>${this.esc(Court.titleName())}</b>.` : 'Você ainda não tem título de nobreza.';
+    if (!r) return `<div class="card" style="margin-top:10px"><div class="sec">⚜️ Títulos de nobreza</div><p>${cur} Não há título mais alto para conceder.</p></div>`;
+    const other = t.lvl >= 0 && t.civ !== ci ? `<p class="bad">Você serve a ${CIV_DEFS[t.civ].short}. Jurar lealdade a ${CIV_DEFS[ci].short} começa do primeiro título.</p>` : '';
+    return `<div class="card" style="margin-top:10px"><div class="sec">⚜️ Títulos de nobreza <span>serviços prestados aqui: ${Court.service(ci)} · fama ${Court.fame()}</span></div>
+      <p>${cur}</p>${other}
+      <div class="titles">${NOBLE_TITLES.map((nt, i) => `<span class="tchip ${t.civ === ci && t.lvl >= i ? 'on' : ''}">${nt.icon} ${P.sex === 'f' ? nt.f : nt.m}</span>`).join('<span class="tarrow">→</span>')}</div>
+      <div class="sec" style="margin-top:8px">Próximo: ${r.t.icon} ${P.sex === 'f' ? r.t.f : r.t.m}</div>
+      <div class="req">${r.checks.map(([lab, ok, v]) => `<div class="req-row"><span>${ok ? '✔' : '✖'}</span><span>${lab}</span><b class="${ok ? 'ok' : 'bad'}">${v}</b></div>`).join('')}</div>
+      <p class="dt-desc">Vantagens: ${r.t.perks}.</p>
+      <small class="muted">Serviços: caçar bandidos no reino, salvar caravanas, vencer batalhas e torneios, esmagar revoltas, tributos e doações às igrejas.</small>
+      <div class="act-row"><button class="primary" data-act="title" data-c="${ci}" ${r.checks.every(x => x[1]) ? '' : 'disabled'}>${r.t.icon} Pedir o título</button></div></div>`;
+  },
+
+  // ------------------------------------------------------------ conselho real
+  councilHtml(ci) {
+    const S = this.sel, plots = Court.plotsOf(ci), c = G.civs[ci];
+    let h = plots.map(pl => { const p = G.people[pl.pid]; return `<div class="alert">🗡️ <b>${this.esc(People.full(p))}</b> (${COUNCIL[pl.seat].m}) conspira contra você!
+      <div class="act-row"><button data-act="judge" data-p="${pl.id}" data-v="pardon">🤝 Perdoar</button><button data-act="judge" data-p="${pl.id}" data-v="exile">🚪 Banir</button><button class="danger" data-act="judge" data-p="${pl.id}" data-v="execute">⚔️ Executar</button></div></div>`; }).join('');
+    h += `<p class="muted">Cada conselheiro é uma pessoa do reino, com competência ⭐ e lealdade próprias (a amizade com você). Conselheiros desleais podem conspirar; o espião-mor descobre corruptos e traidores.${c.stolen && Court.member(ci, 'spy') ? ` Desvios descobertos até agora: ${c.stolen} 🪙.` : ''}</p><div class="kgrid two">`;
+    for (const seat in COUNCIL) {
+      const d = COUNCIL[seat], p = Court.member(ci, seat);
+      h += `<div class="card"><div class="sec">${d.icon} ${d.m}</div>`;
+      if (p) {
+        const loyal = Math.round(p.aff);
+        h += `<div class="crow2">${this.personLine(p, Families.of(p) ? 'Casa ' + Families.of(p).surname : '')}</div>
+          <div class="kv"><div>Competência<b>${'⭐'.repeat(Math.ceil(p.comp / 2))} ${p.comp}</b></div><div>Lealdade<b class="${loyal < 15 ? 'bad' : loyal > 50 ? 'ok' : ''}">${loyal}</b></div>${p.exposed ? '<div>Situação<b class="bad">CORRUPTO</b></div>' : ''}</div>
+          <div class="act-row"><button data-act="tk" data-op="open" data-id="${p.id}">💬 Falar</button><button data-act="cdismiss" data-c="${ci}" data-s="${seat}">Dispensar</button></div>`;
+      } else h += `<p class="muted">Cargo vago.</p>`;
+      h += `<small class="muted">${d.desc}</small>`;
+      if (S.cseat === seat) {
+        h += '<div class="sec" style="margin-top:8px">Candidatos</div>' + Court.candidates(ci).map(q => `<div class="crow"><span class="ri">${q.sex === 'm' ? '👨' : '👩'}</span><span><b>${this.esc(People.full(q))}</b><small>${People.title(q)}, ${q.age} anos · ⭐ ${q.comp} · lealdade ${Math.round(q.aff)}</small></span>
+          <span class="act-row"><button class="primary" data-act="appoint" data-c="${ci}" data-s="${seat}" data-id="${q.id}">Nomear</button></span></div>`).join('');
+      } else h += `<div class="act-row"><button data-act="cpick" data-s="${seat}">${p ? 'Trocar' : 'Nomear alguém'}</button></div>`;
+      h += '</div>';
+    }
+    return h + '</div>';
+  },
+
+  // ------------------------------------------------------------ casamentos arranjados
+  showMatch(id) {
+    const ch = People.get(id), list = Court.marriageable(ch);
+    const rows = list.map(({ p, kind }) => {
+      const f = Families.of(p), civ = Families.civOf(p);
+      return `<div class="crow"><span class="ri">${kind === 'royal' ? '👑' : '🏛️'}</span><span><b>${this.esc(People.full(p))}</b><small>${People.title(p)}, ${p.age} anos · ${civ >= 0 ? CIV_DEFS[civ].short : ''} · ${kind === 'royal' ? 'aliança entre reinos' : (f ? 'Casa ' + this.esc(f.surname) + ' · lealdade +35' : '')}${f && f.rival === G.playerFam ? ' · fim da rivalidade' : ''}</small></span>
+        <span class="act-row"><button class="primary" data-act="domatch" data-id="${id}" data-q="${p.id}" ${P.gold >= 150 ? '' : 'disabled'}>💒 Casar — 150 🪙</button></span></div>`;
+    }).join('') || '<p class="muted">Nenhum pretendente disponível agora. Herdeiros reais só aceitam filhos de reis e duques.</p>';
+    this.open(`💒 Casamento para ${this.esc(ch.name)}`, `<p>Escolha com quem ${this.esc(ch.name)} vai se casar. ${ch.sex === 'm' ? 'A noiva virá morar com a sua família e levará o sobrenome ' + this.esc(G.surname) + '.' : 'Ela assumirá o sobrenome do marido e irá morar com ele, mas continua sendo sua herdeira.'}</p>
+      <div class="list">${rows}</div><div class="btns"><button data-act="kview" data-v="casa">← Voltar</button></div>`, 'showMatch', [id]);
+  },
+
+  // ------------------------------------------------------------ mercado e caravanas
+  marketHtml() {
+    const S = this.sel; S.cv = S.cv || { to: null, cargo: {}, guards: 1 };
+    const goods = MARKET_GOODS;
+    const head = G.civs.map(c => `<th title="${CIV_DEFS[c.id].name}">${CIV_DEFS[c.id].short}</th>`).join('');
+    const rows = goods.map(k => {
+      const prices = G.civs.map(c => Market.sellPrice(c.id, k)), mx = Math.max(...prices), mn = Math.min(...prices);
+      return `<tr><td>${ITEMS[k].icon} ${ITEMS[k].name}</td>${prices.map((v, ci) => `<td class="${v === mx ? 'ok' : v === mn ? 'bad' : ''}">${v}${Market.trend(ci, k) === 'up' ? '▲' : Market.trend(ci, k) === 'down' ? '▼' : ''}</td>`).join('')}</tr>`;
+    }).join('');
+    const from = Market.origin(), cv = S.cv;
+    const tradeable = Object.keys(P.inv).filter(k => MARKET_GOODS.includes(k) && Inv.count(k) > 0);
+    let car = '';
+    if (from === null) car = '<p class="muted">Vá até um castelo ou vila para montar uma caravana daquele reino.</p>';
+    else {
+      const total = Object.values(cv.cargo).reduce((a, b) => a + b, 0);
+      car = `<p>Partida: <b>${CIV_DEFS[from].name}</b>. Escolha o destino:</p>
+        <div class="tabs">${G.civs.filter(c => c.id !== from).map(c => `<button class="tab ${cv.to === c.id ? 'on' : ''}" data-act="cvdest" data-c="${c.id}">${CIV_DEFS[c.id].short}${Diplo.atWar(from, c.id) ? ' ⚔️' : ''}</button>`).join('')}</div>
+        <div class="list">${tradeable.map(k => `<div class="crow"><span class="ri">${ITEMS[k].icon}</span><span><b>${ITEMS[k].name}</b><small>você tem ${Inv.count(k)} · aqui paga ${Market.sellPrice(from, k)} 🪙${cv.to !== null ? ` · em ${CIV_DEFS[cv.to].short} paga ${Market.sellPrice(cv.to, k)} 🪙` : ''}</small></span>
+          <span class="act-row"><b>${cv.cargo[k] || 0}</b><button data-act="cvadd" data-k="${k}" data-n="-10">−10</button><button data-act="cvadd" data-k="${k}" data-n="10">+10</button><button data-act="cvadd" data-k="${k}" data-n="all">Tudo</button></span></div>`).join('') || '<p class="muted">Você não tem mercadorias de comércio (madeira, metais, couro, tecidos, comida, bebidas...).</p>'}</div>
+        <div class="kv"><div>Guardas<b><button data-act="cvguard" data-n="-1">−</button> ${cv.guards} <button data-act="cvguard" data-n="1">+</button></b></div>
+          <div>Custo<b>${Market.cost(cv.guards)} 🪙</b></div><div>Risco de assalto<b class="bad">${cv.to !== null ? Math.round(Market.risk(from, cv.to, cv.guards) * 100) + '%' : '—'}</b></div>
+          <div>Venda estimada<b class="ok">${cv.to !== null ? Market.estimate(cv.to, cv.cargo) + ' 🪙' : '—'}</b></div><div>Valor aqui<b>${Market.estimate(from, cv.cargo)} 🪙</b></div></div>
+        <div class="act-row"><button class="primary" data-act="cvsend" data-f="${from}" ${cv.to !== null && total > 0 && P.gold >= Market.cost(cv.guards) ? '' : 'disabled'}>🐫 Enviar caravana</button>
+          <small class="muted">Você pode acompanhar e defender a caravana pela estrada. Sem escolta, ela corre o risco de ser assaltada.</small></div>`;
+    }
+    const mine = Market.mine().map(c => `<div class="crow2">🐫 ${Diplo.name(c.from)} → ${Diplo.name(c.to)} · ${Math.round(c.pos / c.path.length * 100)}% do caminho · ${c.cargo.map(g => g.n + ' ' + ITEMS[g.k].name).join(', ')}</div>`).join('');
+    return `<div class="card"><div class="sec">🐫 Suas caravanas</div>${mine || '<p class="muted">Nenhuma na estrada.</p>'}${car}</div>
+      <div class="card" style="margin-top:10px"><div class="sec">📈 Quanto cada reino paga <span>verde = melhor, vermelho = pior</span></div><div class="scroll" style="max-height:420px"><table class="trade mtable"><tr><th>Produto</th>${head}</tr>${rows}</table></div>
+        <small class="muted">▲ escassez (guerra, inverno, caravanas assaltadas) · ▼ fartura. Vender muito de uma vez derruba o preço.</small></div>`;
+  },
+
+  // ------------------------------------------------------------ igreja
+  showChapel(sid) {
+    const s = World.structs[sid], vi = s.village, v = World.villages[vi], ci = s.type === 'cathedral' ? s.owner : v ? v.civ : -1;
+    const priest = vi !== undefined ? Faith.priestOf(vi) : null;
+    const dating = G.people.find(p => p.alive && p.dating);
+    const babies = G.people.filter(p => p.alive && p.kin === 'child' && !p.baptized);
+    const shr = World.shrines || [];
+    const h = `<div class="card hero-card"><div class="hc-ic">⛪</div><div><b>${s.type === 'cathedral' ? 'Catedral de ' + CIV_DEFS[ci].short : 'Capela de ' + this.esc(v.name)}</b><br>
+        <span class="muted">${priest ? `${People.title(priest)} ${this.esc(People.full(priest))} cuida da igreja.` : 'O bispo celebra a missa.'} · sua devoção: 🙏 ${Faith.piety()}</span></div></div>
+      <div class="kgrid two">
+        <div class="card"><div class="sec">🙏 Fé</div><div class="btns col">
+          <button data-act="pray" ${G.prayDay === G.day ? 'disabled' : ''}>🙏 Rezar (uma vez por dia · Bênção)</button>
+          <button data-act="bless">✨ Pedir a bênção do padre — ${Faith.piety() >= 50 ? 'grátis' : '40 🪙'} (Graça Divina)</button>
+          <div class="act-row">${[10, 50, 200].map(n => `<button data-act="donate" data-c="${ci}" data-n="${n}" ${P.gold >= n ? '' : 'disabled'}>💛 Doar ${n}</button>`).join('')}</div></div>
+          <small class="muted">Doações aumentam a devoção, a felicidade do reino e contam como serviço prestado para títulos.</small></div>
+        <div class="card"><div class="sec">💒 Sacramentos</div>
+          ${dating ? (Faith.canWed(dating) ? `<button class="primary" data-act="cwed" data-id="${dating.id}" data-v="${vi}" ${P.gold >= 80 && vi !== undefined ? '' : 'disabled'}>💒 Casar com ${this.esc(dating.name)} aqui — 80 🪙 (sem anel)</button>` : `<p class="muted">Para casar na igreja com ${this.esc(dating.name)}, o romance precisa chegar a 70 (agora ${Math.round(dating.rom)}).</p>`) : '<p class="muted">Namore alguém para poder casar na igreja.</p>'}
+          ${babies.map(b => `<button data-act="baptize" data-id="${b.id}">💧 Batizar ${this.esc(b.name)}</button>`).join('')}
+          <div class="sec" style="margin-top:10px">🕯️ Peregrinações</div>
+          ${shr.map((x, i) => `<div class="crow2">${G.shrines && G.shrines[x.shrine] ? '✔' : '🕯️'} <b>${this.esc(x.sname)}</b> <small class="muted">${Math.round(U.dist(P.x / TILE, P.y / TILE, x.x, x.y))} passos</small> ${G.shrines && G.shrines[x.shrine] ? '<small class="ok">visitado</small>' : `<button data-act="pilgrim" data-i="${i}">Partir</button>`}</div>`).join('')}
+          <small class="muted">Cada santuário visitado dá +15 de vida máxima para sempre.</small></div></div>`;
+    this.open('Igreja', h, 'showChapel', [sid], 'Fé, sacramentos e peregrinações');
+  },
+
+  // ------------------------------------------------------------ arena e torneios
+  showArena(ci) {
+    const tr = Arena.tourney(), card = Arena.fightCard(ci), horse = !!P.horse;
+    const bet = `<label class="betbox">Aposta: <select id="betAmt">${[0, 25, 50, 100, 250, 500].filter(n => n <= P.gold).map(n => `<option value="${n}">${n} 🪙</option>`).join('')}</select></label>`;
+    const tiers = ARENA_TIERS.map((t, i) => `<div class="crow"><span class="ri">${['🥉', '🥈', '🥇'][i]}</span><span><b>${t.name}</b><small>prêmio ${t.prize} 🪙 · aposta paga ${t.odds}× · +${t.fame} fama · recomendado nível ${t.lvl}+</small></span>
+      <span class="act-row"><button class="primary" data-act="duel" data-c="${ci}" data-t="${i}">⚔️ Duelo</button><button data-act="joust" data-c="${ci}" data-t="${i}" ${horse ? '' : 'disabled title="Precisa de cavalo"'}>🐎 Justa</button></span></div>`).join('');
+    const h = `<div class="card hero-card"><div class="hc-ic">🏟️</div><div><b>Arena de ${CIV_DEFS[ci].name}</b><br><span class="muted">Sua fama: 🌟 ${Court.fame()} · ouro ${P.gold} 🪙. Na arena ninguém morre: quem cai primeiro perde.</span></div></div>
+      ${tr ? `<div class="alert gold">🏟️ Grande Torneio em ${CIV_DEFS[tr.ci].short} até o dia ${tr.until}! ${tr.ci === ci ? (tr.won ? 'Você é o campeão deste ano!' : tr.out ? 'Você já foi eliminado.' : `<button class="primary" data-act="tourney" data-c="${ci}" ${P.gold >= 50 ? '' : 'disabled'}>Inscrever-se — 50 🪙 (3 lutas, prêmio 500 🪙)</button>`) : 'Vá até lá para competir.'}</div>` : ''}
+      <div class="kgrid two"><div class="card"><div class="sec">⚔️ Lutar</div>${bet}${tiers}
+        <small class="muted">Justa: três passadas a cavalo. Clique em "Golpear" quando a marca passar pelo centro dourado.</small></div>
+        <div class="card"><div class="sec">💰 Apostar na luta de hoje</div>
+          ${card.done ? '<p class="muted">A luta de hoje já aconteceu. Volte amanhã.</p>' : `<p><b>${this.esc(card.a.name)}</b> (paga ${card.a.odds}×) contra <b>${this.esc(card.b.name)}</b> (paga ${card.b.odds}×)</p>
+          <div class="act-row"><button data-act="betfight" data-c="${ci}" data-s="a">Apostar em ${this.esc(card.a.name.split(' ')[0])}</button><button data-act="betfight" data-c="${ci}" data-s="b">Apostar em ${this.esc(card.b.name.split(' ')[0])}</button></div>
+          <small class="muted">Use o valor escolhido em "Aposta".</small>`}</div></div>`;
+    this.open('Arena', h, 'showArena', [ci], 'Duelos, justas, torneios e apostas');
+  },
+  showJoust() {
+    const j = G.joust;
+    if (!j) return;
+    const t = ARENA_TIERS[j.tier];
+    const h = `<p>Justa contra <b>${this.esc(j.foeName)}</b> (${t.name}). Placar: você <b>${j.me}</b> × <b>${j.foe}</b> ${this.esc(j.foeName.split(' ')[0])} · passada ${Math.min(3, j.pass + 1)}/3</p>
+      <div class="joust"><div class="jbar"><i class="jzone"></i><i class="jzone2"></i><i class="jmark" id="jMark"></i></div></div>
+      <div class="list">${j.log.map(l => `<div class="crow2">${this.esc(l)}</div>`).join('')}</div>
+      ${j.over ? `<div class="alert ${j.result.startsWith('🏆') ? 'gold' : ''}">${this.esc(j.result)}</div><div class="act-row"><button class="primary" data-act="close">Sair</button><button onclick="UI.showArena(${j.ci})">Voltar à arena</button></div>`
+        : `<div class="act-row"><button class="primary big" data-act="jstrike">🐎 Golpear! (Espaço)</button></div>`}`;
+    this.open('🐎 Justa', h, 'showJoust', []);
+    const loop = () => {
+      const m = document.getElementById('jMark');
+      if (!m || !G.joust || G.joust.over || !this.cur || this.cur.fn !== 'showJoust') return;
+      m.style.left = (Arena.joustPos() * 100) + '%';
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  },
+
+  // ------------------------------------------------------------ árvore genealógica e mapa de relações
+  showTree(fid, inKingdom) {
+    const S = this.sel; S.treeFam = fid; S.treeInK = !!inKingdom; S.ttab = S.ttab || 'arvore';
+    const f = Families.get(fid) || Families.ensurePlayer();
+    const tabs = `<div class="tabs">${[['arvore', '🌳 Árvore da família'], ['relacoes', '🕸️ Relações entre as casas']].map(([k, l]) => `<button class="tab ${S.ttab === k ? 'on' : ''}" data-act="ttab" data-t="${k}">${l}</button>`).join('')}</div>`;
+    let body = '';
+    if (S.ttab === 'arvore') body = `<div class="scroll" style="max-height:62vh"><div class="ftree">${this.treeHtml(f)}</div></div>`;
+    else {
+      const rel = Court.relationsOf(f);
+      body = `<div class="relmap-wrap"><canvas id="relMap" width="760" height="460"></canvas>
+        <div class="rel-legend"><span><i style="background:#5fd35f"></i>Parentes por casamento</span><span><i style="background:#6fa8ff"></i>Aliados</span><span><i style="background:#e04848"></i>Rivais</span><small class="muted">Clique numa casa para ver os detalhes.</small></div>
+        <div class="list">${rel.map(x => `<div class="crow2"><span style="color:${x.kind === 'rival' ? '#e04848' : x.kind === 'ally' ? '#6fa8ff' : '#5fd35f'}">${x.kind === 'rival' ? '😠 Rival' : x.kind === 'ally' ? '🤝 Aliada' : '💍 Parente'}</span> · <b>${this.esc(Families.name(x.f))}</b></div>`).join('') || '<p class="muted">Esta casa ainda não tem laços nem rivalidades.</p>'}</div></div>`;
+    }
+    const title = `${this.esc(Families.name(f))} — linhagem e relações`;
+    if (inKingdom) this.open('Reino', this.kviewTabs() + tabs + body, 'showKingdom', [], title);
+    else this.open('Linhagem', tabs + body, 'showTree', [fid], title);
+    if (S.ttab === 'relacoes') this.drawRelMap(f);
+  },
+  treeHtml(f) {
+    const mem = Families.members(f, true);
+    const ids = new Set(mem.map(p => p.id));
+    const node = (p, depth) => {
+      if (depth > 6) return '';
+      const sp = typeof p.spouse === 'number' ? G.people[p.spouse] : null;
+      const kids = G.people.filter(k => k.parents.includes(p.id) && (ids.has(k.id) || k.parents.length) && k.id !== p.id);
+      const card = q => `<span class="tnode ${q.alive ? '' : 'dead'} ${q.sex}"><b>${this.esc(q.name)}</b><small>${q.alive ? `${q.age} anos · ${People.title(q)}` : '✝'}${q.maiden && q.maiden !== q.surname ? ' · nascid' + (q.sex === 'f' ? 'a ' : 'o ') + this.esc(q.maiden) : ''}</small></span>`;
+      return `<li><div class="tcouple">${card(p)}${sp ? '<span class="tring">💍</span>' + card(sp) : ''}</div>${kids.length ? `<ul>${kids.map(k => node(k, depth + 1)).join('')}</ul>` : ''}</li>`;
+    };
+    if (f.player) {
+      // a dinastia do jogador: heróis anteriores, o herói atual e os descendentes
+      const heroes = (G.dynasty || []).map((h, i) => `<span class="tnode dead ${h.sex}"><b>${this.esc(h.name)}</b><small>${i + 1}ª geração · ✝ aos ${h.age}</small></span>`).join('<span class="tarrow">→</span>');
+      const kids = G.people.filter(k => k.parents.includes('player') || k.kin === 'child' || k.kin === 'sibling');
+      const sp = G.family.spouse !== null ? People.get(G.family.spouse) : null;
+      return `${heroes ? `<div class="tline">${heroes}<span class="tarrow">→</span></div>` : ''}<ul class="troot"><li><div class="tcouple"><span class="tnode hero"><b>${this.esc(G.name)} ${this.esc(G.surname)}</b><small>você · ${P.age} anos</small></span>${sp ? '<span class="tring">💍</span><span class="tnode"><b>' + this.esc(sp.name) + '</b><small>' + sp.age + ' anos</small></span>' : ''}</div>
+        ${kids.length ? `<ul>${kids.map(k => node(k, 1)).join('')}</ul>` : ''}</li></ul>`;
+    }
+    // raízes: membros cujos pais não estão na família (os fundadores e quem casou para dentro sem par)
+    const inFam = q => q.parents.some(id => ids.has(id));
+    const roots = mem.filter(p => {
+      if (inFam(p)) return false;
+      const sp = typeof p.spouse === 'number' && ids.has(p.spouse) ? G.people[p.spouse] : null;
+      return !(sp && (inFam(sp) || sp.id < p.id)); // quem casou para dentro aparece ao lado do cônjuge
+    });
+    return `<ul class="troot">${roots.slice(0, 12).map(p => node(p, 0)).join('')}</ul>`;
+  },
+  drawRelMap(f) {
+    const cv = document.getElementById('relMap');
+    if (!cv) return;
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+    const rel = Court.relationsOf(f);
+    const others = Families.ranking().map(x => x.f).filter(o => o !== f && !rel.some(r => r.f === o)).slice(0, Math.max(0, 12 - rel.length));
+    const nodes = [{ f, x: W / 2, y: H / 2, main: true }, ...[...rel.map(r => r.f), ...others].map((o, i, a) => ({ f: o, x: W / 2 + Math.cos(i / a.length * Math.PI * 2 - Math.PI / 2) * (W * 0.38), y: H / 2 + Math.sin(i / a.length * Math.PI * 2 - Math.PI / 2) * (H * 0.38) }))];
+    g.clearRect(0, 0, W, H);
+    const edge = (a, b, kind) => { g.strokeStyle = kind === 'rival' ? '#e04848' : kind === 'ally' ? '#6fa8ff' : '#5fd35f'; g.lineWidth = 2.5; g.setLineDash(kind === 'rival' ? [8, 6] : []); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); g.setLineDash([]); };
+    // laços de todas as casas mostradas
+    for (const a of nodes) for (const r of Court.relationsOf(a.f)) { const b = nodes.find(n => n.f === r.f); if (b && a.f.id < b.f.id) edge(a, b, r.kind); }
+    for (const n of nodes) {
+      const r = n.main ? 30 : 20;
+      g.fillStyle = n.f.player ? PLAYER_COLOR : n.f.color; g.beginPath(); g.arc(n.x, n.y, r, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = n.f.noble ? '#ffd54a' : '#1a1208'; g.lineWidth = 3; g.stroke();
+      g.fillStyle = '#fff6dc'; g.font = `bold ${n.main ? 14 : 12}px sans-serif`; g.textAlign = 'center';
+      g.fillText(n.f.surname, n.x, n.y + r + 15);
+      g.font = '14px sans-serif'; g.fillText(n.f.player ? '🏠' : n.f.noble ? '👑' : '🏛️', n.x, n.y + 5);
+    }
+    cv.onclick = ev => {
+      const rc = cv.getBoundingClientRect(), x = (ev.clientX - rc.left) * W / rc.width, y = (ev.clientY - rc.top) * H / rc.height;
+      const n = nodes.find(q => U.dist(q.x, q.y, x, y) < 26);
+      if (n) this.showFamily(n.f.id);
+    };
+  },
+
+  act(a, d) {
+    switch (a) {
+      case 'close': this.close(); return;
+      case 'open': this[d.fn](); return;
+      case 'equip': Game.equip(d.k); break;
+      case 'unequip': P.equip[d.k] = null; break;
+      case 'quick': Game.setQuick(+d.q, d.k); break;
+      case 'unquick': P.quick[+d.q] = null; break;
+      case 'eat': Game.eat(d.k); break;
+      case 'craft': Game.craft(+d.r, +d.n); break;
+      case 'build': this.close(); Game.startPlacing(d.k); return;
+      case 'save': Game.save(World.structs[+d.s]); break;
+      case 'sleep': this.close(); Game.sleep(World.structs[+d.s]); return;
+      case 'train': Game.train(); break;
+      case 'trade2': Game.trade(this.shopCtx.civ, d.k, +d.n, d.m, People.get(this.shopCtx.owner)); break;
+      case 'tk': this.talkAct(d); return;
+      case 'hire': Game.hire(); break;
+      case 'buyfood': if (P.gold >= +d.p) { P.gold -= +d.p; Inv.add(d.k, 1); G.civs[World.structs[+d.s].owner].treasury += +d.p; } break;
+      case 'rumor': this.showTavern(+d.s); return;
+      case 'tribute': Game.tribute(+d.c); break;
+      case 'claim': this.close(); Game.claimThrone(+d.c); return;
+      case 'war':
+        if (!confirm(`Declarar guerra contra ${CIV_DEFS[+d.c].name}? Os guardas atacarão você e o cerco começará.`)) return;
+        this.close(); Game.declareWar(+d.c); return;
+      case 'siege': this.close(); Game.startSiege(+d.c); return;
+      case 'peace': Game.makePeace(+d.c); break;
+      case 'ktab': this.showKingdom(+d.c); return;
+      case 'tax': Game.setTax(+d.c, +d.d); break;
+      case 'kgold': Game.kGold(+d.c, d.n); break;
+      case 'kres': Game.kRes(+d.c, d.k, +d.n); break;
+      case 'invest': Game.invest(+d.c, d.k); break;
+      case 'krecruit': Game.kRecruit(+d.c); break;
+      case 'kescort': Game.kEscort(+d.c); break;
+      case 'kfest': Game.kFestival(+d.c); break;
+      case 'quit': this.close(); Game.toMenu(); return;
+      case 'chest': this.showChest(+d.s); Sound.play('chest'); return;
+      case 'cmove': Store.move(World.structs[+d.s], d.k, d.q, d.to === '1'); break;
+      case 'cstash': Store.stashResources(World.structs[+d.s]); break;
+      case 'buyride': Ride.buy(d.k, +d.p); break;
+      case 'setslot': G.slot = +d.n; break;
+      case 'export': if (!G.dungeon) Saves.download(Game.snapshot()); return;
+      case 'dipl': Diplo.playerAction(+d.c, +d.o, d.x); break;
+      case 'isel': this.sel.inv = d.k; break;
+      case 'isort': P.invOrder = []; break;
+      case 'setseed': P.seed = d.k; this.msg(`🌱 Semente escolhida: ${ITEMS[d.k].name}. Use a enxada num canteiro arado.`); break;
+      case 'savenow': if (G.siege) { this.msg('Não é possível salvar durante um cerco.', 'bad'); return; } Game.save(null); break;
+      case 'buyanimal': Farm.buyAnimal(World.structs[+d.s], d.k); break;
+      case 'collect': Farm.collect(World.structs[+d.s]); break;
+      case 'ptstock': this.ptStock(World.structs[+d.s], d.k, d.q); break;
+      case 'ptcollect': { const s = World.structs[+d.s]; if (s.till > 0) { P.gold += s.till; this.msg(`Você recolheu ${s.till} 🪙 do caixa da taverna.`, 'gold'); s.till = 0; Sound.play('coin'); } break; }
+      case 'carrob': {
+        const e = G.ents.find(x => x.kind === 'caravan' && x.carId === +d.c && !x.dead);
+        if (!e || !confirm('Assaltar a caravana? Os guardas vão atacar e o reino ficará furioso com você.')) return;
+        Caravans.rob(e.car, e); this.close(); return;
+      }
+      case 'batjoin': { const b = Battles.list().find(x => x.id === +d.b); if (b && d.side !== 'none') Battles.join(b, +d.side); this.close(); return; }
+      case 'dtab': this.sel.dtab = d.t; break;
+      case 'kview': this.sel.kview = d.v; this.showKingdom(); return;
+      case 'craftat': this.showCrafting(d.st); return;
+      case 'bagup': Store.upgradeBag(); break;
+      case 'title': Court.requestTitle(+d.c); break;
+      case 'deploy': this.close(); Sieges.deploy(d.k); return;
+      case 'appoint': Court.appoint(+d.c, d.s, People.get(+d.id)); this.sel.cseat = null; break;
+      case 'cpick': this.sel.cseat = d.s; break;
+      case 'cdismiss': Court.dismiss(+d.c, d.s); break;
+      case 'judge': Court.judge(+d.p, d.v); break;
+      case 'match': this.showMatch(+d.id); return;
+      case 'domatch': { const ch = People.get(+d.id), q = People.get(+d.q); if (Court.arrange(ch, q)) { this.sel.kview = 'casa'; this.showKingdom(); return; } break; }
+      case 'tree': this.showTree(+d.f); return;
+      case 'ttab': this.sel.ttab = d.t; this.showTree(this.sel.treeFam, this.sel.treeInK); return;
+      case 'pray': Faith.pray(); break;
+      case 'donate': Faith.donate(+d.c, +d.n); break;
+      case 'bless': Faith.bless(); break;
+      case 'cwed': Faith.wed(People.get(+d.id), +d.v); break;
+      case 'baptize': Faith.baptize(+d.id); break;
+      case 'pilgrim': Faith.startPilgrimage(+d.i); break;
+      case 'duel': Arena.startDuel(+d.c, +d.t, +(document.getElementById('betAmt') || {}).value || 0); return;
+      case 'tourney': Arena.enterTourney(+d.c); return;
+      case 'joust': Arena.joustStart(+d.c, +d.t, +(document.getElementById('betAmt') || {}).value || 0); return;
+      case 'jstrike': Arena.joustStrike(); this.showJoust(); return;
+      case 'betfight': Arena.bet(+d.c, d.s, +(document.getElementById('betAmt') || {}).value || 0); break;
+      case 'cvdest': this.sel.cv.to = +d.c; break;
+      case 'cvadd': { const cv = this.sel.cv, n = d.n === 'all' ? Inv.count(d.k) : Math.min(Inv.count(d.k), (cv.cargo[d.k] || 0) + +d.n); cv.cargo[d.k] = Math.max(0, n); break; }
+      case 'cvguard': this.sel.cv.guards = U.clamp(this.sel.cv.guards + +d.n, 0, 4); break;
+      case 'cvsend': { const cv = this.sel.cv; if (Market.send(+d.f, cv.to, cv.cargo, cv.guards)) this.sel.cv = { to: null, cargo: {}, guards: 1 }; break; }
+      case 'atlasciv': this.sel.atlas = +d.c; this.sel.kview = 'atlas'; this.showKingdom(); return;
+      case 'famview': this.showFamily(+d.f); return;
+      case 'bizopen': this.showBiz(+d.s); return;
+      case 'bizhire': { const p = People.get(+d.id); Biz.hire(p, World.structs[+d.s]); this.showBiz(+d.s); return; }
+      case 'bizfire2': { Biz.fire(People.get(+d.id)); this.showBiz(+d.s); return; }
+      case 'bizcollect': Biz.collect(World.structs[+d.s]); break;
+      case 'bizauto': { const s = World.structs[+d.s]; s.autosell = !s.autosell; break; }
+      case 'revside': { const r = Families.revolt(+d.r); if (r && !r.side) Families.joinRevolt(r, d.side); break; }
+      case 'famfavor': { const f = Families.get(+d.f); if (f && P.gold >= 200) { P.gold -= 200; f.favor = (f.favor || 0) + 25; f.loyalty = Math.min(100, f.loyalty + 15); this.msg(`A ${Families.name(f)} agradece os favores da coroa (+15 de lealdade).`, 'gold'); } break; }
+      case 'fping': { const f = Families.get(+d.f), v = typeof f.seat === 'number' ? World.villages[f.seat] : null; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
+      case 'found': if (confirm(`Fundar a Vila ${G.surname} aqui? Custa ${FOUND_COST.gold} 🪙, ${FOUND_COST.wood} madeira e ${FOUND_COST.stone} pedra.`)) { if (Families.playerFound()) { this.close(); return; } } break;
+      case 'icat': this.sel.cat = d.c; this.sel.inv = null; break;
+      case 'csel': this.sel.craft = +d.r; break;
+      case 'cst': this.sel.st = d.s; break;
+      case 'ccan': this.sel.can = !this.sel.can; break;
+      case 'bsel': this.sel.build = d.k; break;
+      case 'ksub': this.sel.ksub = d.s; break;
+      case 'kping': {
+        const cp = World.capitals[+d.c];
+        G.ping = { x: cp.door.x + 0.5, y: cp.door.y + 1.5, name: 'Castelo de ' + CIV_DEFS[+d.c].short };
+        this.msg(`📍 Destino marcado: ${G.ping.name}. Siga a seta dourada.`, 'gold');
+        break;
+      }
+    }
+    this.refresh();
+  },
+
+  showMainMenu() { Menu.show(); },
+  // tela de carregamento enquanto o mundo é gerado (a geração leva alguns segundos)
+  loading(text, fn) {
+    const el = document.getElementById('loading'), bar = el.querySelector('.ld-bar i'), lab = el.querySelector('small');
+    el.querySelector('.ld-t').textContent = text;
+    bar.classList.remove('det'); bar.style.width = '';
+    lab.textContent = 'Preparando...';
+    el.classList.remove('hidden');
+    const progress = (p, l) => { bar.classList.add('det'); bar.style.width = Math.round(p * 100) + '%'; if (l) lab.textContent = l + '...'; };
+    setTimeout(async () => {
+      try { await fn(progress); }
+      catch (e) { alert('Erro: ' + e.message); }
+      finally { el.classList.add('hidden'); }
+    }, 40);
+  },
+
+};
+
+const HELP_HTML = `
+<h3>Controles</h3>
+<table class="keys">
+<tr><td>W A S D / Setas</td><td>Andar</td></tr>
+<tr><td>Shift</td><td>Correr (gasta vigor)</td></tr>
+<tr><td>Clique esquerdo / Espaço</td><td>Atacar e coletar recursos (segure o clique para um <b>golpe forte</b>)</td></tr>
+<tr><td>Botão direito / X (segure)</td><td>Bloquear com o escudo</td></tr>
+<tr><td>Z</td><td>Esquivar (rolamento rápido)</td></tr>
+<tr><td>T</td><td>Ordem aos capangas: seguir, atacar, aguardar</td></tr>
+<tr><td>J</td><td>Diário: conquistas, estatísticas e dinastia</td></tr>
+<tr><td>G</td><td>Montar aríete ou catapulta durante um cerco</td></tr>
+<tr><td>Clique numa pessoa</td><td>Conversar com ela</td></tr>
+<tr><td>E</td><td>Conversar com pessoas e interagir (cabana, lojas, taverna, castelo, forja...)</td></tr>
+<tr><td>I</td><td>Inventário (equipar e comer)</td></tr>
+<tr><td>C</td><td>Criação de itens</td></tr>
+<tr><td>B</td><td>Construção</td></tr>
+<tr><td>K</td><td>Gerenciar seu reino</td></tr>
+<tr><td>M</td><td>Mapa do mundo</td></tr>
+<tr><td>F</td><td>Comer a melhor comida da mochila</td></tr>
+<tr><td>Q</td><td>Trocar a ferramenta empunhada (machado, picareta, vara de pesca)</td></tr>
+<tr><td>R</td><td>Montar / desmontar do cavalo</td></tr>
+<tr><td>1 2 3 4</td><td>Usar o item guardado na algibeira</td></tr>
+<tr><td>Esc</td><td>Fechar janelas / pausa</td></tr>
+</table>
+<h3>Primeiros passos</h3>
+<ol>
+<li>Colete <b>madeira</b> nas árvores e <b>pedra</b> nas rochas (com as mãos já dá, mas é lento).</li>
+<li>Crie um <b>Machado</b> e uma <b>Picareta de Pedra</b> (C) e empunhe a ferramenta certa (Q). A picareta de pedra quebra <b>carvão, cobre e estanho</b>.</li>
+<li>Funda <b>bronze</b> (cobre + estanho + carvão) na forja. A picareta de bronze quebra <b>ferro</b>; a de ferro, <b>prata e ouro</b>; a de aço, <b>gemas</b>.</li>
+<li>Colha <b>linho</b> para fazer corda e tecido. Com corda e madeira faça uma <b>Vara de Pesca</b> e, na bancada, um <b>Barco a Remo</b>.</li>
+<li>Construa uma <b>Fogueira</b>, uma <b>Bancada</b> e uma <b>Forja</b> (B) perto da sua cabana.</li>
+<li>Cace cervos e javalis para obter <b>carne</b> e <b>couro</b>. Asse a carne na fogueira.</li>
+<li>Equipe <b>Elmo, Gibão, Calções e Botas</b>: cada peça soma defesa.</li>
+<li>Cada vila tem <b>Armazém, Madeireira, Pedreira e Ferreiro</b>, cada um vendendo e comprando o seu tipo de mercadoria. <b>Caçadores</b> andam pelos arredores vendendo peles, ossos, chifres e presas.</li>
+<li>Chegue perto de qualquer pessoa e aperte <b>E</b> (ou clique no balão 💬) para conversar: elogie, dê presentes (cada um tem um favorito), paquere, recrute <b>capangas</b> e equipe-os com armas e armaduras.</li>
+<li>Com amizade e romance altos, peça em namoro; com um <b>Anel de Prata</b>, peça em casamento. Casados, durmam em casa para ter filhos.</li>
+<li>Com um <b>arco</b> equipado, clique para atirar flechas (ou segure Espaço para mirar no inimigo mais próximo).</li>
+<li>Explore as <b>cavernas</b> nas montanhas e ilhas: monstros, minérios raros, baús de tesouro e chefes com itens lendários.</li>
+<li>A mochila tem <b>limite de peso</b>: guarde itens no Baú, ou compre um <b>cavalo</b> e uma <b>carroça</b> na taverna.</li>
+<li>Cada ano tem 4 <b>estações</b> de 2 dias. No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem.</li>
+<li>Com a <b>Enxada</b>, are a terra, plante sementes e colha; regue com o <b>Regador</b> (encha na água). Chuva também rega.</li>
+<li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
+<li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas todo dia.</li>
+<li><b>Caravanas</b> viajam entre os reinos: escolte-as contra bandidos ou assalte-as.</li>
+<li>Reinos em guerra travam <b>batalhas em campo aberto</b>: escolha um lado e lute com seus capangas.</li>
+<li>Escolha a <b>profissão dos filhos</b> conversando com eles (a partir dos 12 anos).</li>
+<li>Se você morrer é <b>fim de jogo</b>, mas pode continuar a linhagem como um dos seus filhos, que herda tudo.</li>
+<li>Conquiste um castelo (ou compre o trono pela diplomacia) e torne-se <b>Rei</b>!</li>
+</ol>
+<p>Como rei, você controla impostos, tesouro, armazéns, investimentos e a guarnição de cada reino, separados do seu ouro pessoal. Cuide da felicidade do povo ou ele se revoltará.</p>
+<p class="muted">Salve na sua Cabana, nas Casas ou a qualquer momento em Ajustes (Esc). No modo Fácil, ao morrer você volta para casa e perde parte do ouro. Controle (gamepad) e toque também funcionam.</p>`;
