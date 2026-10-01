@@ -25,8 +25,16 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      # usa a versão gravada no commit (o gancho local atualiza a cada commit);
+      # se o commit não mudou version.json (edição pelo site do GitHub), cria uma nova
       - name: Gravar a versão
-        run: echo "{\"version\":\"$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}\"}" > version.json
+        run: |
+          if git diff --quiet HEAD~1 HEAD -- version.json 2>/dev/null; then
+            echo "{\"version\":\"$(date -u +%Y%m%d-%H%M%S)\"}" > version.json
+          fi
+          cat version.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
