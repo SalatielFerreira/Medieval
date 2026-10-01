@@ -93,6 +93,7 @@ const MapView = {
     if (!this.inited) this.init();
     this.el.classList.remove('hidden');
     this.isOpen = true;
+    this.chunkCache = new Map(); // o mundo pode ter mudado (estação, construções) desde a última vez
     this.resize();
     const fit = this.fitZoom();
     if (!this.z) this.centerOn(P.x / TILE, P.y / TILE, Math.min(MAP_MAX_ZOOM, fit * 2.2));
@@ -228,6 +229,19 @@ const MapView = {
     this.tip.style.top = Math.min(h.my + 16, this.ch - hh - 8) + 'px';
   },
 
+  // cópia leve (8 px por bloco) dos pedaços do mundo, só para o mapa; não disputa o cache do jogo
+  mapChunk(gx, gy, canMake) {
+    const key = gx + ',' + gy, M = this.chunkCache || (this.chunkCache = new Map());
+    const c = M.get(key);
+    if (c) return c;
+    if (!canMake) return null;
+    const src = World.getChunk(gx, gy), cv = document.createElement('canvas');
+    cv.width = cv.height = CH * 8;
+    const cg = cv.getContext('2d'); cg.imageSmoothingEnabled = true;
+    cg.drawImage(src, 0, 0, cv.width, cv.height);
+    M.set(key, cv);
+    return 'new';
+  },
   // ------------------------------------------------------------ desenho
   draw() {
     const g = this.cv.getContext('2d'), dpr = window.devicePixelRatio || 1;
@@ -240,8 +254,14 @@ const MapView = {
     if (z >= 9) {
       const tx0 = Math.max(0, Math.floor(ox / CH)), tx1 = Math.min(WORLD_W / CH - 1, Math.floor((ox + cw / z) / CH));
       const ty0 = Math.max(0, Math.floor(oy / CH)), ty1 = Math.min(WORLD_H / CH - 1, Math.floor((oy + ch / z) / CH));
-      for (let gy = ty0; gy <= ty1; gy++) for (let gx = tx0; gx <= tx1; gx++)
-        g.drawImage(World.getChunk(gx, gy), Math.floor(X(gx * CH)), Math.floor(Y(gy * CH)), Math.ceil(CH * z) + 1, Math.ceil(CH * z) + 1);
+      // por baixo, a imagem do mundo inteiro; por cima, os pedaços detalhados que já ficaram prontos
+      g.drawImage(World.mini, X(0), Y(0), WORLD_W * z, WORLD_H * z);
+      let budget = 4; // pedaços novos por quadro: monta aos poucos em vez de travar
+      for (let gy = ty0; gy <= ty1; gy++) for (let gx = tx0; gx <= tx1; gx++) {
+        const c = this.mapChunk(gx, gy, budget > 0);
+        if (c === 'new') { budget--; continue; }
+        if (c) g.drawImage(c, Math.floor(X(gx * CH)), Math.floor(Y(gy * CH)), Math.ceil(CH * z) + 1, Math.ceil(CH * z) + 1);
+      }
       // árvores e rochas como pontos
       const a0 = Math.max(0, Math.floor(ox)), a1 = Math.min(WORLD_W - 1, Math.ceil(ox + cw / z));
       const b0 = Math.max(0, Math.floor(oy)), b1 = Math.min(WORLD_H - 1, Math.ceil(oy + ch / z));
@@ -254,7 +274,8 @@ const MapView = {
       }
       // construções das vilas e acampamentos vistos de cima
       for (const st of World.structs) {
-        if (st.owner === 'player' || st.type === 'castle') continue;
+        // só construções de reinos (santuários e outras sem dono ficam de fora) e visíveis
+        if (st.owner === 'player' || st.type === 'castle' || st.hidden || st.removed || !CIV_DEFS[st.owner]) continue;
         const col = st.type === 'field' ? '#c9a24a' : st.type === 'camp' ? '#6a5034'
           : st.type === 'store' ? Game.civColor(st.owner) : U.shade(CIV_DEFS[st.owner].roof, 0.05);
         g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(X(st.x) + 1, Y(st.y) + 2, st.w * z - 2, st.h * z - 2);

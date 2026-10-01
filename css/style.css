@@ -939,3 +939,5 @@ body.small .inv3 { grid-template-columns: 1fr !important; }
 .mt-i { line-height: 1; vertical-align: baseline; }
 .mt-i::before { top: -0.12em; }
 @media (max-height: 520px) { .menu-wrap { gap: 8px; padding: 10px 16px; } .menu-wrap .mt-line { display: none; } }
+/* mapa aberto ocupa a tela inteira */
+#mapView { inset: 0 !important; border-radius: 0 !important; border: none !important; }
