@@ -20,6 +20,11 @@ const TINFO = [
 function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
 
 // min: nível de ferramenta exigido (0 = mãos, 1 = pedra, 2 = bronze, 3 = ferro, 4 = aço)
+// altitude a partir da qual o terreno vira montanha. Versão 2 do terreno = metade das montanhas da versão 1 (0.735).
+// Jogos salvos antigos continuam usando o corte antigo, para o mundo deles não mudar.
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626 };
+const TERRAIN_V = 2, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
   /* 2 */ { name: 'Pinheiro',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [2, 4], resin: [0, 2] },     regrow: 240,  pc: '#2d5e3a' },
@@ -122,7 +127,7 @@ const World = {
       else if (e < 0.33) t = T.WATER;
       else if (e < 0.36) t = north ? T.SNOW : T.SAND;
       else if (e < 0.635) t = north ? T.SNOW : (m > 0.53 ? T.FOREST : T.GRASS);
-      else if (e < 0.735) t = north ? T.SNOW : T.HILL;
+      else if (e < (this.mountCut || MOUNT_CUT)) t = north ? T.SNOW : T.HILL;
       else t = T.MOUNT;
       this.tiles[i] = t;
     }

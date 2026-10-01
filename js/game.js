@@ -150,7 +150,8 @@ const Game = {
     const name = opts.name;
     G.name = name;
     G.slot = opts.slot || Saves.firstFree() || 1;
-    const ok = await WorldGen.run(WORLD_SEED, onProgress);
+    G.terrain = TERRAIN_V;
+    const ok = await WorldGen.run(WORLD_SEED, onProgress, G.terrain);
     if (!ok) throw new Error('Falha ao gerar o mundo');
     this.initCivs();
     G.family = { spouse: null, tryChild: false, dueDay: 0 };
@@ -185,7 +186,7 @@ const Game = {
   saveInfo() { return Saves.list().filter(Boolean).sort((a, b) => b.savedAt - a.savedAt)[0] || null; },
   snapshot() {
     return {
-      v: 5, slot: G.slot, savedAt: Date.now(), seed: World.seed, ping: G.ping, name: G.name, surname: G.surname, time: G.time, day: G.day, spawn: G.spawn,
+      v: 5, slot: G.slot, savedAt: Date.now(), seed: World.seed, terrain: G.terrain || TERRAIN_V, ping: G.ping, name: G.name, surname: G.surname, time: G.time, day: G.day, spawn: G.spawn,
       player: { x: P.x, y: P.y, hp: P.hp, maxHp: P.maxHp, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
@@ -229,7 +230,9 @@ const Game = {
   async load(slot, onProgress) {
     const s = Saves.read(slot);
     if (!s) return false;
-    const ok = await WorldGen.run(s.seed, onProgress);
+    // jogos salvos antes da mudança das montanhas não têm "terrain": usam o terreno antigo (versão 1)
+    G.terrain = s.terrain || 1;
+    const ok = await WorldGen.run(s.seed, onProgress, G.terrain);
     if (!ok) return false;
     G.slot = slot;
     G.name = s.name; G.ping = s.ping || null; G.time = s.time; G.day = s.day; G.spawn = s.spawn; G.civs = s.civs;

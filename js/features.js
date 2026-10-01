@@ -291,7 +291,8 @@ const WorldGen = {
       MinHeap.toString() + ';',
       fnObj('Dungeon', Dungeon, ['placeCaves']),
       'const World={' + ['idx', 'inb', 'tile', 'generate', 'areaOk', 'areaFree', 'addStruct', 'findPath', 'carveRoad'].map(k => World[k].toString()).join(',') + ',buildMinimap(){}};',
-      `onmessage=e=>{postMessage({hello:true});World.onProgress=(p,l)=>postMessage({progress:p,label:l});
+      `const MOUNT_CUT=${MOUNT_CUT};`,
+      `onmessage=e=>{postMessage({hello:true});World.onProgress=(p,l)=>postMessage({progress:p,label:l});World.mountCut=e.data.cut;
         const ok=World.generate(e.data.seed);
         if(!ok){postMessage({done:true,ok:false});return;}
         const W=World;
@@ -299,7 +300,10 @@ const WorldGen = {
           villages:W.villages,capitals:W.capitals,camps:W.camps,islands:W.islands,caves:W.caves,start:W.start,startCabin:W.startCabin});};`,
     ].join('\n');
   },
-  run(seed, onProgress) {
+  // terrain: versão do terreno (jogos salvos antigos guardam a versão 1)
+  run(seed, onProgress, terrain) {
+    const cut = TERRAIN_CUTS[terrain || TERRAIN_V];
+    World.mountCut = cut;
     return new Promise(resolve => {
       let finished = false;
       const sync = () => {
@@ -331,7 +335,7 @@ const WorldGen = {
         World.buildMinimap();
         resolve(true);
       };
-      w.postMessage({ seed });
+      w.postMessage({ seed, cut });
     });
   },
 };
