@@ -18,6 +18,7 @@ Dê dois cliques em `index.html`. O jogo abre no Chrome ou no Edge e funciona of
 | T | Ordem aos capangas: seguir, atacar, aguardar aqui |
 | J | Diário: conquistas, estatísticas, dinastia |
 | Clique numa pessoa | Conversar com ela |
+| Roda do mouse | Aproximar ou afastar a câmera (zoom) |
 | G | Montar aríete ou catapulta durante um cerco |
 | E | Conversar com pessoas e interagir (cabana, lojas, taverna, castelo, forja...) |
 | I | Inventário (equipar e comer) |

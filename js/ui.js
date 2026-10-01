@@ -35,7 +35,7 @@ const UI = {
     this.buildHud();
     this.initDrag();
     this.talkEl = document.getElementById('talkBtn');
-    this.talkEl.innerHTML = `${icon('chat')}<span>Conversar</span><kbd>E</kbd>`;
+    this.talkEl.innerHTML = `${icon('chat')}<span>Conversar</span>`;
     this.talkEl.addEventListener('click', () => { if (this.talkEl.dataset.id) this.showTalk(+this.talkEl.dataset.id); });
     document.getElementById('gameover').addEventListener('click', e => {
       const b = e.target.closest('[data-go]');
@@ -89,10 +89,10 @@ const UI = {
     const quick = document.getElementById('quick');
     quick.classList.add('glass');
     quick.innerHTML = `<div class="q-tool" data-qt="1" title="Trocar ferramenta (Q)">
-        <span class="q-ic" id="qToolIc"></span><div><small>FERRAMENTA <span class="k">Q</span></small><b id="qToolName"></b><em id="qToolSub"></em></div></div>
-      <div class="q-ord" data-qo="1" title="Ordem aos capangas (T)"><small>ORDEM <span class="k">T</span></small><b id="qOrder"></b></div>
+        <span class="q-ic" id="qToolIc"></span><div><small>FERRAMENTA</small><b id="qToolName"></b><em id="qToolSub"></em></div></div>
+      <div class="q-ord" data-qo="1" title="Ordem aos capangas (T)"><small>ORDEM</small><b id="qOrder"></b></div>
       <div class="q-load"><small>CARGA</small><span id="qLoadT"></span><div class="q-lbar"><i id="qLoad"></i></div></div>
-      <div class="q-bag"><small>ALGIBEIRA</small><div class="q-slots">${[0, 1, 2, 3].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span><span class="k">${q + 1}</span></div>`).join('')}</div></div>`;
+      <div class="q-bag"><small>ALGIBEIRA</small><div class="q-slots">${[0, 1, 2, 3].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span></div>`).join('')}</div></div>`;
     quick.addEventListener('click', e => {
       if (G.state !== 'play' || G.paused) return;
       if (e.target.closest('[data-qt]')) Game.cycleTool();
@@ -102,7 +102,7 @@ const UI = {
     });
     const tb = document.getElementById('toolbar');
     tb.classList.add('glass');
-    const btn = (fn, ic, label, key) => `<button data-tb="${fn}" title="${label} (${key})">${icon(ic)}<small>${label}</small><span class="k">${key}</span></button>`;
+    const btn = (fn, ic, label, key) => `<button data-tb="${fn}" title="${label} (${key})">${icon(ic)}<small>${label}</small></button>`;
     tb.innerHTML = btn('showInventory', 'backpack', 'Mochila', 'I') + btn('showCrafting', 'hammer', 'Criar', 'C') +
       btn('showBuild', 'build', 'Construir', 'B') + btn('showKingdom', 'crown', 'Reino', 'K') +
       btn('showMap', 'map', 'Mapa', 'M') + btn('showDiary', 'book', 'Diário', 'J') + '<span class="sep"></span>' + btn('showSettings', 'gear', 'Ajustes', 'Esc');
@@ -287,10 +287,10 @@ const UI = {
       <div class="card bagcard"><div class="sec">🎒 ${this.esc(bag.name)} <span>nível ${Store.bagLvl()}/10</span></div>
         <div class="q-lbar"><i class="${w > cap ? 'over' : ''}" style="width:${U.clamp(w / cap * 100, 0, 100)}%"></i></div>
         <small class="muted">Carga ${w} / ${cap}${nb ? ` · próximo: ${nb.cap} (na Bancada)` : ' · nível máximo!'}</small></div>
-      <div class="card"><div class="sec">Algibeira <span>teclas 1 a 4 · arraste comida para cá</span></div><div class="bag4">${[0, 1, 2, 3].map(q => {
+      <div class="card"><div class="sec">Algibeira <span>arraste comida para cá</span></div><div class="bag4">${[0, 1, 2, 3].map(q => {
         const k = P.quick[q], it = k && ITEMS[k];
         return `<div class="tile qtile ${it && S.inv === k ? 'on' : ''}" data-drop="quick" data-q="${q}" ${it ? `data-drag="quick" data-k="${k}" data-act="isel"` : ''} title="${it ? it.name + ' (arraste para fora para tirar)' : 'Vazio — arraste uma comida para cá'}">
-          <span class="tk">${q + 1}</span>${it ? `${it.icon}<span class="tn">${Inv.count(k)}</span>` : '<span class="muted">+</span>'}</div>`;
+          ${it ? `${it.icon}<span class="tn">${Inv.count(k)}</span>` : '<span class="muted">+</span>'}</div>`;
       }).join('')}</div></div></div>`;
     const tabs = ['Todos', ...order].filter(c => c === 'Todos' || counts[c])
       .map(c => `<button class="tab ${S.cat === c ? 'on' : ''}" data-act="icat" data-c="${c}">${c}<span class="cnt">${c === 'Todos' ? keys.length : counts[c]}</span></button>`).join('');
@@ -1077,8 +1077,9 @@ const UI = {
     if (!e) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
     el.style.display = 'flex';
     el.dataset.id = e.npc.id;
-    el.style.left = Math.round(e.x - cx) + 'px';
-    el.style.top = Math.round(e.y - cy - (e.npc.age < 14 ? 70 : 86)) + 'px';
+    const z = Game.zoom || 1;
+    el.style.left = Math.round((e.x - cx) * z) + 'px';
+    el.style.top = Math.round((e.y - cy - (e.npc.age < 14 ? 34 : 50)) * z - 36) + 'px';
   },
 
   // ------------------------------------------------------------ fim de jogo e nascimento

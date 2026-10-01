@@ -14,7 +14,7 @@ const Pad = {
     const dz = v => Math.abs(v) < 0.2 ? 0 : v;
     const lx = dz(p.axes[0] || 0), ly = dz(p.axes[1] || 0), rx = dz(p.axes[2] || 0), ry = dz(p.axes[3] || 0);
     G.padMove = lx || ly ? { x: lx, y: ly } : null;
-    if (rx || ry) { G.mouse.wx = P.x + rx * 140; G.mouse.wy = P.y - 14 + ry * 140; G.mouse.x = G.mouse.wx - G.cam.x; G.mouse.y = G.mouse.wy - G.cam.y; }
+    if (rx || ry) { G.mouse.wx = P.x + rx * 140; G.mouse.wy = P.y - 14 + ry * 140; G.mouse.x = (G.mouse.wx - G.cam.x) * (Game.zoom || 1); G.mouse.y = (G.mouse.wy - G.cam.y) * (Game.zoom || 1); }
     else if (G.padMove) { G.mouse.wx = P.x + lx * 80; G.mouse.wy = P.y - 14 + ly * 80; }
     if (G.state !== 'play') { this.prev = b; return; }
     if (UI.isOpen()) {
@@ -46,7 +46,7 @@ const Touch = {
     el.innerHTML = `<div class="tc-stick" id="tcStick"><div class="tc-knob" id="tcKnob"></div></div>
       <div class="tc-btns">
         <button class="tc-b tc-main" data-tc="atk">⚔️<small>Atacar</small></button>
-        <button class="tc-b" data-tc="use">✋<small>Usar (E)</small></button>
+        <button class="tc-b" data-tc="use">✋<small>Usar</small></button>
         <button class="tc-b" data-tc="block">🛡️<small>Bloquear</small></button>
         <button class="tc-b" data-tc="dodge">💨<small>Esquiva</small></button>
         <button class="tc-b sm" data-tc="ride">🐴</button>

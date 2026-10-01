@@ -1,7 +1,9 @@
 'use strict';
 // Núcleo do jogo: estado, loop, controles, combate, economia, cerco e salvamento.
 
-const DAY_LEN = 300; // segundos reais por dia de jogo
+const DAY_LEN = 300;
+// níveis de zoom da câmera (1 = o mais afastado); múltiplos que mantêm os pixels nítidos
+const ZOOM_LEVELS = [1, 1.25, 1.5, 1.75, 2, 2.5]; // segundos reais por dia de jogo
 const SAVE_KEY = 'medieval_save_v3';
 
 const G = {
@@ -67,6 +69,14 @@ const Game = {
     window.addEventListener('keyup', e => { G.keys[e.code] = false; });
     window.addEventListener('blur', () => { G.keys = {}; G.mouse.down = false; });
     this.canvas.addEventListener('mousemove', e => { G.mouse.x = e.clientX; G.mouse.y = e.clientY; });
+    // roda do mouse: aproxima ou afasta a câmera do personagem
+    this.canvas.addEventListener('wheel', e => {
+      if (G.state !== 'play') return;
+      e.preventDefault();
+      const steps = ZOOM_LEVELS, cur = steps.indexOf(this.zoomStep()), i = U.clamp(cur + (e.deltaY < 0 ? 1 : -1), 0, steps.length - 1);
+      G.settings.zoom = steps[i];
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(G.settings)); } catch (err) { /* vale só nesta sessão */ }
+    }, { passive: false });
     this.canvas.addEventListener('mousedown', e => {
       if (G.state !== 'play' || G.paused) return;
       if (e.button === 2) { if (G.placing) G.placing = null; else G.mouse.right = true; return; }
@@ -416,11 +426,15 @@ const Game = {
     Season.weather(dt);
     this.updateAudio(dt);
 
-    // câmera
-    const cw = this.canvas.width, ch = this.canvas.height;
+    // câmera (com zoom suave até o nível escolhido na roda do mouse)
+    const want = this.zoomStep();
+    this.zoom = this.zoom || want;
+    this.zoom += (want - this.zoom) * Math.min(1, dt * 10);
+    if (Math.abs(want - this.zoom) < 0.002) this.zoom = want;
+    const zm = this.zoom, cw = this.canvas.width / zm, ch = this.canvas.height / zm;
     G.cam.x = U.clamp(P.x - cw / 2, 0, Math.max(0, WORLD_W * TILE - cw));
     G.cam.y = U.clamp(P.y - 16 - ch / 2, 0, Math.max(0, WORLD_H * TILE - ch));
-    G.mouse.wx = G.mouse.x + G.cam.x; G.mouse.wy = G.mouse.y + G.cam.y;
+    G.mouse.wx = G.mouse.x / zm + G.cam.x; G.mouse.wy = G.mouse.y / zm + G.cam.y;
 
     // mudança de território
     if (G.ping && U.dist(P.x / TILE, P.y / TILE, G.ping.x, G.ping.y) < 1.6) {
@@ -440,7 +454,7 @@ const Game = {
       const boat = s || npc ? null : this.boatAction();
       UI.prompt(G.placing ? `Posicionando <b>${BUILDINGS[G.placing].name}</b> — clique para construir · botão direito/Esc cancela`
         : P.fishing ? (P.fishing.state === 'bite' ? '<b>❗ O peixe mordeu! Clique ou aperte Espaço AGORA!</b>' : '🎣 Pescando... espere o peixe morder (andar recolhe a linha)')
-        : npc ? `<kbd>E</kbd> Conversar com ${npc.npc.name}` : s ? `<kbd>E</kbd> ${this.interactLabel(s)}` : boat ? `<kbd>E</kbd> ${boat.label}` : null);
+        : npc ? `Conversar com ${npc.npc.name}` : s ? this.interactLabel(s) : boat ? boat.label : null);
     }
   },
 
@@ -1447,21 +1461,26 @@ const Game = {
     for (let k = 0; k < n; k++) G.parts.push({ x, y, vx: U.rnd(-60, 60), vy: U.rnd(-90, -20), life: U.rnd(0.3, 0.7), color, size: U.rint(2, 4) });
   },
 
+  zoomStep() { const z = +G.settings.zoom || 1; return ZOOM_LEVELS.includes(z) ? z : 1; },
   // ================================================================ renderização
   render() {
-    const ctx = this.ctx, cw = this.canvas.width, ch = this.canvas.height;
+    const ctx = this.ctx, sw = this.canvas.width, sh = this.canvas.height;
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#1d4e89'; ctx.fillRect(0, 0, cw, ch);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#1d4e89'; ctx.fillRect(0, 0, sw, sh);
     if (G.state !== 'play') return;
-    const cx = Math.round(G.cam.x), cy = Math.round(G.cam.y);
+    // o mundo é desenhado em escala (zoom); cw/ch são o tamanho da vista em pixels do mundo
+    const z = this.zoom || 1, cw = sw / z, ch = sh / z;
+    const cx = Math.round(G.cam.x * z) / z, cy = Math.round(G.cam.y * z) / z;
     const t = G.realTime;
+    ctx.setTransform(z, 0, 0, z, 0, 0);
 
     // terreno
     const CPX = CH * TILE;
     for (let gy = Math.floor(cy / CPX); gy <= Math.floor((cy + ch) / CPX); gy++)
       for (let gx = Math.floor(cx / CPX); gx <= Math.floor((cx + cw) / CPX); gx++) {
         if (gx < 0 || gy < 0 || gx * CH >= WORLD_W || gy * CH >= WORLD_H) continue;
-        ctx.drawImage(World.getChunk(gx, gy), gx * CPX - cx, gy * CPX - cy, CPX, CPX);
+        ctx.drawImage(World.getChunk(gx, gy), gx * CPX - cx, gy * CPX - cy, CPX + 1 / z, CPX + 1 / z);
       }
 
     // construções planas por baixo, demais ordenadas por profundidade
@@ -1530,11 +1549,13 @@ const Game = {
     // iluminação noturna
     if (G.darkness > 0.01) {
       const l = this.lctx;
+      l.setTransform(1, 0, 0, 1, 0, 0);
       l.globalCompositeOperation = 'source-over';
-      l.clearRect(0, 0, cw, ch);
+      l.clearRect(0, 0, sw, sh);
       l.fillStyle = G.dungeon ? `rgba(6,4,2,${G.darkness})` : `rgba(8,12,38,${G.darkness})`;
-      l.fillRect(0, 0, cw, ch);
+      l.fillRect(0, 0, sw, sh);
       l.globalCompositeOperation = 'destination-out';
+      l.setTransform(z, 0, 0, z, 0, 0);
       const hole = (x, y, r) => {
         const g = l.createRadialGradient(x, y, 0, x, y, r);
         g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
@@ -1552,9 +1573,11 @@ const Game = {
         else if (s.type === 'castle') { hole(sx - 22, (s.y + s.h) * TILE - cy - 20, 110 + flick); hole(sx + 22, (s.y + s.h) * TILE - cy - 20, 110 + flick); }
         else if (s.type === 'cabin' || s.type === 'house' || s.type === 'tavern' || s.type === 'vhouse' || s.type === 'store') hole(sx, sy, 80);
       }
-      ctx.drawImage(this.light, 0, 0);
+      ctx.drawImage(this.light, 0, 0, cw, ch);
     }
 
+    Sieges.drawBoulders(ctx, cx, cy);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     // rótulos
     ctx.textAlign = 'center';
     for (const s of vis) {
@@ -1568,7 +1591,7 @@ const Game = {
       else if (s.type === 'shrine') { label = '🕯️ ' + s.sname; col = '#e8e0ff'; }
       else if (s.type === 'cathedral') { label = '⛪ Catedral'; col = '#e8e0ff'; }
       if (!label) continue;
-      const lx = (s.x + s.w / 2) * TILE - cx, ly = s.y * TILE - cy - (s.type === 'castle' ? 22 : 10);
+      const lx = ((s.x + s.w / 2) * TILE - cx) * z, ly = (s.y * TILE - cy) * z - (s.type === 'castle' ? 22 : 10);
       ctx.font = 'bold 14px Georgia, serif';
       const w = ctx.measureText(label).width + 14;
       ctx.fillStyle = 'rgba(20,14,8,0.7)'; ctx.fillRect(lx - w / 2, ly - 14, w, 19);
@@ -1585,23 +1608,22 @@ const Game = {
       if (e.npc && !e.npc.hostile && d < td) { td = d; talkTo = e; }
     }
     tags.sort((a, b) => a[0] - b[0]);
-    for (const [d, e] of tags.slice(0, 6).reverse()) this.drawTag(ctx, e, cx, cy, d);
+    for (const [d, e] of tags.slice(0, 6).reverse()) this.drawTag(ctx, e, cx, cy, d, z);
     if (G.hoverNpc && U.dist(G.hoverNpc.x, G.hoverNpc.y, P.x, P.y) < 4.5 * TILE) talkTo = G.hoverNpc;
     UI.talkButton(UI.isOpen() || P.dead ? null : talkTo, cx, cy);
     for (const tx of G.texts) {
       ctx.globalAlpha = Math.min(1, tx.life * 2);
       ctx.font = 'bold 13px Georgia, serif';
-      ctx.fillStyle = '#000'; ctx.fillText(tx.text, tx.x - cx + 1, tx.y - cy + 1);
-      ctx.fillStyle = tx.color; ctx.fillText(tx.text, tx.x - cx, tx.y - cy);
+      ctx.fillStyle = '#000'; ctx.fillText(tx.text, (tx.x - cx) * z + 1, (tx.y - cy) * z + 1);
+      ctx.fillStyle = tx.color; ctx.fillText(tx.text, (tx.x - cx) * z, (tx.y - cy) * z);
     }
     ctx.globalAlpha = 1; ctx.textAlign = 'left';
 
-    Season.drawWeather(ctx, cw, ch);
-    Sieges.drawBoulders(ctx, cx, cy);
-    this.drawBossBar(ctx, cw);
-    Sieges.drawGateBar(ctx, cw);
-    this.drawPing(ctx, cx, cy, cw, ch);
-    this.drawMinimap(ctx, cw);
+    this.drawPing(ctx, cx, cy, sw, sh, z);
+    Season.drawWeather(ctx, sw, sh);
+    this.drawBossBar(ctx, sw);
+    Sieges.drawGateBar(ctx, sw);
+    this.drawMinimap(ctx, sw);
   },
 
   drawBossBar(ctx, cw) {
@@ -1616,7 +1638,7 @@ const Game = {
     ctx.fillStyle = '#c0392b'; ctx.fillRect(x, y + 14, w * Math.max(0, b.hp / b.maxHp), 9);
     ctx.textAlign = 'left';
   },
-  drawTag(ctx, e, cx, cy, d) {
+  drawTag(ctx, e, cx, cy, d, z = 1) {
     let name, sub, col = '#d8c9a6';
     if (e.npc) {
       const p = e.npc, rel = People.relation(p);
@@ -1628,7 +1650,7 @@ const Game = {
       name = `${e.tmp.name} · ${e.tmp.age} anos`;
       sub = 'Soldado de ' + CIV_DEFS[e.civ].short;
     }
-    const x = e.x - cx, y = e.y - cy - (e.npc && e.npc.age < 14 ? 34 : 50);
+    const x = (e.x - cx) * z, y = (e.y - cy - (e.npc && e.npc.age < 14 ? 34 : 50)) * z;
     ctx.save();
     ctx.globalAlpha = U.clamp(1.6 - d / (4 * TILE), 0.3, 1);
     ctx.font = '600 11px "Segoe UI", sans-serif';
@@ -1667,7 +1689,7 @@ const Game = {
     ctx.fillStyle = '#ff4040';
     for (const c of World.camps) if (!c.cleared) ctx.fillRect(x0 + (c.x + 1) * k - 1, y0 + (c.y + 1) * k - 1, 3, 3);
     ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
-    ctx.strokeRect(x0 + G.cam.x / TILE * k, y0 + G.cam.y / TILE * k, this.canvas.width / TILE * k, this.canvas.height / TILE * k);
+    ctx.strokeRect(x0 + G.cam.x / TILE * k, y0 + G.cam.y / TILE * k, this.canvas.width / (this.zoom || 1) / TILE * k, this.canvas.height / (this.zoom || 1) / TILE * k);
     const px = x0 + P.x / TILE * k, py = y0 + P.y / TILE * k;
     if (G.ping) {
       const gx = x0 + G.ping.x * k, gy = y0 + G.ping.y * k;
@@ -1687,15 +1709,15 @@ const Game = {
     ctx.fillStyle = 'rgba(15,11,7,0.9)'; ctx.beginPath(); ctx.arc(x0 + S / 2, y0 - 1, 8, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#f1e4c6'; ctx.fillText('N', x0 + S / 2, y0 + 3);
     ctx.fillStyle = 'rgba(15,11,7,0.85)'; ctx.fillRect(x0 + S - 46, y0 + S - 16, 46, 16);
-    ctx.fillStyle = '#e8dcc0'; ctx.font = '600 10px "Segoe UI", sans-serif'; ctx.fillText('M · mapa', x0 + S - 23, y0 + S - 5);
+    ctx.fillStyle = '#e8dcc0'; ctx.font = '600 10px "Segoe UI", sans-serif'; ctx.fillText('mapa', x0 + S - 23, y0 + S - 5);
     ctx.textAlign = 'left';
   },
 
   // seta e marcador do destino marcado no mapa
-  drawPing(ctx, cx, cy, cw, ch) {
+  drawPing(ctx, cx, cy, cw, ch, z = 1) {
     if (!G.ping) return;
     const t = G.realTime;
-    const px = G.ping.x * TILE - cx, py = G.ping.y * TILE - cy;
+    const px = (G.ping.x * TILE - cx) * z, py = (G.ping.y * TILE - cy) * z;
     const dist = MapView.distText(G.ping.x, G.ping.y);
     ctx.textAlign = 'center';
     if (px > 30 && px < cw - 30 && py > 60 && py < ch - 30) {
@@ -1711,7 +1733,7 @@ const Game = {
       ctx.fillStyle = '#ffe9a8'; ctx.fillText(`${G.ping.name} · ${dist}`, px, py - 52);
     } else {
       // bússola ao redor do personagem apontando para o destino
-      const sx = P.x - cx, sy = P.y - cy - 16, a = Math.atan2(py - sy, px - sx);
+      const sx = (P.x - cx) * z, sy = (P.y - cy - 16) * z, a = Math.atan2(py - sy, px - sx);
       const ca = Math.cos(a), sa = Math.sin(a);
       const R = 62 + Math.sin(t * 5) * 3;
       const ex = sx + ca * R, ey = sy + sa * R;
