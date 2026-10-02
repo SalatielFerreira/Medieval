@@ -311,7 +311,7 @@ const WorldGen = {
         finished = true;
         if (onProgress) onProgress(0.15, 'Gerando o mundo (modo simples)');
         // dá tempo de a tela de carregamento aparecer antes do trabalho pesado
-        setTimeout(() => { World.onProgress = null; const ok = World.generate(seed); resolve(ok); }, 60);
+        setTimeout(() => { World.onProgress = null; const ok = World.generate(seed); if (ok) { World.thinMountains(); World.buildMinimap(); } resolve(ok); }, 60);
       };
       let w, alive = false;
       if (this.forceSync || typeof Worker === 'undefined') { sync(); return; }
@@ -332,7 +332,7 @@ const WorldGen = {
         Object.assign(World, d);
         delete World.done; delete World.ok;
         World.regrow = []; World.chunks = new Map(); World.shakes = new Map(); World.sprites = null; World.season = -1;
-        World.buildMinimap();
+        World.thinMountains(); World.buildMinimap();
         resolve(true);
       };
       w.postMessage({ seed, cut });

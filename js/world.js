@@ -520,6 +520,36 @@ const World = {
     const cx = this.mini.getContext('2d');
     cx.fillStyle = `rgb(${r},${g},${b})`; cx.fillRect(i % WORLD_W, (i / WORLD_W) | 0, 1, 1);
   },
+  // metade das montanhas vira colina (as mais baixas). Roda depois da geração, então castelos, vilas e cavernas
+  // continuam no mesmo lugar e os jogos salvos antigos também ficam com menos montanhas.
+  thinMountains() {
+    const N = WORLD_W * WORLD_H, el = [];
+    for (let i = 0; i < N; i++) if (this.tiles[i] === T.MOUNT) el.push(this.elev[i]);
+    this.mountStats = { before: el.length, after: el.length };
+    if (el.length < 2) return;
+    el.sort((a, b) => a - b);
+    const cut = el[Math.floor(el.length / 2)];
+    const hillOres = e => [[0.09, 3], [0.12, 12], [0.145, 13], [0.168, 14], [0.198, 4], [0.208, e > 0.67 ? 5 : 0], [0.218, e > 0.68 ? 15 : 0], [0.223, e > 0.69 ? 16 : 0], [0.24, 2]];
+    const snowOres = e => [[0.15, 2], [0.19, 3], [0.21, 4], [0.225, 12], [0.233, e > 0.6 ? 15 : 0], [0.238, e > 0.62 ? 16 : 0]];
+    const change = [];
+    for (let i = 0; i < N; i++) if (this.tiles[i] === T.MOUNT && this.elev[i] < cut && this.sgrid[i] < 0) change.push(i);
+    for (const i of change) {
+      const x = i % WORLD_W, y = (i / WORLD_W) | 0;
+      // no norte gelado vira neve; no resto, colina
+      let snow = 0, other = 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const t = this.tile(x + dx, y + dy); if (t === T.SNOW) snow++; else if (t === T.HILL || t === T.GRASS || t === T.FOREST) other++; }
+      const t = snow > other ? T.SNOW : T.HILL;
+      this.tiles[i] = t;
+      if (!this.obj[i]) {
+        const h = U.hash2(x, y, this.seed + 7), e = this.elev[i];
+        let o = 0;
+        for (const [lim, id] of (t === T.SNOW ? snowOres : hillOres)(e)) if (h < lim) { o = id; break; }
+        if (o) { this.obj[i] = o; this.objHp[i] = OBJ[o].hp; }
+      }
+    }
+    this.mountStats.after = el.length - change.length;
+    this.chunks = new Map();
+  },
   // troca o terreno de um bloco (estradas) e redesenha o pedaço do mapa
   setTile(i, t) {
     this.tiles[i] = t;

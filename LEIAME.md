@@ -87,6 +87,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 ## Novidades desta versão
 
 - **Calendário de verdade:** os 12 meses do ano (janeiro a dezembro, 365 dias) e cada dia dura 1 minuto real. O jogo começa em 1º de março. As estações seguem os meses: primavera (março a maio), verão (junho a agosto), outono (setembro a novembro) e inverno (dezembro a fevereiro). O aniversário de todos é no 1º de janeiro, e o Grande Torneio começa em 24 de junho.
+- **Metade das montanhas:** as montanhas mais baixas viraram colinas (ou neve, no norte), com minérios. Vale também para jogos salvos antigos; castelos, vilas e cavernas continuam no mesmo lugar.
 - **Recursos renascem em 1 ano:** árvores, pedras e minérios coletados só voltam a crescer 1 ano (do jogo) depois.
 - **Estradas:** B → Estradas. Clique e arraste para abrir estradas, de graça; sobre rio raso vira ponte. "Remover estrada" tira qualquer estrada ou ponte, até as do mapa (nas vilas e castelos dos outros, só o chefe ou o rei). O Muro de Pedra (e a muralha das vilas) custa só 1 pedra.
 - **Chefe de vila:** vire chefe fundando sua vila, **pela força** (converse com o chefe e desafie-o: derrote a milícia; o rei decide se o ataque é uma afronta à coroa ou se a vila se defende sozinha) ou **pela diplomacia** (no castelo, peça a chefia ao rei com boa relação e ouro). O chefe recebe os impostos dos moradores.
