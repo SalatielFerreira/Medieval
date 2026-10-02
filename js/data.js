@@ -281,7 +281,7 @@ const BUILDINGS = {
   biz_smithy: { name: 'Ferraria',        w: 2, h: 2, blocks: true,  cost: { stone: 30, wood: 15, iron_bar: 6, clay: 6 }, desc: 'Empreendimento: até 2 ferreiros. Produz barras de ferro e bronze.' },
   biz_shop:   { name: 'Empório',         w: 3, h: 2, blocks: true,  cost: { wood: 40, stone: 15, cloth: 6 }, desc: 'Empreendimento: até 3 comerciantes. Rende ouro todo dia (mais dentro de um reino).' },
   wall_wood:  { name: 'Paliçada',        w: 1, h: 1, blocks: true,  cost: { wood: 3 },             desc: 'Muro de madeira para proteger sua base.' },
-  wall_stone: { name: 'Muro de Pedra',   w: 1, h: 1, blocks: true,  cost: { stone: 4 },            desc: 'Muro resistente de pedra.' },
+  wall_stone: { name: 'Muro de Pedra',   w: 1, h: 1, blocks: true,  cost: { stone: 1 },            desc: 'Muro resistente de pedra.' },
 };
 
 // Construções das civilizações

@@ -88,7 +88,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 - **Calendário de verdade:** os 12 meses do ano (janeiro a dezembro, 365 dias) e cada dia dura 1 minuto real. O jogo começa em 1º de março. As estações seguem os meses: primavera (março a maio), verão (junho a agosto), outono (setembro a novembro) e inverno (dezembro a fevereiro). O aniversário de todos é no 1º de janeiro, e o Grande Torneio começa em 24 de junho.
 - **Recursos renascem em 1 ano:** árvores, pedras e minérios coletados só voltam a crescer 1 ano (do jogo) depois.
-- **Estradas:** B → Estradas. Clique e arraste para abrir estradas (1 pedra por bloco); sobre rio raso vira ponte (3 madeiras). "Remover estrada" desfaz as suas e devolve o material.
+- **Estradas:** B → Estradas. Clique e arraste para abrir estradas, de graça; sobre rio raso vira ponte. "Remover estrada" desfaz as suas. O Muro de Pedra (e a muralha das vilas) custa só 1 pedra.
 - **Chefe de vila:** vire chefe fundando sua vila, **pela força** (converse com o chefe e desafie-o: derrote a milícia; o rei decide se o ataque é uma afronta à coroa ou se a vila se defende sozinha) ou **pela diplomacia** (no castelo, peça a chefia ao rei com boa relação e ouro). O chefe recebe os impostos dos moradores.
 - **Obras do chefe e do rei:** o chefe (dentro da vila) e o rei (no reino todo) podem abrir e remover estradas, **mudar de lugar** e **demolir** casas, lojas, tavernas, capelas, muralhas e todos os imóveis, e **erguer imóveis novos** nas vilas (B → Reformas e Obras). Castelos, cavernas, acampamentos e santuários não saem do lugar. Suas próprias construções podem ser mudadas e demolidas em qualquer lugar.
 

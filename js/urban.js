@@ -4,7 +4,6 @@
 // fundar, conquistar pela força ou pedir ao rei.
 
 const VILLAGE_R = 16; // raio (em blocos) da área de uma vila
-const ROAD_COST = { stone: 1 }, BRIDGE_COST = { wood: 3 };
 const ROAD_GROUND = [T.GRASS, T.FOREST, T.HILL, T.SAND, T.SNOW];
 // imóveis públicos que chefes e reis podem erguer dentro das vilas
 const CIVIC = {
@@ -16,7 +15,7 @@ const CIVIC = {
   tavern: { name: 'Taverna',   icon: '🍺', w: 3, h: 2, cost: { wood: 35, stone: 15 },              desc: 'Mercenários, cavalos, comida e boatos.', slot: 'tavern' },
   chapel: { name: 'Capela',    icon: '⛪', w: 2, h: 2, cost: { stone: 30, wood: 15 },              desc: 'Igreja da vila, com padre.', slot: 'chapel' },
   well:   { name: 'Poço',      icon: '🪣', w: 1, h: 1, cost: { stone: 12 },                        desc: 'Poço de água para a praça.' },
-  vwall:  { name: 'Muralha',   icon: '🧱', w: 1, h: 1, cost: { stone: 4 },                         desc: 'Trecho de muralha de pedra.' },
+  vwall:  { name: 'Muralha',   icon: '🧱', w: 1, h: 1, cost: { stone: 1 },                         desc: 'Trecho de muralha de pedra.' },
   field:  { name: 'Plantação', icon: '🌾', w: 3, h: 2, cost: { wood: 8 },                          desc: 'Campo de trigo da vila.' },
 };
 // construções que nunca saem do lugar
@@ -71,15 +70,15 @@ const Urban = {
     if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
     const town = this.foreignTown(tx, ty);
     if (town) return `Só o chefe da vila ou o rei pode mexer nas estradas de ${town}`;
-    const cost = k === T.BRIDGE ? BRIDGE_COST : ROAD_COST;
-    if (!Inv.has(cost)) return k === T.BRIDGE ? 'Ponte: faltam 3 madeiras' : 'Estrada: falta 1 pedra';
+
+
     return null;
   },
   buildRoad(tx, ty, quiet) {
     const err = this.roadErr(tx, ty);
     if (err) { if (!quiet || err !== 'Já tem estrada aqui') this.warn(err); return false; }
     const i = World.idx(tx, ty), orig = World.tiles[i], k = this.roadKind(orig);
-    Inv.pay(k === T.BRIDGE ? BRIDGE_COST : ROAD_COST);
+
     World.setTile(i, k);
     World.regrow = World.regrow.filter(r => r.i !== i);
     const E = this.E();
@@ -109,11 +108,11 @@ const Urban = {
     const err = this.unroadErr(tx, ty);
     if (err) { if (!quiet || err !== 'Não há estrada aqui') this.warn(err); return false; }
     const i = World.idx(tx, ty), E = this.E();
-    const mine = E.mine[i] !== undefined, bridge = World.tiles[i] === T.BRIDGE;
+    const mine = E.mine[i] !== undefined;
     const ground = mine ? E.mine[i] : this.groundOf(i);
     World.setTile(i, ground);
     if (mine) { delete E.mine[i]; delete E.roads[i]; } else E.roads[i] = ground;
-    if (mine) Inv.add(bridge ? 'wood' : 'stone', bridge ? 3 : 1); // estrada sua: devolve o material
+
     Game.burst((tx + 0.5) * TILE, (ty + 0.6) * TILE, '#6e4f2e', 5);
     Sound.play('mine', { vol: 0.35 });
     return true;
@@ -318,7 +317,7 @@ const Urban = {
   },
   prompt() {
     const m = this.mode;
-    if (m === 'road') return '🛣️ <b>Abrindo estradas</b> — clique e arraste · 1 pedra por bloco (ponte: 3 madeiras) · botão direito/Esc encerra';
+    if (m === 'road') return '🛣️ <b>Abrindo estradas</b> — clique e arraste · de graça · botão direito/Esc encerra';
     if (m === 'u:unroad') return '⛏️ <b>Removendo estradas</b> — clique e arraste · botão direito/Esc encerra';
     if (m === 'u:demolish') return '💥 <b>Demolir</b> — clique numa construção · botão direito/Esc encerra';
     if (m === 'u:move') return this.pick ? `🔀 Escolha o novo lugar para <b>${this.nameOf(this.pick)}</b> · botão direito solta` : '🔀 <b>Mudar de lugar</b> — clique numa construção · botão direito/Esc encerra';
@@ -364,10 +363,10 @@ const Urban = {
 
   // ------------------------------------------------------------ painel de construção
   info(k) {
-    if (k === 'road') return { name: 'Estrada', icon: '🛣️', cost: ROAD_COST, sub: '1 bloco · clique e arraste', can: Inv.has(ROAD_COST) || Inv.has(BRIDGE_COST), btn: '🛣️ Abrir estradas',
-      desc: 'Abre uma estrada de terra batida, onde se anda 25% mais rápido. Sobre rio raso vira ponte (3 madeiras por bloco). Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode abrir estradas.' };
+    if (k === 'road') return { name: 'Estrada', icon: '🛣️', sub: 'de graça · clique e arraste', can: true, btn: '🛣️ Abrir estradas',
+      desc: 'Abre uma estrada de terra batida, onde se anda 25% mais rápido. Não gasta material. Sobre rio raso vira ponte. Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode abrir estradas.' };
     if (k === 'u:unroad') return { name: 'Remover estrada', icon: '⛏️', sub: 'reforma', can: true, btn: '⛏️ Remover estradas',
-      desc: 'Desfaz as estradas que você abriu (devolve a pedra). Como chefe de vila ou rei, também remove as estradas da sua vila ou do seu reino.' };
+      desc: 'Desfaz as estradas que você abriu. Como chefe de vila ou rei, também remove as estradas da sua vila ou do seu reino.' };
     if (k === 'u:move') return { name: 'Mudar de lugar', icon: '🔀', sub: 'reforma', can: true, btn: '🔀 Escolher a construção',
       desc: 'Clique numa construção e depois no novo lugar. As suas mudam em qualquer lugar; casas, lojas, muralhas e outros imóveis das vilas só como chefe (dentro da vila) ou rei (no reino todo). Castelos, cavernas, acampamentos e santuários não saem do lugar.' };
     if (k === 'u:demolish') return { name: 'Demolir', icon: '💥', sub: 'reforma', can: true, btn: '💥 Escolher a construção',

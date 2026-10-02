@@ -517,7 +517,7 @@ const UI = {
       for (const k of ks) {
         const b = this.binfo(k), tool = !b.cost;
         rows += `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${b.icon}</span>
-          <span><b>${b.name}</b><small>${b.sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Ferramenta' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
+          <span><b>${b.name}</b><small>${b.sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
       }
     }
     const b = this.binfo(S.build);
@@ -1712,7 +1712,7 @@ const HELP_HTML = `
 <li>Explore as <b>cavernas</b> nas montanhas e ilhas: monstros, minérios raros, baús de tesouro e chefes com itens lendários.</li>
 <li>A mochila tem <b>limite de peso</b>: guarde itens no Baú, ou compre um <b>cavalo</b> e uma <b>carroça</b> na taverna.</li>
 <li>O <b>calendário</b> tem os 12 meses do ano (cada dia dura 1 minuto). As <b>estações</b> seguem os meses: primavera (março a maio), verão, outono e inverno (dezembro a fevereiro). No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem. Árvores, pedras e minérios coletados só renascem depois de 1 ano.</li>
-<li>Abra <b>estradas</b> (B → Estradas): 1 pedra por bloco, ou ponte de madeira sobre rio raso. Clique e arraste.</li>
+<li>Abra <b>estradas</b> (B → Estradas): de graça; sobre rio raso vira ponte. Clique e arraste.</li>
 <li>Vire <b>chefe de uma vila</b> fundando a sua, conquistando (converse com o chefe e desafie-o) ou pedindo ao rei no castelo. O chefe (na vila) e o rei (no reino todo) podem criar, mudar de lugar e demolir estradas e imóveis (B → Reformas e Obras).</li>
 <li>Com a <b>Enxada</b>, are a terra, plante sementes e colha; regue com o <b>Regador</b> (encha na água). Chuva também rega.</li>
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
