@@ -350,7 +350,7 @@ const People = {
     return { text: TRAITS[p.trait].fights ? 'Finalmente uma aventura! Vamos!' : 'Está certo, vou com você.', note: `${this.full(p)} agora é seu capanga. Equipe-${p.sex === "m" ? "o" : "a"} pela conversa.` };
   },
   dismiss(p) {
-    p.capanga = false; p.home = p.oldHome || p.home;
+    p.capanga = false; p.post = null; p.home = p.oldHome || p.home;
     for (const e of G.ents) if (e.npc === p) e.dead = true;
     G.spawned.delete(p.id);
     return { text: 'Foi uma honra lutar ao seu lado.', note: `${p.name} voltou para casa.` };

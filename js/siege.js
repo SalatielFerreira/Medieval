@@ -174,7 +174,7 @@ const Sieges = {
     a.state = 'done';
     for (const e of G.ents) if (e.tag === 'asl' + a.id || e.tag === 'def' + a.id || (e.faction === 'engine' && e.assault === a.id)) e.dead = true;
     const civ = a.target.civ, c = G.civs[civ], gen = Court.member(civ, 'general');
-    const defense = c.garrison * 1.3 + c.invest.walls * 4 + (gen ? gen.comp * 1.5 : 0) + (a.target.kind === 'gate' ? 6 : 2) + (a.gate > 0 ? 4 : -4);
+    const defense = c.garrison * 1.3 + c.invest.walls * 4 + (gen ? gen.comp * 1.5 : 0) + (a.target.kind === 'gate' ? 6 : 2) + (a.gate > 0 ? 4 : -4) + Guards.power(a.target);
     const attack = a.str + U.rnd(0, 6);
     const att = G.civs[a.att];
     if (a.str <= 0 || defense >= attack) {

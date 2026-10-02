@@ -278,7 +278,7 @@ const Game = {
     (s.vlife || []).forEach((l, i) => { if (World.villages[i]) Object.assign(World.villages[i], l); });
     Towns.init(); Towns.applyAll();
     Urban.restore(); Families.refresh();
-    for (const p of G.people) if (p.alive && p.capanga) this.spawnCapanga(p);
+    for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
     UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
     return true;
@@ -1169,6 +1169,7 @@ const Game = {
       });
     });
     Biz.ambient(spawnNpc);
+    Guards.ambient();
     Farm.ambient();
   },
   ensureGroup(tag, max, make) {
@@ -1364,13 +1365,13 @@ const Game = {
     const farms = World.structs.filter(s => s.owner === 'player' && s.type === 'farm').length, crop = Season.cur().farm;
     if (farms && crop) { Inv.add('wheat', farms * crop); UI.msg(`🌾 Suas fazendas produziram ${farms * crop} de trigo (${Season.cur().name}).`); }
     else if (farms) UI.msg('❄️ No inverno as fazendas não produzem.');
-    const allies = this.allies();
-    const upkeep = allies.length * 4;
+    const allies = this.allies(), caps = G.people.filter(p => p.alive && p.capanga);
+    const upkeep = caps.length * 4; // seguidores e guardas recebem soldo
     if (upkeep) {
       const k = G.civs.find(c => c.ruler === 'player' && c.treasury >= upkeep);
       if (P.gold >= upkeep) { P.gold -= upkeep; UI.msg(`Você pagou ${upkeep} 🪙 de soldo aos seus soldados.`); }
       else if (k) { k.treasury -= upkeep; UI.msg(`O tesouro de ${CIV_DEFS[k.id].short} pagou ${upkeep} 🪙 de soldo.`); }
-      else { allies[allies.length - 1].dead = true; UI.msg('Um soldado abandonou você por falta de pagamento.', 'bad'); }
+      else { const q = allies.length ? allies[allies.length - 1].npc : caps[caps.length - 1]; if (q) People.dismiss(q); UI.msg('Um soldado abandonou você por falta de pagamento.', 'bad'); }
     }
     for (const c of G.civs) this.tickCiv(c);
     for (const camp of World.camps) if (camp.cleared && G.day >= camp.respawnDay) { camp.cleared = false; camp.left = 4; }
@@ -1383,7 +1384,7 @@ const Game = {
     Farm.dayTick(!!G.rainedToday); G.rainedToday = false;
     Farm.produce(); Farm.tavernTick();
     if (!G.dungeon) { Towns.dayTick(); Caravans.dayTick(); Battles.dayTick(); }
-    Progress.dayTick();
+    Progress.dayTick(); Guards.dayTick();
     if (G.family.dueDay && G.day >= G.family.dueDay) { G.family.dueDay = 0; setTimeout(() => UI.showBirth(), 50); }
     const cd = Calendar.of(G.day);
     if (cd.day === 1) UI.banner(`📅 ${MONTHS[cd.month][0]} do ano ${cd.year}`);

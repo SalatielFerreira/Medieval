@@ -160,7 +160,7 @@ class Creature {
       this.aggroOv = ord === 'attack' ? 15 : ord === 'hold' ? 7 : 0;
     }
     // moradores e animais não ficam amontoados: afastam-se uns dos outros
-    if (this.kind === 'villager' || this.faction === 'pet' || this.kind === 'ally') {
+    if (this.kind === 'villager' || this.faction === 'pet' || this.kind === 'ally' || this.kind === 'sentry') {
       for (const o of G.ents) {
         if (o === this || o.dead || (o.kind !== this.kind && !(this.faction === 'pet' && o.faction === 'pet'))) continue;
         const dx = this.x - o.x, dy = this.y - o.y, dd = dx * dx + dy * dy;
@@ -270,7 +270,7 @@ class Creature {
           hair: lk.hair, hairStyle: lk.hairStyle, beard: lk.beard, beardStyle: lk.beardStyle, skirt: lk.skirt, skin: lk.skin, aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
         break;
       }
-      case 'villager': case 'ally': {
+      case 'villager': case 'ally': case 'sentry': {
         if (this.npc) {
           const lk = People.look(this.npc);
           if (this.npc.capanga && !this.npc.equip.torso) lk.body = PLAYER_COLOR;

@@ -336,6 +336,7 @@ const CREATURES = {
   sheep:    { name: 'Ovelha',    hp: 25,  dmg: 0,  speed: 35,  r: 10, faction: 'pet', xp: 0 },
   caravan:  { name: 'Caravana',  hp: 160, dmg: 0,  speed: 55,  r: 16, faction: 'civ', xp: 0 },
   ally:     { name: 'Soldado',  hp: 60,  dmg: 9,  speed: 125, r: 10, faction: 'player', xp: 0, aggro: 8 },
+  sentry:   { name: 'Guarda',   hp: 60,  dmg: 9,  speed: 110, r: 10, faction: 'player', xp: 0, aggro: 9 }, // capanga de guarda na vila ou no castelo
 };
 
 // prod = produção diária com 150 habitantes

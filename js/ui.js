@@ -8,7 +8,7 @@ const PANEL_ICONS = {
   showInventory: 'backpack', showCrafting: 'hammer', showBuild: 'build', showKingdom: 'crown', showSettings: 'gear', showHelp: 'star',
   showTalk: 'chat', showGift: 'star', showEquipC: 'shield', showShop: 'coin', showTavern: 'users', showCastle: 'castle',
   showRest: 'build', showFarm: 'food', showBarracks: 'shield', showChest: 'backpack', showStable: 'users',
-  showBiz: 'coin', showFamily: 'users', showHire: 'coin', showChapel: 'star', showArena: 'sword', showJoust: 'sword', showTree: 'users', showMatch: 'users',
+  showBiz: 'coin', showFamily: 'users', showHire: 'coin', showGuard: 'shield', showChapel: 'star', showArena: 'sword', showJoust: 'sword', showTree: 'users', showMatch: 'users',
   showAnimals: 'food', showPTavern: 'coin', showCaravan: 'coin', showBattle: 'sword', showDiary: 'book', showProf: 'star',
 };
 const WIDE_PANELS = ['showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree'];
@@ -720,6 +720,7 @@ const UI = {
         <div class="card"><div class="sec">💼 Empreendimentos <span>construa em B → Empreendimentos</span></div>
           ${biz.map(s => { const fc = Biz.forecast(s); return `<div class="famrow biz"><span class="fr-n">${Game.buildIcon(s.type)}</span><span></span><span><b>${BUILDINGS[s.type].name}</b><small>${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários · salários ${fc.wages} 🪙/dia</small></span><span></span><span></span><button data-act="bizopen" data-s="${s.id}">Abrir</button></div>`; }).join('') || '<p class="muted">Nenhum ainda. Construa uma Fazenda Comercial, Serraria, Mina, Empório... e contrate moradores das vilas.</p>'}</div>
       </div>
+      ${this.guardsHtml()}
       <div class="card" style="margin-top:10px"><div class="sec">🏘️ Fundar a Vila ${this.esc(G.surname)}</div>
         ${mine.map(({ v, i }) => `<div class="crow2"><b>${this.esc(v.name)}</b> <small class="muted">${CIV_DEFS[v.civ].short} · nível ${v.level || 1} · ${People.residents(i).length} moradores · rende ${People.residents(i).length * 2} 🪙/dia</small></div>`).join('')}
         <p class="dt-desc">Escolha um lugar aberto (longe de outras vilas e castelos), fique no centro dele e funde uma vila com o nome da sua família. Colonos se mudam para lá, a vila cresce e paga impostos para você todos os dias.</p>
@@ -758,6 +759,26 @@ const UI = {
             ${ruler && !f.noble ? `<button class="primary" data-act="famfavor" data-f="${f.id}" ${P.gold >= 200 ? '' : 'disabled'} title="Aumenta a lealdade e evita revoltas">🎁 Conceder favores — 200 🪙</button>` : ''}</div></div>
       </div>`;
     this.open('Família', body, 'showFamily', [fid], `${f.civ >= 0 ? CIV_DEFS[f.civ].short : ''} · ${mem.length} membros`);
+  },
+
+  // ------------------------------------------------------------ capangas de guarda
+  showGuard(id) {
+    const p = People.get(id);
+    const rows = Guards.places().map(post => {
+      const n = Guards.at(post).length, cap = Guards.cap(post), here = Guards.same(p.post, post);
+      return `<button class="rrow" data-act="tk" data-op="guard" data-k="${Guards.key(post)}" data-id="${id}" ${n >= cap || here ? 'disabled' : ''}><span class="ri">${post.kind === 'village' ? '🏘️' : '🏰'}</span>
+        <span><b>${this.esc(Guards.name(post))}</b><small>${post.kind === 'village' ? 'sua vila (chefe)' : 'seu castelo (rei)'} · guardas ${n}/${cap}</small></span><span class="rs ${n >= cap ? 'mat' : 'ok'}">${here ? 'Aqui' : n >= cap ? 'Lotado' : 'Mandar'}</span></button>`;
+    }).join('') || '<p class="muted">Você não é chefe de nenhuma vila nem rei.</p>';
+    this.open('🛡️ Guarda de ' + this.esc(p.name), `<p>Onde ${this.esc(p.name)} vai montar guarda? ${p.sex === 'f' ? 'Ela' : 'Ele'} patrulha o lugar, enfrenta bandidos, rebeldes e soldados inimigos e ajuda a defender quando um exército ataca. Guardas não contam no limite de seguidores, mas continuam recebendo soldo (4 🪙 por dia).</p>
+      <div class="list">${rows}</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`, 'showGuard', [id]);
+  },
+  guardsHtml() {
+    const list = Guards.all(), places = Guards.places();
+    if (!list.length && !places.length) return '';
+    const rows = list.map(p => { const st = People.capangaStats(p); return `<div class="crow"><span class="ri">🛡️</span><span><b>${this.esc(People.full(p))}</b><small>guarda em ${this.esc(Guards.name(p.post))} · ⚔️ ${st.dmg} · 🛡️ ${st.def}</small></span>
+      <span class="act-row"><button data-act="tk" data-op="unguard" data-id="${p.id}">👣 Chamar de volta</button></span></div>`; }).join('');
+    const sum = places.map(post => `${this.esc(Guards.name(post))}: ${Guards.at(post).length}/${Guards.cap(post)}`).join(' · ');
+    return `<div class="card" style="margin-top:10px"><div class="sec">🛡️ Guardas <span>${sum || 'sem vila nem castelo'}</span></div>${rows || '<p class="muted">Nenhum capanga de guarda. Converse com um capanga e escolha “Mandar fazer guarda”.</p>'}</div>`;
   },
 
   // ------------------------------------------------------------ empreendimento do jogador
@@ -973,6 +994,8 @@ const UI = {
     if (p.job !== undefined && p.job !== null) acts.push(['bizfire', '📤 Demitir do empreendimento']);
     else if (Biz.can(p) === true && Biz.list().length) acts.push(['hiremenu', '💼 Contratar para trabalhar']);
     if (p.capanga) acts.push(['equipc', '🛡️ Equipar capanga'], ['dismiss', '🏠 Dispensar']);
+    if (p.capanga && p.post) acts.push(['unguard', '👣 Voltar a me seguir']);
+    else if (p.capanga && Guards.places().length) acts.push(['guardmenu', '🛡️ Mandar fazer guarda']);
     else if (People.canRecruit(p)) acts.push(['recruit', `🤝 Recrutar como capanga — ${People.recruitCost(p)} 🪙`]);
     if (adult && !p.kin && p.spouse !== 'player') acts.push(['insult', '😠 Insultar']);
     if (p.rank === 'priest') acts.push(['church', '⛪ Assuntos da igreja']);
@@ -1057,6 +1080,9 @@ const UI = {
       case 'shopnpc': this.showShop(RANKS[p.rank].shop, p.home.type === 'village' ? p.home.idx : -1, p.id); return;
       case 'recruit': r = People.recruit(p); break;
       case 'dismiss': r = People.dismiss(p); break;
+      case 'guardmenu': this.showGuard(p.id); return;
+      case 'guard': if (Guards.assign(p, Guards.decode(d.k))) { this.close(); return; } this.showGuard(p.id); return;
+      case 'unguard': { const ok = Guards.recall(p); if (this.cur && this.cur.fn === 'showKingdom') { this.refresh(); return; } if (ok) { this.close(); return; } break; }
       case 'equipc': this.showEquipC(p.id); return;
       case 'ceq': {
         const it = ITEMS[d.k];
@@ -1713,6 +1739,7 @@ const HELP_HTML = `
 <li>A mochila tem <b>limite de peso</b>: guarde itens no Baú, ou compre um <b>cavalo</b> e uma <b>carroça</b> na taverna.</li>
 <li>O <b>calendário</b> tem os 12 meses do ano (cada dia dura 1 minuto). As <b>estações</b> seguem os meses: primavera (março a maio), verão, outono e inverno (dezembro a fevereiro). No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem. Árvores, pedras e minérios coletados só renascem depois de 1 ano.</li>
 <li>Abra <b>estradas</b> (B → Estradas): de graça; sobre rio raso vira ponte. Clique e arraste.</li>
+<li>Como chefe ou rei, mande capangas <b>fazer guarda</b> na sua vila ou no seu castelo (converse com o capanga).</li>
 <li>Vire <b>chefe de uma vila</b> fundando a sua, conquistando (converse com o chefe e desafie-o) ou pedindo ao rei no castelo. O chefe (na vila) e o rei (no reino todo) podem criar, mudar de lugar e demolir estradas e imóveis (B → Reformas e Obras).</li>
 <li>Com a <b>Enxada</b>, are a terra, plante sementes e colha; regue com o <b>Regador</b> (encha na água). Chuva também rega.</li>
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>

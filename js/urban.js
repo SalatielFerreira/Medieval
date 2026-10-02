@@ -474,3 +474,85 @@ const Chiefdom = {
     Sound.play('levelup');
   },
 };
+
+// ====================================================================== capangas de guarda
+// O chefe pode deixar capangas guardando a sua vila e o rei, o castelo. Eles patrulham o lugar,
+// lutam contra quem ameaçar e reforçam a defesa quando um exército ataca. Não contam como seguidores.
+const GUARD_CAP = { village: 6, castle: 12 };
+const Guards = {
+  places() {
+    return [...Urban.myVillages().map(({ i }) => ({ kind: 'village', vi: i })),
+      ...G.civs.filter(c => c.ruler === 'player').map(c => ({ kind: 'castle', civ: c.id }))];
+  },
+  key(post) { return post.kind === 'village' ? 'v' + post.vi : 'c' + post.civ; },
+  decode(k) { return k[0] === 'v' ? { kind: 'village', vi: +k.slice(1) } : { kind: 'castle', civ: +k.slice(1) }; },
+  same(a, b) { return !!(a && b) && this.key(a) === this.key(b); },
+  name(post) { return post.kind === 'village' ? (World.villages[post.vi] || {}).name || '?' : 'Castelo de ' + CIV_DEFS[post.civ].short; },
+  valid(post) {
+    if (post.kind === 'village') { const v = World.villages[post.vi]; return !!v && v.lord === 'player'; }
+    return !!G.civs[post.civ] && G.civs[post.civ].ruler === 'player';
+  },
+  cap(post) { return GUARD_CAP[post.kind]; },
+  at(post) { return G.people.filter(p => p.alive && p.capanga && this.same(p.post, post)); },
+  all() { return G.people.filter(p => p.alive && p.capanga && p.post); },
+  // ponto de guarda (em blocos): a praça da vila ou a frente do portão do castelo
+  spot(post) {
+    if (post.kind === 'village') { const v = World.villages[post.vi]; return { x: v.x + 0.5, y: v.y + 0.5 }; }
+    const d = World.capitals[post.civ].door; return { x: d.x + 0.5, y: d.y + 2.5 };
+  },
+  despawn(p) { for (const e of G.ents) if (e.npc === p) e.dead = true; G.spawned.delete(p.id); },
+  assign(p, post) {
+    if (!p.capanga) return false;
+    if (!this.valid(post)) { UI.msg('Você não manda mais neste lugar.', 'bad'); return false; }
+    if (this.same(p.post, post)) return false;
+    if (this.at(post).length >= this.cap(post)) { UI.msg(`${this.name(post)} já tem ${this.cap(post)} guardas, o máximo.`, 'bad'); return false; }
+    this.despawn(p);
+    p.post = { kind: post.kind, vi: post.vi, civ: post.civ };
+    const s = this.spot(post);
+    if (U.dist(P.x / TILE, P.y / TILE, s.x, s.y) < 30) this.spawn(p);
+    UI.msg(`🛡️ ${People.full(p)} vai montar guarda em ${this.name(post)}.`, 'gold');
+    return true;
+  },
+  recall(p) {
+    if (!p.post) return false;
+    if (Game.allies().length >= Game.followerCap()) { UI.msg('Você já tem seguidores demais. Dispense alguém ou consiga mais espaço (títulos, casas).', 'bad'); return false; }
+    const where = this.name(p.post);
+    this.despawn(p);
+    p.post = null;
+    Game.spawnCapanga(p);
+    UI.msg(`👣 ${p.name} deixou a guarda de ${where} e voltou a seguir você.`, 'gold');
+    return true;
+  },
+  spawn(p) {
+    const s = this.spot(p.post), sp = freeSpotNear(s.x * TILE, s.y * TILE, 4 * TILE);
+    const e = Game.spawn('sentry', sp.x, sp.y, { leash: 7, npc: p });
+    e.aggroOv = 11;
+    G.spawned.set(p.id, e);
+    return e;
+  },
+  // os guardas aparecem no posto quando o jogador está por perto
+  ambient() {
+    if (G.dungeon) return;
+    for (const p of this.all()) {
+      if (G.spawned.has(p.id) || !this.valid(p.post)) continue;
+      const s = this.spot(p.post);
+      if (U.dist(P.x / TILE, P.y / TILE, s.x, s.y) < 30) this.spawn(p);
+    }
+  },
+  // força dos guardas no lugar atacado (para batalhas resolvidas longe do jogador)
+  power(target) {
+    const post = target.kind === 'gate' ? { kind: 'castle', civ: target.civ } : target.kind === 'village' ? { kind: 'village', vi: target.vi } : null;
+    if (!post) return 0;
+    return this.at(post).reduce((s, p) => s + 2 + People.capangaStats(p).dmg / 12, 0);
+  },
+  // quem perdeu a vila ou o castelo volta a seguir o jogador
+  dayTick() {
+    for (const p of this.all()) {
+      if (this.valid(p.post)) continue;
+      const where = this.name(p.post);
+      this.despawn(p); p.post = null;
+      Game.spawnCapanga(p);
+      UI.msg(`${p.name} não pode mais guardar ${where} e voltou para o seu lado.`, 'bad');
+    }
+  },
+};

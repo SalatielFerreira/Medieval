@@ -90,6 +90,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Recursos renascem em 1 ano:** árvores, pedras e minérios coletados só voltam a crescer 1 ano (do jogo) depois.
 - **Estradas:** B → Estradas. Clique e arraste para abrir estradas, de graça; sobre rio raso vira ponte. "Remover estrada" desfaz as suas. O Muro de Pedra (e a muralha das vilas) custa só 1 pedra.
 - **Chefe de vila:** vire chefe fundando sua vila, **pela força** (converse com o chefe e desafie-o: derrote a milícia; o rei decide se o ataque é uma afronta à coroa ou se a vila se defende sozinha) ou **pela diplomacia** (no castelo, peça a chefia ao rei com boa relação e ouro). O chefe recebe os impostos dos moradores.
+- **Guardas:** como chefe de vila ou rei, converse com um capanga e escolha "Mandar fazer guarda": ele patrulha a sua vila (até 6 guardas) ou o seu castelo (até 12), enfrenta quem ameaçar e reforça a defesa quando um exército ataca. Guardas não contam no limite de seguidores, mas recebem soldo. Chame de volta pela conversa ou em Reino → Sua casa.
 - **Obras do chefe e do rei:** o chefe (dentro da vila) e o rei (no reino todo) podem abrir e remover estradas, **mudar de lugar** e **demolir** casas, lojas, tavernas, capelas, muralhas e todos os imóveis, e **erguer imóveis novos** nas vilas (B → Reformas e Obras). Castelos, cavernas, acampamentos e santuários não saem do lugar. Suas próprias construções podem ser mudadas e demolidas em qualquer lugar.
 
 ## Versão anterior (3)
