@@ -11,7 +11,7 @@ const PANEL_ICONS = {
   showBiz: 'coin', showFamily: 'users', showHire: 'coin', showGuard: 'shield', showChapel: 'star', showArena: 'sword', showJoust: 'sword', showTree: 'users', showMatch: 'users',
   showAnimals: 'food', showPTavern: 'coin', showCaravan: 'coin', showBattle: 'sword', showDiary: 'book', showProf: 'star',
 };
-const WIDE_PANELS = ['showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree'];
+const WIDE_PANELS = ['showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree', 'showKingdom', 'showSettings'];
 
 const UI = {
   cur: null,
@@ -27,6 +27,10 @@ const UI = {
       const b = e.target.closest('[data-act]');
       if (!b || b.disabled) return;
       this.act(b.dataset.act, b.dataset);
+    });
+    this.panel.addEventListener('input', e => {
+      const el = e.target;
+      if (el.type === 'range' && el.dataset.set) { const l = el.parentNode.querySelector('.rv'); if (l) l.textContent = Math.round(el.value * 100) + '%'; }
     });
     this.panel.addEventListener('change', e => {
       const el = e.target.closest('[data-set]');
@@ -503,23 +507,24 @@ const UI = {
   },
   showBuild() {
     const S = this.sel;
-    const groups = [['Moradia', ['cabin', 'house', 'manor']], ['Produção', ['campfire', 'workbench', 'forge', 'oven', 'brewery']],
-      ['Fazenda e animais', ['farm', 'coop', 'pen', 'beehive']], ['Empreendimentos (contrate funcionários)', ['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop', 'ptavern']],
-      ['Guarda', ['chest', 'stable']], ['Defesa e exército', ['barracks', 'wall_wood', 'wall_stone']],
-      ['Estradas', ['road', 'u:unroad']], ['Reformas', ['u:move', 'u:demolish']]].map(([g, ks]) => [g, ks.filter(k => BUILDINGS[k] || k.includes(':') || k === 'road')]);
+    // categorias no menu lateral: [chave, ícone, nome, itens]
+    const cats = [['moradia', '🏠', 'Moradia', ['cabin', 'house', 'manor']], ['producao', '🔨', 'Produção', ['campfire', 'workbench', 'forge', 'oven', 'brewery']],
+      ['fazenda', '🐄', 'Fazenda e animais', ['farm', 'coop', 'pen', 'beehive']], ['negocios', '💼', 'Empreendimentos', ['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop', 'ptavern']],
+      ['guarda', '📦', 'Baús e estábulo', ['chest', 'stable']], ['defesa', '🛡️', 'Defesa e exército', ['barracks', 'wall_wood', 'wall_stone']],
+      ['estradas', '🛣️', 'Estradas', ['road', 'u:unroad']], ['reformas', '🔀', 'Reformas', ['u:move', 'u:demolish']]]
+      .map(([k, ic, name, ks]) => [k, ic, name, ks.filter(x => BUILDINGS[x] || x.includes(':') || x === 'road')]);
     const auth = Urban.hasAny();
-    if (auth) groups.push(['Obras da vila (chefe) e do reino (rei)', Object.keys(CIVIC).map(k => 'c:' + k)]);
-    if (S.build.startsWith('c:') && !auth) S.build = 'cabin';
-    if (!BUILDINGS[S.build] && !S.build.includes(':') && S.build !== 'road') S.build = 'cabin';
-    let rows = '';
-    for (const [g, ks] of groups) {
-      rows += `<div class="grp">${g}</div>`;
-      for (const k of ks) {
-        const b = this.binfo(k), tool = !b.cost;
-        rows += `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${b.icon}</span>
-          <span><b>${b.name}</b><small>${b.sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
-      }
-    }
+    if (auth) cats.push(['obras', '🏗️', 'Obras nas vilas', Object.keys(CIVIC).map(k => 'c:' + k)]);
+    const catOf = k => (cats.find(c => c[3].includes(k)) || cats[0])[0];
+    if (S.build && S.build.startsWith('c:') && !auth) S.build = null;
+    if (!S.bcat || !cats.some(c => c[0] === S.bcat)) S.bcat = S.build ? catOf(S.build) : 'moradia';
+    const cat = cats.find(c => c[0] === S.bcat);
+    if (!S.build || !cat[3].includes(S.build)) S.build = cat[3][0];
+    const rows = cat[3].map(k => {
+      const b = this.binfo(k), tool = !b.cost;
+      return `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${b.icon}</span>
+        <span><b>${b.name}</b><small>${b.sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
+    }).join('');
     const b = this.binfo(S.build);
     const req = b.cost ? Object.entries(b.cost).map(([k, n]) => {
       const have = Inv.count(k);
@@ -534,43 +539,162 @@ const UI = {
       ${req ? `<div><div class="sec">Custo</div><div class="req">${req}</div></div>` : ''}
       <div class="act-row"><button class="primary" data-act="${BUILDINGS[S.build] ? 'build' : 'urban'}" data-k="${S.build}" ${b.can ? '' : 'disabled'}>${b.btn}</button></div>
       ${BUILDINGS[S.build] ? '<small class="muted">Depois de clicar, escolha o local perto de você. Botão direito ou Esc cancela. Não dá para construir sobre estradas ou água, nem dentro das cidades dos outros.</small>' : ''}
-      ${power}`;
-    this.open('Construção', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail">${detail}</div></div>`,
+      ${['estradas', 'reformas', 'obras'].includes(S.bcat) ? power : ''}`;
+    const ready = c => c[3].filter(k => { const x = this.binfo(k); return x.cost && x.can; }).length;
+    const groups = [['Sua base', cats.slice(0, 6).map(c => [c[0], c[1], c[2], ready(c)])], ['Estradas e vilas', cats.slice(6).map(c => [c[0], c[1], c[2]])]];
+    this.open('Construção', this.navHtml(groups, S.bcat, 'bcat', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail">${detail}</div></div>`),
       'showBuild', [], 'Erga sua base, abra estradas e reforme as vilas');
   },
 
-  // Reino: abas por reino governado e seções organizadas
+  // ============================================================ menu lateral (Reino, Ajustes e Construção)
+  // groups: [[título do grupo, [[chave, ícone, nome, número, alerta]]]]
+  navHtml(groups, cur, act, body) {
+    const item = ([k, ic, label, badge, warn]) => `<button class="snav-i ${cur === k ? 'on' : ''}" data-act="${act}" data-k="${k}"><span class="si">${ic}</span><span class="sl">${label}</span>${badge !== undefined && badge !== '' && badge !== 0 ? `<em class="${warn ? 'warn' : ''}">${badge}</em>` : ''}</button>`;
+    return `<div class="navlay"><nav class="snav">${groups.map(([title, items]) => (title ? `<div class="snav-g">${title}</div>` : '') + items.map(item).join('')).join('')}</nav>
+      <div class="snav-body" data-scroll="snav">${body}</div></div>`;
+  },
+  pageHead(ic, title, sub) { return `<div class="pg-head"><span class="pg-ic">${ic}</span><div><h3>${title}</h3>${sub ? `<small>${sub}</small>` : ''}</div></div>`; },
+
+  // ============================================================ Reino
+  // Você (visão geral, coroa, família, vilas e guardas, empreendimentos) · Seus reinos (um por reino) · O mundo
   showKingdom(ci) {
-    const S = this.sel;
-    const ruled = G.civs.filter(c => c.ruler === 'player');
-    S.kview = S.kview || 'meu';
-    if (S.kview !== 'meu') { this.showKingdomInfo(); return; }
-    if (!ruled.length) {
-      const rows = G.civs.map(c => {
-        const d = CIV_DEFS[c.id], r = Math.round(c.relation);
-        return `<div class="relrow"><span class="cdot" style="background:${Game.civColor(c.id)}"></span>
-          <span><b>${d.name}</b><small>${this.esc(c.rulerName)} · guarnição ${c.garrison} · população ${c.pop}</small></span>
-          <span class="pbar"><i style="left:50%;width:${Math.abs(r) / 2}%;${r < 0 ? 'transform:translateX(-100%);background:#c0392b' : 'background:#5fd35f'}"></i><em></em></span>
-          <span class="rlab">${r} · ${Game.relationText(c)}${c.atWar ? ' <span class="badge">GUERRA</span>' : ''}</span>
-          <button data-act="kping" data-c="${c.id}" title="Marcar o castelo como destino">📍</button></div>`;
-      }).join('');
-      this.open('Reino', `${this.kviewTabs()}<div class="card hero-card"><div class="hc-ic">👑</div><div><b>Você ainda não governa nenhum reino.</b><br><span class="muted">Escolha seu caminho para a coroa:</span></div></div>
-        <div class="kgrid two">
-          <div class="card"><div class="sec">⚔️ Pela força</div><ol class="steps"><li>Reúna capangas e equipe-os bem.</li><li>No castelo, declare guerra.</li><li>Derrote toda a guarnição.</li><li>Vença o soberano diante dos portões.</li></ol></div>
-          <div class="card"><div class="sec">📜 Pela diplomacia</div><ol class="steps"><li>Venda nas lojas, pague tributos e caçe bandidos.</li><li>Alcance relação 75 ou mais.</li><li>Junte 1500 moedas.</li><li>Reivindique o trono no castelo.</li></ol></div>
-        </div>
-        <div class="sec" style="margin-top:14px">Relações com os ${G.civs.length} reinos</div><div class="rels">${rows}</div>
-        ${this.newsHtml()}`, 'showKingdom', [ci], 'Conquiste terras e governe a economia');
-      return;
+    const S = this.sel, ruled = G.civs.filter(c => c.ruler === 'player');
+    if (ci !== undefined && ci >= 0 && G.civs[ci] && G.civs[ci].ruler === 'player') S.knav = 'k:' + ci;
+    if (!S.knav) S.knav = ruled.length ? 'k:' + ruled[0].id : 'overview';
+    if (S.knav.startsWith('k:') && !ruled.some(c => 'k:' + c.id === S.knav)) S.knav = ruled.length ? 'k:' + ruled[0].id : 'overview';
+    const mine = Urban.myVillages(), alerts = this.kAlerts();
+    const groups = [['Você', [['overview', '🏠', 'Visão geral', alerts.length, alerts.length > 0], ['crown', '👑', 'Coroa e títulos'], ['family', '👪', 'Família'],
+      ['villages', '🏘️', 'Vilas e guardas', mine.length], ['biz', '💼', 'Empreendimentos', Biz.list().length]]]];
+    if (ruled.length) groups.push(['Seus reinos', ruled.map(c => ['k:' + c.id, `<span class="cdot" style="background:${Game.civColor(c.id)}"></span>`, CIV_DEFS[c.id].short,
+      c.rebel > 0 || c.atWar ? '!' : '', c.rebel > 0 || c.atWar])]);
+    groups.push(['O mundo', [['atlas', '🗺️', 'Os 7 reinos'], ['families', '🏛️', 'Famílias'], ['market', '📈', 'Mercado e caravanas', Market.mine().length],
+      ['news', '📜', 'Crônicas e guerras', Diplo.D().wars.length], ['tree', '🌳', 'Linhagens']]]);
+    const page = this.kPage(S.knav);
+    this.open('Reino', this.navHtml(groups, S.knav, 'knav', page), 'showKingdom', [], 'Você, seus reinos e o mundo');
+    if (S.knav === 'tree' && S.ttab === 'relacoes') this.drawRelMap(Families.ensurePlayer());
+  },
+  // avisos importantes (aparecem na Visão geral)
+  kAlerts() {
+    const out = [];
+    for (const c of G.civs.filter(x => x.ruler === 'player')) {
+      const s = CIV_DEFS[c.id].short, fc = Game.civForecast(c);
+      if (c.rebel > 0) out.push([`⚠️ ${s}: o povo está à beira da revolta (${c.rebel}/3).`, 'k:' + c.id]);
+      if (fc.wheat < fc.need) out.push([`🌾 ${s}: falta trigo, o povo vai passar fome.`, 'k:' + c.id]);
+      for (const pl of Court.plotsOf(c.id)) out.push([`🗡️ ${s}: conspiração descoberta no conselho.`, 'k:' + c.id]);
+      for (const r of (G.revolts || []).filter(r => !r.done && r.civ === c.id)) out.push([`🔥 ${s}: a ${Families.name(Families.get(r.fam) || { surname: '?' })} se revoltou.`, 'k:' + c.id]);
     }
-    if (ci === undefined || ci < 0 || G.civs[ci].ruler !== 'player') ci = this.kTab >= 0 && G.civs[this.kTab] && G.civs[this.kTab].ruler === 'player' ? this.kTab : ruled[0].id;
-    this.kTab = ci;
-    const c = G.civs[ci], d = CIV_DEFS[ci], fc = Game.civForecast(c);
+    for (const a of (G.assaults || []).filter(a => a.state !== 'done')) out.push([`🚩 ${Diplo.name(a.att)} ${a.state === 'march' ? 'marcha contra' : 'ataca'} ${Sieges.targetName(a)}.`, 'villages']);
+    if (G.vwar && World.villages[G.vwar.vi]) out.push([`⚔️ Ataque a ${World.villages[G.vwar.vi].name}: faltam ${G.vwar.left} milicianos.`, 'villages']);
+    for (const c of G.civs) if (c.ruler !== 'player' && c.atWar) out.push([`⚔️ ${CIV_DEFS[c.id].short} está em guerra com você.`, 'crown']);
+    return out;
+  },
+  // próximos passos sugeridos conforme o que o jogador ainda não fez
+  nextSteps() {
+    const ruled = G.civs.some(c => c.ruler === 'player'), out = [];
+    if (!Court.title() && !ruled) out.push(['⚜️', 'Ganhe um título de nobreza: venda nas lojas, cace bandidos e peça o título no castelo (Cavaleiro: relação 25+ e nível 3).', 'crown']);
+    if (!Urban.myVillages().length && !ruled) out.push(['🏘️', 'Torne-se chefe de uma vila: peça ao rei no castelo, desafie o chefe na conversa ou funde a sua (Barão ou mais).', 'villages']);
+    if (G.family.spouse === null) out.push(['💍', 'Case-se: faça amizade, namore e peça em casamento com um Anel de Prata (ou na capela).', 'family']);
+    if (!Biz.list().length) out.push(['💼', 'Abra um empreendimento (Construir → Empreendimentos) e contrate moradores.', 'biz']);
+    if (Urban.myVillages().length && !Guards.all().length) out.push(['🛡️', 'Deixe capangas de guarda nas suas vilas: converse com um capanga.', 'villages']);
+    if (!ruled) out.push(['👑', 'Conquiste um reino pela força ou compre o trono pela diplomacia.', 'crown']);
+    return out.slice(0, 4);
+  },
+  kPage(nav) {
+    const S = this.sel, ruled = G.civs.filter(c => c.ruler === 'player');
+    const relRow = c => {
+      const d = CIV_DEFS[c.id], r = Math.round(c.relation);
+      return `<div class="relrow"><span class="cdot" style="background:${Game.civColor(c.id)}"></span>
+        <span><b>${d.name}</b><small>${this.esc(c.rulerName)} · guarnição ${c.garrison} · população ${c.pop}</small></span>
+        <span class="pbar"><i style="left:50%;width:${Math.abs(r) / 2}%;${r < 0 ? 'transform:translateX(-100%);background:#c0392b' : 'background:#5fd35f'}"></i><em></em></span>
+        <span class="rlab">${c.ruler === 'player' ? '<span class="ok">seu reino</span>' : `${r} · ${Game.relationText(c)}`}${c.atWar ? ' <span class="badge">GUERRA</span>' : ''}</span>
+        <button data-act="kping" data-c="${c.id}" title="Marcar o castelo como destino">📍</button></div>`;
+    };
+    if (nav === 'overview') {
+      const t = Game.playerTitle(), f = Families.ensurePlayer(), mine = Urban.myVillages();
+      const link = (k, label, val) => `<button class="stile link" data-act="knav" data-k="${k}"><small>${label}</small><b>${val}</b></button>`;
+      const alerts = this.kAlerts(), steps = this.nextSteps();
+      return this.pageHead(t.king ? '👑' : '🛡️', `${this.esc(G.name)} ${this.esc(G.surname || '')}`, `${this.esc(t.text)} · nível ${P.level} · ${P.age} anos · ${Calendar.full(G.day)}`)
+        + (alerts.length ? `<div class="card"><div class="sec">⚠️ Atenção</div>${alerts.map(([txt, k]) => `<div class="alert row">${this.esc(txt)}<button data-act="knav" data-k="${k}">Ver</button></div>`).join('')}</div>` : '')
+        + `<div class="card"><div class="sec">Seus domínios <span>clique para abrir</span></div><div class="tiles big">
+          ${link(ruled.length ? 'k:' + ruled[0].id : 'crown', 'Reinos governados', ruled.length)}${link('villages', 'Vilas que você chefia', mine.length)}
+          ${link('biz', 'Empreendimentos', Biz.list().length)}${link('villages', 'Guardas', Guards.all().length)}
+          ${link('family', 'Família', (Families.members(f).length + 1) + (Families.members(f).length ? ' pessoas' : ' pessoa'))}${link('crown', 'Título', Court.title() ? Court.title().icon + ' ' + this.esc(Court.titleName()) : '—')}</div></div>
+        <div class="card"><div class="sec">Recursos pessoais</div><div class="tiles big">
+          <div class="stile"><small>Ouro</small><b>${P.gold} 🪙</b></div><div class="stile"><small>Influência</small><b>⭐ ${Families.influence(f)}</b></div>
+          <div class="stile"><small>Capangas</small><b>${Game.allies().length} / ${Game.followerCap()}</b></div><div class="stile"><small>Fama</small><b>🌟 ${Court.fame()}</b></div>
+          <div class="stile"><small>Devoção</small><b>🙏 ${Faith.piety()}</b></div><div class="stile"><small>Caravanas na estrada</small><b>🐫 ${Market.mine().length}</b></div></div></div>
+        ${steps.length ? `<div class="card"><div class="sec">Próximos passos</div><div class="nextsteps">${steps.map(([ic, txt, k]) => `<button class="nstep" data-act="knav" data-k="${k}"><span>${ic}</span><span>${txt}</span><b>›</b></button>`).join('')}</div></div>` : ''}`;
+    }
+    if (nav === 'crown') {
+      const t = Court.T();
+      const titleTxt = Court.title() ? `${Court.title().icon} Você é <b>${this.esc(Court.titleName())}</b>. Vantagens: ${Court.title().perks}.` : 'Você ainda não tem título de nobreza.';
+      return this.pageHead('👑', 'Coroa e títulos', ruled.length ? `Você governa ${ruled.map(c => CIV_DEFS[c.id].short).join(', ')}` : 'Os caminhos até o trono')
+        + `<div class="card"><div class="sec">⚜️ Título de nobreza</div><p>${titleTxt}</p>
+          <div class="titles">${NOBLE_TITLES.map((nt, i) => `<span class="tchip ${t.lvl >= i ? 'on' : ''}">${nt.icon} ${P.sex === 'f' ? nt.f : nt.m}</span>`).join('<span class="tarrow">→</span>')}</div>
+          <small class="muted">Peça títulos no castelo de um reino (aperte E na porta do castelo). Cada um exige relação, serviços prestados, nível e uma taxa.</small></div>
+        <div class="kgrid two">
+          <div class="card"><div class="sec">⚔️ Coroa pela força</div><ol class="steps"><li>Reúna capangas e equipe-os bem.</li><li>No castelo, declare guerra.</li><li>Derrube o portão (aríete, catapulta) e vença a guarnição.</li><li>Derrote o soberano diante dos portões.</li></ol></div>
+          <div class="card"><div class="sec">📜 Coroa pela diplomacia</div><ol class="steps"><li>Venda nas lojas, pague tributos e cace bandidos.</li><li>Alcance relação 75 (Duque: 60).</li><li>Junte 1500 moedas (Duque: 800).</li><li>Reivindique o trono no castelo.</li></ol></div></div>
+        <div class="card"><div class="sec">Relações com os ${G.civs.length} reinos <span>📍 marca o castelo no mapa</span></div><div class="rels">${G.civs.map(relRow).join('')}</div></div>`;
+    }
+    if (nav === 'family') {
+      const f = Families.ensurePlayer(), mem = Families.members(f).filter(p => p.alive);
+      const kids = mem.filter(p => p.kin === 'child' && p.age >= 16 && p.spouse === null);
+      const role = p => p.spouse === 'player' ? 'cônjuge' : p.kin === 'child' ? (p.prof ? PROFESSIONS[p.prof].icon + ' ' + (p.sex === 'f' ? PROFESSIONS[p.prof].f : PROFESSIONS[p.prof].name) : 'filh' + (p.sex === 'f' ? 'a' : 'o')) : p.kin || '';
+      return this.pageHead('👪', `Casa ${this.esc(G.surname)}`, `Influência ⭐ ${Families.influence(f)} · ${mem.length + 1} membros`)
+        + `<div class="card"><div class="sec">Membros <span>converse com eles para escolher profissões e ter filhos</span></div>
+          <div class="crow2">${this.personLine('player')}</div>
+          ${mem.map(p => `<div class="crow2">${this.personLine(p, role(p))} ${p.alive ? `<button data-act="tk" data-op="open" data-id="${p.id}">💬</button>` : ''}</div>`).join('') || '<p class="muted">Case-se e tenha filhos para a sua casa crescer. Se você morrer, continua o jogo como um dos filhos.</p>'}</div>
+        ${kids.length ? `<div class="card"><div class="sec">💒 Casamentos arranjados <span>150 🪙</span></div>${kids.map(k => `<div class="crow2">${this.personLine(k)} <button data-act="match" data-id="${k.id}">Arranjar casamento</button></div>`).join('')}
+          <small class="muted">Case seus filhos com herdeiros de outros reinos (alianças) ou com as famílias mais poderosas (lealdade e fim de rivalidades).</small></div>` : ''}
+        <div class="act-row"><button data-act="knav" data-k="tree">🌳 Árvore da família e relações</button></div>`;
+    }
+    if (nav === 'villages') {
+      const mine = Urban.myVillages(), site = Families.playerSite(), have = k => k === 'gold' ? P.gold : Inv.count(k);
+      const vrow = ({ v, i }) => { const res = People.residents(i).length, post = { kind: 'village', vi: i };
+        return `<div class="crow"><span class="ri">🏘️</span><span><b>${this.esc(v.name)}</b><small>${CIV_DEFS[v.civ].short} · nível ${v.level || 1} · ${res} moradores · impostos ${res * Court.villageTax()} 🪙/dia · guardas ${Guards.at(post).length}/${Guards.cap(post)}</small></span>
+          <span class="act-row"><button data-act="vping" data-v="${i}" title="Marcar no mapa">📍</button></span></div>`; };
+      return this.pageHead('🏘️', 'Vilas e guardas', 'O chefe recebe impostos e manda nas estradas e nos imóveis da vila')
+        + `<div class="card"><div class="sec">Vilas que você chefia <span>${mine.length}</span></div>${mine.map(vrow).join('') || '<p class="muted">Nenhuma ainda.</p>'}
+          <small class="muted">Como chefe, use Construir → Reformas e Obras para mudar, demolir e erguer imóveis e estradas dentro da vila.</small></div>
+        ${this.guardsHtml()}
+        <div class="card"><div class="sec">Como virar chefe de uma vila</div><div class="kgrid">
+          <div class="mini-card"><b>📜 Pedir ao rei</b><small>No castelo do reino, com boa relação e ouro.</small></div>
+          <div class="mini-card"><b>⚔️ Conquistar</b><small>Converse com o chefe da vila e desafie-o. O rei decide se é uma afronta.</small></div>
+          <div class="mini-card"><b>🏗️ Fundar</b><small>A Vila ${this.esc(G.surname)}, aqui embaixo (Barão ou mais, ou rei).</small></div></div></div>
+        <div class="card"><div class="sec">🏗️ Fundar a Vila ${this.esc(G.surname)}</div>
+          <p class="dt-desc">Fique no centro de um lugar aberto (longe de outras vilas e castelos) e funde uma vila com o nome da sua família. Colonos se mudam para lá e pagam impostos todos os dias.</p>
+          <div class="cost">${this.fmtCost(FOUND_COST, have)}</div>
+          <div class="act-row"><button class="primary" data-act="found" ${site.ok === true && Inv.has(FOUND_COST) ? '' : 'disabled'}>🏘️ Fundar aqui</button>
+            <small class="${site.ok === true ? 'ok' : 'bad'}">${site.ok === true ? `✔ Este lugar serve (território de ${CIV_DEFS[site.civ].short}).` : '✖ ' + this.esc(site.ok)}</small></div></div>`;
+    }
+    if (nav === 'biz') {
+      const biz = Biz.list();
+      return this.pageHead('💼', 'Empreendimentos', 'Construa em Construir → Empreendimentos e contrate moradores das vilas')
+        + `<div class="card">${biz.map(s => { const fc = Biz.forecast(s); return `<div class="crow"><span class="ri">${Game.buildIcon(s.type)}</span><span><b>${BUILDINGS[s.type].name}</b><small>${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários · salários ${fc.wages} 🪙/dia${s.till ? ` · caixa ${s.till} 🪙` : ''}</small></span><span class="act-row"><button data-act="bizopen" data-s="${s.id}">Abrir</button></span></div>`; }).join('')
+          || '<p class="muted">Nenhum ainda. Construa uma Fazenda Comercial, Moinho, Serraria, Pedreira, Mina, Ferraria, Empório ou a sua Taverna, e contrate moradores das vilas próximas.</p>'}</div>`;
+    }
+    if (nav.startsWith('k:')) return this.kingdomPage(+nav.slice(2));
+    if (nav === 'atlas') return this.atlasHtml();
+    if (nav === 'families') {
+      const all = Families.ranking(), total = G.people.filter(p => p.alive).length;
+      return this.pageHead('🏛️', 'Famílias', `${all.length} famílias e ${total} pessoas vivas no mundo`)
+        + `<p class="muted">A influência soma riqueza, membros, empreendimentos, títulos e vilas. Famílias com pouca lealdade e muita riqueza podem declarar guerra à coroa.</p>
+        <div class="card famlist">${all.slice(0, 40).map((x, i) => this.famRow(x, i, true)).join('')}</div>`;
+    }
+    if (nav === 'market') return this.pageHead('📈', 'Mercado e caravanas', 'Quanto cada reino paga e as suas caravanas') + this.marketHtml();
+    if (nav === 'news') return this.pageHead('📜', 'Crônicas e guerras', 'O que acontece nos sete reinos') + this.newsHtml(40);
+    if (nav === 'tree') { S.treeFam = G.playerFam; S.treeInK = true; return this.pageHead('🌳', 'Linhagens', 'Sua árvore genealógica e as relações entre as casas') + this.treeBody(Families.ensurePlayer()); }
+    return '';
+  },
+  // um reino governado pelo jogador: uma fileira de abas e o conteúdo
+  kingdomPage(ci) {
+    const S = this.sel, c = G.civs[ci], d = CIV_DEFS[ci], fc = Game.civForecast(c);
     const have = k => k === 'gold' ? c.treasury : (c.stock[k] || 0);
     const net = fc.income - fc.upkeep, wheatNet = fc.wheat - fc.need;
-    const kt = ruled.map(r => `<button class="tab ${r.id === ci ? 'on' : ''}" data-act="ktab" data-c="${r.id}"><span class="cdot" style="background:${Game.civColor(r.id)}"></span>${CIV_DEFS[r.id].short}</button>`).join('');
-    const subs = [['resumo', 'Resumo'], ['conselho', 'Conselho'], ['economia', 'Economia'], ['obras', 'Obras'], ['exercito', 'Exército e povo'], ['diplo', 'Diplomacia'], ['cronicas', 'Crônicas']];
-    const st = subs.map(([k, lab]) => `<button class="tab ${S.ksub === k ? 'on' : ''}" data-act="ksub" data-s="${k}">${lab}</button>`).join('');
+    const subs = [['resumo', '📊 Resumo'], ['economia', '💰 Economia'], ['obras', '🏗️ Obras'], ['exercito', '🛡️ Exército e povo'], ['conselho', '🎩 Conselho'], ['diplo', '🤝 Diplomacia']];
+    if (!subs.some(([k]) => k === S.ksub)) S.ksub = 'resumo';
+    const st = subs.map(([k, lab]) => `<button class="tab ${S.ksub === k ? 'on' : ''}" data-act="ksub" data-s="${k}">${lab}${k === 'conselho' && Court.plotsOf(ci).length ? ' <span class="badge">!</span>' : ''}</button>`).join('');
     let sec = '';
     if (S.ksub === 'resumo') {
       sec = `<div class="tiles big">
@@ -581,8 +705,8 @@ const UI = {
           <div class="stile"><small>Guarnição</small><b>${c.garrison} / ${Game.maxGarrison(c)}</b></div>
           <div class="stile"><small>Trigo por dia</small><b class="${wheatNet < 0 ? 'bad' : 'ok'}">${wheatNet >= 0 ? '+' : ''}${wheatNet} 🌾</b></div>
         </div>
-        ${c.rebel > 0 ? `<div class="alert">⚠️ O povo está à beira da revolta (${c.rebel}/3 dias). Baixe impostos ou faça um festival.</div>` : ''}
-        ${wheatNet < 0 ? '<div class="alert">⚠️ Falta trigo: o povo vai passar fome. Invista em Fazendas Reais ou deposite trigo.</div>' : ''}
+        ${c.rebel > 0 ? `<div class="alert">⚠️ O povo está à beira da revolta (${c.rebel}/3 dias). Baixe impostos ou faça um festival (aba Exército e povo).</div>` : ''}
+        ${wheatNet < 0 ? '<div class="alert">⚠️ Falta trigo: o povo vai passar fome. Invista em Fazendas Reais (aba Obras) ou deposite trigo (aba Economia).</div>' : ''}
         <div class="card"><div class="sec">Impostos</div><div class="taxbox">
           <button data-act="tax" data-c="${ci}" data-d="-0.05" ${c.tax <= 0 ? 'disabled' : ''}>−5%</button><div class="val">${Math.round(c.tax * 100)}%</div>
           <button data-act="tax" data-c="${ci}" data-d="0.05" ${c.tax >= 0.5 ? 'disabled' : ''}>+5%</button>
@@ -607,19 +731,17 @@ const UI = {
               : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="ally" ${!al && r >= 40 && c.treasury >= 200 ? '' : 'disabled'} title="Exige relação 40+">🤝 Aliança 200</button>
                  <button class="danger" data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="war">⚔️ Guerra</button>`}`}</span></div>`;
       }).join('') + '</div>';
-    } else if (S.ksub === 'cronicas') {
-      sec = this.newsHtml(40);
     } else if (S.ksub === 'conselho') {
       sec = this.councilHtml(ci);
     } else if (S.ksub === 'obras') {
-      sec = `<p class="muted">As obras são pagas com o tesouro e os armazéns do reino, não com o seu bolso.</p><div class="kgrid">${Object.entries(INVESTMENTS).map(([k, inv]) => {
+      sec = `<p class="muted">As obras são pagas com o tesouro e os armazéns do reino, não com o seu bolso. Para mexer em casas, lojas e estradas, use Construir → Reformas e Obras.</p><div class="kgrid">${Object.entries(INVESTMENTS).map(([k, inv]) => {
         const can = Object.entries(inv.cost).every(([r, n]) => have(r) >= n);
         return `<div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">${inv.icon}</div><div><b>${inv.name}</b><div class="dt-cat">Nível ${c.invest[k]}</div></div></div>
           <p class="dt-desc">${inv.desc}</p><div class="cost">${this.fmtCost(inv.cost, have)}</div>
           <button class="primary" data-act="invest" data-c="${ci}" data-k="${k}" ${can ? '' : 'disabled'}>Investir</button></div>`;
       }).join('')}</div>`;
     } else {
-      const capOk = Game.allies().length < Game.followerCap();
+      const capOk = Game.allies().length < Game.followerCap(), post = { kind: 'castle', civ: ci };
       sec = `<div class="kgrid">
         <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🛡️</div><div><b>Recrutar guarnição</b><div class="dt-cat">${c.garrison} / ${Game.maxGarrison(c)} soldados</div></div></div>
           <p class="dt-desc">Soldados defendem o castelo e as vilas.</p><div class="cost">${this.fmtCost({ gold: 40, wheat: 5 }, have)}</div>
@@ -629,15 +751,12 @@ const UI = {
           <button class="primary" data-act="kescort" data-c="${ci}" ${c.garrison > 1 && capOk ? '' : 'disabled'}>Convocar</button></div>
         <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🎉</div><div><b>Festival</b><div class="dt-cat">Felicidade atual ${Math.round(c.happy)}%</div></div></div>
           <p class="dt-desc">Uma grande festa: +10 de felicidade agora e mais no próximo dia.</p><div class="cost">${this.fmtCost({ gold: 100, wheat: 40 }, have)}</div>
-          <button class="primary" data-act="kfest" data-c="${ci}" ${have('gold') >= 100 && have('wheat') >= 40 ? '' : 'disabled'}>Realizar festival</button></div></div>`;
+          <button class="primary" data-act="kfest" data-c="${ci}" ${have('gold') >= 100 && have('wheat') >= 40 ? '' : 'disabled'}>Realizar festival</button></div>
+        <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🏰</div><div><b>Guardas no castelo</b><div class="dt-cat">${Guards.at(post).length} / ${Guards.cap(post)} capangas</div></div></div>
+          <p class="dt-desc">Converse com um capanga e escolha "Mandar fazer guarda" para deixá-lo defendendo o castelo.</p></div></div>`;
     }
-    this.open(d.name, `${this.kviewTabs()}<div class="tabs ktabs">${kt}</div><div class="tabs subtabs">${st}</div><div class="kbody">${sec}</div>`, 'showKingdom', [ci], `Governado por ${this.esc(G.name)} · ${d.desc}`);
-  },
-
-  kviewTabs() {
-    const S = this.sel, ruled = G.civs.some(c => c.ruler === 'player');
-    return `<div class="tabs kview">${[['meu', ruled ? '👑 Seus reinos' : '👑 Caminho da coroa'], ['atlas', '🗺️ Os 7 reinos'], ['familias', '🏛️ Famílias'], ['casa', '🏠 Sua casa'], ['mercado', '📈 Mercado'], ['linhagens', '🌳 Linhagens']]
-      .map(([k, l]) => `<button class="tab ${S.kview === k ? 'on' : ''}" data-act="kview" data-v="${k}">${l}</button>`).join('')}</div>`;
+    return this.pageHead(`<span class="cdot big" style="background:${Game.civColor(ci)}"></span>`, d.name, `Governado por ${this.esc(G.name)} · ${this.esc(d.desc)}`)
+      + `<div class="tabs subtabs">${st}</div><div class="kbody">${sec}</div>`;
   },
   personLine(p, extra) {
     if (!p) return '<span class="muted">—</span>';
@@ -653,88 +772,49 @@ const UI = {
       ${f.player || f.noble ? '<span></span>' : `<span class="pbar" title="Lealdade à coroa: ${Math.round(f.loyalty)}"><i style="width:${f.loyalty}%;background:${f.loyalty < 25 ? '#c0392b' : f.loyalty < 50 ? '#d6ae60' : '#5fd35f'}"></i></span>`}
       ${f.player ? '<span></span>' : `<button data-act="famview" data-f="${f.id}">Ver</button>`}</div>`;
   },
-  // atlas dos reinos, ranking das famílias e a casa do jogador
-  showKingdomInfo() {
+  // os sete reinos: cortes, vilas, famílias e números de cada um
+  atlasHtml() {
     const S = this.sel;
-    let body = '';
-    if (S.kview === 'mercado') { this.open('Reino', this.kviewTabs() + this.marketHtml(), 'showKingdom', [], 'Preços dos sete reinos e suas caravanas'); return; }
-    if (S.kview === 'linhagens') { this.showTree(G.playerFam, true); return; }
-    if (S.kview === 'atlas') {
-      const ci = S.atlas !== undefined ? S.atlas : (G.zone >= 0 ? G.zone : 0);
-      const c = G.civs[ci], d = CIV_DEFS[ci];
-      const tabs = G.civs.map(o => `<button class="tab ${o.id === ci ? 'on' : ''}" data-act="atlasciv" data-c="${o.id}"><span class="cdot" style="background:${Game.civColor(o.id)}"></span>${CIV_DEFS[o.id].short}</button>`).join('');
-      const ppl = Families.civPeople(ci), fams = Families.ranking(ci).filter(x => !x.f.player);
-      const court = G.people.filter(p => p.alive && p.home.type === 'castle' && p.home.civ === ci && NOBLE_RANKS.includes(p.rank)).sort((a, b) => RANKS[a.rank].order - RANKS[b.rank].order || b.age - a.age);
-      const vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci);
-      const rv = (G.revolts || []).filter(r => !r.done && r.civ === ci);
-      body = `<div class="tabs ktabs">${tabs}</div>
-        <div class="atlas-head" style="border-color:${Game.civColor(ci)}"><b style="color:${Game.civColor(ci)}">${d.name}</b><small>${this.esc(d.desc)}</small></div>
-        ${rv.map(r => `<div class="alert">🔥 A ${this.esc(Families.name(Families.get(r.fam)))} está em revolta contra a coroa (dia ${r.days + 1}, força ${r.str}). <button data-act="famview" data-f="${r.fam}">Ver</button></div>`).join('')}
-        <div class="tiles big">
-          <div class="stile"><small>Pessoas</small><b>${ppl.length}</b></div>
-          <div class="stile"><small>Crianças</small><b>${ppl.filter(p => p.age < 14).length}</b></div>
-          <div class="stile"><small>Famílias</small><b>${fams.length}</b></div>
-          <div class="stile"><small>Vilas</small><b>${vills.length}</b></div>
-          <div class="stile"><small>Nascimentos no ano</small><b>${(G.births || {})[ci] || 0}</b><small>ano passado: ${(G.lastBirths || {})[ci] || 0}</small></div>
-          <div class="stile"><small>Guarnição</small><b>${c.garrison}</b></div>
-          <div class="stile"><small>Felicidade</small><b>${Math.round(c.happy)}%</b></div>
-          <div class="stile"><small>Tesouro</small><b>${c.treasury} 🪙</b></div>
-        </div>
-        <div class="kgrid two">
-          <div class="card"><div class="sec">👑 Corte real</div>
-            ${c.ruler === 'player' ? `<div class="crow2">${this.personLine('player')} <span class="tag gold">SOBERANO</span></div>` : ''}
-            ${court.map(p => `<div class="crow2">${this.personLine(p, Families.of(p) ? 'Casa ' + Families.of(p).surname : '')}</div>`).join('') || (c.ruler === 'player' ? '' : '<p class="muted">Sem corte.</p>')}</div>
-          <div class="card"><div class="sec">🏛️ Famílias mais influentes</div>${fams.slice(0, 6).map((x, i) => this.famRow(x, i, false)).join('') || '<p class="muted">Nenhuma.</p>'}</div>
-        </div>
-        <div class="card" style="margin-top:10px"><div class="sec">🏘️ Vilas e seus chefes</div>
-          <table class="trade vtable"><tr><th>Vila</th><th>Nível</th><th>Moradores</th><th>Chefe</th><th>Senhor</th></tr>${vills.map(({ v, i }) => {
-            const ch = Families.chiefOf(v), res = People.residents(i).length;
-            const lord = v.lord === 'player' ? '<b class="ok">Você</b>' : v.lordFam !== undefined && Families.get(v.lordFam) ? 'Casa ' + this.esc(Families.get(v.lordFam).surname) : '<span class="muted">a coroa</span>';
-            return `<tr><td><b>${this.esc(v.name)}</b>${v.founded ? ' <small class="tag">nova</small>' : ''}${v.ruin ? ' <small class="bad">ruínas</small>' : ''}</td><td>${v.level || 1}</td><td>${res} / ${Families.vcap(v)}</td>
-              <td>${ch === 'player' ? 'Você' : ch ? `${this.esc(People.full(ch))}<small class="muted"> · ${ch.age} anos</small>` : '<span class="muted">—</span>'}</td><td>${lord}</td></tr>`;
-          }).join('')}</table></div>`;
-      this.open('Reino', this.kviewTabs() + body, 'showKingdom', [], 'Informações dos reinos, cortes, vilas e famílias');
-      return;
-    }
-    if (S.kview === 'familias') {
-      const all = Families.ranking();
-      const total = G.people.filter(p => p.alive).length;
-      body = `<p class="muted">${all.length} famílias e ${total} pessoas vivas no mundo. A influência soma riqueza, membros, empreendimentos, títulos e vilas. Famílias com pouca lealdade e muita riqueza podem declarar guerra à coroa.</p>
-        <div class="famlist">${all.slice(0, 40).map((x, i) => this.famRow(x, i, true)).join('')}</div>`;
-      this.open('Reino', this.kviewTabs() + body, 'showKingdom', [], 'As casas mais poderosas dos sete reinos');
-      return;
-    }
-    // sua casa
-    const f = Families.ensurePlayer(), mem = Families.members(f).filter(p => p.alive);
-    const biz = Biz.list(), mine = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.lord === 'player');
-    const site = Families.playerSite(), have = k => k === 'gold' ? P.gold : Inv.count(k);
-    const kids = mem.filter(p => p.kin === 'child' && p.age >= 16 && p.spouse === null);
-    body = `<div class="card hero-card"><div class="hc-ic">🏛️</div><div><b>Casa ${this.esc(G.surname)}</b><br><span class="muted">Influência ⭐ ${Families.influence(f)} · ${mem.length + 1} membros · capangas ${Game.allies().length}/${Game.followerCap()} · ${biz.length} empreendimentos · ${mine.length} vila(s)</span>
-      <br><span class="muted">${Court.title() ? Court.title().icon + ' ' + this.esc(Court.titleName()) : 'Sem título de nobreza'} · 🌟 fama ${Court.fame()} · 🙏 devoção ${Faith.piety()}</span></div></div>
-      ${kids.length ? `<div class="card"><div class="sec">💒 Casamentos arranjados</div>${kids.map(k => `<div class="crow2">${this.personLine(k)} <button data-act="match" data-id="${k.id}">Arranjar casamento</button></div>`).join('')}
-        <small class="muted">Case seus filhos com herdeiros de outros reinos (alianças) ou com as famílias mais poderosas (lealdade e fim de rivalidades).</small></div>` : ''}
-      <div class="kgrid two">
-        <div class="card"><div class="sec">👪 Família</div>
-          <div class="crow2">${this.personLine('player')}</div>
-          ${mem.map(p => `<div class="crow2">${this.personLine(p, p.spouse === 'player' ? 'cônjuge' : p.kin === 'child' ? (p.prof ? PROFESSIONS[p.prof].icon + ' ' + (p.sex === 'f' ? PROFESSIONS[p.prof].f : PROFESSIONS[p.prof].name) : 'filh' + (p.sex === 'f' ? 'a' : 'o')) : p.kin || '')}</div>`).join('') || '<p class="muted">Case-se e tenha filhos para a sua casa crescer.</p>'}</div>
-        <div class="card"><div class="sec">💼 Empreendimentos <span>construa em B → Empreendimentos</span></div>
-          ${biz.map(s => { const fc = Biz.forecast(s); return `<div class="famrow biz"><span class="fr-n">${Game.buildIcon(s.type)}</span><span></span><span><b>${BUILDINGS[s.type].name}</b><small>${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários · salários ${fc.wages} 🪙/dia</small></span><span></span><span></span><button data-act="bizopen" data-s="${s.id}">Abrir</button></div>`; }).join('') || '<p class="muted">Nenhum ainda. Construa uma Fazenda Comercial, Serraria, Mina, Empório... e contrate moradores das vilas.</p>'}</div>
+    const ci = S.atlas !== undefined ? S.atlas : (G.zone >= 0 ? G.zone : 0);
+    const c = G.civs[ci], d = CIV_DEFS[ci];
+    const tabs = G.civs.map(o => `<button class="tab ${o.id === ci ? 'on' : ''}" data-act="atlasciv" data-c="${o.id}"><span class="cdot" style="background:${Game.civColor(o.id)}"></span>${CIV_DEFS[o.id].short}</button>`).join('');
+    const ppl = Families.civPeople(ci), fams = Families.ranking(ci).filter(x => !x.f.player);
+    const court = G.people.filter(p => p.alive && p.home.type === 'castle' && p.home.civ === ci && NOBLE_RANKS.includes(p.rank)).sort((a, b) => RANKS[a.rank].order - RANKS[b.rank].order || b.age - a.age);
+    const vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci);
+    const rv = (G.revolts || []).filter(r => !r.done && r.civ === ci);
+    return this.pageHead('🗺️', 'Os 7 reinos', 'Cortes, vilas, famílias e números de cada reino') + `<div class="tabs ktabs">${tabs}</div>
+      <div class="atlas-head" style="border-color:${Game.civColor(ci)}"><b style="color:${Game.civColor(ci)}">${d.name}</b><small>${this.esc(d.desc)} · ${this.esc(c.rulerName)} · ${Game.relationText(c)}</small></div>
+      ${rv.map(r => `<div class="alert">🔥 A ${this.esc(Families.name(Families.get(r.fam)))} está em revolta contra a coroa (dia ${r.days + 1}, força ${r.str}). <button data-act="famview" data-f="${r.fam}">Ver</button></div>`).join('')}
+      <div class="tiles big">
+        <div class="stile"><small>Pessoas</small><b>${ppl.length}</b></div>
+        <div class="stile"><small>Crianças</small><b>${ppl.filter(p => p.age < 14).length}</b></div>
+        <div class="stile"><small>Famílias</small><b>${fams.length}</b></div>
+        <div class="stile"><small>Vilas</small><b>${vills.length}</b></div>
+        <div class="stile"><small>Nascimentos no ano</small><b>${(G.births || {})[ci] || 0}</b><small>ano passado: ${(G.lastBirths || {})[ci] || 0}</small></div>
+        <div class="stile"><small>Guarnição</small><b>${c.garrison}</b></div>
+        <div class="stile"><small>Felicidade</small><b>${Math.round(c.happy)}%</b></div>
+        <div class="stile"><small>Tesouro</small><b>${c.treasury} 🪙</b></div>
       </div>
-      ${this.guardsHtml()}
-      <div class="card" style="margin-top:10px"><div class="sec">🏘️ Fundar a Vila ${this.esc(G.surname)}</div>
-        ${mine.map(({ v, i }) => `<div class="crow2"><b>${this.esc(v.name)}</b> <small class="muted">${CIV_DEFS[v.civ].short} · nível ${v.level || 1} · ${People.residents(i).length} moradores · rende ${People.residents(i).length * 2} 🪙/dia</small></div>`).join('')}
-        <p class="dt-desc">Escolha um lugar aberto (longe de outras vilas e castelos), fique no centro dele e funde uma vila com o nome da sua família. Colonos se mudam para lá, a vila cresce e paga impostos para você todos os dias.</p>
-        <div class="cost">${this.fmtCost(FOUND_COST, have)}</div>
-        <div class="act-row"><button class="primary" data-act="found" ${site.ok === true && Inv.has(FOUND_COST) ? '' : 'disabled'}>🏘️ Fundar aqui</button>
-          <small class="${site.ok === true ? 'ok' : 'bad'}">${site.ok === true ? `✔ Este lugar serve (território de ${CIV_DEFS[site.civ].short}).` : '✖ ' + this.esc(site.ok)}</small></div></div>`;
-    this.open('Reino', this.kviewTabs() + body, 'showKingdom', [], 'Sua família, seus negócios e suas vilas');
+      <div class="kgrid two">
+        <div class="card"><div class="sec">👑 Corte real</div>
+          ${c.ruler === 'player' ? `<div class="crow2">${this.personLine('player')} <span class="tag gold">SOBERANO</span></div>` : ''}
+          ${court.map(p => `<div class="crow2">${this.personLine(p, Families.of(p) ? 'Casa ' + Families.of(p).surname : '')}</div>`).join('') || (c.ruler === 'player' ? '' : '<p class="muted">Sem corte.</p>')}</div>
+        <div class="card"><div class="sec">🏛️ Famílias mais influentes</div>${fams.slice(0, 6).map((x, i) => this.famRow(x, i, false)).join('') || '<p class="muted">Nenhuma.</p>'}</div>
+      </div>
+      <div class="card"><div class="sec">🏘️ Vilas e seus chefes</div>
+        <table class="trade vtable"><tr><th>Vila</th><th>Nível</th><th>Moradores</th><th>Chefe</th><th>Senhor</th></tr>${vills.map(({ v, i }) => {
+          const ch = Families.chiefOf(v), res = People.residents(i).length;
+          const lord = v.lord === 'player' ? '<b class="ok">Você</b>' : v.lordFam !== undefined && Families.get(v.lordFam) ? 'Casa ' + this.esc(Families.get(v.lordFam).surname) : '<span class="muted">a coroa</span>';
+          return `<tr><td><b>${this.esc(v.name)}</b>${v.founded ? ' <small class="tag">nova</small>' : ''}${v.ruin ? ' <small class="bad">ruínas</small>' : ''}</td><td>${v.level || 1}</td><td>${res} / ${Families.vcap(v)}</td>
+            <td>${ch === 'player' ? 'Você' : ch ? `${this.esc(People.full(ch))}<small class="muted"> · ${ch.age} anos</small>` : '<span class="muted">—</span>'}</td><td>${lord}</td></tr>`;
+        }).join('')}</table></div>`;
   },
 
   // ------------------------------------------------------------ uma família
   showFamily(fid) {
     const f = Families.get(fid);
     if (!f) return;
-    if (f.player) { this.sel.kview = 'casa'; this.showKingdom(); return; }
+    if (f.player) { this.sel.knav = 'family'; this.showKingdom(); return; }
     const mem = Families.members(f).sort((a, b) => b.age - a.age), h = Families.head(f), rv = Families.activeRevoltOf(f);
     const ruler = G.civs[f.civ] && G.civs[f.civ].ruler === 'player';
     const bizs = World.structs.filter(s => s.fam === f.id && FAMILY_BIZ[s.type]);
@@ -825,33 +905,71 @@ const UI = {
       <div class="card" style="margin-top:12px"><div class="sec">Crônicas dos reinos</div><div class="chron">${log}</div></div>`;
   },
 
-  showSettings() {
-    const s = G.settings;
+  // ============================================================ Ajustes: Jogo · Tela · Som · Controles · Como jogar
+  showSettings(tab) {
+    const S = this.sel, s = G.settings;
+    if (tab) S.stab = tab;
+    else if (!(this.cur && this.cur.fn === 'showSettings')) S.stab = 'jogo'; // Esc e o botão Ajustes abrem na aba Jogo
+    S.stab = S.stab || 'jogo';
     const sw = (key, label, sub) => `<div class="set-row"><div><b>${label}</b><small>${sub}</small></div>
       <label class="switch"><input type="checkbox" data-set="${key}" ${s[key] ? 'checked' : ''}><span></span></label></div>`;
     const sel = (key, label, sub, opts) => `<div class="set-row"><div><b>${label}</b><small>${sub}</small></div>
       <select data-set="${key}">${opts.map(([v, t]) => `<option value="${v}" ${String(s[key]) === String(v) ? 'selected' : ''}>${t}</option>`).join('')}</select></div>`;
-    this.open('Ajustes', `
-      <div class="card"><div class="sec">Interface</div>
-        ${sel('uiScale', 'Escala da interface', 'Automática se ajusta ao tamanho da tela (celular, notebook, monitor)', [['auto', 'Automática'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']])}
-        ${sel('touch', 'Controles de toque', 'Joystick e botões na tela para celular e tablet', [['auto', 'Automático'], ['on', 'Sempre'], ['off', 'Nunca']])}
-        ${sw('minimap', 'Minimapa', 'Mapa pequeno no canto superior direito')}
-        ${sel('miniSize', 'Tamanho do minimapa', 'Clique no minimapa para abrir o mapa completo', [[140, 'Pequeno'], [180, 'Médio'], [230, 'Grande']])}
-        ${sw('numbers', 'Números nas barras', 'Mostra os valores de vida, energia e fome')}
-        ${sw('keysbar', 'Barra de atalhos no rodapé', 'Lista de teclas na parte de baixo da tela')}</div>
-      <div class="card" style="margin-top:12px"><div class="sec">Som</div>
-        ${sel('music', 'Volume da música', 'Trilha medieval que muda de dia, à noite, nas cavernas e em batalha', [[0, 'Desligada'], [0.25, '25%'], [0.5, '50%'], [0.75, '75%'], [1, '100%']])}
-        ${sel('sfx', 'Volume dos efeitos', 'Passos, golpes, machado, picareta, fogueira, chuva...', [[0, 'Desligados'], [0.35, '35%'], [0.7, '70%'], [1, '100%']])}
-        ${sw('mute', 'Silenciar tudo', 'Desliga todo o áudio do jogo')}</div>
-      <div class="card" style="margin-top:12px"><div class="sec">Jogo</div>
-        <div class="set-row"><div><b>Salvar o jogo agora</b><small>Grava no espaço ${G.slot}. Não funciona dentro de cavernas nem durante um cerco.</small></div>
-          <button class="primary" data-act="savenow" ${G.dungeon || G.siege ? 'disabled' : ''}>💾 Salvar</button></div>
-        <div class="set-row"><div><b>Dificuldade</b><small>${DIFFICULTY[G.diff || 'normal'].desc}</small></div>
-          <select data-set="diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}" ${G.diff === k ? 'selected' : ''}>${d.name}</option>`).join('')}</select></div>
-        <div class="set-row"><div><b>Exportar o jogo atual</b><small>Baixa um arquivo .json com o progresso de agora (pode ser importado no menu principal).</small></div><button data-act="export">⬇️ Exportar</button></div>
-        <div class="act-row"><button class="primary" data-act="close">▶ Continuar jogando</button><button data-act="open" data-fn="showHelp">❓ Como jogar</button>
-          <button class="danger" data-act="quit">Sair para o menu</button></div>
-        <small class="muted">Ao sair para o menu, o progresso desde o último salvamento é perdido.</small></div>`, 'showSettings', [], 'Personalize a interface');
+    const range = (key, label, sub) => `<div class="set-row"><div><b>${label}</b><small>${sub}</small></div>
+      <div class="range-box"><input type="range" min="0" max="1" step="0.05" data-set="${key}" value="${+s[key]}"><span class="rv">${Math.round(+s[key] * 100)}%</span></div></div>`;
+    let body = '';
+    if (S.stab === 'jogo') {
+      const inf = Saves.info(G.slot), blocked = G.dungeon ? 'Dentro de cavernas não dá para salvar.' : G.siege ? 'Durante um cerco não dá para salvar.' : '';
+      const when = inf && inf.savedAt ? new Date(inf.savedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca';
+      body = this.pageHead('▶', 'Jogo', `${this.esc(G.name)} ${this.esc(G.surname || '')} · ${Calendar.full(G.day)} · espaço ${G.slot}`)
+        + `<div class="set-actions">
+          <button class="primary big" data-act="close">▶ Continuar jogando</button>
+          <button class="big" data-act="savenow" ${blocked ? 'disabled' : ''}>💾 Salvar agora</button>
+          <button class="big" data-act="export" ${G.dungeon ? 'disabled' : ''}>⬇️ Exportar arquivo</button>
+          <button class="danger big" data-act="quit">🚪 Sair para o menu</button></div>
+        <small class="muted">${blocked || `Último salvamento no espaço ${G.slot}: ${when}. Dormir em casa também salva.`} Ao sair para o menu, o que não foi salvo se perde.</small>
+        <div class="card"><div class="sec">Partida</div>
+          <div class="set-row"><div><b>Dificuldade</b><small>${DIFFICULTY[G.diff || 'normal'].desc}</small></div>
+            <select data-set="diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}" ${G.diff === k ? 'selected' : ''}>${d.name}</option>`).join('')}</select></div>
+          <div class="set-row"><div><b>Exportar</b><small>Baixa um arquivo .json com o progresso de agora. Ele pode ser importado no menu principal (Jogos salvos).</small></div><button data-act="export" ${G.dungeon ? 'disabled' : ''}>⬇️ Exportar</button></div></div>`;
+    } else if (S.stab === 'tela') {
+      body = this.pageHead('🖥️', 'Tela e interface', 'Tamanho, minimapa e o que aparece na tela')
+        + `<div class="card"><div class="sec">Tamanho</div>
+          ${sel('uiScale', 'Escala da interface', 'Automática se ajusta ao tamanho da tela (celular, notebook, monitor)', [['auto', 'Automática'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']])}</div>
+        <div class="card"><div class="sec">Minimapa</div>
+          ${sw('minimap', 'Mostrar o minimapa', 'Mapa pequeno no canto superior direito (clique nele para abrir o mapa completo)')}
+          ${sel('miniSize', 'Tamanho do minimapa', 'Em telas pequenas ele fica menor automaticamente', [[140, 'Pequeno'], [180, 'Médio'], [230, 'Grande']])}</div>
+        <div class="card"><div class="sec">Informações na tela</div>
+          ${sw('numbers', 'Números nas barras', 'Mostra os valores de vida, energia e fome')}
+          ${sw('keysbar', 'Barra de atalhos no rodapé', 'Lista das teclas na parte de baixo da tela')}</div>`;
+    } else if (S.stab === 'som') {
+      body = this.pageHead('🔊', 'Som', 'Música e efeitos, todos criados pelo próprio jogo')
+        + `<div class="card">
+          ${range('music', 'Música', 'Trilha medieval que muda de dia, à noite, nas cavernas e em batalha')}
+          ${range('sfx', 'Efeitos', 'Passos, golpes, machado, picareta, fogueira, chuva...')}
+          ${sw('mute', 'Silenciar tudo', 'Desliga todo o áudio do jogo')}</div>`;
+    } else if (S.stab === 'controles') {
+      const h = this.helpParts();
+      body = this.pageHead('🎮', 'Controles', 'Teclado e mouse, controle (gamepad) e toque')
+        + `${sel('touch', 'Controles de toque', 'Joystick e botões na tela para celular e tablet', [['auto', 'Automático'], ['on', 'Sempre'], ['off', 'Nunca']])}
+        <div class="card"><div class="sec">Teclado e mouse</div><div class="hk-grid">${h.rows.map(([k, v]) => `<div class="hk"><kbd>${k}</kbd><span>${v}</span></div>`).join('')}</div></div>
+        <div class="card"><div class="sec">Controle (gamepad)</div><p class="dt-desc">Analógico esquerdo anda e o direito mira · A/✕ ataca · B/○ esquiva · X/□ interage · Y/△ mochila · LB troca a ferramenta · RB bloqueia · LT monta · RT (segure) golpe forte · Back abre o mapa · Start abre os ajustes · setas usam a algibeira.</p></div>`;
+    } else {
+      const h = this.helpParts();
+      body = this.pageHead('❓', 'Como jogar', 'Primeiros passos e dicas')
+        + `<div class="card"><ol class="hs-list">${h.steps.map(x => `<li>${x}</li>`).join('')}</ol>${h.paras.map(x => `<p class="muted">${x}</p>`).join('')}</div>`;
+    }
+    const groups = [[null, [['jogo', '▶', 'Jogo'], ['tela', '🖥️', 'Tela e interface'], ['som', '🔊', 'Som'], ['controles', '🎮', 'Controles'], ['ajuda', '❓', 'Como jogar']]]];
+    this.open('Ajustes', this.navHtml(groups, S.stab, 'stab', body), 'showSettings', [], 'Jogo, tela, som e controles');
+  },
+  // partes do texto de ajuda (tabela de teclas, passos e parágrafos)
+  helpParts() {
+    if (!this._help) {
+      const div = document.createElement('div'); div.innerHTML = HELP_HTML;
+      this._help = { rows: [...div.querySelectorAll('table tr')].map(tr => [...tr.children].map(td => td.innerHTML)),
+        steps: [...div.querySelectorAll('li')].map(li => li.innerHTML), paras: [...div.querySelectorAll('p')].map(p => p.innerHTML) };
+    }
+    return this._help;
   },
 
   showRest(sid) {
@@ -1497,21 +1615,22 @@ const UI = {
 
   // ------------------------------------------------------------ árvore genealógica e mapa de relações
   showTree(fid, inKingdom) {
-    const S = this.sel; S.treeFam = fid; S.treeInK = !!inKingdom; S.ttab = S.ttab || 'arvore';
+    const S = this.sel; S.ttab = S.ttab || 'arvore';
+    if (inKingdom) { S.knav = 'tree'; this.showKingdom(); return; }
+    S.treeFam = fid; S.treeInK = false;
     const f = Families.get(fid) || Families.ensurePlayer();
-    const tabs = `<div class="tabs">${[['arvore', '🌳 Árvore da família'], ['relacoes', '🕸️ Relações entre as casas']].map(([k, l]) => `<button class="tab ${S.ttab === k ? 'on' : ''}" data-act="ttab" data-t="${k}">${l}</button>`).join('')}</div>`;
-    let body = '';
-    if (S.ttab === 'arvore') body = `<div class="scroll" style="max-height:62vh"><div class="ftree">${this.treeHtml(f)}</div></div>`;
-    else {
-      const rel = Court.relationsOf(f);
-      body = `<div class="relmap-wrap"><canvas id="relMap" width="760" height="460"></canvas>
-        <div class="rel-legend"><span><i style="background:#5fd35f"></i>Parentes por casamento</span><span><i style="background:#6fa8ff"></i>Aliados</span><span><i style="background:#e04848"></i>Rivais</span><small class="muted">Clique numa casa para ver os detalhes.</small></div>
-        <div class="list">${rel.map(x => `<div class="crow2"><span style="color:${x.kind === 'rival' ? '#e04848' : x.kind === 'ally' ? '#6fa8ff' : '#5fd35f'}">${x.kind === 'rival' ? '😠 Rival' : x.kind === 'ally' ? '🤝 Aliada' : '💍 Parente'}</span> · <b>${this.esc(Families.name(x.f))}</b></div>`).join('') || '<p class="muted">Esta casa ainda não tem laços nem rivalidades.</p>'}</div></div>`;
-    }
-    const title = `${this.esc(Families.name(f))} — linhagem e relações`;
-    if (inKingdom) this.open('Reino', this.kviewTabs() + tabs + body, 'showKingdom', [], title);
-    else this.open('Linhagem', tabs + body, 'showTree', [fid], title);
+    this.open('Linhagem', this.treeBody(f), 'showTree', [fid], `${this.esc(Families.name(f))} — linhagem e relações`);
     if (S.ttab === 'relacoes') this.drawRelMap(f);
+  },
+  // abas "árvore" e "relações" de uma família
+  treeBody(f) {
+    const S = this.sel; S.ttab = S.ttab || 'arvore';
+    const tabs = `<div class="tabs">${[['arvore', '🌳 Árvore da família'], ['relacoes', '🕸️ Relações entre as casas']].map(([k, l]) => `<button class="tab ${S.ttab === k ? 'on' : ''}" data-act="ttab" data-t="${k}">${l}</button>`).join('')}</div>`;
+    if (S.ttab === 'arvore') return tabs + `<div class="scroll" style="max-height:62vh"><div class="ftree">${this.treeHtml(f)}</div></div>`;
+    const rel = Court.relationsOf(f);
+    return tabs + `<div class="relmap-wrap"><canvas id="relMap" width="760" height="460"></canvas>
+      <div class="rel-legend"><span><i style="background:#5fd35f"></i>Parentes por casamento</span><span><i style="background:#6fa8ff"></i>Aliados</span><span><i style="background:#e04848"></i>Rivais</span><small class="muted">Clique numa casa para ver os detalhes.</small></div>
+      <div class="list">${rel.map(x => `<div class="crow2"><span style="color:${x.kind === 'rival' ? '#e04848' : x.kind === 'ally' ? '#6fa8ff' : '#5fd35f'}">${x.kind === 'rival' ? '😠 Rival' : x.kind === 'ally' ? '🤝 Aliada' : '💍 Parente'}</span> · <b>${this.esc(Families.name(x.f))}</b></div>`).join('') || '<p class="muted">Esta casa ainda não tem laços nem rivalidades.</p>'}</div></div>`;
   },
   treeHtml(f) {
     const mem = Families.members(f, true);
@@ -1594,7 +1713,11 @@ const UI = {
         this.close(); Game.declareWar(+d.c); return;
       case 'siege': this.close(); Game.startSiege(+d.c); return;
       case 'peace': Game.makePeace(+d.c); break;
-      case 'ktab': this.showKingdom(+d.c); return;
+      case 'ktab': this.sel.knav = 'k:' + d.c; this.showKingdom(); return;
+      case 'knav': this.sel.knav = d.k; this.showKingdom(); return;
+      case 'stab': this.showSettings(d.k); return;
+      case 'bcat': this.sel.bcat = d.k; this.sel.build = null; this.showBuild(); return;
+      case 'vping': { const v = World.villages[+d.v]; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
       case 'tax': Game.setTax(+d.c, +d.d); break;
       case 'kgold': Game.kGold(+d.c, d.n); break;
       case 'kres': Game.kRes(+d.c, d.k, +d.n); break;
@@ -1625,7 +1748,7 @@ const UI = {
       }
       case 'batjoin': { const b = Battles.list().find(x => x.id === +d.b); if (b && d.side !== 'none') Battles.join(b, +d.side); this.close(); return; }
       case 'dtab': this.sel.dtab = d.t; break;
-      case 'kview': this.sel.kview = d.v; this.showKingdom(); return;
+      case 'kview': this.sel.knav = { meu: 'overview', casa: 'family', atlas: 'atlas', familias: 'families', mercado: 'market', linhagens: 'tree' }[d.v] || 'overview'; this.showKingdom(); return;
       case 'craftat': this.showCrafting(d.st); return;
       case 'bagup': Store.upgradeBag(); break;
       case 'title': Court.requestTitle(+d.c); break;
@@ -1635,7 +1758,7 @@ const UI = {
       case 'cdismiss': Court.dismiss(+d.c, d.s); break;
       case 'judge': Court.judge(+d.p, d.v); break;
       case 'match': this.showMatch(+d.id); return;
-      case 'domatch': { const ch = People.get(+d.id), q = People.get(+d.q); if (Court.arrange(ch, q)) { this.sel.kview = 'casa'; this.showKingdom(); return; } break; }
+      case 'domatch': { const ch = People.get(+d.id), q = People.get(+d.q); if (Court.arrange(ch, q)) { this.sel.knav = 'family'; this.showKingdom(); return; } break; }
       case 'tree': this.showTree(+d.f); return;
       case 'ttab': this.sel.ttab = d.t; this.showTree(this.sel.treeFam, this.sel.treeInK); return;
       case 'pray': Faith.pray(); break;
@@ -1653,7 +1776,7 @@ const UI = {
       case 'cvadd': { const cv = this.sel.cv, n = d.n === 'all' ? Inv.count(d.k) : Math.min(Inv.count(d.k), (cv.cargo[d.k] || 0) + +d.n); cv.cargo[d.k] = Math.max(0, n); break; }
       case 'cvguard': this.sel.cv.guards = U.clamp(this.sel.cv.guards + +d.n, 0, 4); break;
       case 'cvsend': { const cv = this.sel.cv; if (Market.send(+d.f, cv.to, cv.cargo, cv.guards)) this.sel.cv = { to: null, cargo: {}, guards: 1 }; break; }
-      case 'atlasciv': this.sel.atlas = +d.c; this.sel.kview = 'atlas'; this.showKingdom(); return;
+      case 'atlasciv': this.sel.atlas = +d.c; this.sel.knav = 'atlas'; this.showKingdom(); return;
       case 'famview': this.showFamily(+d.f); return;
       case 'bizopen': this.showBiz(+d.s); return;
       case 'bizhire': { const p = People.get(+d.id); Biz.hire(p, World.structs[+d.s]); this.showBiz(+d.s); return; }
