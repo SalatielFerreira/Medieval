@@ -1376,8 +1376,8 @@ const Game = {
     G.day++;
     Season.apply(true);
     for (const camp of World.camps) if (camp.cleared && G.day >= camp.respawnDay) { camp.cleared = false; camp.left = 4; }
-    // a vida (envelhecer, casar, ter filhos) anda um ano a cada mês do calendário
-    if (Calendar.of(G.day).day === 1 && G.day > 1) People.tickYear();
+    // a vida (envelhecer, casar, ter filhos) anda um ano a cada 6 meses do calendário (1º de janeiro e 1º de julho = 30 minutos reais)
+    { const cd = Calendar.of(G.day); if (cd.day === 1 && cd.month % 6 === 0 && G.day > 1) People.tickYear(); }
     Arena.dayTick(); Progress.dayTick(); Guards.dayTick(); Homes.dayTick(true);
     G.econT = (G.econT || 0) + 1;
     if (G.econT >= ECON_DAYS) { G.econT = 0; this.econTick(); }
@@ -1385,7 +1385,7 @@ const Game = {
     const cd = Calendar.of(G.day);
     if (cd.day === 1) UI.banner(`📅 ${MONTHS[cd.month][0]} do ano ${cd.year}`);
   },
-  // a cada 5 dias: a economia e o mundo andam (o mesmo ritmo de quando o dia durava 5 minutos)
+  // uma vez por mês (5 minutos reais): a economia e o mundo andam
   econTick() {
     const gold0 = P.gold, inv0 = Object.assign({}, P.inv);
     this.ledger = [];

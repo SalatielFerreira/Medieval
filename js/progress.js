@@ -79,7 +79,7 @@ const Progress = {
     const cd = Calendar.of(G.day);
     if (cd.month === 2 && cd.day === 1 && G.day > 1) this.add('winters'); // chegou a primavera: sobreviveu ao inverno
   },
-  // a cada 5 dias: o trabalho dos filhos com profissão
+  // uma vez por mês: o trabalho dos filhos com profissão
   econTick() {
     for (const p of G.people) {
       if (!p.alive || p.kin !== 'child' || !p.prof) continue;

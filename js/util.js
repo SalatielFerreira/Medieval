@@ -5,14 +5,15 @@ const TILE = 32;
 const WORLD_W = 320, WORLD_H = 320;
 const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
-// Calendário: os 12 meses do ano real e 1 dia de jogo = 1 minuto real. O jogo começa em 1º de março (primavera).
-const DAY_LEN = 60; // segundos reais por dia de jogo
-// a economia (impostos, soldos, salários, guerras, revoltas, colheitas) anda a cada 5 dias = 5 minutos reais, o ritmo de antes
-const ECON_DAYS = 5;
-const MONTHS = [['Janeiro', 31], ['Fevereiro', 28], ['Março', 31], ['Abril', 30], ['Maio', 31], ['Junho', 30],
-  ['Julho', 31], ['Agosto', 31], ['Setembro', 30], ['Outubro', 31], ['Novembro', 30], ['Dezembro', 31]];
-const YEAR_DAYS = 365;
-const CAL_START = 59; // dias do ano antes de 1º de março
+// Calendário: 12 meses de 30 dias. 1 mês = 5 minutos reais (1 dia = 10 segundos), 1 ano = 1 hora real.
+// O jogo começa em 7 de dezembro.
+const DAY_LEN = 10; // segundos reais por dia de jogo
+// a economia (impostos, soldos, salários, guerras, revoltas, colheitas) anda uma vez por mês = 5 minutos reais
+const ECON_DAYS = 30;
+const MONTHS = [['Janeiro', 30], ['Fevereiro', 30], ['Março', 30], ['Abril', 30], ['Maio', 30], ['Junho', 30],
+  ['Julho', 30], ['Agosto', 30], ['Setembro', 30], ['Outubro', 30], ['Novembro', 30], ['Dezembro', 30]];
+const YEAR_DAYS = 360;
+const CAL_START = 11 * 30 + 6; // dias do ano antes de 7 de dezembro
 const Calendar = {
   // dia de jogo (1, 2, 3...) -> { year, month (0 = janeiro), day (1..31) }
   of(day) {

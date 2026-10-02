@@ -1432,13 +1432,13 @@ const UI = {
               <div class="req-row"><span>${c.relation >= COURT_INVITE.rel ? '✔' : '✖'}</span><span>Relação com o reino</span><b class="${c.relation >= COURT_INVITE.rel ? 'ok' : 'bad'}">${Math.round(c.relation)}/${COURT_INVITE.rel}</b></div></div>
             <small class="muted">O reconhecimento soma serviços prestados (caçar bandidos, salvar caravanas, batalhas, torneios, tributos, doações), fama e relação.${cur ? ` Você já serve à corte de ${CIV_DEFS[cur.civ].short}.` : ''}</small>`}</div>`;
     }
-    const o = COURT_OFFICES[cur.office], away = G.day - cur.lastVisit, audOk = G.day - cur.audience >= 10;
+    const o = COURT_OFFICES[cur.office], away = G.day - cur.lastVisit, audOk = G.day - cur.audience >= COURT_AUDIENCE_DAYS;
     const offices = Object.entries(COURT_OFFICES).map(([k, x]) => `<button class="${cur.office === k ? 'primary' : ''}" data-act="coffice" data-k="${k}" ${rn >= x.renown && cur.office !== k ? '' : 'disabled'} title="${x.desc} (reconhecimento ${x.renown}+)">${x.icon} ${RoyalCourt.officeName(k)}${rn < x.renown ? ' · ' + x.renown : ''}</button>`).join('');
     const others = G.civs.filter(x => x.id !== ci);
     return `<div class="card court-card"><div class="sec">👑 Você está na corte de ${CIV_DEFS[ci].short} <span>desde ${Calendar.short(cur.since)} · reconhecimento ${rn}</span></div>
       <p class="dt-desc">${o.icon} <b>${RoyalCourt.officeName(cur.office)}</b> — ${o.desc} Salário a cada ${ECON_DAYS} dias: ~${o.pay + Math.floor(rn / 20) * 5} 🪙.</p>
       <div class="act-row">${offices}</div>
-      <div class="act-row" style="margin-top:8px"><button data-act="caudience" ${audOk ? '' : 'disabled'}>📜 Audiência com o rei${audOk ? '' : ' (em ' + (10 - (G.day - cur.audience)) + ' dias)'}</button>
+      <div class="act-row" style="margin-top:8px"><button data-act="caudience" ${audOk ? '' : 'disabled'}>📜 Audiência com o rei${audOk ? '' : ' (em ' + (COURT_AUDIENCE_DAYS - (G.day - cur.audience)) + ' dias)'}</button>
         ${cur.office === 'general' ? `<button data-act="cescort" ${c.garrison > 2 && Game.allies().length < Game.followerCap() ? '' : 'disabled'}>⚔️ Pedir escolta</button>` : ''}
         <button class="danger" data-act="cleave">🚪 Deixar a corte</button></div>
       ${cur.office === 'diplomat' ? `<div class="sec" style="margin-top:10px">🤝 Propor ao rei</div>${others.map(x => { const war = Diplo.atWar(ci, x.id), al = Diplo.allied(ci, x.id);
@@ -1990,14 +1990,14 @@ const HELP_HTML = `
 <li>Com um <b>arco</b> equipado, clique para atirar flechas (ou segure Espaço para mirar no inimigo mais próximo).</li>
 <li>Explore as <b>cavernas</b> nas montanhas e ilhas: monstros, minérios raros, baús de tesouro e chefes com itens lendários.</li>
 <li>A mochila tem <b>limite de peso</b>: guarde itens no Baú, ou compre um <b>cavalo</b> e uma <b>carroça</b> na taverna.</li>
-<li>O <b>calendário</b> tem os 12 meses do ano (cada dia dura 1 minuto). As <b>estações</b> seguem os meses: primavera (março a maio), verão, outono e inverno (dezembro a fevereiro). No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem. Árvores, pedras e minérios coletados só renascem depois de 1 ano.</li>
+<li>O <b>calendário</b> tem 12 meses de 30 dias: cada mês dura 5 minutos (1 dia = 10 segundos) e o ano inteiro dura 1 hora. O jogo começa em 7 de dezembro. As <b>estações</b> seguem os meses: primavera (março a maio), verão, outono e inverno (dezembro a fevereiro). No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem. Árvores, pedras e minérios coletados só renascem depois de 1 ano.</li>
 <li>Abra <b>estradas</b> (B → Estradas): de graça; sobre rio raso vira ponte. Clique e arraste.</li>
 <li>Como chefe ou rei, mande capangas <b>fazer guarda</b> na sua vila ou no seu castelo (converse com o capanga).</li>
 <li>Vire <b>chefe de uma vila</b> fundando a sua, conquistando (converse com o chefe e desafie-o) ou pedindo ao rei no castelo. O chefe (na vila) e o rei (no reino todo) podem criar, mudar de lugar e demolir estradas e imóveis (B → Reformas e Obras).</li>
 <li>Com a <b>Enxada</b>, are a terra, plante sementes e colha; regue com o <b>Regador</b> (encha na água). Chuva também rega.</li>
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
 <li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas.</li>
-<li>A economia (impostos, soldos, salários, colheitas) anda a cada 5 dias; veja o resumo em Diário → Contas. As pessoas envelhecem um ano a cada mês do calendário.</li>
+<li>A economia (impostos, soldos, salários, colheitas) anda uma vez por mês; veja o resumo em Diário → Contas. As pessoas envelhecem um ano a cada 6 meses do calendário (em 1º de janeiro e 1º de julho).</li>
 <li>Fique atento aos <b>eventos</b>: mercadores perdidos, tesouros enterrados, lobos atacando vilas e até dragões. Eles aparecem marcados no mapa.</li>
 <li>Capangas sobem de nível lutando. Escolha a <b>postura</b> de cada um (agressivo, equilibrado ou defensivo) conversando com eles.</li>
 <li>Segure o clique (ou o Espaço) para atacar e coletar sem parar. Para o <b>golpe forte</b>, segure V e solte.</li>

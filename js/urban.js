@@ -432,7 +432,7 @@ const Chiefdom = {
       Game.addRelation(v.civ, 5);
       this.grant(vi, `${c.rulerName} entregou a você a chefia de ${v.name}.`);
     } else {
-      G.askDay[vi] = G.day + 7; Game.addRelation(v.civ, -3);
+      G.askDay[vi] = G.day + ECON_DAYS; Game.addRelation(v.civ, -3);
       UI.msg(`${c.rulerName} recusa: "Ainda não confio tanto em você." Tente de novo em 7 dias.`, 'bad');
     }
   },

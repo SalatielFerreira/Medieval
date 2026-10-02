@@ -271,7 +271,7 @@ const Routine = {
     const d = U.dist(e.x, e.y, tg.x, tg.y);
     // quem ficar preso no caminho também acaba entrando em casa
     if (ph === 'night') e.nightT = (e.nightT || 0) + dt;
-    if (ph === 'night' && (d < 16 || e.nightT > 25)) { e.sleeping = true; e.x = tg.x; e.y = tg.y; return true; }
+    if (ph === 'night' && (d < 16 || e.nightT > DAY_LEN * 0.12)) { e.sleeping = true; e.x = tg.x; e.y = tg.y; return true; }
     if (d > 44) { this.go(e, tg.x, tg.y, Math.max(sp, 34), dt); return true; }
     // chegou: fica conversando por ali
     const r = e.rt || (e.rt = { t: 0, x: tg.x, y: tg.y });

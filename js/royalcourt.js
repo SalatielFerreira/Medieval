@@ -4,9 +4,10 @@
 // e a obrigação de aparecer no castelo de tempos em tempos. Só se serve a uma corte por vez.
 
 const COURT_INVITE = { renown: 40, rel: 40 };
-const COURT_ABSENCE = { warn: 30, expel: 45 }; // dias sem aparecer no castelo
+const COURT_ABSENCE = { warn: 3 * ECON_DAYS, expel: 5 * ECON_DAYS }; // dias sem aparecer no castelo (3 e 5 meses)
+const COURT_AUDIENCE_DAYS = ECON_DAYS; // uma audiência por mês
 const COURT_OFFICES = {
-  advisor:   { name: 'Conselheiro do Rei',  f: 'Conselheira do Rei',  icon: '📜', renown: 40, pay: 20, desc: 'Aconselha o rei: +2 de serviço prestado e +1 de relação a cada 5 dias.' },
+  advisor:   { name: 'Conselheiro do Rei',  f: 'Conselheira do Rei',  icon: '📜', renown: 40, pay: 20, desc: 'Aconselha o rei: +2 de serviço prestado e +1 de relação por mês.' },
   treasurer: { name: 'Tesoureiro Real',     f: 'Tesoureira Real',     icon: '💰', renown: 60, pay: 30, desc: 'Cuida do tesouro: o reino arrecada 10% a mais e você recebe uma parte.' },
   general:   { name: 'General do Rei',      f: 'Generala do Rei',     icon: '⚔️', renown: 70, pay: 30, desc: 'Comanda a guarnição: +1 soldado por ciclo e você pode pedir escolta ao rei.' },
   diplomat:  { name: 'Embaixador',          f: 'Embaixadora',         icon: '🤝', renown: 80, pay: 25, desc: 'Representa o reino: melhora as relações e pode propor ao rei alianças, paz ou guerra.' },
@@ -26,13 +27,13 @@ const RoyalCourt = {
   },
   officeName(k) { const o = COURT_OFFICES[k]; return P.sex === 'f' ? o.f : o.name; },
 
-  // a cada 5 dias: convites, salário, efeitos do cargo e a obrigação de aparecer
+  // uma vez por mês: convites, salário, efeitos do cargo e a obrigação de aparecer
   tick() {
     const cur = this.C();
-    // convite pendente vence em 30 dias
-    if (G.courtInvite && (G.day - G.courtInvite.day > 30 || !this.canBeInvited(G.courtInvite.civ))) G.courtInvite = null;
+    // convite pendente vence em 3 meses
+    if (G.courtInvite && (G.day - G.courtInvite.day > 3 * ECON_DAYS || !this.canBeInvited(G.courtInvite.civ))) G.courtInvite = null;
     if (!G.courtInvite) {
-      const cands = G.civs.filter(c => this.canBeInvited(c.id) && (!G.courtRefused || !G.courtRefused[c.id] || G.day - G.courtRefused[c.id] > 60))
+      const cands = G.civs.filter(c => this.canBeInvited(c.id) && (!G.courtRefused || !G.courtRefused[c.id] || G.day - G.courtRefused[c.id] > 6 * ECON_DAYS))
         .sort((a, b) => this.renown(b.id) - this.renown(a.id));
       if (cands.length && Math.random() < 0.6) this.invite(cands[0].id);
     }
@@ -95,10 +96,10 @@ const RoyalCourt = {
     cur.office = k;
     UI.msg(`${o.icon} Você agora é ${this.officeName(k)} de ${CIV_DEFS[cur.civ].short}.`, 'gold');
   },
-  // audiência com o rei: um presente ou favor (uma vez a cada 10 dias)
+  // audiência com o rei: um presente ou favor (uma vez por mês)
   audience() {
     const cur = this.C();
-    if (!cur || G.day - cur.audience < 10) return;
+    if (!cur || G.day - cur.audience < COURT_AUDIENCE_DAYS) return;
     cur.audience = G.day;
     const c = G.civs[cur.civ], r = Math.random();
     if (r < 0.4) { const g = Math.min(U.rint(60, 150), Math.max(0, c.treasury - 50)); P.gold += g; UI.msg(`👑 ${c.rulerName} agradece seus conselhos com ${g} 🪙.`, 'gold'); }
