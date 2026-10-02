@@ -93,7 +93,10 @@ const Urban = {
     const i = World.idx(tx, ty), t = World.tiles[i];
     if (t !== T.ROAD && t !== T.BRIDGE) return 'Não há estrada aqui';
     if (World.sgrid[i] >= 0) return 'Há uma construção em cima';
-    if (this.E().mine[i] === undefined && !this.authority(tx, ty)) return 'Só remove estradas que você abriu, ou as da sua vila ou do seu reino';
+    if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
+    // fora das vilas e castelos dos outros, qualquer estrada (até as do mapa) pode ser removida
+    const town = this.E().mine[i] === undefined ? this.foreignTown(tx, ty) : null;
+    if (town) return `Só o chefe da vila ou o rei pode mexer nas estradas de ${town}`;
     return null;
   },
   // terreno que volta no lugar de uma estrada antiga (a vizinhança decide)
@@ -366,7 +369,7 @@ const Urban = {
     if (k === 'road') return { name: 'Estrada', icon: '🛣️', sub: 'de graça · clique e arraste', can: true, btn: '🛣️ Abrir estradas',
       desc: 'Abre uma estrada de terra batida, onde se anda 25% mais rápido. Não gasta material. Sobre rio raso vira ponte. Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode abrir estradas.' };
     if (k === 'u:unroad') return { name: 'Remover estrada', icon: '⛏️', sub: 'reforma', can: true, btn: '⛏️ Remover estradas',
-      desc: 'Desfaz as estradas que você abriu. Como chefe de vila ou rei, também remove as estradas da sua vila ou do seu reino.' };
+      desc: 'Remove qualquer estrada ou ponte, inclusive as que já vêm no mapa (o terreno volta a ser campo, floresta ou rio). Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode remover.' };
     if (k === 'u:move') return { name: 'Mudar de lugar', icon: '🔀', sub: 'reforma', can: true, btn: '🔀 Escolher a construção',
       desc: 'Clique numa construção e depois no novo lugar. As suas mudam em qualquer lugar; casas, lojas, muralhas e outros imóveis das vilas só como chefe (dentro da vila) ou rei (no reino todo). Castelos, cavernas, acampamentos e santuários não saem do lugar.' };
     if (k === 'u:demolish') return { name: 'Demolir', icon: '💥', sub: 'reforma', can: true, btn: '💥 Escolher a construção',
