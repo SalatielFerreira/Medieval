@@ -92,7 +92,7 @@ const Menu = {
       <div class="mc-orn"><span></span>⚜<span></span></div>
       <p class="mc-intro">Sete reinos disputam estas terras. Você começa com uma cabana e nada mais.<br><em>Colete, crie, ame, lute... e funde uma dinastia.</em></p>
       <div class="mc-opts">
-        ${info ? opt('load', '▶', 'Continuar a jornada', `${UI.esc(info.name)}${info.age ? ` · ${info.age} anos` : ''} · dia ${info.day} · nível ${info.level || 1}`, 'main', `data-n="${info.slot}"`) : ''}
+        ${info ? opt('load', '▶', 'Continuar a jornada', `${UI.esc(info.name)}${info.age ? ` · ${info.age} anos` : ''} · ${Calendar.short(info.day)} · nível ${info.level || 1}`, 'main', `data-n="${info.slot}"`) : ''}
         ${opt('create', '⚔️', 'Novo jogo', 'Crie seu herói e comece do zero', info ? '' : 'main')}
         ${opt('slots', '📜', 'Jogos salvos', 'Carregar, importar e exportar · 3 espaços')}
         ${opt('help', '❓', 'Como jogar', 'Controles, primeiros passos e dicas')}
@@ -104,7 +104,7 @@ const Menu = {
     const rows = Saves.list().map((inf, i) => {
       const n = i + 1;
       return `<div class="slotrow ${inf ? '' : 'empty'}"><div class="sr-n">${n}</div>
-        <div class="sr-info">${inf ? `<b>${UI.esc(inf.name)}</b><small>${inf.sex === 'f' ? 'Heroína' : 'Herói'} · ${inf.age} anos · nível ${inf.level || 1} · dia ${inf.day}${inf.ruled ? ` · 👑 ${inf.ruled} reino(s)` : ''} · salvo em ${fmt(inf.savedAt)}${Saves.size(n) ? ` · ${Saves.size(n)} KB` : ''}</small>` : '<b>Espaço vazio</b><small>Comece um novo jogo ou importe um arquivo</small>'}</div>
+        <div class="sr-info">${inf ? `<b>${UI.esc(inf.name)}</b><small>${inf.sex === 'f' ? 'Heroína' : 'Herói'} · ${inf.age} anos · nível ${inf.level || 1} · ${Calendar.short(inf.day)}${inf.ruled ? ` · 👑 ${inf.ruled} reino(s)` : ''} · salvo em ${fmt(inf.savedAt)}${Saves.size(n) ? ` · ${Saves.size(n)} KB` : ''}</small>` : '<b>Espaço vazio</b><small>Comece um novo jogo ou importe um arquivo</small>'}</div>
         <div class="sr-acts">${inf ? `<button class="mc-main" data-m="load" data-n="${n}">▶ Carregar</button><button data-m="export" data-n="${n}" title="Baixar arquivo">⬇️ Exportar</button><button data-m="del" data-n="${n}" title="Apagar">🗑️</button>`
           : ''}<button data-m="import" data-n="${n}" title="Importar arquivo para este espaço">⬆️ Importar</button></div></div>`;
     }).join('');

@@ -46,6 +46,8 @@ const OBJ = [null,
   /* 18 */{ name: 'Linho',                         blocks: false, tool: null,   min: 0, hp: 1,  drops: { fiber: [2, 3] },                    regrow: 150,  pc: '#6a8fd0' },
   /* 19 */{ name: 'Erva Medicinal',                blocks: false, tool: null,   min: 0, hp: 1,  drops: { herb: [1, 2] },                     regrow: 200,  pc: '#7ac070' },
 ];
+// árvores, rochas e minérios só voltam a crescer 1 ano (do calendário do jogo) depois de coletados
+for (const o of OBJ) if (o && (o.tree || o.tool === 'pick')) o.regrow = YEAR_DAYS * DAY_LEN;
 
 const CH = 16; // tiles por chunk
 const HALF = TILE / 2; // resolução interna (pixel art 2x)
@@ -382,7 +384,8 @@ const World = {
   },
   addStruct(type, x, y, w, h, owner, extra) {
     const info = BUILDINGS[type] && owner === 'player' ? BUILDINGS[type] : CIV_STRUCTS[type];
-    const s = Object.assign({ id: this.structs.length, type, x, y, w, h, owner, blocks: info.blocks }, extra || {});
+    // okey: tipo e posição de origem, iguais em todo carregamento (usado para guardar obras de chefes e reis)
+    const s = Object.assign({ id: this.structs.length, okey: type + '@' + x + ',' + y, type, x, y, w, h, owner, blocks: info.blocks }, extra || {});
     this.structs.push(s);
     for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) {
       const k = this.idx(i, j);
@@ -477,7 +480,8 @@ const World = {
       const r = this.regrow[k];
       r.time -= dt;
       if (r.time > 0) continue;
-      if (this.sgrid[r.i] >= 0) { this.regrow.splice(k, 1); continue; }
+      const tt = this.tiles[r.i];
+      if (this.sgrid[r.i] >= 0 || tt === T.ROAD || tt === T.BRIDGE) { this.regrow.splice(k, 1); continue; }
       const x = r.i % WORLD_W, y = (r.i / WORLD_W) | 0;
       if (U.dist((x + 0.5) * TILE, (y + 0.5) * TILE, px, py) < TILE * 3) { r.time = 10; continue; }
       this.obj[r.i] = r.t; this.objHp[r.i] = OBJ[r.t].hp;
@@ -492,19 +496,37 @@ const World = {
     c.width = WORLD_W; c.height = WORLD_H;
     const g = c.getContext('2d');
     const img = g.createImageData(WORLD_W, WORLD_H);
-    const civRgb = CIV_DEFS.map(d => U.hexRgb(d.color));
     for (let i = 0; i < WORLD_W * WORLD_H; i++) {
-      let [r, gg, b] = U.hexRgb(TINFO[this.tiles[i]].c);
-      if (this.obj[i] && OBJ[this.obj[i]].tree) { r *= 0.75; gg *= 0.8; b *= 0.75; }
-      const t = this.terr[i];
-      if (t >= 0 && this.tiles[i] !== T.WATER && this.tiles[i] !== T.DEEP) {
-        const cr = civRgb[t];
-        r = r * 0.7 + cr[0] * 0.3; gg = gg * 0.7 + cr[1] * 0.3; b = b * 0.7 + cr[2] * 0.3;
-      }
+      const [r, gg, b] = this.miniColor(i);
       img.data[i * 4] = r; img.data[i * 4 + 1] = gg; img.data[i * 4 + 2] = b; img.data[i * 4 + 3] = 255;
     }
     g.putImageData(img, 0, 0);
     this.mini = c;
+  },
+  miniColor(i) {
+    let [r, gg, b] = U.hexRgb(TINFO[this.tiles[i]].c);
+    if (this.obj[i] && OBJ[this.obj[i]].tree) { r *= 0.75; gg *= 0.8; b *= 0.75; }
+    const t = this.terr[i];
+    if (t >= 0 && this.tiles[i] !== T.WATER && this.tiles[i] !== T.DEEP) {
+      const cr = U.hexRgb(CIV_DEFS[t].color);
+      r = r * 0.7 + cr[0] * 0.3; gg = gg * 0.7 + cr[1] * 0.3; b = b * 0.7 + cr[2] * 0.3;
+    }
+    return [Math.round(r), Math.round(gg), Math.round(b)];
+  },
+  // repinta um único ponto do minimapa (ao abrir ou remover uma estrada)
+  miniPixel(i) {
+    if (!this.mini) return;
+    const [r, g, b] = this.miniColor(i);
+    const cx = this.mini.getContext('2d');
+    cx.fillStyle = `rgb(${r},${g},${b})`; cx.fillRect(i % WORLD_W, (i / WORLD_W) | 0, 1, 1);
+  },
+  // troca o terreno de um bloco (estradas) e redesenha o pedaço do mapa
+  setTile(i, t) {
+    this.tiles[i] = t;
+    if (t === T.ROAD || t === T.BRIDGE) this.obj[i] = 0;
+    const x = i % WORLD_W, y = (i / WORLD_W) | 0;
+    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) this.chunks.delete(Math.floor((x + dx) / CH) + ',' + Math.floor((y + dy) / CH));
+    this.miniPixel(i);
   },
 
   // ---------------------------------------------------------------- desenho do terreno

@@ -85,10 +85,12 @@ const Arena = {
   // ------------------------------------------------------------ Grande Torneio (uma capital por ano)
   tourney() { const t = G.tourney; return t && G.day <= t.until ? t : null; },
   dayTick() {
-    if (G.day % YEAR_DAYS === 3 && !this.tourney()) {
+    // uma vez por ano, a partir de 24 de junho, por 10 dias
+    const cd = Calendar.of(G.day);
+    if (cd.month === 5 && cd.day === 24 && !this.tourney()) {
       const ci = U.rint(0, CIV_DEFS.length - 1);
-      G.tourney = { ci, until: G.day + 2, round: 0, out: false, won: false };
-      Diplo.chronicle(`🏟️ O Grande Torneio acontece em ${Diplo.name(ci)} até o dia ${G.day + 2}! Prêmio: 500 🪙 e muita fama.`, true);
+      G.tourney = { ci, until: G.day + 10, round: 0, out: false, won: false };
+      Diplo.chronicle(`🏟️ O Grande Torneio acontece em ${Diplo.name(ci)} até ${Calendar.text(G.day + 10)}! Prêmio: 500 🪙 e muita fama.`, true);
     }
   },
   enterTourney(ci) {

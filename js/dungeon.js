@@ -52,6 +52,7 @@ const Dungeon = {
   // ------------------------------------------------------------ entrar e sair
   enter(cave) {
     if (G.dungeon) return;
+    Urban.stop();
     if (P.mounted) { P.mounted = false; }
     if (G.siege) Game.endSiege('Você entrou na caverna e o cerco foi abandonado.');
     if (G.duel) Arena.lose('saiu da arena');

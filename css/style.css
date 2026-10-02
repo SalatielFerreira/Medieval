@@ -52,7 +52,7 @@ body.nonum .track span { display: none; }
 .clk-top { display: flex; align-items: center; gap: 9px; }
 .clk-top .ico { width: 24px; height: 24px; }
 .clk-top .sun { color: #ffd24a; } .clk-top .moon { color: #a9c4ff; }
-.clk-top b { display: block; font-family: Georgia, serif; font-size: 15px; color: var(--gold-hi); }
+.clk-top b { display: block; white-space: nowrap; font-family: Georgia, serif; font-size: 15px; color: var(--gold-hi); }
 .clk-top small { font-size: 11px; color: #c9b48a; }
 .clk-time { margin-left: auto; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .clk-bar { height: 4px; margin: 8px 0 7px; background: rgba(0, 0, 0, 0.5); border-radius: 2px; overflow: hidden; }

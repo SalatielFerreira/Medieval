@@ -1,7 +1,6 @@
 'use strict';
 // Pessoas do mundo: identidade, famílias, personalidade, relacionamentos, conversa, lojas e envelhecimento.
 
-const YEAR_DAYS = 8; // dias de jogo por ano (2 dias por estação)
 
 const NAMES_M = ['Afonso', 'Bernardo', 'Duarte', 'Fernão', 'Gonçalo', 'Henrique', 'Jaime', 'Lourenço', 'Martim', 'Nuno', 'Pedro', 'Rodrigo',
   'Sancho', 'Tomé', 'Vasco', 'Álvaro', 'Diogo', 'Estêvão', 'Garcia', 'Mendo', 'Rui', 'Simão', 'Tristão', 'Vicente', 'Gil', 'Egas',

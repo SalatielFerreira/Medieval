@@ -33,6 +33,7 @@ const Towns = {
   // mostra ou esconde as construções conforme o nível e as ruínas
   show(v) {
     for (const s of [...v.extra.houses, ...v.extra.walls, ...(v.extra.well ? [v.extra.well] : [])]) {
+      if (s.removed) continue; // demolida pelo chefe ou pelo rei
       s.hidden = v.level < s.growth;
       s.blocks = !s.hidden;
       s.owner = v.civ;

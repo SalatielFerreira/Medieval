@@ -76,7 +76,8 @@ const Progress = {
   },
   // efeitos diários das profissões dos filhos
   dayTick() {
-    if (Season.idx() === 0 && G.day % YEAR_DAYS === 1 && G.day > 1) this.add('winters');
+    const cd = Calendar.of(G.day);
+    if (cd.month === 2 && cd.day === 1 && G.day > 1) this.add('winters'); // chegou a primavera: sobreviveu ao inverno
     for (const p of G.people) {
       if (!p.alive || p.kin !== 'child' || !p.prof) continue;
       if (p.prof === 'smith' && World.structs.some(s => s.owner === 'player' && s.type === 'forge')) { Inv.add('iron_bar', 1); UI.msg(`⚒️ ${p.name} forjou 1 Barra de Ferro.`); }

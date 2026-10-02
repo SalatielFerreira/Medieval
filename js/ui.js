@@ -116,7 +116,7 @@ const UI = {
   toggle(fn) {
     if (this.cur && this.cur.fn === fn) { this.close(); return; }
     if (this.cur) this.close();
-    G.placing = null;
+    G.placing = null; Urban.stop();
     this[fn]();
   },
   showGameUI(on) {
@@ -217,9 +217,9 @@ const UI = {
     const hh = String(Math.floor(h)).padStart(2, '0'), mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
     const night = G.darkness > 0.3;
     html('clkIcon', night ? icon('moon', 'moon') : icon('sun', 'sun'));
-    txt('clkDay', 'Dia ' + G.day);
+    txt('clkDay', Calendar.text(G.day));
     const se = Season.cur();
-    txt('clkPhase', `${se.icon} ${se.name} · ` + (h >= 4.5 && h < 7 ? 'Amanhecer' : h >= 7 && h < 12 ? 'Manhã' : h >= 12 && h < 18 ? 'Tarde' : h >= 18 && h < 20.5 ? 'Entardecer' : 'Noite'));
+    txt('clkPhase', `${se.icon} ${se.name} · Ano ${Calendar.of(G.day).year}`);
     txt('clkTime', hh + ':' + mm);
     $('clkProg').style.width = (G.time / DAY_LEN * 100) + '%';
     const zc = G.zone >= 0 ? Game.civColor(G.zone) : '#9ad65a';
@@ -494,36 +494,49 @@ const UI = {
     this.open(st ? STATIONS[st].name.split(' /')[0] : 'Criação', body, 'showCrafting', [st], st ? 'Receitas desta estação' : 'Itens que você faz com as próprias mãos');
   },
 
-  // Construir: lista agrupada e detalhes com custo
+  // Construir: lista agrupada e detalhes com custo (inclui estradas, reformas e as obras de chefe e rei)
+  binfo(k) {
+    if (!BUILDINGS[k]) return Urban.info(k);
+    const b = BUILDINGS[k], n = World.structs.filter(s => s.owner === 'player' && s.type === k && !s.removed).length;
+    return { name: b.name, icon: Game.buildIcon(k), cost: b.cost, desc: b.desc, sub: `${b.w}×${b.h} · ${n ? `você tem ${n}` : 'nenhuma ainda'}`, can: Inv.has(b.cost),
+      cat: `${b.w}×${b.h} espaços · ${b.blocks ? 'sólida' : 'pode-se andar por cima'}`, btn: '📍 Posicionar no mapa', owned: n, size: `${b.w}×${b.h}` };
+  },
   showBuild() {
     const S = this.sel;
     const groups = [['Moradia', ['cabin', 'house', 'manor']], ['Produção', ['campfire', 'workbench', 'forge', 'oven', 'brewery']],
       ['Fazenda e animais', ['farm', 'coop', 'pen', 'beehive']], ['Empreendimentos (contrate funcionários)', ['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop', 'ptavern']],
-      ['Guarda', ['chest', 'stable']], ['Defesa e exército', ['barracks', 'wall_wood', 'wall_stone']]].map(([g, ks]) => [g, ks.filter(k => BUILDINGS[k])]);
-    if (!BUILDINGS[S.build]) S.build = 'cabin';
-    const owned = k => World.structs.filter(s => s.owner === 'player' && s.type === k).length;
+      ['Guarda', ['chest', 'stable']], ['Defesa e exército', ['barracks', 'wall_wood', 'wall_stone']],
+      ['Estradas', ['road', 'u:unroad']], ['Reformas', ['u:move', 'u:demolish']]].map(([g, ks]) => [g, ks.filter(k => BUILDINGS[k] || k.includes(':') || k === 'road')]);
+    const auth = Urban.hasAny();
+    if (auth) groups.push(['Obras da vila (chefe) e do reino (rei)', Object.keys(CIVIC).map(k => 'c:' + k)]);
+    if (S.build.startsWith('c:') && !auth) S.build = 'cabin';
+    if (!BUILDINGS[S.build] && !S.build.includes(':') && S.build !== 'road') S.build = 'cabin';
     let rows = '';
     for (const [g, ks] of groups) {
       rows += `<div class="grp">${g}</div>`;
       for (const k of ks) {
-        const b = BUILDINGS[k], can = Inv.has(b.cost);
-        rows += `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${Game.buildIcon(k)}</span>
-          <span><b>${b.name}</b><small>${b.w}×${b.h} · ${owned(k) ? `você tem ${owned(k)}` : 'nenhuma ainda'}</small></span><span class="rs ${can ? 'ok' : 'mat'}">${can ? 'Disponível' : 'Falta material'}</span></button>`;
+        const b = this.binfo(k), tool = !b.cost;
+        rows += `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${b.icon}</span>
+          <span><b>${b.name}</b><small>${b.sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Ferramenta' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
       }
     }
-    const b = BUILDINGS[S.build], can = Inv.has(b.cost);
-    const req = Object.entries(b.cost).map(([k, n]) => {
+    const b = this.binfo(S.build);
+    const req = b.cost ? Object.entries(b.cost).map(([k, n]) => {
       const have = Inv.count(k);
       return `<div class="req-row"><span>${ITEMS[k].icon}</span><span>${ITEMS[k].name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;
-    }).join('');
-    const detail = `<div class="dt-head"><div class="dt-ic">${Game.buildIcon(S.build)}</div><div><div class="dt-name">${b.name}</div><div class="dt-cat">${b.w}×${b.h} espaços · ${b.blocks ? 'sólida' : 'pode-se andar por cima'}</div></div></div>
+    }).join('') : '';
+    const mine = Urban.myVillages(), kings = G.civs.filter(c => c.ruler === 'player');
+    const power = kings.length || mine.length ? `<small class="ok">Você manda em: ${[...kings.map(c => '👑 ' + CIV_DEFS[c.id].short + ' (reino todo)'), ...mine.map(x => '🏘️ ' + this.esc(x.v.name))].join(' · ')}</small>`
+      : '<small class="muted">Para mexer nos imóveis e estradas das vilas, torne-se chefe de uma vila (fundando, conquistando ou pedindo ao rei) ou rei.</small>';
+    const detail = `<div class="dt-head"><div class="dt-ic">${b.icon}</div><div><div class="dt-name">${b.name}</div><div class="dt-cat">${b.cat || b.sub}</div></div></div>
       <p class="dt-desc">${b.desc}</p>
-      <div class="kv"><div>Você possui<b>${owned(S.build)}</b></div><div>Tamanho<b>${b.w}×${b.h}</b></div></div>
-      <div><div class="sec">Custo</div><div class="req">${req}</div></div>
-      <div class="act-row"><button class="primary" data-act="build" data-k="${S.build}" ${can ? '' : 'disabled'}>📍 Posicionar no mapa</button></div>
-      <small class="muted">Depois de clicar, escolha o local perto de você. Botão direito ou Esc cancela. Não dá para construir sobre estradas, água ou dentro das cidades.</small>`;
+      ${b.owned !== undefined ? `<div class="kv"><div>Você possui<b>${b.owned}</b></div><div>Tamanho<b>${b.size}</b></div></div>` : ''}
+      ${req ? `<div><div class="sec">Custo</div><div class="req">${req}</div></div>` : ''}
+      <div class="act-row"><button class="primary" data-act="${BUILDINGS[S.build] ? 'build' : 'urban'}" data-k="${S.build}" ${b.can ? '' : 'disabled'}>${b.btn}</button></div>
+      ${BUILDINGS[S.build] ? '<small class="muted">Depois de clicar, escolha o local perto de você. Botão direito ou Esc cancela. Não dá para construir sobre estradas ou água, nem dentro das cidades dos outros.</small>' : ''}
+      ${power}`;
     this.open('Construção', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail">${detail}</div></div>`,
-      'showBuild', [], 'Erga sua base, estações de trabalho e defesas');
+      'showBuild', [], 'Erga sua base, abra estradas e reforme as vilas');
   },
 
   // Reino: abas por reino governado e seções organizadas
@@ -725,7 +738,7 @@ const UI = {
     const ruler = G.civs[f.civ] && G.civs[f.civ].ruler === 'player';
     const bizs = World.structs.filter(s => s.fam === f.id && FAMILY_BIZ[s.type]);
     const body = `<div class="card hero-card" style="border-color:${f.color}"><div class="hc-ic" style="color:${f.color}">🏛️</div><div><b>${this.esc(Families.name(f))}</b>${f.noble ? ' <span class="tag gold">CASA REAL</span>' : ''}<br>
-        <span class="muted">${f.civ >= 0 ? CIV_DEFS[f.civ].name : 'Sem reino'} · sede: ${this.esc(Families.seatName(f))} · desde o dia ${f.since}</span></div></div>
+        <span class="muted">${f.civ >= 0 ? CIV_DEFS[f.civ].name : 'Sem reino'} · sede: ${this.esc(Families.seatName(f))} · desde ${Calendar.short(f.since)}</span></div></div>
       ${rv ? `<div class="alert">🔥 Em guerra contra a coroa de ${CIV_DEFS[rv.civ].short}! Dia ${rv.days + 1} da revolta · força rebelde ${rv.str} · guarnição real ${G.civs[rv.civ].garrison}.
         ${rv.side ? `<b>Você apoia ${rv.side === 'rebel' ? 'os rebeldes' : 'a coroa'}.</b>` : ruler ? '<b>É o seu reino: vá até a vila e derrote os rebeldes!</b>' : `<div class="act-row"><button class="danger" data-act="revside" data-r="${rv.id}" data-side="rebel">🔥 Apoiar a revolta</button><button class="primary" data-act="revside" data-r="${rv.id}" data-side="crown">🛡️ Defender a coroa</button></div>`}</div>` : ''}
       <div class="tiles big">
@@ -783,9 +796,9 @@ const UI = {
   // guerras, alianças e acontecimentos recentes do mundo
   newsHtml(n) {
     const D = Diplo.D();
-    const wars = D.wars.map(w => `<span class="chip">⚔️ ${Diplo.name(w.a)} × ${Diplo.name(w.b)} <small>desde o dia ${w.since}</small></span>`).join('') || '<span class="muted">Nenhuma guerra no momento.</span>';
+    const wars = D.wars.map(w => `<span class="chip">⚔️ ${Diplo.name(w.a)} × ${Diplo.name(w.b)} <small>desde ${Calendar.short(w.since)}</small></span>`).join('') || '<span class="muted">Nenhuma guerra no momento.</span>';
     const allies = D.allies.map(k => { const [a, b] = k.split('-').map(Number); return `<span class="chip">🤝 ${Diplo.name(a)} e ${Diplo.name(b)}</span>`; }).join('') || '<span class="muted">Nenhuma aliança.</span>';
-    const log = D.log.slice(0, n || 10).map(e => `<div class="logrow"><span>Dia ${e.day}</span>${this.esc(e.text)}</div>`).join('') || '<p class="muted">Nada aconteceu ainda. Os reinos observam uns aos outros...</p>';
+    const log = D.log.slice(0, n || 10).map(e => `<div class="logrow"><span>${Calendar.short(e.day)}</span>${this.esc(e.text)}</div>`).join('') || '<p class="muted">Nada aconteceu ainda. Os reinos observam uns aos outros...</p>';
     return `<div class="kgrid two" style="margin-top:12px"><div class="card"><div class="sec">Guerras</div><div class="chips">${wars}</div></div>
       <div class="card"><div class="sec">Alianças</div><div class="chips">${allies}</div></div></div>
       <div class="card" style="margin-top:12px"><div class="sec">Crônicas dos reinos</div><div class="chron">${log}</div></div>`;
@@ -823,7 +836,7 @@ const UI = {
   showRest(sid) {
     const s = World.structs[sid];
     const slots = Saves.list().map((inf, i) => `<button class="slotbtn ${G.slot === i + 1 ? 'on' : ''}" data-act="setslot" data-n="${i + 1}" title="${inf ? this.esc(inf.name) + ', dia ' + inf.day : 'vazio'}">
-      <b>Espaço ${i + 1}</b><small>${inf ? `${this.esc(inf.name)} · dia ${inf.day}` : 'vazio'}</small></button>`).join('');
+      <b>Espaço ${i + 1}</b><small>${inf ? `${this.esc(inf.name)} · ${Calendar.short(inf.day)}` : 'vazio'}</small></button>`).join('');
     const h = `<p>Um lugar seguro para descansar. ${s.type === 'cabin' ? 'O fogo da lareira ainda crepita.' : 'Sua casa está aquecida e arrumada.'}</p>
       <div class="kgrid two">
         <div class="card"><div class="sec">Descanso</div><div class="btns col">
@@ -963,6 +976,7 @@ const UI = {
     else if (People.canRecruit(p)) acts.push(['recruit', `🤝 Recrutar como capanga — ${People.recruitCost(p)} 🪙`]);
     if (adult && !p.kin && p.spouse !== 'player') acts.push(['insult', '😠 Insultar']);
     if (p.rank === 'priest') acts.push(['church', '⛪ Assuntos da igreja']);
+    { const vi = Chiefdom.vilOf(p); if (vi >= 0 && G.civs[World.villages[vi].civ].ruler !== 'player') acts.push(['vchallenge', '⚔️ Desafiar pela chefia da vila']); }
     if (p.kin === 'child' && p.age >= 12) acts.push(['profmenu', p.prof ? `${PROFESSIONS[p.prof].icon} Mudar profissão` : '🎓 Escolher profissão']);
     const st = p.capanga ? People.capangaStats(p) : null;
     const h = `<div class="talk">
@@ -1053,6 +1067,11 @@ const UI = {
       }
       case 'cun': if (p.equip[d.k]) { Inv.add(p.equip[d.k], 1); p.equip[d.k] = null; Game.refreshCapanga(p); } this.showEquipC(p.id); return;
       case 'insult': r = People.insult(p); break;
+      case 'vchallenge': {
+        const vi = Chiefdom.vilOf(p), v = World.villages[vi];
+        if (!v || !confirm(`Atacar ${v.name} para tomar a chefia de ${p.name}? A milícia vai lutar, e o rei decide se isso é uma afronta à coroa.`)) return;
+        this.close(); Chiefdom.challenge(vi); return;
+      }
       case 'profmenu': this.showProf(p.id); return;
       case 'hiremenu': this.showHire(p.id); return;
       case 'church': { const ch = World.villages[p.home.idx] && World.villages[p.home.idx].chapel; if (ch) this.showChapel(ch.id); return; }
@@ -1089,7 +1108,7 @@ const UI = {
     const el = document.getElementById('gameover');
     el.innerHTML = `<div class="gobox">
       <div class="go-skull">☠</div><h1>FIM DE JOGO</h1>
-      <p class="go-cause"><b>${UI.esc(G.name)}</b> morreu ${UI.esc(cause)} aos ${P.age} anos, no dia ${G.day}.</p>
+      <p class="go-cause"><b>${UI.esc(G.name)}</b> morreu ${UI.esc(cause)} aos ${P.age} anos, em ${Calendar.full(G.day)}.</p>
       ${heirs.length ? '<h3>Continue a sua linhagem</h3><div class="go-heirs">' + heirs.map(h => `<button data-go="heir" data-id="${h.id}">
           <canvas data-pid="${h.id}" width="56" height="56"></canvas><span><b>${UI.esc(h.name)}</b><small>${h.sex === 'm' ? 'Filho' : 'Filha'} · ${h.age} anos${h.age < 16 ? ` (assume aos 16)` : ''}</small></span></button>`).join('') + '</div>'
         : '<p class="muted2">Você não deixou herdeiros. Case-se e tenha filhos para continuar sua linhagem numa próxima vez.</p>'}
@@ -1160,7 +1179,7 @@ const UI = {
         <button data-act="deploy" data-k="catapult" ${Inv.count('catapult') ? '' : 'disabled'}>🏹 Montar catapulta (${Inv.count('catapult')})</button>
         <small class="muted">Derrube o portão (${Math.ceil(G.siege.gate || 0)} de resistência) com aríetes, catapultas ou golpes. Enquanto ele estiver de pé, arqueiros atiram das muralhas e o soberano não sai.</small>`;
     }
-    h += this.titleCard(ci);
+    h += this.titleCard(ci) + this.chiefCard(ci);
     const court = G.people.filter(q => q.alive && q.home.type === 'castle' && q.home.civ === ci).sort((a, b) => RANKS[a.rank].order - RANKS[b.rank].order);
     h += '</div><h3>Corte real</h3><div class="list">' + court.map(q => { const rl = People.relation(q); return `<div class="item"><canvas class="mini-portrait" data-pid="${q.id}" width="44" height="44"></canvas>
       <div class="info"><b>${UI.esc(People.full(q))}</b><small>${People.title(q)} · ${q.age} anos · <span style="color:${rl.col}">${rl.text}</span></small></div>
@@ -1168,6 +1187,19 @@ const UI = {
     h += `<p class="muted">Para conquistar pela força, derrote toda a guarnição (${c.garrison} soldados) e depois o próprio soberano diante dos portões. Leve seguidores!</p>`;
     this.open(`🏰 Castelo — ${d.name}`, h, 'showCastle', [ci]);
     this.drawMiniPortraits();
+  },
+  chiefCard(ci) {
+    const c = G.civs[ci], vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci);
+    if (!vills.length) return '';
+    const rows = vills.map(({ v, i }) => {
+      if (v.lord === 'player') return `<div class="crow2">🏘️ <b>${this.esc(v.name)}</b> <small class="ok">você é o chefe</small></div>`;
+      const need = Chiefdom.askNeed(i), wait = G.askDay && (G.askDay[i] || 0) > G.day;
+      const ok = !c.atWar && c.relation >= need.rel && P.gold >= need.gold && !wait;
+      return `<div class="crow2">🏘️ <b>${this.esc(v.name)}</b> <small class="muted">${People.residents(i).length} moradores · exige relação ${need.rel}+${wait ? ' · recusou até ' + Calendar.text(G.askDay[i]) : ''}</small>
+        <button data-act="vask" data-v="${i}" ${ok ? '' : 'disabled'}>📜 Pedir a chefia — ${need.gold} 🪙</button></div>`;
+    }).join('');
+    return `<div class="card" style="margin-top:10px"><div class="sec">🏘️ Chefia das vilas <span>o chefe manda nas estradas e nos imóveis da vila</span></div>${rows}
+      <small class="muted">Também dá para virar chefe fundando uma vila (Reino → Sua casa) ou pela força: converse com o chefe da vila e desafie-o. Atacar uma vila não é guerra com a coroa: o rei decide se foi uma afronta.</small></div>`;
   },
   relBar(c) { return `<b>${Math.round(c.relation)}</b> ${Game.relationText(c)}`; },
 
@@ -1268,7 +1300,7 @@ const UI = {
     if (tab === 'ach') {
       const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
       body = `<div class="sec">Desbloqueadas <span>${got} de ${ACHIEVEMENTS.length}</span></div>${this.bar(got, ACHIEVEMENTS.length)}
-        <div class="ach-grid">${ACHIEVEMENTS.map(a => `<div class="ach ${G.ach[a.id] ? 'got' : ''}"><span>${a.icon}</span><div><b>${a.name}</b><small>${a.desc}</small>${G.ach[a.id] ? `<em>Dia ${G.ach[a.id]}</em>` : ''}</div></div>`).join('')}</div>`;
+        <div class="ach-grid">${ACHIEVEMENTS.map(a => `<div class="ach ${G.ach[a.id] ? 'got' : ''}"><span>${a.icon}</span><div><b>${a.name}</b><small>${a.desc}</small>${G.ach[a.id] ? `<em>${Calendar.short(G.ach[a.id])}</em>` : ''}</div></div>`).join('')}</div>`;
     } else if (tab === 'stats') {
       const kills = Object.keys(st).filter(k => k.startsWith('kill_')).reduce((a, k) => a + st[k], 0);
       const rows = [['🪓', 'Árvores cortadas', st.trees], ['⛏️', 'Rochas quebradas', st.ores], ['🌿', 'Plantas colhidas', st.plants], ['🎣', 'Peixes pescados', st.fish],
@@ -1281,13 +1313,13 @@ const UI = {
       const kids = G.people.filter(p => p.kin === 'child');
       const heroes = [...(G.dynasty || []), { name: G.name, sex: P.sex, age: P.age, day: G.day, level: P.level, cur: true, kingdoms: G.civs.filter(c => c.ruler === 'player').map(c => CIV_DEFS[c.id].short) }];
       body = `<div class="sec">Gerações <span>${heroes.length}</span></div><div class="dyn">${heroes.map((h, i) => `<div class="dyn-row ${h.cur ? 'cur' : ''}"><span class="dyn-n">${i + 1}ª</span>
-          <div><b>${this.esc(h.name)}</b><small>${h.cur ? 'Herói atual' : `Morreu ${this.esc(h.cause)} aos ${h.age} anos, no dia ${h.day}`} · nível ${h.level}${h.kingdoms && h.kingdoms.length ? ' · 👑 ' + h.kingdoms.join(', ') : ''}</small></div></div>`).join('')}</div>
+          <div><b>${this.esc(h.name)}</b><small>${h.cur ? 'Herói atual' : `Morreu ${this.esc(h.cause)} aos ${h.age} anos, em ${Calendar.full(h.day)}`} · nível ${h.level}${h.kingdoms && h.kingdoms.length ? ' · 👑 ' + h.kingdoms.join(', ') : ''}</small></div></div>`).join('')}</div>
         <div class="sec" style="margin-top:12px">Filhos <span>${kids.filter(k => k.alive).length} vivos</span></div>
         <div class="list">${kids.length ? kids.map(k => `<div class="item"><span class="ic">${k.sex === 'm' ? '👦' : '👧'}</span><div class="info"><b>${this.esc(k.name)}</b> · ${k.age} anos${k.alive ? '' : ' · ✝'}
           <small>${k.prof ? PROFESSIONS[k.prof].icon + ' ' + (k.sex === 'f' ? PROFESSIONS[k.prof].f : PROFESSIONS[k.prof].name) : k.age >= 12 ? 'Sem profissão — converse para escolher' : 'Ainda é criança'}</small></div></div>`).join('') : '<p class="muted">Nenhum filho ainda.</p>'}</div>
-        <div class="kv" style="margin-top:12px"><div>Dias de história<b>${G.day}</b></div><div>Reinos governados<b>${G.civs.filter(c => c.ruler === 'player').length}</b></div><div>Ouro<b>${P.gold}</b></div><div>Dificuldade<b>${DIFFICULTY[G.diff || 'normal'].name}</b></div></div>`;
+        <div class="kv" style="margin-top:12px"><div>Dias de história<b>${G.day}</b></div><div>Data<b>${Calendar.full(G.day)}</b></div><div>Reinos governados<b>${G.civs.filter(c => c.ruler === 'player').length}</b></div><div>Ouro<b>${P.gold}</b></div><div>Dificuldade<b>${DIFFICULTY[G.diff || 'normal'].name}</b></div></div>`;
     } else {
-      body = (G.diary || []).length ? `<div class="diary">${G.diary.map(e => `<div><em>Dia ${e.day}</em><span>${this.esc(e.text)}</span></div>`).join('')}</div>` : '<p class="muted">Nada escrito ainda.</p>';
+      body = (G.diary || []).length ? `<div class="diary">${G.diary.map(e => `<div><em>${Calendar.short(e.day)}</em><span>${this.esc(e.text)}</span></div>`).join('')}</div>` : '<p class="muted">Nada escrito ainda.</p>';
     }
     this.open('Diário do Herói', `<div class="tabs">${tabs}</div><div class="scroll" data-scroll="diary">${body}</div>`, 'showDiary', [], `${this.esc(G.name)} · ${Object.keys(G.ach || {}).length} conquistas · ${(G.dynasty || []).length + 1}ª geração`);
   },
@@ -1409,7 +1441,7 @@ const UI = {
     const tiers = ARENA_TIERS.map((t, i) => `<div class="crow"><span class="ri">${['🥉', '🥈', '🥇'][i]}</span><span><b>${t.name}</b><small>prêmio ${t.prize} 🪙 · aposta paga ${t.odds}× · +${t.fame} fama · recomendado nível ${t.lvl}+</small></span>
       <span class="act-row"><button class="primary" data-act="duel" data-c="${ci}" data-t="${i}">⚔️ Duelo</button><button data-act="joust" data-c="${ci}" data-t="${i}" ${horse ? '' : 'disabled title="Precisa de cavalo"'}>🐎 Justa</button></span></div>`).join('');
     const h = `<div class="card hero-card"><div class="hc-ic">🏟️</div><div><b>Arena de ${CIV_DEFS[ci].name}</b><br><span class="muted">Sua fama: 🌟 ${Court.fame()} · ouro ${P.gold} 🪙. Na arena ninguém morre: quem cai primeiro perde.</span></div></div>
-      ${tr ? `<div class="alert gold">🏟️ Grande Torneio em ${CIV_DEFS[tr.ci].short} até o dia ${tr.until}! ${tr.ci === ci ? (tr.won ? 'Você é o campeão deste ano!' : tr.out ? 'Você já foi eliminado.' : `<button class="primary" data-act="tourney" data-c="${ci}" ${P.gold >= 50 ? '' : 'disabled'}>Inscrever-se — 50 🪙 (3 lutas, prêmio 500 🪙)</button>`) : 'Vá até lá para competir.'}</div>` : ''}
+      ${tr ? `<div class="alert gold">🏟️ Grande Torneio em ${CIV_DEFS[tr.ci].short} até ${Calendar.text(tr.until)}! ${tr.ci === ci ? (tr.won ? 'Você é o campeão deste ano!' : tr.out ? 'Você já foi eliminado.' : `<button class="primary" data-act="tourney" data-c="${ci}" ${P.gold >= 50 ? '' : 'disabled'}>Inscrever-se — 50 🪙 (3 lutas, prêmio 500 🪙)</button>`) : 'Vá até lá para competir.'}</div>` : ''}
       <div class="kgrid two"><div class="card"><div class="sec">⚔️ Lutar</div>${bet}${tiers}
         <small class="muted">Justa: três passadas a cavalo. Clique em "Golpear" quando a marca passar pelo centro dourado.</small></div>
         <div class="card"><div class="sec">💰 Apostar na luta de hoje</div>
@@ -1519,6 +1551,8 @@ const UI = {
       case 'eat': Game.eat(d.k); break;
       case 'craft': Game.craft(+d.r, +d.n); break;
       case 'build': this.close(); Game.startPlacing(d.k); return;
+      case 'urban': this.close(); Urban.start(d.k); return;
+      case 'vask': Chiefdom.ask(+d.v); break;
       case 'save': Game.save(World.structs[+d.s]); break;
       case 'sleep': this.close(); Game.sleep(World.structs[+d.s]); return;
       case 'train': Game.train(); break;
@@ -1677,7 +1711,9 @@ const HELP_HTML = `
 <li>Com um <b>arco</b> equipado, clique para atirar flechas (ou segure Espaço para mirar no inimigo mais próximo).</li>
 <li>Explore as <b>cavernas</b> nas montanhas e ilhas: monstros, minérios raros, baús de tesouro e chefes com itens lendários.</li>
 <li>A mochila tem <b>limite de peso</b>: guarde itens no Baú, ou compre um <b>cavalo</b> e uma <b>carroça</b> na taverna.</li>
-<li>Cada ano tem 4 <b>estações</b> de 2 dias. No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem.</li>
+<li>O <b>calendário</b> tem os 12 meses do ano (cada dia dura 1 minuto). As <b>estações</b> seguem os meses: primavera (março a maio), verão, outono e inverno (dezembro a fevereiro). No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem. Árvores, pedras e minérios coletados só renascem depois de 1 ano.</li>
+<li>Abra <b>estradas</b> (B → Estradas): 1 pedra por bloco, ou ponte de madeira sobre rio raso. Clique e arraste.</li>
+<li>Vire <b>chefe de uma vila</b> fundando a sua, conquistando (converse com o chefe e desafie-o) ou pedindo ao rei no castelo. O chefe (na vila) e o rei (no reino todo) podem criar, mudar de lugar e demolir estradas e imóveis (B → Reformas e Obras).</li>
 <li>Com a <b>Enxada</b>, are a terra, plante sementes e colha; regue com o <b>Regador</b> (encha na água). Chuva também rega.</li>
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
 <li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas todo dia.</li>

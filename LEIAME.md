@@ -57,7 +57,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Pessoas com identidade:** cerca de 450 NPCs com nome, sobrenome de família, idade, hierarquia (Rei, Rainha, Príncipe, Princesa, Cavaleiro, Ferreiro, Madeireiro, Pedreiro, Comerciante, Taverneiro, Caçador, Camponês, Andarilho, Mendigo...), personalidade e presente favorito. Eles envelhecem, têm filhos e morrem. Quando morrem, só os filhos dão continuidade ao ofício.
 - **Conversa (E ou balão 💬):** conversar, elogiar, presentear, paquerar, namorar, casar (com Anel de Prata), terminar, insultar (pessoas orgulhosas ou corajosas podem partir para a briga), negociar e recrutar capangas que você equipa com armas e armaduras.
 - **Lojas especializadas** em cada vila (Armazém, Madeireira, Pedreira, Ferreiro e Taverna) e **caçadores** que vendem peles, ossos, chifres e presas. A amizade com o dono dá desconto.
-- **Família e linhagem:** case-se, tenha filhos (sexo aleatório, você escolhe o nome). Cada ano dura 6 dias de jogo. Morrer é fim de jogo, mas você pode continuar como seu filho ou filha, que herda tudo.
+- **Família e linhagem:** case-se, tenha filhos (sexo aleatório, você escolhe o nome). O ano segue o calendário de 12 meses (365 dias, 1 dia = 1 minuto real). Morrer é fim de jogo, mas você pode continuar como seu filho ou filha, que herda tudo.
 
 - **Mapa fixo** de 320×320 tiles, o mesmo em todas as partidas: cerca de 73% de terra, com campos, florestas, colinas, montanhas, neve, rios e lagos. Há **8 ilhas** no mar que só se alcançam de barco e guardam prata, ouro, gemas e carvalhos anciões.
 - **7 reinos:** Valdória, Karthum, Nordheim, Elvaren, Mordrak, Brennor e Valtaris. Cada um tem castelo, 3 vilas espaçadas (Armazém, Ferreiro, Madeireira, Pedreira, Taverna, casas e plantações), território com fronteiras, estradas e economia própria. Há 14 acampamentos de bandidos.
@@ -85,6 +85,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
 ## Novidades desta versão
+
+- **Calendário de verdade:** os 12 meses do ano (janeiro a dezembro, 365 dias) e cada dia dura 1 minuto real. O jogo começa em 1º de março. As estações seguem os meses: primavera (março a maio), verão (junho a agosto), outono (setembro a novembro) e inverno (dezembro a fevereiro). O aniversário de todos é no 1º de janeiro, e o Grande Torneio começa em 24 de junho.
+- **Recursos renascem em 1 ano:** árvores, pedras e minérios coletados só voltam a crescer 1 ano (do jogo) depois.
+- **Estradas:** B → Estradas. Clique e arraste para abrir estradas (1 pedra por bloco); sobre rio raso vira ponte (3 madeiras). "Remover estrada" desfaz as suas e devolve o material.
+- **Chefe de vila:** vire chefe fundando sua vila, **pela força** (converse com o chefe e desafie-o: derrote a milícia; o rei decide se o ataque é uma afronta à coroa ou se a vila se defende sozinha) ou **pela diplomacia** (no castelo, peça a chefia ao rei com boa relação e ouro). O chefe recebe os impostos dos moradores.
+- **Obras do chefe e do rei:** o chefe (dentro da vila) e o rei (no reino todo) podem abrir e remover estradas, **mudar de lugar** e **demolir** casas, lojas, tavernas, capelas, muralhas e todos os imóveis, e **erguer imóveis novos** nas vilas (B → Reformas e Obras). Castelos, cavernas, acampamentos e santuários não saem do lugar. Suas próprias construções podem ser mudadas e demolidas em qualquer lugar.
+
+## Versão anterior (3)
 
 - **Mochila com 10 níveis:** de 220 até 500 de carga. Melhore na Bancada de Trabalho com couro, corda, tecido e, nos níveis altos, pele de lobo, lã, seda, aço e uma gema.
 - **Arrastar e soltar na Mochila:** arraste itens para os espaços do corpo (equipar), para a algibeira (comidas e remédios), para fora do corpo (tirar), para a lixeira (descartar) ou entre si (reorganizar; "Organizar" volta à ordem por categoria). Clique num item para ver os detalhes, que agora cabem inteiros, sem rolagem. No celular, segure o item um instante para arrastar.
@@ -165,6 +173,7 @@ js/progress.js    conquistas, estatísticas, diário, dinastia e profissões
 js/families.js    famílias, sobrenomes, chefes de vila, revoltas, vilas fundadas e empreendimentos com funcionários
 js/court.js       títulos de nobreza, conselho real, conspirações, casamentos arranjados e rivalidades
 js/market.js      preços dinâmicos e caravanas do jogador
+js/urban.js       estradas, chefia das vilas e obras de chefes e reis (mover, criar e demolir imóveis)
 js/siege.js       portões, aríetes, catapultas e ataques inimigos às suas terras
 js/arena.js       arenas, duelos, justas, Grande Torneio e apostas
 js/faith.js       capelas, catedrais, padres, bênçãos, casamento na igreja e santuários

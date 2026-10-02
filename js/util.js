@@ -5,6 +5,30 @@ const TILE = 32;
 const WORLD_W = 320, WORLD_H = 320;
 const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
+// Calendário: os 12 meses do ano real e 1 dia de jogo = 1 minuto real. O jogo começa em 1º de março (primavera).
+const DAY_LEN = 60; // segundos reais por dia de jogo
+const MONTHS = [['Janeiro', 31], ['Fevereiro', 28], ['Março', 31], ['Abril', 30], ['Maio', 31], ['Junho', 30],
+  ['Julho', 31], ['Agosto', 31], ['Setembro', 30], ['Outubro', 31], ['Novembro', 30], ['Dezembro', 31]];
+const YEAR_DAYS = 365;
+const CAL_START = 59; // dias do ano antes de 1º de março
+const Calendar = {
+  // dia de jogo (1, 2, 3...) -> { year, month (0 = janeiro), day (1..31) }
+  of(day) {
+    let d = day - 1 + CAL_START;
+    const year = Math.floor(d / YEAR_DAYS) + 1;
+    d %= YEAR_DAYS;
+    let m = 0;
+    while (d >= MONTHS[m][1]) { d -= MONTHS[m][1]; m++; }
+    return { year, month: m, day: d + 1 };
+  },
+  text(day) { const c = this.of(day); return `${c.day} de ${MONTHS[c.month][0]}`; },
+  full(day) { const c = this.of(day); return `${c.day} de ${MONTHS[c.month][0]} do ano ${c.year}`; },
+  short(day) { const c = this.of(day); return `${c.day}/${MONTHS[c.month][0].slice(0, 3)} · ano ${c.year}`; },
+  isNewYear(day) { return (day - 1 + CAL_START) % YEAR_DAYS === 0; },
+  // estações do hemisfério norte: primavera (mar–mai), verão (jun–ago), outono (set–nov), inverno (dez–fev)
+  season(day) { return Math.floor(((this.of(day).month + 10) % 12) / 3); },
+};
+
 const U = {
   mulberry32(a) {
     return function () {

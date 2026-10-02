@@ -1,10 +1,8 @@
 'use strict';
 // Núcleo do jogo: estado, loop, controles, combate, economia, cerco e salvamento.
 
-const DAY_LEN = 300;
 // níveis de zoom da câmera (1 = o mais afastado); múltiplos que mantêm os pixels nítidos
-const ZOOM_LEVELS = [1, 1.25, 1.5, 1.75, 2, 2.5]; // segundos reais por dia de jogo
-const SAVE_KEY = 'medieval_save_v3';
+const ZOOM_LEVELS = [1, 1.25, 1.5, 1.75, 2, 2.5];
 
 const G = {
   state: 'menu', paused: false, time: 0, day: 1, ents: [], texts: [], parts: [],
@@ -79,10 +77,11 @@ const Game = {
     }, { passive: false });
     this.canvas.addEventListener('mousedown', e => {
       if (G.state !== 'play' || G.paused) return;
-      if (e.button === 2) { if (G.placing) G.placing = null; else G.mouse.right = true; return; }
+      if (e.button === 2) { if (Urban.mode) Urban.cancel(); else if (G.placing) G.placing = null; else G.mouse.right = true; return; }
       if (e.button !== 0) return;
       const mm = this.miniRect;
       if (mm && e.clientX >= mm.x && e.clientX <= mm.x + mm.s && e.clientY >= mm.y && e.clientY <= mm.y + mm.s) { UI.toggle('showMap'); return; }
+      if (Urban.mode) { Urban.click(); return; }
       if (G.placing) { this.placeBuilding(); return; }
       // clicar numa pessoa abre a conversa com ela
       const h = G.hoverNpc;
@@ -100,6 +99,7 @@ const Game = {
     });
     window.addEventListener('mouseup', e => {
       if (e.button === 2) { G.mouse.right = false; return; }
+      Urban.drag = false;
       G.mouse.down = false;
       if (P.charging && G.state === 'play' && !G.paused) Moves.release();
       P.charging = false;
@@ -166,7 +166,7 @@ const Game = {
     Arena.init(); Faith.init();
     Families.init(); Families.ensurePlayer(); Faith.ensurePriests();
     G.title = { lvl: -1, civ: -1 }; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
-    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null;
+    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; Urban.stop();
     const d = World.start.door;
     this.resetPlayer((d.x + 0.5) * TILE, (d.y + 1) * TILE);
     G.spawn = { x: P.x, y: P.y };
@@ -180,7 +180,7 @@ const Game = {
     UI.msg('Aperte C para criar ferramentas e B para construir. M abre o mapa.');
   },
 
-  toMenu() { UI.close(); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
+  toMenu() { Urban.stop(); UI.close(); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
 
   // ================================================================ salvar / carregar (3 espaços)
   saveInfo() { return Saves.list().filter(Boolean).sort((a, b) => b.savedAt - a.savedAt)[0] || null; },
@@ -190,7 +190,8 @@ const Game = {
       player: { x: P.x, y: P.y, hp: P.hp, maxHp: P.maxHp, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
-      vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin })),
+      vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
+      urban: G.urban || {}, askDay: G.askDay || {},
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
@@ -264,7 +265,8 @@ const Game = {
     G.title = s.title || { lvl: -1, civ: -1 }; G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
-    G.duel = null; G.joust = null;
+    G.duel = null; G.joust = null; G.vwar = null; Urban.stop();
+    G.urban = s.urban || {}; G.askDay = s.askDay || {};
     G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
@@ -275,9 +277,10 @@ const Game = {
     G.stats = s.stats || {}; G.ach = s.ach || {}; G.diary = s.diary || []; G.dynasty = s.dynasty || []; G.diff = s.diff || 'normal';
     (s.vlife || []).forEach((l, i) => { if (World.villages[i]) Object.assign(World.villages[i], l); });
     Towns.init(); Towns.applyAll();
+    Urban.restore(); Families.refresh();
     for (const p of G.people) if (p.alive && p.capanga) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
-    UI.msg(`Bem-vindo de volta, ${G.name}! Dia ${G.day} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
+    UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
     return true;
   },
 
@@ -356,6 +359,7 @@ const Game = {
     if (code === 'Space' && G.joust && !G.joust.over && UI.cur && UI.cur.fn === 'showJoust') { Arena.joustStrike(); UI.showJoust(); return; }
     if (G.state !== 'play' || P.dead || UI.modal) return;
     if (code === 'Escape') {
+      if (Urban.mode) { Urban.stop(); return; }
       if (G.placing) { G.placing = null; return; }
       if (UI.isOpen()) { UI.close(); return; }
       UI.showSettings(); return;
@@ -363,7 +367,7 @@ const Game = {
     const map = { KeyI: 'showInventory', KeyC: 'showCrafting', KeyB: 'showBuild', KeyK: 'showKingdom', KeyM: 'showMap', KeyJ: 'showDiary' };
     if (map[code]) {
       if (UI.cur && UI.cur.fn === map[code]) UI.close();
-      else { G.placing = null; UI[map[code]](); }
+      else { G.placing = null; Urban.stop(); UI[map[code]](); }
       return;
     }
     if (MapView.isOpen) {
@@ -417,7 +421,7 @@ const Game = {
     Ranged.update(dt);
     Battles.update();
     Caravans.update(dt);
-    Families.update(dt);
+    Families.update(dt); Chiefdom.update(dt); Urban.update();
     Sieges.update(dt); Arena.update();
     this.progT = (this.progT || 0) - dt;
     if (this.progT <= 0) {
@@ -455,7 +459,7 @@ const Game = {
       const npc = this.nearestNpc();
       const s = npc ? null : this.nearestInteract();
       const boat = s || npc ? null : this.boatAction();
-      UI.prompt(G.placing ? `Posicionando <b>${BUILDINGS[G.placing].name}</b> — clique para construir · botão direito/Esc cancela`
+      UI.prompt(Urban.mode ? Urban.prompt() : G.placing ? `Posicionando <b>${BUILDINGS[G.placing].name}</b> — clique para construir · botão direito/Esc cancela`
         : P.fishing ? (P.fishing.state === 'bite' ? '<b>❗ O peixe mordeu! Clique ou aperte Espaço AGORA!</b>' : '🎣 Pescando... espere o peixe morder (andar recolhe a linha)')
         : npc ? `Conversar com ${npc.npc.name}` : s ? this.interactLabel(s) : boat ? boat.label : null);
     }
@@ -510,7 +514,7 @@ const Game = {
     } else if (P.hunger > 30 && P.hp < P.maxHp) P.hp = Math.min(P.maxHp, P.hp + dt * 0.6 * (Farm.has('regen') ? 3 : Farm.has('mead') || Farm.has('blessed') ? 2 : 1));
 
     this.updateFishing(dt);
-    if ((G.keys.Space || (G.mouse.down && !P.charging)) && P.atkCd <= 0 && !G.placing && !P.blocking) this.playerAction(G.mouse.down, false);
+    if ((G.keys.Space || (G.mouse.down && !P.charging)) && P.atkCd <= 0 && !G.placing && !Urban.mode && !P.blocking) this.playerAction(G.mouse.down, false);
   },
 
   // ================================================================ ações do jogador
@@ -880,8 +884,8 @@ const Game = {
     const cx = (tx + b.w / 2) * TILE, cy = (ty + b.h / 2) * TILE;
     if (U.dist(cx, cy, P.x, P.y) > 8 * TILE) return 'Longe demais';
     if (b.blocks && P.x + P.r > tx * TILE && P.x - P.r < (tx + b.w) * TILE && P.y > ty * TILE && P.y - P.r < (ty + b.h) * TILE) return 'Você está no caminho';
-    for (const s of World.structs) {
-      if (typeof s.owner !== 'number' && s.owner !== 'bandit') continue;
+    if (!Urban.authority(Math.floor(tx + b.w / 2), Math.floor(ty + b.h / 2))) for (const s of World.structs) {
+      if (s.hidden || (typeof s.owner !== 'number' && s.owner !== 'bandit')) continue;
       if (tx < s.x + s.w + 2 && tx + b.w > s.x - 2 && ty < s.y + s.h + 2 && ty + b.h > s.y - 2) return 'Perto demais de uma cidade';
     }
     return null;
@@ -947,7 +951,8 @@ const Game = {
       if (d.gold) { const g = U.rint(d.gold[0], d.gold[1]); P.gold += g; this.addText(e.x, e.y - 50 - k * 14, `+${g} 🪙`, '#ffd54a'); }
       if (d.xp) this.gainXp(d.xp);
     }
-    if ((e.kind === 'guard') && e.civ >= 0) {
+    if (e.militia !== undefined) Chiefdom.killed(e);
+    else if ((e.kind === 'guard') && e.civ >= 0) {
       const c = G.civs[e.civ];
       c.garrison = Math.max(0, c.garrison - 1);
     }
@@ -1149,7 +1154,7 @@ const Game = {
       for (const p of People.residents(vi)) {
         if (G.spawned.has(p.id)) continue;
         const work = { merchant: v.store, smith: v.smith, lumber: v.lumber, mason: v.quarry, innkeeper: v.tavern, priest: v.chapel }[p.rank];
-        if (work && p.age >= 14) spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ);
+        if (work && !work.removed && p.age >= 14) spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ);
         else {
           // cada morador fica perto da própria casa, para não aglomerar todos no centro
           const hs = World.structs.filter(h => h.type === 'vhouse' && h.village === vi && !h.hidden && !h.ruined);
@@ -1369,7 +1374,7 @@ const Game = {
     }
     for (const c of G.civs) this.tickCiv(c);
     for (const camp of World.camps) if (camp.cleared && G.day >= camp.respawnDay) { camp.cleared = false; camp.left = 4; }
-    if (G.day % YEAR_DAYS === 0) People.tickYear();
+    if (Calendar.isNewYear(G.day)) People.tickYear();
     Diplo.tickDay();
     Families.dayTick(); Biz.dayTick();
     if (G.day % 4 === 0) Faith.ensurePriests();
@@ -1380,10 +1385,12 @@ const Game = {
     if (!G.dungeon) { Towns.dayTick(); Caravans.dayTick(); Battles.dayTick(); }
     Progress.dayTick();
     if (G.family.dueDay && G.day >= G.family.dueDay) { G.family.dueDay = 0; setTimeout(() => UI.showBirth(), 50); }
-    UI.msg(`☀️ Amanhece o dia ${G.day}.`);
+    const cd = Calendar.of(G.day);
+    if (cd.day === 1) UI.banner(`📅 ${MONTHS[cd.month][0]} do ano ${cd.year}`);
   },
   sleep(s) {
     P.hp = P.maxHp; P.stamina = 100; P.hunger = Math.max(0, P.hunger - 20);
+    World.updateRegrow(DAY_LEN - G.time, P.x, P.y); // o resto da noite também conta para as plantas crescerem
     G.time = 0;
     const f = G.family, sp = f.spouse !== null ? People.get(f.spouse) : null;
     if (sp && sp.alive && f.tryChild && !f.dueDay) {
@@ -1393,7 +1400,7 @@ const Game = {
     }
     this.onNewDay();
     this.save(s, true);
-    UI.banner(`🛏️ Dia ${G.day}`);
+    UI.banner(`🛏️ ${Calendar.text(G.day)}`);
   },
 
   // ---------------------------------------------------------------- ações do painel do reino
@@ -1548,6 +1555,8 @@ const Game = {
 
     for (const p of G.parts) { ctx.fillStyle = p.color; ctx.fillRect(p.x - cx, p.y - cy, p.size, p.size); }
     Ranged.draw(ctx, cx, cy);
+
+    Urban.draw(ctx, cx, cy, t);
 
     // iluminação noturna
     if (G.darkness > 0.01) {

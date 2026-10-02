@@ -152,7 +152,7 @@ const Store = {
 
 // ====================================================================== estações e clima
 const Season = {
-  idx(day) { return Math.floor((((day || G.day) - 1) % YEAR_DAYS) / (YEAR_DAYS / 4)); },
+  idx(day) { return Calendar.season(day || G.day); },
   cur() { return SEASONS[this.idx()]; },
   winter() { return this.idx() === 3; },
   apply(announce) {
