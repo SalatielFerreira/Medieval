@@ -19,9 +19,9 @@ const Menu = {
     if (!this.built) this.build();
     this.mainCard();
     if (!this.running) { this.running = true; this.t0 = performance.now(); requestAnimationFrame(t => this.loop(t)); }
-    this.checkUpdate(false);
+    this.checkUpdate();
     clearInterval(this.updTimer);
-    this.updTimer = setInterval(() => { if (G.state === 'menu') this.checkUpdate(false); }, 60000);
+    this.updTimer = setInterval(() => { if (G.state === 'menu') this.checkUpdate(); }, 60000);
   },
   hide() {
     document.getElementById('menu').classList.add('hidden');
@@ -42,7 +42,7 @@ const Menu = {
       if (e.target.id === 'heroSurname') { this.hero.surname = e.target.value; this.nameTag(); }
       if (e.target.id === 'heroAge') { this.hero.age = +e.target.value; document.getElementById('ageVal').textContent = this.hero.age + ' anos'; this.ageNote(); }
     });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden && G.state === 'menu') this.checkUpdate(false); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && G.state === 'menu') this.checkUpdate(); });
     window.addEventListener('resize', () => { if (G.state === 'menu') this.fit(); });
     this.bg = document.getElementById('menuBg');
     // estrelas e montanhas fixas
@@ -95,9 +95,8 @@ const Menu = {
         ${info ? opt('load', '▶', 'Continuar a jornada', `${UI.esc(info.name)}${info.age ? ` · ${info.age} anos` : ''} · ${Calendar.short(info.day)} · nível ${info.level || 1}`, 'main', `data-n="${info.slot}"`) : ''}
         ${opt('create', '⚔️', 'Novo jogo', 'Crie seu herói e comece do zero', info ? '' : 'main')}
         ${opt('slots', '📜', 'Jogos salvos', 'Carregar, importar e exportar · 3 espaços')}
-        ${opt('help', '❓', 'Como jogar', 'Controles, primeiros passos e dicas')}
       </div>
-      <div class="mc-foot"><span>${this.versionText()}</span><button class="mc-link" data-m="checkupd">🔄 Procurar atualização</button></div>`, 'main');
+      <div class="mc-foot"><span>${this.versionText()}</span></div>`, 'main');
   },
   slotsCard() {
     const fmt = t => t ? new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
@@ -158,44 +157,24 @@ const Menu = {
     if (!el) return;
     el.textContent = a < 25 ? 'Jovem e cheio de energia' : a < 40 ? 'No auge da vida' : a < 55 ? 'Os primeiros fios brancos aparecem' : a < 68 ? 'Cabelos grisalhos de experiência' : 'Cabelos brancos de um ancião';
   },
-  // ajuda em abas: cada aba cabe inteira na janela
-  helpCard(tab) {
-    const div = document.createElement('div'); div.innerHTML = HELP_HTML;
-    const rows = [...div.querySelectorAll('table tr')].map(tr => [...tr.children].map(td => td.innerHTML));
-    const steps = [...div.querySelectorAll('li')].map(li => li.innerHTML);
-    const paras = [...div.querySelectorAll('p')].map(x => x.innerHTML);
-    const per = Math.ceil(steps.length / 3);
-    const tabs = [['keys', '🎮 Controles'], ['s1', '🌱 Primeiros passos'], ['s2', '🏡 Vida e família'], ['s3', '👑 Reinos e mais']];
-    tab = tab || 'keys';
-    let body;
-    if (tab === 'keys') body = `<div class="hk-grid">${rows.map(([k, v]) => `<div class="hk"><kbd>${k}</kbd><span>${v}</span></div>`).join('')}</div>`;
-    else {
-      const n = +tab[1] - 1, part = steps.slice(n * per, n * per + per);
-      body = `<ol class="hs-list" start="${n * per + 1}">${part.map(x => `<li>${x}</li>`).join('')}</ol>${n === 2 ? paras.map(x => `<p class="mc-note">${x}</p>`).join('') : ''}`;
-    }
-    this.setCard(`<h2 class="mc-h">❓ Como jogar</h2>
-      <div class="mtabs">${tabs.map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-m="htab" data-t="${k}">${l}</button>`).join('')}</div>
-      <div class="mc-help">${body}</div>
-      <div class="mc-btns row"><button data-m="back">← Voltar</button></div>`, 'help');
-  },
 
   // ------------------------------------------------------------ atualização (GitHub Pages)
-  checkUpdate(manual) {
+  // procura sozinho (ao abrir, a cada minuto no menu e ao voltar para a aba) e avisa quando há versão nova
+  checkUpdate() {
     const cur = window.GAME_VERSION || 'local';
-    if (location.protocol === 'file:' || cur === 'local') { if (manual) this.showUpdate(null, 'Você está jogando a partir dos arquivos do computador. A atualização automática funciona quando o jogo é aberto pelo GitHub Pages.'); return; }
+    if (location.protocol === 'file:' || cur === 'local') return;
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => {
       if (j && j.version && j.version !== cur) this.showUpdate(j.version);
-      else if (manual) this.showUpdate(null, `Você já está na versão mais recente (${cur}).`);
-    }).catch(() => { if (manual) this.showUpdate(null, 'Não foi possível verificar agora. Confira sua conexão.'); });
+    }).catch(() => {});
   },
-  showUpdate(v, text) {
+  showUpdate(v) {
     const el = document.getElementById('updModal');
-    if (!el || (v && this.dismissed === v)) return;
-    el.innerHTML = `<div class="upd-box"><div class="upd-ic">${v ? '🔄' : '✔'}</div>
-      <h3>${v ? 'Nova versão disponível!' : 'Atualização'}</h3>
-      <p>${v ? `O jogo foi atualizado. Clique em <b>Atualizar o jogo</b> para carregar a versão nova, sem nada guardado do cache.<br><small>Seus jogos salvos continuam intactos.</small>` : text}</p>
-      <div class="upd-vers">${v ? `<span>Aberta: ${UI.esc(window.GAME_VERSION)}</span><span>Nova: ${UI.esc(v)}</span>` : ''}</div>
-      <div class="mc-btns row">${v ? `<button data-m="upddismiss" data-v="${UI.esc(v)}">Depois</button><button class="mc-main" data-m="updnow" data-v="${UI.esc(v)}">🔄 Atualizar o jogo</button>` : '<button class="mc-main" data-m="upddismiss">OK</button>'}</div></div>`;
+    if (!el || this.dismissed === v) return;
+    el.innerHTML = `<div class="upd-box"><div class="upd-ic">🔄</div>
+      <h3>Nova versão disponível!</h3>
+      <p>O jogo foi atualizado. Clique em <b>Atualizar o jogo</b> para carregar a versão nova, sem nada guardado do cache.<br><small>Seus jogos salvos continuam intactos.</small></p>
+      <div class="upd-vers"><span>Aberta: ${UI.esc(window.GAME_VERSION)}</span><span>Nova: ${UI.esc(v)}</span></div>
+      <div class="mc-btns row"><button data-m="upddismiss" data-v="${UI.esc(v)}">Depois</button><button class="mc-main" data-m="updnow" data-v="${UI.esc(v)}">🔄 Atualizar o jogo</button></div></div>`;
     el.classList.remove('hidden');
   },
   // recarrega a página com a versão no endereço: o navegador busca tudo de novo
@@ -207,10 +186,7 @@ const Menu = {
   act(a, d) {
     if (a === 'create') this.createCard();
     else if (a === 'back') this.mainCard();
-    else if (a === 'help') this.helpCard();
-    else if (a === 'htab') this.helpCard(d.t);
     else if (a === 'slots') this.slotsCard();
-    else if (a === 'checkupd') this.checkUpdate(true);
     else if (a === 'updnow') this.updateNow(d.v);
     else if (a === 'upddismiss') { if (d.v) this.dismissed = d.v; document.getElementById('updModal').classList.add('hidden'); }
     else if (a === 'export') Saves.exportSlot(+d.n);
