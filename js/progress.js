@@ -78,18 +78,21 @@ const Progress = {
   dayTick() {
     const cd = Calendar.of(G.day);
     if (cd.month === 2 && cd.day === 1 && G.day > 1) this.add('winters'); // chegou a primavera: sobreviveu ao inverno
+  },
+  // a cada 5 dias: o trabalho dos filhos com profissão
+  econTick() {
     for (const p of G.people) {
       if (!p.alive || p.kin !== 'child' || !p.prof) continue;
-      if (p.prof === 'smith' && World.structs.some(s => s.owner === 'player' && s.type === 'forge')) { Inv.add('iron_bar', 1); UI.msg(`⚒️ ${p.name} forjou 1 Barra de Ferro.`); }
+      if (p.prof === 'smith' && World.structs.some(s => s.owner === 'player' && s.type === 'forge')) { Inv.add('iron_bar', 1); Game.note(`⚒️ ${p.name} forjou 1 Barra de Ferro.`); }
       if (p.prof === 'farmer') {
         let n = 0;
         for (const k in Farm.plots()) { const pl = G.plots[k]; if (pl.crop) { pl.watered = true; n++; if (pl.stage >= CROPS[pl.crop].days) Farm.harvest(+k); } }
-        if (n) UI.msg(`🌾 ${p.name} cuidou de ${n} plantações.`);
+        if (n) Game.note(`🌾 ${p.name} cuidou de ${n} plantações.`);
       }
       if (p.prof === 'merchant') {
         const box = Store.box(World.startCabin); let g = 0;
         for (const k of Object.keys(box)) { const n = Math.ceil(box[k] * 0.1); box[k] -= n; g += n * ITEMS[k].price; if (box[k] <= 0) delete box[k]; }
-        if (g) { P.gold += g; UI.msg(`⚖️ ${p.name} vendeu sobras do baú por ${g} 🪙.`); }
+        if (g) { P.gold += g; Game.note(`⚖️ ${p.name} vendeu sobras do baú por ${g} 🪙.`); }
       }
       if (p.prof === 'governor') { const c = G.civs.find(x => x.ruler === 'player'); if (c) c.happy = Math.min(100, c.happy + 6); }
     }

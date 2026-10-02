@@ -73,7 +73,7 @@ const Court = {
     const c = G.civs[this.T().civ];
     if (c.ruler === 'player') return;
     const g = Math.min(t.stipend, Math.max(0, c.treasury - 50));
-    if (g > 0) { c.treasury -= g; P.gold += g; UI.msg(`${t.icon} Renda do seu título: +${g} 🪙 de ${CIV_DEFS[this.T().civ].short}.`, 'gold'); }
+    if (g > 0) { c.treasury -= g; P.gold += g; Game.note(`${t.icon} Renda do seu título: +${g} 🪙 de ${CIV_DEFS[this.T().civ].short}.`); }
   },
 
   // ------------------------------------------------------------ conselho real
@@ -141,7 +141,7 @@ const Court = {
         if (seat === 'diplomat') for (const o of G.civs) if (o.id !== ci) Diplo.addRel(ci, o.id, p.comp * 0.12);
         // conspiração
         if (p.aff < -5 && !G.plotsC.some(x => !x.done && x.pid === p.id) && Math.random() < 0.12) {
-          G.plotsC.push({ id: G.day * 10 + Object.keys(COUNCIL).indexOf(seat), civ: ci, pid: p.id, seat, day: G.day, ripe: G.day + U.rint(4, 7), found: false, done: false });
+          G.plotsC.push({ id: G.day * 10 + Object.keys(COUNCIL).indexOf(seat), civ: ci, pid: p.id, seat, day: G.day, ripe: G.day + U.rint(4, 7) * ECON_DAYS, found: false, done: false });
         }
       }
       // o espião-mor investiga
@@ -191,7 +191,7 @@ const Court = {
     const f = Families.of(p), c = G.civs[pl.civ];
     if (verdict === 'pardon') {
       People.addAff(p, 35);
-      if (Math.random() < 0.3) { pl.done = false; pl.found = false; pl.ripe = G.day + U.rint(5, 9); }
+      if (Math.random() < 0.3) { pl.done = false; pl.found = false; pl.ripe = G.day + U.rint(5, 9) * ECON_DAYS; }
       UI.msg(`Você perdoou ${p.name}. ${p.sex === 'f' ? 'Ela' : 'Ele'} jura lealdade... desta vez.`, 'gold');
     } else if (verdict === 'exile') {
       p.council = null; this.council(pl.civ)[pl.seat] = null; p.home = { type: 'wild' }; People.addAff(p, -60);

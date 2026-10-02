@@ -7,6 +7,8 @@ const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 // Calendário: os 12 meses do ano real e 1 dia de jogo = 1 minuto real. O jogo começa em 1º de março (primavera).
 const DAY_LEN = 60; // segundos reais por dia de jogo
+// a economia (impostos, soldos, salários, guerras, revoltas, colheitas) anda a cada 5 dias = 5 minutos reais, o ritmo de antes
+const ECON_DAYS = 5;
 const MONTHS = [['Janeiro', 31], ['Fevereiro', 28], ['Março', 31], ['Abril', 30], ['Maio', 31], ['Junho', 30],
   ['Julho', 31], ['Agosto', 31], ['Setembro', 30], ['Outubro', 31], ['Novembro', 30], ['Dezembro', 31]];
 const YEAR_DAYS = 365;

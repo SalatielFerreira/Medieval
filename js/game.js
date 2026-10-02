@@ -100,7 +100,7 @@ const Game = {
     window.addEventListener('mouseup', e => {
       if (e.button === 2) { G.mouse.right = false; return; }
       Urban.drag = false;
-      G.mouse.down = false;
+      G.mouse.down = false; P.gatherHold = false;
       if (P.charging && G.state === 'play' && !G.paused) Moves.release();
       P.charging = false;
     });
@@ -166,7 +166,7 @@ const Game = {
     Arena.init(); Faith.init();
     Families.init(); Families.ensurePlayer(); Faith.ensurePriests();
     G.title = { lvl: -1, civ: -1 }; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
-    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; Urban.stop();
+    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; Urban.stop(); WorldEvents.reset();
     const d = World.start.door;
     this.resetPlayer((d.x + 0.5) * TILE, (d.y + 1) * TILE);
     G.spawn = { x: P.x, y: P.y };
@@ -191,7 +191,7 @@ const Game = {
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
-      urban: G.urban || {}, askDay: G.askDay || {},
+      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [],
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
@@ -265,8 +265,8 @@ const Game = {
     G.title = s.title || { lvl: -1, civ: -1 }; G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
-    G.duel = null; G.joust = null; G.vwar = null; Urban.stop();
-    G.urban = s.urban || {}; G.askDay = s.askDay || {};
+    G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
+    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || [];
     G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
@@ -418,6 +418,7 @@ const Game = {
       if (T_.regrow <= 0) { T_.regrow = 1; World.updateRegrow(1, P.x, P.y); }
     }
     if (!G.dungeon) this.updateSiege(dt);
+    WorldEvents.update(dt);
     Ranged.update(dt);
     Battles.update();
     Caravans.update(dt);
@@ -514,7 +515,7 @@ const Game = {
     } else if (P.hunger > 30 && P.hp < P.maxHp) P.hp = Math.min(P.maxHp, P.hp + dt * 0.6 * (Farm.has('regen') ? 3 : Farm.has('mead') || Farm.has('blessed') ? 2 : 1));
 
     this.updateFishing(dt);
-    if ((G.keys.Space || (G.mouse.down && !P.charging)) && P.atkCd <= 0 && !G.placing && !Urban.mode && !P.blocking) this.playerAction(G.mouse.down, false);
+    if ((G.keys.Space || (G.mouse.down && !P.charging) || P.gatherHold) && P.atkCd <= 0 && !G.placing && !Urban.mode && !P.blocking) this.playerAction(G.mouse.down, false);
   },
 
   // ================================================================ ações do jogador
@@ -680,6 +681,7 @@ const Game = {
       case 'chapel': return '⛪ Capela de ' + (World.villages[s.village] ? World.villages[s.village].name : '');
       case 'cathedral': return '⛪ Catedral de ' + CIV_DEFS[s.owner].short;
       case 'shrine': return `🕯️ ${s.sname}${G.shrines && G.shrines[s.shrine] ? ' (visitado)' : ''}`;
+      case 'dig': return '⛏️ Cavar o tesouro enterrado (picareta ou enxada)';
       case 'arena': return '🏟️ Arena de ' + CIV_DEFS[s.owner].short + (Arena.tourney() && Arena.tourney().ci === s.owner ? ' — GRANDE TORNEIO!' : '');
     }
     if (BIZ_TYPES[s.type] && s.owner === 'player') return `💼 ${BUILDINGS[s.type].name} — ${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários`;
@@ -700,7 +702,7 @@ const Game = {
   nearestNpc() {
     let best = null, bd = 1.9 * TILE;
     for (const e of G.ents) {
-      if (e.dead || !e.npc || e.npc.hostile) continue;
+      if (e.dead || e.sleeping || !e.npc || e.npc.hostile) continue;
       const d = U.dist(e.x, e.y, P.x, P.y);
       if (d < bd) { bd = d; best = e; }
     }
@@ -739,6 +741,7 @@ const Game = {
       case 'store': case 'smith': case 'lumber': case 'quarry': UI.showShop(s.type, s.village); break;
       case 'tavern': UI.showTavern(s.id); break;
       case 'castle': if (G.civs[s.owner].ruler === 'player') UI.showKingdom(s.owner); else UI.showCastle(s.owner); break;
+      case 'dig': WorldEvents.dig(s); break;
     }
   },
   nearStation(st) {
@@ -922,7 +925,7 @@ const Game = {
       return;
     }
     let d = Math.max(1, Math.round(amount * (0.85 + Math.random() * 0.3)));
-    if (target.npc && target.npc.capanga) d = Math.max(1, Math.round(d * 40 / (40 + People.capangaStats(target.npc).def * 2.5)));
+    if (target.npc && target.npc.capanga) d = Math.max(1, Math.round(d * 40 / (40 + People.capangaStats(target.npc).def * 2.5) * (STANCES[target.npc.stance] || STANCES.normal).taken));
     target.hp -= d; target.hurt = 0.2;
     Sound.play('hit', { vol: src === P ? 1 : 0.5 });
     this.addText(target.x, target.y - 38, '-' + d, src === P ? '#ffffff' : '#ffd0a0');
@@ -950,6 +953,9 @@ const Game = {
       }
       if (d.gold) { const g = U.rint(d.gold[0], d.gold[1]); P.gold += g; this.addText(e.x, e.y - 50 - k * 14, `+${g} 🪙`, '#ffd54a'); }
       if (d.xp) this.gainXp(d.xp);
+      // capangas ganham experiência: quem deu o golpe final leva tudo; os que estão perto do jogador, um terço
+      if (d.xp && src && src.npc && src.npc.capanga) People.capXp(src.npc, d.xp);
+      else if (d.xp && src === P) for (const a of this.allies()) if (a.npc && U.dist(a.x, a.y, P.x, P.y) < 10 * TILE) People.capXp(a.npc, Math.ceil(d.xp / 3));
     }
     if (e.militia !== undefined) Chiefdom.killed(e);
     else if ((e.kind === 'guard') && e.civ >= 0) {
@@ -970,6 +976,7 @@ const Game = {
     if (byPlayer) { Progress.add('kill_' + e.kind); if (e.def.boss) Progress.add('bosses'); }
     if (e.kind === 'caravan' && e.car && byPlayer) Caravans.loot(e.car, e);
     if (e.kind === 'rebel') Families.rebelKilled(e);
+    if (e.tag === 'wev') WorldEvents.onKill(e);
     if (e.assault !== undefined) Sieges.soldierKilled(e);
     if (e.kind === 'caravan' && e.car && !byPlayer) { if (e.car.owner === 'player') Market.lost(e.car); else e.car.done = true; }
     if (byPlayer && e.kind === 'bandit') Court.addService(World.terr[World.idx(Math.floor(e.x / TILE), Math.floor(e.y / TILE))], 1);
@@ -977,7 +984,7 @@ const Game = {
 
   campCleared(camp) {
     Progress.add('camps');
-    camp.cleared = true; camp.respawnDay = G.day + 4;
+    camp.cleared = true; camp.respawnDay = G.day + 4 * ECON_DAYS;
     const g = U.rint(40, 90);
     P.gold += g; Inv.add('iron_bar', 2);
     for (const c of G.civs) this.addRelation(c.id, 6);
@@ -1016,7 +1023,7 @@ const Game = {
     const c = People.get(id);
     const oldName = G.name;
     const years = Math.max(0, 16 - c.age);
-    if (years) { People.ageAll(years); G.day += years * YEAR_DAYS; }
+    if (years) { People.ageAll(years); G.day += years * 30; } // cada ano de vida dura um mês do calendário
     for (const p of G.people) {
       if (p === c) continue;
       if (p.kin === 'child') p.kin = 'sibling';
@@ -1067,7 +1074,7 @@ const Game = {
     const e = G.spawned.get(p.id);
     if (!e) return;
     const st = People.capangaStats(p);
-    e.dmg = st.dmg;
+    e.dmg = st.dmg; e.maxHp = st.hp; e.hp = Math.min(e.hp, st.hp);
   },
   newMercenary(civ) {
     const p = People.create({ rank: 'mercenary', civ: civ >= 0 ? civ : -1, age: U.rint(20, 45), home: { type: 'wild' }, aff: 30,
@@ -1132,7 +1139,9 @@ const Game = {
     }
     const spawnNpc = (p, x, y, leash, civ) => {
       const s = freeSpotNear(x + U.rnd(-1, 1) * TILE, y + U.rnd(-0.5, 0.5) * TILE, TILE * 2);
-      G.spawned.set(p.id, this.spawn('villager', s.x, s.y, { civ, npc: p, leash }));
+      const e = this.spawn('villager', s.x, s.y, { civ, npc: p, leash });
+      G.spawned.set(p.id, e);
+      return e;
     };
     for (let c = 0; c < CIV_DEFS.length; c++) {
       const cp = World.capitals[c];
@@ -1151,17 +1160,18 @@ const Game = {
         const s = freeSpotNear((v.x + Math.cos(a) * 9) * TILE, (v.y + Math.sin(a) * 7) * TILE, 3 * TILE);
         return this.spawn('guard', s.x, s.y, { civ: v.raid.by, leash: 14, tag: 'raid' + vi, archer: Math.random() < 0.3 });
       });
+      // cada morador tem a sua casa (mendigos dormem na praça); de dia fica no trabalho ou perto de casa
+      const hs = World.structs.filter(h => h.type === 'vhouse' && h.village === vi && !h.hidden && !h.ruined);
       for (const p of People.residents(vi)) {
         if (G.spawned.has(p.id)) continue;
+        const h = hs.length && p.rank !== 'beggar' ? hs[(typeof p.id === 'number' ? p.id : String(p.id).length * 7) % hs.length] : null;
         const work = { merchant: v.store, smith: v.smith, lumber: v.lumber, mason: v.quarry, innkeeper: v.tavern, priest: v.chapel }[p.rank];
-        if (work && !work.removed && p.age >= 14) spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ);
-        else {
-          // cada morador fica perto da própria casa, para não aglomerar todos no centro
-          const hs = World.structs.filter(h => h.type === 'vhouse' && h.village === vi && !h.hidden && !h.ruined);
-          const h = hs.length && p.rank !== 'beggar' ? hs[(typeof p.id === 'number' ? p.id : String(p.id).length * 7) % hs.length] : null;
-          if (h) spawnNpc(p, (h.x + h.w / 2) * TILE, (h.y + h.h + 0.9) * TILE, p.rank === 'hunter' ? 36 : p.rank === 'wanderer' ? 32 : 4.5, v.civ);
-          else spawnNpc(p, (v.x + 0.5) * TILE, (v.y - 0.3) * TILE, p.rank === 'hunter' ? 36 : p.rank === 'wanderer' ? 32 : p.rank === 'beggar' ? 6 : 9, v.civ);
-        }
+        let e;
+        if (work && !work.removed && p.age >= 14) e = spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ);
+        else if (h) e = spawnNpc(p, (h.x + h.w / 2) * TILE, (h.y + h.h + 0.9) * TILE, p.rank === 'hunter' ? 36 : p.rank === 'wanderer' ? 32 : 4.5, v.civ);
+        else e = spawnNpc(p, (v.x + 0.5) * TILE, (v.y - 0.3) * TILE, p.rank === 'hunter' ? 36 : p.rank === 'wanderer' ? 32 : p.rank === 'beggar' ? 6 : 9, v.civ);
+        e.house = h; e.vi = vi;
+        Routine.placed(e);
       }
       if (G.civs[v.civ].garrison > 0) this.ensureGroup('vg' + vi, 1, () => {
         const s = freeSpotNear((v.x + 0.5) * TILE, (v.y - 0.5) * TILE, 2 * TILE);
@@ -1362,33 +1372,55 @@ const Game = {
   onNewDay() {
     G.day++;
     Season.apply(true);
-    const farms = World.structs.filter(s => s.owner === 'player' && s.type === 'farm').length, crop = Season.cur().farm;
-    if (farms && crop) { Inv.add('wheat', farms * crop); UI.msg(`🌾 Suas fazendas produziram ${farms * crop} de trigo (${Season.cur().name}).`); }
-    else if (farms) UI.msg('❄️ No inverno as fazendas não produzem.');
-    const allies = this.allies(), caps = G.people.filter(p => p.alive && p.capanga);
-    const upkeep = caps.length * 4; // seguidores e guardas recebem soldo
-    if (upkeep) {
-      const k = G.civs.find(c => c.ruler === 'player' && c.treasury >= upkeep);
-      if (P.gold >= upkeep) { P.gold -= upkeep; UI.msg(`Você pagou ${upkeep} 🪙 de soldo aos seus soldados.`); }
-      else if (k) { k.treasury -= upkeep; UI.msg(`O tesouro de ${CIV_DEFS[k.id].short} pagou ${upkeep} 🪙 de soldo.`); }
-      else { const q = allies.length ? allies[allies.length - 1].npc : caps[caps.length - 1]; if (q) People.dismiss(q); UI.msg('Um soldado abandonou você por falta de pagamento.', 'bad'); }
-    }
-    for (const c of G.civs) this.tickCiv(c);
     for (const camp of World.camps) if (camp.cleared && G.day >= camp.respawnDay) { camp.cleared = false; camp.left = 4; }
-    if (Calendar.isNewYear(G.day)) People.tickYear();
-    Diplo.tickDay();
-    Families.dayTick(); Biz.dayTick();
-    if (G.day % 4 === 0) Faith.ensurePriests();
-    Market.dayTick(); Court.dayTick(); Court.rivalTick(); Court.stipendTick(); Arena.dayTick();
-    if (!G.dungeon) Sieges.dayTick();
-    Farm.dayTick(!!G.rainedToday); G.rainedToday = false;
-    Farm.produce(); Farm.tavernTick();
-    if (!G.dungeon) { Towns.dayTick(); Caravans.dayTick(); Battles.dayTick(); }
-    Progress.dayTick(); Guards.dayTick();
+    // a vida (envelhecer, casar, ter filhos) anda um ano a cada mês do calendário
+    if (Calendar.of(G.day).day === 1 && G.day > 1) People.tickYear();
+    Arena.dayTick(); Progress.dayTick(); Guards.dayTick();
+    G.econT = (G.econT || 0) + 1;
+    if (G.econT >= ECON_DAYS) { G.econT = 0; this.econTick(); }
     if (G.family.dueDay && G.day >= G.family.dueDay) { G.family.dueDay = 0; setTimeout(() => UI.showBirth(), 50); }
     const cd = Calendar.of(G.day);
     if (cd.day === 1) UI.banner(`📅 ${MONTHS[cd.month][0]} do ano ${cd.year}`);
   },
+  // a cada 5 dias: a economia e o mundo andam (o mesmo ritmo de quando o dia durava 5 minutos)
+  econTick() {
+    const gold0 = P.gold, inv0 = Object.assign({}, P.inv);
+    this.ledger = [];
+    const farms = World.structs.filter(s => s.owner === 'player' && s.type === 'farm' && !s.removed).length, crop = Season.cur().farm;
+    if (farms && crop) { Inv.add('wheat', farms * crop); this.note(`🌾 Suas fazendas produziram ${farms * crop} de trigo.`); }
+    else if (farms) this.note('❄️ No inverno as fazendas não produzem.');
+    const allies = this.allies(), caps = G.people.filter(p => p.alive && p.capanga);
+    const upkeep = caps.length * 4; // seguidores e guardas recebem soldo
+    if (upkeep) {
+      const k = G.civs.find(c => c.ruler === 'player' && c.treasury >= upkeep);
+      if (P.gold >= upkeep) { P.gold -= upkeep; this.note(`⚔️ Soldo dos capangas: −${upkeep} 🪙.`); }
+      else if (k) { k.treasury -= upkeep; this.note(`⚔️ O tesouro de ${CIV_DEFS[k.id].short} pagou ${upkeep} 🪙 de soldo.`); }
+      else { const q = allies.length ? allies[allies.length - 1].npc : caps[caps.length - 1]; if (q) People.dismiss(q); UI.msg('Um soldado abandonou você por falta de pagamento.', 'bad'); }
+    }
+    for (const c of G.civs) this.tickCiv(c);
+    Diplo.tickDay();
+    Families.dayTick(); Biz.dayTick();
+    Faith.ensurePriests();
+    Market.dayTick(); Court.dayTick(); Court.rivalTick(); Court.stipendTick();
+    if (!G.dungeon) Sieges.dayTick();
+    Farm.dayTick(!!G.rainedToday); G.rainedToday = false;
+    Farm.produce(); Farm.tavernTick();
+    if (!G.dungeon) { Towns.dayTick(); Caravans.dayTick(); Battles.dayTick(); }
+    Progress.econTick();
+    // resumo: uma linha só, com o saldo de ouro e o que entrou na mochila; os detalhes ficam no Diário
+    const notes = this.ledger; this.ledger = null;
+    const dg = P.gold - gold0, got = [];
+    for (const k in P.inv) { const d = P.inv[k] - (inv0[k] || 0); if (d > 0) got.push(`+${d} ${ITEMS[k].name}`); }
+    if (dg || got.length || notes.length) {
+      G.ledger = G.ledger || [];
+      G.ledger.unshift({ day: G.day, gold: dg, got, notes });
+      if (G.ledger.length > 30) G.ledger.length = 30;
+      const parts = [dg ? `${dg > 0 ? '+' : ''}${dg} 🪙` : '', ...got.slice(0, 3)].filter(Boolean);
+      UI.msg(`📒 Resumo dos últimos ${ECON_DAYS} dias: ${parts.join(' · ') || 'sem mudanças no seu bolso'}${got.length > 3 ? ' ...' : ''} (Diário → Contas)`, dg < 0 ? 'bad' : '');
+    }
+  },
+  // mensagens de rotina durante o resumo vão para o Diário; fora dele aparecem normalmente
+  note(text) { if (this.ledger) this.ledger.push(text); else UI.msg(text); },
   sleep(s) {
     P.hp = P.maxHp; P.stamina = 100; P.hunger = Math.max(0, P.hunger - 20);
     World.updateRegrow(DAY_LEN - G.time, P.x, P.y); // o resto da noite também conta para as plantas crescerem
@@ -1396,7 +1428,7 @@ const Game = {
     const f = G.family, sp = f.spouse !== null ? People.get(f.spouse) : null;
     if (sp && sp.alive && f.tryChild && !f.dueDay) {
       f.tryChild = false;
-      if (Math.random() < 0.65) { f.dueDay = G.day + 3; UI.msg(`💕 Uma criança está a caminho! Ela chegará em 2 dias.`, 'gold'); }
+      if (Math.random() < 0.65) { f.dueDay = G.day + 2 * ECON_DAYS + 1; UI.msg(`💕 Uma criança está a caminho! Ela chegará em ${2 * ECON_DAYS} dias.`, 'gold'); }
       else UI.msg('Nenhum bebê desta vez... conversem e tentem de novo.');
     }
     this.onNewDay();
@@ -1494,6 +1526,7 @@ const Game = {
         ctx.drawImage(World.getChunk(gx, gy), gx * CPX - cx, gy * CPX - cy, CPX + 1 / z, CPX + 1 / z);
       }
 
+    Routine.frame();
     // construções planas por baixo, demais ordenadas por profundidade
     const list = [];
     const vis = [];
@@ -1509,7 +1542,7 @@ const Game = {
     G.hoverNpc = null;
     { let bd = 22;
       for (const e of G.ents) {
-        if (e.dead || !e.npc || e.npc.hostile) continue;
+        if (e.dead || e.sleeping || !e.npc || e.npc.hostile) continue;
         const d = U.dist(e.x, e.y - 16, G.mouse.wx, G.mouse.wy);
         if (d < bd) { bd = d; G.hoverNpc = e; }
       }
@@ -1527,7 +1560,7 @@ const Game = {
       if (World.obj[i]) list.push({ y: (y + 1) * TILE - 1, k: 0, i, x, y: (y + 1) * TILE - 1, ty: y });
     }
     for (const e of G.ents) {
-      if (e.x - cx < -40 || e.x - cx > cw + 40 || e.y - cy < -60 || e.y - cy > ch + 60) continue;
+      if (e.sleeping || e.x - cx < -40 || e.x - cx > cw + 40 || e.y - cy < -60 || e.y - cy > ch + 60) continue;
       list.push({ y: e.y, k: 2, e });
     }
     list.push({ y: P.y, k: 3 });
@@ -1584,7 +1617,8 @@ const Game = {
         else if (s.type === 'cave_exit') hole(sx, sy, 160);
         else if (s.type === 'tchest' && !s.opened) hole(sx, sy, 60);
         else if (s.type === 'castle') { hole(sx - 22, (s.y + s.h) * TILE - cy - 20, 110 + flick); hole(sx + 22, (s.y + s.h) * TILE - cy - 20, 110 + flick); }
-        else if (s.type === 'cabin' || s.type === 'house' || s.type === 'tavern' || s.type === 'vhouse' || s.type === 'store') hole(sx, sy, 80);
+        else if (s.type === 'vhouse' || s.type === 'tavern') { if (Routine.lit(s)) hole(sx, sy, s.type === 'tavern' ? 115 + flick : 80); }
+        else if (s.type === 'cabin' || s.type === 'house' || s.type === 'store') hole(sx, sy, 80);
       }
       ctx.drawImage(this.light, 0, 0, cw, ch);
     }
@@ -1614,7 +1648,7 @@ const Game = {
     let talkTo = null, td = 1.9 * TILE;
     const tags = [];
     for (const e of G.ents) {
-      if (e.dead || e.kind === 'lord' || (!e.npc && e.kind !== 'guard')) continue;
+      if (e.dead || e.sleeping || e.kind === 'lord' || (!e.npc && e.kind !== 'guard')) continue;
       const d = U.dist(e.x, e.y, P.x, P.y);
       if (d > 5 * TILE) continue;
       tags.push([d, e]);

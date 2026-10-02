@@ -47,7 +47,7 @@ function hostile(a, b) {
   if (fa === fb || a.dmg <= 0 || b.kind === 'villager') return false;
   if (a.kind === 'boar') return a.provoked && fb === 'player';
   if (b.kind === 'deer' || b.kind === 'boar') return false;
-  if (fa === 'wild') return fb === 'player';
+  if (fa === 'wild') return fb === 'player' || (!!a.raid && b.kind === 'guard');
   if (fa === 'bandit') return fb === 'player' || fb.startsWith('civ');
   if (fa.startsWith('civ')) {
     if (fb === 'bandit' || fb === 'wild') return true;
@@ -111,7 +111,7 @@ class Creature {
       const n = this.npc;
       if (n.age < 14) { this.dmg = 0; this.maxHp = this.hp = 25; }
       if (n.rank === 'knight') { this.dmg = 14; this.maxHp = this.hp = 110; }
-      if (n.capanga) { const st = People.capangaStats(n); this.dmg = st.dmg; this.maxHp = this.hp = 70 + Math.min(40, n.age); }
+      if (n.capanga) { const st = People.capangaStats(n); this.dmg = st.dmg; this.maxHp = this.hp = st.hp; }
     }
     this.look = opts.look || {};
     this.target = null; this.provoked = false; this.returning = false;
@@ -152,17 +152,29 @@ class Creature {
 
   update(dt) {
     const d = this.def;
+    // dormindo em casa (rotina dos moradores): só espera o dia chegar
+    if (this.sleeping) { Routine.update(this, dt, 0); return; }
+    // acompanhando o jogador (mercador perdido)
+    if (this.escort) {
+      this.anim += dt; this.hurt -= dt; this.moving = false;
+      const dp = U.dist(this.x, this.y, P.x, P.y);
+      if (dp > 20 * TILE) { const s = freeSpotNear(P.x, P.y, 60); this.x = s.x; this.y = s.y; }
+      else if (dp > 46) this.moveToward(P.x - P.dir * 30, P.y + 8, 125, dt);
+      return;
+    }
     if (this.kind === 'caravan') { this.anim += dt; this.hurt -= dt; Caravans.move(this, dt); return; }
     if (this.faction === 'engine') { Sieges.engineUpdate(this, dt); return; }
     if (this.follow) { if (this.follow.dead) this.follow = null; else { this.home.x = this.follow.x - 24; this.home.y = this.follow.y + 14; } }
-    if (this.kind === 'ally') {
-      const ord = G.order || 'follow';
-      this.aggroOv = ord === 'attack' ? 15 : ord === 'hold' ? 7 : 0;
+    // capangas: a ordem do grupo e a postura de cada um decidem de que distância eles atacam
+    if ((this.kind === 'ally' || this.kind === 'sentry') && this.npc) {
+      const ord = G.order || 'follow', st = STANCES[this.npc.stance] || STANCES.normal;
+      const base = this.kind === 'sentry' ? 11 : ord === 'attack' ? 15 : ord === 'hold' ? 7 : 8;
+      this.aggroOv = Math.max(3, base + st.aggro);
     }
     // moradores e animais não ficam amontoados: afastam-se uns dos outros
     if (this.kind === 'villager' || this.faction === 'pet' || this.kind === 'ally' || this.kind === 'sentry') {
       for (const o of G.ents) {
-        if (o === this || o.dead || (o.kind !== this.kind && !(this.faction === 'pet' && o.faction === 'pet'))) continue;
+        if (o === this || o.dead || o.sleeping || (o.kind !== this.kind && !(this.faction === 'pet' && o.faction === 'pet'))) continue;
         const dx = this.x - o.x, dy = this.y - o.y, dd = dx * dx + dy * dy;
         if (dd < 900 && dd > 0.01) { const L = Math.sqrt(dd); moveEnt(this, dx / L * 40 * dt, dy / L * 40 * dt); }
       }
@@ -200,7 +212,7 @@ class Creature {
       this.aim = Math.atan2(t.y - this.y, t.x - this.x);
       if (this.kind === 'ally') {
         const ord = G.order || 'follow';
-        if (ord === 'hold' && G.holdPos ? U.dist(this.x, this.y, G.holdPos.x, G.holdPos.y) > 9 * TILE : U.dist(this.x, this.y, P.x, P.y) > (ord === 'attack' ? 18 : 11) * TILE) this.target = null;
+        if (ord === 'hold' && G.holdPos ? U.dist(this.x, this.y, G.holdPos.x, G.holdPos.y) > 9 * TILE : U.dist(this.x, this.y, P.x, P.y) > ((this.npc && STANCES[this.npc.stance] ? STANCES[this.npc.stance].chase : 11) + (ord === 'attack' ? 7 : 0)) * TILE) this.target = null;
       } else if (this.siegeOf < 0 && U.dist(this.x, this.y, this.home.x, this.home.y) > this.leash * 1.8) {
         this.target = null; this.returning = true;
       }
@@ -219,7 +231,7 @@ class Creature {
       else if (U.dist(this.x, this.y, fx, fy) > 18) this.moveToward(fx, fy, sp * (dp > 5 * TILE ? 1.1 : 0.75), dt);
       return;
     }
-    if (this.kind === 'villager' && this.npc && NPCWork.update(this, dt, sp)) return;
+    if (this.kind === 'villager' && this.npc && (Routine.update(this, dt, sp) || NPCWork.update(this, dt, sp))) return;
     if (this.returning) {
       this.moveToward(this.home.x, this.home.y, sp * 0.8, dt);
       if (U.dist(this.x, this.y, this.home.x, this.home.y) < 2 * TILE) this.returning = false;
@@ -229,6 +241,7 @@ class Creature {
   }
 
   draw(ctx, cx, cy) {
+    if (this.sleeping) return;
     const x = this.x - cx, y = this.y - cy;
     const hurt = this.hurt > 0;
     switch (this.kind) {

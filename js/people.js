@@ -57,6 +57,12 @@ const TRAITS = {
   corajoso:    { name: 'Corajoso',    talk: 1.0, romance: 1.0, fights: true, line: 'Se houver luta, pode contar comigo!' },
   desconfiado: { name: 'Desconfiado', talk: 0.6, romance: 0.8, line: 'Por que tantas perguntas?' },
 };
+// posturas dos capangas: dano causado, dano recebido, raio para atacar (blocos) e até onde perseguem
+const STANCES = {
+  aggressive: { name: 'Agressivo',   icon: '🔥', dmg: 1.2,  taken: 1.15, aggro: 5,  chase: 16, desc: 'ataca de longe e persegue, causa +20% de dano, mas recebe +15%' },
+  normal:     { name: 'Equilibrado', icon: '⚖️', dmg: 1,    taken: 1,    aggro: 0,  chase: 11, desc: 'o jeito de sempre' },
+  defensive:  { name: 'Defensivo',   icon: '🛡️', dmg: 0.85, taken: 0.7,  aggro: -4, chase: 6,  desc: 'fica perto, só luta com quem chega, recebe −30% de dano' },
+};
 const GIFTABLE = ['apple', 'berries', 'bread', 'apple_pie', 'cooked_meat', 'cooked_fish', 'herb', 'cloth', 'leather', 'iron_bar', 'gem',
   'goldfish', 'silver_ring', 'wolf_pelt', 'coconut', 'herbal_salve'];
 
@@ -224,6 +230,7 @@ const People = {
 
   // ------------------------------------------------------------ conversa
   say(p) {
+    if (p.lost) return 'Por favor, me ajude! Perdi a estrada e não sei voltar para a vila... e dizem que há lobos por aqui.';
     const n = G.name, a = p.aff;
     const pool = [];
     if (p.age < 14) pool.push('Você é um cavaleiro de verdade?', 'Minha mãe disse para não falar com estranhos!', 'Quer brincar de espada?', 'Eu vou ser o maior herói de todos!');
@@ -356,10 +363,27 @@ const People = {
     return { text: 'Foi uma honra lutar ao seu lado.', note: `${p.name} voltou para casa.` };
   },
   capangaStats(p) {
-    const e = p.equip;
-    const dmg = 9 + (e.weapon ? ITEMS[e.weapon].dmg * 0.8 : 0);
-    const def = ['head', 'torso', 'legs', 'feet'].reduce((s, k) => s + (e[k] ? ITEMS[e[k]].def : 0), 0);
-    return { dmg: Math.round(dmg), def };
+    const e = p.equip, lvl = p.clvl || 1, st = STANCES[p.stance] || STANCES.normal;
+    const dmg = (9 + (e.weapon ? ITEMS[e.weapon].dmg * 0.8 : 0) + (lvl - 1) * 1.5) * st.dmg;
+    const def = ['head', 'torso', 'legs', 'feet'].reduce((s, k) => s + (e[k] ? ITEMS[e[k]].def : 0), 0) + Math.floor((lvl - 1) / 2);
+    return { dmg: Math.round(dmg), def, lvl, hp: 70 + Math.min(40, p.age) + (lvl - 1) * 8 };
+  },
+  // experiência dos capangas: sobem de nível lutando
+  capXpNext(p) { return 40 + (p.clvl || 1) * 30; },
+  capXp(p, n) {
+    if (!p || !p.capanga || !p.alive || n <= 0) return;
+    p.clvl = p.clvl || 1; p.cxp = (p.cxp || 0) + n;
+    while (p.cxp >= this.capXpNext(p)) {
+      p.cxp -= this.capXpNext(p); p.clvl++;
+      const st = this.capangaStats(p), e = G.spawned.get(p.id);
+      if (e && !e.dead) { e.dmg = st.dmg; e.maxHp = st.hp; e.hp = Math.min(st.hp, e.hp + 8); }
+      UI.msg(`⭐ ${p.name} subiu para o nível ${p.clvl}! (dano ${st.dmg}, defesa ${st.def}, vida ${st.hp})`, 'gold');
+    }
+  },
+  setStance(p, k) {
+    if (!STANCES[k]) return;
+    p.stance = k;
+    Game.refreshCapanga(p);
   },
 
   // ------------------------------------------------------------ morte, herança e o passar dos anos
@@ -422,7 +446,7 @@ const People = {
     }
     G.lastBirths = G.births || {}; G.births = {};
     Families.yearTick();
-    UI.msg(`🎂 Um ano se passou. ${G.name} agora tem ${P.age} anos.`);
+    UI.msg(`🎂 Mais um ano de vida (cada mês do calendário vale um ano): ${G.name} agora tem ${P.age} anos.`);
     if (P.age >= 62 && Math.random() < (P.age - 60) * 0.04) Game.playerDie('de velhice');
   },
   ageAll(years) { for (let k = 0; k < years; k++) for (const p of G.people) if (p.alive) { p.age++; if (p.rank === 'child' && p.age >= 14) p.rank = 'peasant'; } },

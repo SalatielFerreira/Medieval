@@ -818,7 +818,7 @@ const World = {
       R(6, 24, w - 12, h - 28, wallCol); R(6, h - 8, w - 12, 4, U.shade(wallCol, -0.15));
       R(w / 2 - 5, h - 22, 10, 18, '#5a3a1e'); R(w / 2 + 2, h - 14, 2, 2, '#d4b14a');
       R(12, 32, 8, 8, '#2a2a3a'); R(w - 20, 32, 8, 8, '#2a2a3a');
-      if (G.darkness > 0.2) { R(13, 33, 6, 6, '#ffd36b'); R(w - 19, 33, 6, 6, '#ffd36b'); }
+      if (G.darkness > 0.2 && ((s.type !== 'vhouse' && s.type !== 'tavern') || Routine.lit(s))) { const f = 0.85 + Math.sin(time * 3 + s.id) * 0.15; R(13, 33, 6, 6, U.rgba('#ffd36b', f)); R(w - 19, 33, 6, 6, U.rgba('#ffd36b', f)); }
       roof(4, 2, w - 8, 24, rc);
     };
 
@@ -1070,6 +1070,14 @@ const World = {
         R(3, 12, 26, 16, s.opened ? '#5a3a1e' : '#7a3a1e'); R(3, 9, 26, 6, s.opened ? '#4a2a12' : '#a0482a');
         R(3, 12, 26, 2, '#ffd54a'); R(3, 22, 26, 2, '#ffd54a'); R(14, 14, 4, 6, '#ffe9a8');
         if (!s.opened) { const gl = 0.4 + Math.sin(time * 4) * 0.25; ctx.fillStyle = `rgba(255,220,100,${gl})`; ctx.fillRect(X + 6, Y + 4, 2, 2); ctx.fillRect(X + 24, Y + 6, 2, 2); }
+        break;
+      }
+      case 'dig': {
+        // monte de terra com um X marcado
+        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 26, 13, 4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#7a5230'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 22, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X + 10, Y + 17); ctx.lineTo(X + 22, Y + 27); ctx.moveTo(X + 22, Y + 17); ctx.lineTo(X + 10, Y + 27); ctx.stroke();
+        const gl = 0.4 + Math.sin(time * 4) * 0.3; ctx.fillStyle = `rgba(255,220,100,${gl})`; ctx.fillRect(X + 15, Y + 8, 2, 2);
         break;
       }
       case 'cave': {

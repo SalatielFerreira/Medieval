@@ -991,3 +991,4 @@ button.stile.link:hover { border-color: rgba(255, 213, 74, 0.6); background: rgb
 }
 body.small .navlay { grid-template-columns: 1fr !important; }
 body.small .snav-body { overflow-y: visible; }
+.ledger { display: flex; flex-direction: column; gap: 8px; }

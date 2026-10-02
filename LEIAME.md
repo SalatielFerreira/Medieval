@@ -86,6 +86,15 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Economia no ritmo de antes:** impostos, soldos, salários, renda dos reinos, guerras, revoltas e colheitas andam a cada 5 dias (5 minutos reais, como era antes do calendário novo).
+- **Resumo das contas:** em vez de uma mensagem a cada minuto, aparece um resumo a cada 5 dias (ouro e itens). Os detalhes ficam no Diário → Contas. Avisos importantes continuam aparecendo na hora.
+- **Vida em ritmo próprio:** as pessoas envelhecem, casam e têm filhos a cada mês do calendário (1 ano de vida por mês), então as famílias e a dinastia continuam vivas.
+- **Eventos no mundo:** mercador perdido para escoltar até uma vila, tesouro enterrado para cavar (picareta ou enxada), alcateia com Lobo Alfa atacando uma vila e, raramente, um Dragão Ancestral fora das cavernas. Cada evento aparece marcado no mapa.
+- **Capangas mais fortes:** sobem de nível com a experiência (mais dano, defesa e vida) e têm postura: Agressivo, Equilibrado ou Defensivo (converse com eles ou use Equipar e treinar).
+- **Rotina dos moradores:** trabalham de dia, ao entardecer muitos vão à taverna (o padre vai à capela) e à noite entram em casa para dormir. As janelas acendem quando há gente em casa.
+- **Coletar segurando o botão:** segure o clique (ou o botão de ataque) perto de árvores, rochas e plantações para coletar sem parar. Com inimigo por perto, segurar continua sendo golpe forte.
+- **Ícone do jogo** na aba do navegador.
+
 - **Calendário de verdade:** os 12 meses do ano (janeiro a dezembro, 365 dias) e cada dia dura 1 minuto real. O jogo começa em 1º de março. As estações seguem os meses: primavera (março a maio), verão (junho a agosto), outono (setembro a novembro) e inverno (dezembro a fevereiro). O aniversário de todos é no 1º de janeiro, e o Grande Torneio começa em 24 de junho.
 - **Metade das montanhas:** as montanhas mais baixas viraram colinas (ou neve, no norte), com minérios. Vale também para jogos salvos antigos; castelos, vilas e cavernas continuam no mesmo lugar.
 - **Recursos renascem em 1 ano:** árvores, pedras e minérios coletados só voltam a crescer 1 ano (do jogo) depois.

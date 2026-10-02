@@ -83,7 +83,7 @@ const Touch = {
         if (k === 'eat') Game.eatBest();
       });
       const up = () => {
-        if (k === 'atk') { G.keys.Space = false; if (P.charging) Moves.release(); }
+        if (k === 'atk') { G.keys.Space = false; if (P.charging) Moves.release(); P.gatherHold = false; }
         if (k === 'block') this.block = false;
       };
       b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);

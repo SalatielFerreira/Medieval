@@ -122,12 +122,12 @@ const Diplo = {
       const targets = this.villagesOf(lose);
       if (targets.length) {
         const v = targets.reduce((best, x) => U.dist(x.x, x.y, World.capitals[win].x, World.capitals[win].y) < U.dist(best.x, best.y, World.capitals[win].x, World.capitals[win].y) ? x : best, targets[0]);
-        v.raid = { by: win, until: G.day + 1 };
+        v.raid = { by: win, until: G.day + ECON_DAYS };
         if (this.involves(lose)) UI.msg(`🔥 ${this.name(win)} está atacando ${v.name}! Vá defender a vila.`, 'bad');
         if (L.garrison < 3 && targets.length > 1 && Math.random() < 0.35) this.captureVillage(v, win);
       }
       const dur = G.day - w.since;
-      if ((dur > 5 && Math.random() < 0.3) || (L.garrison <= 0 && G.civs[lose].ruler !== 'player')) {
+      if ((dur > 5 * ECON_DAYS && Math.random() < 0.3) || (L.garrison <= 0 && G.civs[lose].ruler !== 'player')) {
         const tribute = Math.min(L.treasury, 200);
         L.treasury -= tribute; Wn.treasury += tribute;
         this.makePeace(w.a, w.b, tribute ? `${this.name(lose)} pagou ${tribute} moedas de tributo` : 'os dois lados estão exaustos');

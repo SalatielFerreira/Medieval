@@ -131,19 +131,19 @@ const Families = {
         f.loyalty = U.clamp(f.loyalty + (target - f.loyalty) * 0.15 + U.rnd(-4, 4), 0, 100);
         f.favor = (f.favor || 0) * 0.96;
       }
-      if (this.canFound(f) && G.day - (G.lastFound || -9) >= 3 && Math.random() < 0.15) { if (this.found(f)) G.lastFound = G.day; }
+      if (this.canFound(f) && G.day - (G.lastFound || -99) >= 3 * ECON_DAYS && Math.random() < 0.15) { if (this.found(f)) G.lastFound = G.day; }
       else if (typeof f.seat === 'number' && f.biz.length < 2 && f.wealth >= 300 + f.biz.length * 200 && this.bizIn(f.seat) < 4 && Math.random() < 0.2) this.buildBiz(f);
-      if (c && !f.noble && f.loyalty < 20 && f.wealth >= 300 && this.adults(f).length >= 2 && G.day > 8 && G.day - (G.lastRevolt || -99) >= 10 &&
+      if (c && !f.noble && f.loyalty < 20 && f.wealth >= 300 && this.adults(f).length >= 2 && G.day > 8 * ECON_DAYS && G.day - (G.lastRevolt || -999) >= 10 * ECON_DAYS &&
         !G.revolts.some(r => !r.done && r.civ === f.civ) && Math.random() < 0.2) { this.startRevolt(f); G.lastRevolt = G.day; }
     }
     for (const r of G.revolts) if (!r.done) this.revoltDay(r);
-    G.revolts = G.revolts.filter(r => !r.done || G.day - r.day < 12);
+    G.revolts = G.revolts.filter(r => !r.done || G.day - r.day < 12 * ECON_DAYS);
     // impostos das vilas do jogador
     const mine = World.villages.filter(v => v.lord === 'player');
     if (mine.length) {
       let g = 0;
       mine.forEach(v => { g += People.residents(World.villages.indexOf(v)).length * Court.villageTax(); });
-      if (g) { P.gold += g; UI.msg(`🏘️ Suas vilas pagaram ${g} 🪙 de impostos.`, 'gold'); }
+      if (g) { P.gold += g; Game.note(`🏘️ Suas vilas pagaram ${g} 🪙 de impostos.`); }
     }
   },
   // famílias sem ninguém vivo saem da lista (e seus empreendimentos fecham)
@@ -566,7 +566,7 @@ const Biz = {
     }
     for (const p of quit) { this.fire(p); UI.msg(`😠 ${p.name} se demitiu por falta de pagamento.`, 'bad'); }
     const parts = Object.entries(made).map(([k, n]) => `${n} ${ITEMS[k].name}`);
-    if (wages || parts.length || gold) UI.msg(`💼 Empreendimentos: ${parts.length ? parts.join(', ') : 'sem produção'}${gold ? ` · +${gold} 🪙 no caixa` : ''} · salários −${wages} 🪙.`, 'gold');
+    if (wages || parts.length || gold) Game.note(`💼 Empreendimentos: ${parts.length ? parts.join(', ') : 'sem produção'}${gold ? ` · +${gold} 🪙 no caixa` : ''} · salários −${wages} 🪙.`, 'gold');
   },
   collect(s) {
     const got = [];

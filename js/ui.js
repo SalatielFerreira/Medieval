@@ -149,7 +149,7 @@ const UI = {
     if (it.fish) p.push('peixe cru — asse na fogueira');
     if (it.block) p.push(`bloqueia ${Math.round(it.block * 100)}%`);
     if (it.buff) p.push(`${BUFFS[it.buff].icon} ${BUFFS[it.buff].desc}`);
-    if (it.seed) p.push(`plante com a enxada · ${CROPS[it.seed].days} dias`);
+    if (it.seed) p.push(`plante com a enxada · ${CROPS[it.seed].days * ECON_DAYS} dias`);
     return p.join(' · ');
   },
   bar(v, max, cls) { return `<div class="mbar ${cls || ''}"><i style="width:${U.clamp(v / max * 100, 0, 100)}%"></i></div>`; },
@@ -430,7 +430,7 @@ const UI = {
     if (it.tool) kv.push(['Ferramenta', `${TOOL_NAMES[it.tool]} · ${TIER_NAMES[it.tier]}`]);
     if (it.food) kv.push(['Fome', '+' + it.food]);
     if (it.heal) kv.push(['Vida', '+' + it.heal]);
-    if (it.seed) kv.push(['Colheita', `${CROPS[it.seed].days} dias`]);
+    if (it.seed) kv.push(['Colheita', `${CROPS[it.seed].days * ECON_DAYS} dias`]);
     kv.push(['Quantidade', Inv.count(k)], ['Valor', '~' + it.price + ' 🪙'], ['Peso', Math.round(itemWeight(k) * 10) / 10]);
     let acts = '';
     if (it.slot) acts += eq ? `<button data-act="unequip" data-k="${eq}">Tirar</button>` : `<button class="primary" data-act="equip" data-k="${k}">${it.slot === 'tool' ? 'Empunhar' : 'Equipar'}</button>`;
@@ -855,7 +855,7 @@ const UI = {
   guardsHtml() {
     const list = Guards.all(), places = Guards.places();
     if (!list.length && !places.length) return '';
-    const rows = list.map(p => { const st = People.capangaStats(p); return `<div class="crow"><span class="ri">🛡️</span><span><b>${this.esc(People.full(p))}</b><small>guarda em ${this.esc(Guards.name(p.post))} · ⚔️ ${st.dmg} · 🛡️ ${st.def}</small></span>
+    const rows = list.map(p => { const st = People.capangaStats(p); return `<div class="crow"><span class="ri">🛡️</span><span><b>${this.esc(People.full(p))}</b><small>guarda em ${this.esc(Guards.name(p.post))} · ⭐ nível ${st.lvl} · ⚔️ ${st.dmg} · 🛡️ ${st.def}</small></span>
       <span class="act-row"><button data-act="tk" data-op="unguard" data-id="${p.id}">👣 Chamar de volta</button></span></div>`; }).join('');
     const sum = places.map(post => `${this.esc(Guards.name(post))}: ${Guards.at(post).length}/${Guards.cap(post)}`).join(' · ');
     return `<div class="card" style="margin-top:10px"><div class="sec">🛡️ Guardas <span>${sum || 'sem vila nem castelo'}</span></div>${rows || '<p class="muted">Nenhum capanga de guarda. Converse com um capanga e escolha “Mandar fazer guarda”.</p>'}</div>`;
@@ -1111,12 +1111,13 @@ const UI = {
     if (shop && shop !== 'tavern' && p.age >= 14 && (shop === 'hunter' || p.home.type === 'village')) acts.push(['shopnpc', '⚖️ Negociar']);
     if (p.job !== undefined && p.job !== null) acts.push(['bizfire', '📤 Demitir do empreendimento']);
     else if (Biz.can(p) === true && Biz.list().length) acts.push(['hiremenu', '💼 Contratar para trabalhar']);
-    if (p.capanga) acts.push(['equipc', '🛡️ Equipar capanga'], ['dismiss', '🏠 Dispensar']);
+    if (p.capanga) { const sk = STANCES[p.stance] || STANCES.normal; acts.push(['equipc', '🛡️ Equipar e treinar'], ['stance', `${sk.icon} Postura: ${sk.name}`], ['dismiss', '🏠 Dispensar']); }
     if (p.capanga && p.post) acts.push(['unguard', '👣 Voltar a me seguir']);
     else if (p.capanga && Guards.places().length) acts.push(['guardmenu', '🛡️ Mandar fazer guarda']);
     else if (People.canRecruit(p)) acts.push(['recruit', `🤝 Recrutar como capanga — ${People.recruitCost(p)} 🪙`]);
     if (adult && !p.kin && p.spouse !== 'player') acts.push(['insult', '😠 Insultar']);
     if (p.rank === 'priest') acts.push(['church', '⛪ Assuntos da igreja']);
+    { const ev = WorldEvents.cur(); if (p.lost && ev && ev.kind === 'lost' && ev.pid === p.id && !ev.escort) acts.unshift(['escort', '🧭 Venha comigo, eu levo você']); }
     { const vi = Chiefdom.vilOf(p); if (vi >= 0 && G.civs[World.villages[vi].civ].ruler !== 'player') acts.push(['vchallenge', '⚔️ Desafiar pela chefia da vila']); }
     if (p.kin === 'child' && p.age >= 12) acts.push(['profmenu', p.prof ? `${PROFESSIONS[p.prof].icon} Mudar profissão` : '🎓 Escolher profissão']);
     const st = p.capanga ? People.capangaStats(p) : null;
@@ -1128,7 +1129,7 @@ const UI = {
           <div class="tk-tags">${Families.of(p) ? `<span class="famchip" data-act="famview" data-f="${p.fam}" style="border-color:${Families.of(p).color}">🏛️ ${UI.esc(Families.name(Families.of(p)))}</span>` : ''}
             ${Families.isChief(p) ? `<span class="tag">Chefe de ${UI.esc(World.villages.find(v => v.chief === p.id).name)}</span>` : ''}
             ${p.job !== undefined && p.job !== null && World.structs[p.job] ? `<span>💼 Trabalha no seu <b>${UI.esc(BUILDINGS[World.structs[p.job].type].name)}</b></span>` : ''}
-            <span>Personalidade: <b>${t.name}</b></span><span>Gosta de: <b>${p.aff >= 35 || p.kin ? ITEMS[p.fav].icon + ' ' + ITEMS[p.fav].name : '???'}</b></span>
+            ${p.capanga ? `<span>⭐ Nível <b>${p.clvl || 1}</b> · ${STANCES[p.stance] ? STANCES[p.stance].icon + ' ' + STANCES[p.stance].name : '⚖️ Equilibrado'}</span>` : ''}<span>Personalidade: <b>${t.name}</b></span><span>Gosta de: <b>${p.aff >= 35 || p.kin ? ITEMS[p.fav].icon + ' ' + ITEMS[p.fav].name : '???'}</b></span>
             ${st ? `<span>⚔️ Dano <b>${st.dmg}</b> · 🛡️ Defesa <b>${st.def}</b></span>` : ''}${p.hostile ? '<span class="bad">Hostil!</span>' : ''}</div>
           ${affBar}${romBar}
           <div class="speech">“${UI.esc(text)}”</div>
@@ -1158,7 +1159,11 @@ const UI = {
   showEquipC(id) {
     const p = People.get(id), st = People.capangaStats(p);
     let h = `<p>Entregue armas e armaduras da sua mochila para <b>${UI.esc(People.full(p))}</b>. Itens removidos voltam para você.</p>
-      <div class="stats"><div>⚔️ Dano <b>${st.dmg}</b></div><div>🛡️ Defesa <b>${st.def}</b></div></div><div class="equip6">`;
+      <div class="stats"><div>⭐ Nível <b>${st.lvl}</b> · ${p.cxp || 0}/${People.capXpNext(p)} XP</div><div>❤️ Vida <b>${st.hp}</b></div><div>⚔️ Dano <b>${st.dmg}</b></div><div>🛡️ Defesa <b>${st.def}</b></div></div>
+      ${this.bar(p.cxp || 0, People.capXpNext(p))}
+      <div class="sec" style="margin-top:10px">Postura em combate</div><div class="act-row">${Object.entries(STANCES).map(([k, s]) => `<button class="${(p.stance || 'normal') === k ? 'primary' : ''}" data-act="tk" data-op="setstance" data-k="${k}" data-id="${id}" title="${s.desc}">${s.icon} ${s.name}</button>`).join('')}</div>
+      <small class="muted">${(STANCES[p.stance] || STANCES.normal).desc}. Capangas ganham experiência derrotando inimigos (quem dá o golpe final leva mais).</small>
+      <div class="sec" style="margin-top:10px">Equipamento</div><div class="equip6">`;
     for (const sl of EQUIP_SLOTS) {
       if (sl.key === 'tool') continue;
       const k = p.equip[sl.key], it = k && ITEMS[k];
@@ -1198,6 +1203,8 @@ const UI = {
       case 'shopnpc': this.showShop(RANKS[p.rank].shop, p.home.type === 'village' ? p.home.idx : -1, p.id); return;
       case 'recruit': r = People.recruit(p); break;
       case 'dismiss': r = People.dismiss(p); break;
+      case 'stance': { const ks = Object.keys(STANCES), k = ks[(ks.indexOf(p.stance || 'normal') + 1) % ks.length]; People.setStance(p, k); r = { text: { aggressive: 'Vou pra cima deles!', normal: 'Do jeito de sempre, chefe.', defensive: 'Fico de olho e protejo você.' }[k], note: `Postura: ${STANCES[k].icon} ${STANCES[k].name} — ${STANCES[k].desc}.` }; break; }
+      case 'setstance': People.setStance(p, d.k); this.showEquipC(p.id); return;
       case 'guardmenu': this.showGuard(p.id); return;
       case 'guard': if (Guards.assign(p, Guards.decode(d.k))) { this.close(); return; } this.showGuard(p.id); return;
       case 'unguard': { const ok = Guards.recall(p); if (this.cur && this.cur.fn === 'showKingdom') { this.refresh(); return; } if (ok) { this.close(); return; } break; }
@@ -1211,6 +1218,7 @@ const UI = {
       }
       case 'cun': if (p.equip[d.k]) { Inv.add(p.equip[d.k], 1); p.equip[d.k] = null; Game.refreshCapanga(p); } this.showEquipC(p.id); return;
       case 'insult': r = People.insult(p); break;
+      case 'escort': WorldEvents.escort(); this.close(); UI.msg(`🧭 ${p.name} segue você. Leve-${p.sex === 'f' ? 'a' : 'o'} até qualquer vila ou castelo.`, 'gold'); return;
       case 'vchallenge': {
         const vi = Chiefdom.vilOf(p), v = World.villages[vi];
         if (!v || !confirm(`Atacar ${v.name} para tomar a chefia de ${p.name}? A milícia vai lutar, e o rei decide se isso é uma afronta à coroa.`)) return;
@@ -1438,7 +1446,7 @@ const UI = {
   // ------------------------------------------------------------ diário do herói
   showDiary() {
     const S = this.sel, tab = S.dtab || 'ach', st = G.stats || {};
-    const tabs = [['ach', '🏆 Conquistas'], ['stats', '📊 Estatísticas'], ['dyn', '🌳 Dinastia'], ['log', '📜 Diário']]
+    const tabs = [['ach', '🏆 Conquistas'], ['stats', '📊 Estatísticas'], ['dyn', '🌳 Dinastia'], ['contas', '📒 Contas'], ['log', '📜 Diário']]
       .map(([k, l]) => `<button class="tab ${tab === k ? 'on' : ''}" data-act="dtab" data-t="${k}">${l}</button>`).join('');
     let body = '';
     if (tab === 'ach') {
@@ -1462,6 +1470,9 @@ const UI = {
         <div class="list">${kids.length ? kids.map(k => `<div class="item"><span class="ic">${k.sex === 'm' ? '👦' : '👧'}</span><div class="info"><b>${this.esc(k.name)}</b> · ${k.age} anos${k.alive ? '' : ' · ✝'}
           <small>${k.prof ? PROFESSIONS[k.prof].icon + ' ' + (k.sex === 'f' ? PROFESSIONS[k.prof].f : PROFESSIONS[k.prof].name) : k.age >= 12 ? 'Sem profissão — converse para escolher' : 'Ainda é criança'}</small></div></div>`).join('') : '<p class="muted">Nenhum filho ainda.</p>'}</div>
         <div class="kv" style="margin-top:12px"><div>Dias de história<b>${G.day}</b></div><div>Data<b>${Calendar.full(G.day)}</b></div><div>Reinos governados<b>${G.civs.filter(c => c.ruler === 'player').length}</b></div><div>Ouro<b>${P.gold}</b></div><div>Dificuldade<b>${DIFFICULTY[G.diff || 'normal'].name}</b></div></div>`;
+    } else if (tab === 'contas') {
+      const L = G.ledger || [];
+      body = `<p class="muted">A cada ${ECON_DAYS} dias a economia anda: impostos, soldos, salários, colheitas e vendas. Aqui fica o resumo de cada período.</p>` + (L.length ? `<div class="ledger">${L.map(e => `<div class="card"><div class="sec">${Calendar.short(e.day)} <span class="${e.gold < 0 ? 'bad' : e.gold > 0 ? 'ok' : ''}">${e.gold > 0 ? '+' : ''}${e.gold} 🪙</span></div>${e.got.length ? `<div class="chips dense">${e.got.map(g => `<span class="chip">${this.esc(g)}</span>`).join('')}</div>` : ''}${e.notes.map(n => `<div class="crow2">${this.esc(n)}</div>`).join('')}</div>`).join('')}</div>` : '<p class="muted">Ainda não houve nenhum período completo.</p>');
     } else {
       body = (G.diary || []).length ? `<div class="diary">${G.diary.map(e => `<div><em>${Calendar.short(e.day)}</em><span>${this.esc(e.text)}</span></div>`).join('')}</div>` : '<p class="muted">Nada escrito ainda.</p>';
     }
@@ -1866,7 +1877,11 @@ const HELP_HTML = `
 <li>Vire <b>chefe de uma vila</b> fundando a sua, conquistando (converse com o chefe e desafie-o) ou pedindo ao rei no castelo. O chefe (na vila) e o rei (no reino todo) podem criar, mudar de lugar e demolir estradas e imóveis (B → Reformas e Obras).</li>
 <li>Com a <b>Enxada</b>, are a terra, plante sementes e colha; regue com o <b>Regador</b> (encha na água). Chuva também rega.</li>
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
-<li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas todo dia.</li>
+<li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas.</li>
+<li>A economia (impostos, soldos, salários, colheitas) anda a cada 5 dias; veja o resumo em Diário → Contas. As pessoas envelhecem um ano a cada mês do calendário.</li>
+<li>Fique atento aos <b>eventos</b>: mercadores perdidos, tesouros enterrados, lobos atacando vilas e até dragões. Eles aparecem marcados no mapa.</li>
+<li>Capangas sobem de nível lutando. Escolha a <b>postura</b> de cada um (agressivo, equilibrado ou defensivo) conversando com eles.</li>
+<li>Segure o clique perto de árvores e rochas para coletar sem parar.</li>
 <li><b>Caravanas</b> viajam entre os reinos: escolte-as contra bandidos ou assalte-as.</li>
 <li>Reinos em guerra travam <b>batalhas em campo aberto</b>: escolha um lado e lute com seus capangas.</li>
 <li>Escolha a <b>profissão dos filhos</b> conversando com eles (a partir dos 12 anos).</li>

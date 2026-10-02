@@ -304,6 +304,7 @@ const CIV_STRUCTS = {
   vwall:  { name: 'Muralha', blocks: true },
   cave_exit: { name: 'Saída da Caverna', blocks: false },
   tchest: { name: 'Baú de Tesouro', blocks: true },
+  dig:    { name: 'Tesouro Enterrado', blocks: false },
   // empreendimentos das famílias
   fmill:  { name: 'Moinho',  blocks: true },
   fshop:  { name: 'Empório', blocks: true },

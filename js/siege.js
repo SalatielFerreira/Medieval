@@ -133,7 +133,7 @@ const Sieges = {
   // ------------------------------------------------------------ ataques inimigos às terras do jogador
   assaultOf(t) { return (G.assaults || []).find(a => a.state === 'attack' && a.target.kind === t.kind && a.target.civ === t.civ); },
   dayTick() {
-    G.assaults = (G.assaults || []).filter(a => a.state !== 'done' || G.day - a.day < 4);
+    G.assaults = (G.assaults || []).filter(a => a.state !== 'done' || G.day - a.day < 4 * ECON_DAYS);
     for (const a of G.assaults) {
       if (a.state === 'march' && G.day >= a.day) {
         a.state = 'attack'; a.days = 0;
@@ -154,12 +154,12 @@ const Sieges = {
       let target;
       if (enemyOfMine && (Math.random() < 0.5 || !myVillages.length)) target = { kind: 'gate', civ: enemyOfMine.id };
       else { const x = myVillages.length ? U.pick(myVillages) : null; if (!x) continue; target = { kind: 'village', vi: x.i, civ: x.v.civ }; }
-      const a = { id: G.day * 10 + c.id, att: c.id, target, day: G.day + 1, state: 'march', str: Math.round(c.garrison * 0.6 + 6), engines: c.garrison > 12 ? 2 : 1,
+      const a = { id: G.day * 10 + c.id, att: c.id, target, day: G.day + ECON_DAYS, state: 'march', str: Math.round(c.garrison * 0.6 + 6), engines: c.garrison > 12 ? 2 : 1,
         gate: target.kind === 'gate' ? this.gateMax(target.civ) : 0, gateMax: target.kind === 'gate' ? this.gateMax(target.civ) : 0, spawnedEngines: 0 };
       G.assaults.push(a);
       c.atWar = true;
       UI.banner(`🚩 ${Diplo.name(c.id)} marcha contra ${this.targetName(a)}!`);
-      UI.msg(`Espiões avisam: o exército de ${Diplo.name(c.id)} (${a.str} soldados, ${a.engines} máquina(s) de cerco) chega amanhã a ${this.targetName(a)}.`, 'bad');
+      UI.msg(`Espiões avisam: o exército de ${Diplo.name(c.id)} (${a.str} soldados, ${a.engines} máquina(s) de cerco) chega em ${ECON_DAYS} dias a ${this.targetName(a)}.`, 'bad');
       Diplo.chronicle(`🚩 ${Diplo.name(c.id)} marcha contra ${this.targetName(a)}.`);
       break;
     }
