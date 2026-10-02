@@ -11,6 +11,8 @@ const PANEL_ICONS = {
   showBiz: 'coin', showFamily: 'users', showHire: 'coin', showGuard: 'shield', showChapel: 'star', showArena: 'sword', showJoust: 'sword', showTree: 'users', showMatch: 'users',
   showAnimals: 'food', showPTavern: 'coin', showCaravan: 'coin', showBattle: 'sword', showDiary: 'book', showProf: 'star',
 };
+// janelas principais, na ordem da barra de botões (as setas do cabeçalho pulam de uma para a outra)
+const MAIN_WINDOWS = [['showInventory', 'Mochila'], ['showCrafting', 'Criar'], ['showBuild', 'Construir'], ['showKingdom', 'Reino'], ['showMap', 'Mapa'], ['showDiary', 'Diário'], ['showSettings', 'Ajustes']];
 const WIDE_PANELS = ['showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree', 'showKingdom', 'showSettings'];
 
 const UI = {
@@ -164,10 +166,27 @@ const UI = {
     const ic = PANEL_ICONS[fn] || 'star';
     this.panel.className = WIDE_PANELS.includes(fn) ? 'wide' : '';
     this.panel.innerHTML = `<div class="ph"><div class="ph-ic">${icon(ic)}</div><div class="ph-t"><h2>${clean}</h2>${sub ? `<small>${sub}</small>` : ''}</div>
-      <button class="x" data-act="close" title="Fechar (Esc)">${icon('x')}</button></div><div class="pb">${body}</div>`;
+      ${this.winNavHtml(fn)}<button class="x" data-act="close" title="Fechar (Esc)">${icon('x')}</button></div><div class="pb">${body}</div>`;
     this.panel.classList.remove('hidden');
     for (const el of this.panel.querySelectorAll('[data-scroll], .pb')) { const k = el.dataset.scroll || 'pb'; if (scrolls[k]) el.scrollTop = scrolls[k]; }
     G.paused = true;
+  },
+  // setas ◀ ▶ no cabeçalho das janelas principais
+  winNavHtml(fn, attr) {
+    const i = MAIN_WINDOWS.findIndex(w => w[0] === fn);
+    if (i < 0) return '';
+    const n = MAIN_WINDOWS.length, prev = MAIN_WINDOWS[(i - 1 + n) % n], next = MAIN_WINDOWS[(i + 1) % n];
+    const a = attr || 'data-act="wnav"';
+    return `<div class="ph-nav"><button class="nav-arr" ${a} data-d="-1" title="${prev[1]}">${icon('chevL')}</button><button class="nav-arr" ${a} data-d="1" title="${next[1]}">${icon('chevR')}</button></div>`;
+  },
+  wnav(d) {
+    const i = MAIN_WINDOWS.findIndex(w => this.cur && w[0] === this.cur.fn);
+    if (i < 0) return;
+    const n = MAIN_WINDOWS.length, fn = MAIN_WINDOWS[(i + d + n) % n][0];
+    this.close();
+    G.placing = null; Urban.stop();
+    this[fn]();
+    Sound.play('ui');
   },
   close() { this.panel.classList.add('hidden'); MapView.hide(); this.cur = null; G.paused = false; },
   isOpen() { return !!this.cur; },
@@ -1726,6 +1745,7 @@ const UI = {
   act(a, d) {
     switch (a) {
       case 'close': this.close(); return;
+      case 'wnav': this.wnav(+d.d); return;
       case 'open': this[d.fn](); return;
       case 'equip': Game.equip(d.k); break;
       case 'unequip': P.equip[d.k] = null; break;

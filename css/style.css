@@ -1071,3 +1071,11 @@ body.small #quick .q-load, body.small #quick .q-slots { display: revert; }
 body.small #log { width: min(330px, 70vw); }
 body.small .toast { font-size: 11.5px; padding: 6px 7px; grid-template-columns: 24px 1fr auto auto; }
 body.small .tc-ic { width: 24px; height: 24px; font-size: 13px; }
+
+/* setas ◀ ▶ no cabeçalho das janelas principais (pulam para a janela anterior/seguinte) */
+.ph-nav { display: flex; gap: 4px; margin-left: auto; }
+.ph .nav-arr, .mv-tools .nav-arr { width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; color: #f1d79a; }
+.ph .nav-arr .ico, .mv-tools .nav-arr .ico { width: 18px; height: 18px; }
+.ph .nav-arr:hover:not(:disabled) { color: #fff2c8; border-color: #e8c06a; }
+.ph-nav + .x { margin-left: 6px; }
+.mv-tools .ph-nav { margin-left: 0; margin-right: 2px; }

@@ -22,7 +22,7 @@ const MapView = {
           <button data-mv="goping" title="Mostrar a marcação">${icon('pin')}<span>Marcação</span></button>
           <button data-mv="clear" title="Remover a marcação">${icon('trash')}</button>
           <span class="sep"></span>
-          <button data-mv="close" class="mv-close" title="Fechar (M ou Esc)">${icon('x')}</button>
+          ${UI.winNavHtml('showMap', 'data-mv="wnav"')}<button data-mv="close" class="mv-close" title="Fechar (M ou Esc)">${icon('x')}</button>
         </div>
       </div>
       <div class="mv-body">
@@ -40,6 +40,7 @@ const MapView = {
 
     this.el.addEventListener('click', e => {
       const b = e.target.closest('[data-mv]');
+      if (b && b.dataset.mv === 'wnav') { UI.wnav(+b.dataset.d); return; }
       if (b) this.tool(b.dataset.mv);
       const r = e.target.closest('[data-goto]');
       if (r) {
