@@ -935,7 +935,7 @@ body.small .inv3 { grid-template-columns: 1fr !important; }
 }
 .mt-i { line-height: 1; vertical-align: baseline; }
 /* a flor de lis é o pingo do "I", centrada na haste */
-.mt-fl { position: absolute; left: 50%; top: -0.78em; transform: translateX(-50%); font-family: "Segoe UI Symbol", "Noto Sans Symbols", Georgia, serif; font-size: 0.46em; font-weight: 400; line-height: 1;
+.mt-fl { position: absolute; left: 50%; top: -1.05em; transform: translateX(-50%); font-family: "Segoe UI Symbol", "Noto Sans Symbols", Georgia, serif; font-size: 0.46em; font-weight: 400; line-height: 1;
   color: #f2c45a; -webkit-text-fill-color: #f2c45a; text-shadow: 0 0 14px rgba(255, 150, 60, 0.75); pointer-events: none; }
 @media (max-height: 520px) { .menu-wrap { gap: 8px; padding: 10px 16px; } .menu-wrap .mt-line { display: none; } }
 /* mapa aberto ocupa a tela inteira */
