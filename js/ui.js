@@ -615,7 +615,7 @@ const UI = {
     const mine = Urban.myVillages(), alerts = this.kAlerts();
     const groups = [['Você', [['overview', '🏠', 'Visão geral', alerts.length, alerts.length > 0], ['crown', '👑', 'Coroa e títulos'], ['family', '👪', 'Família'],
       ['villages', '🏘️', 'Vilas e guardas', mine.length], ['biz', '💼', 'Empreendimentos', Biz.list().length]]]];
-    if (ruled.length) groups.push(['Seus reinos', ruled.map(c => ['k:' + c.id, `<span class="cdot" style="background:${Game.civColor(c.id)}"></span>`, CIV_DEFS[c.id].short,
+    if (ruled.length) groups.push(['Seus reinos', ruled.map(c => ['k:' + c.id, Heraldry.armsSvg(c.id, 16), CIV_DEFS[c.id].short,
       c.rebel > 0 || c.atWar ? '!' : '', c.rebel > 0 || c.atWar])]);
     groups.push(['O mundo', [['atlas', '🗺️', 'Os 7 reinos'], ['families', '🏛️', 'Famílias'], ['market', '📈', 'Mercado e caravanas', Market.mine().length],
       ['news', '📜', 'Crônicas e guerras', Diplo.D().wars.length], ['tree', '🌳', 'Linhagens']]]);
@@ -749,7 +749,7 @@ const UI = {
     const S = this.sel, c = G.civs[ci], d = CIV_DEFS[ci], fc = Game.civForecast(c);
     const have = k => k === 'gold' ? c.treasury : (c.stock[k] || 0);
     const net = fc.income - fc.upkeep, wheatNet = fc.wheat - fc.need;
-    const subs = [['resumo', '📊 Resumo'], ['economia', '💰 Economia'], ['obras', '🏗️ Obras'], ['exercito', '🛡️ Exército e povo'], ['conselho', '🎩 Conselho'], ['diplo', '🤝 Diplomacia']];
+    const subs = [['resumo', '📊 Resumo'], ['economia', '💰 Economia'], ['obras', '🏗️ Obras'], ['exercito', '🛡️ Exército e povo'], ['conselho', '🎩 Conselho'], ['diplo', '🤝 Diplomacia'], ['brasao', '⚜️ Bandeira e brasão']];
     if (!subs.some(([k]) => k === S.ksub)) S.ksub = 'resumo';
     const st = subs.map(([k, lab]) => `<button class="tab ${S.ksub === k ? 'on' : ''}" data-act="ksub" data-s="${k}">${lab}${k === 'conselho' && Court.plotsOf(ci).length ? ' <span class="badge">!</span>' : ''}</button>`).join('');
     let sec = '';
@@ -788,10 +788,30 @@ const UI = {
               : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="ally" ${!al && r >= 40 && c.treasury >= 200 ? '' : 'disabled'} title="Exige relação 40+">🤝 Aliança 200</button>
                  <button class="danger" data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="war">⚔️ Guerra</button>`}`}</span></div>`;
       }).join('') + '</div>';
+    } else if (S.ksub === 'brasao') {
+      const hx = Heraldry.get(ci);
+      const pick = (k, v, inner, label, on) => `<button class="hpick ${on ? 'on' : ''}" data-act="hset" data-c="${ci}" data-k="${k}" data-v="${v}" title="${label}">${inner}<small>${label}</small></button>`;
+      sec = `<div class="kgrid two">
+        <div class="card herald-prev"><div class="sec">Prévia</div>
+          <div class="hp-row">${Heraldry.flagSvg(ci, 150, 100)}${Heraldry.armsSvg(ci, 92)}</div>
+          <div class="hp-name">${this.esc(d.name)}</div>
+          <div class="act-row"><button data-act="hreset" data-c="${ci}">↺ Voltar ao original</button></div>
+          <small class="muted">A bandeira tremula nas torres do castelo e o brasão fica sobre o portão.</small></div>
+        <div class="card"><div class="sec">Nome do reino</div>
+          <div class="cr-names"><label>Nome completo<input id="hName" maxlength="32" value="${this.esc(d.name)}"></label><label>Nome curto<input id="hShort" maxlength="14" value="${this.esc(d.short)}"></label></div>
+          <div class="act-row" style="margin-top:6px"><button class="primary" data-act="hname" data-c="${ci}">✍️ Renomear o reino</button></div>
+          <div class="sec" style="margin-top:12px">Cor do reino</div>
+          <div class="hswatch">${TINCTURES.map(([c, n]) => `<button class="sw ${hx.color === c ? 'on' : ''}" data-act="hset" data-c="${ci}" data-k="color" data-v="${c}" title="${n}" style="background:${c}"></button>`).join('')}</div>
+          <div class="sec" style="margin-top:12px">Metal (segunda cor)</div>
+          <div class="hswatch">${METALS.map(([c, n]) => `<button class="sw ${hx.metal === c ? 'on' : ''}" data-act="hset" data-c="${ci}" data-k="metal" data-v="${c}" title="${n}" style="background:${c}"></button>`).join('')}</div>
+          <small class="muted">A cor aparece nas fronteiras, no mapa, nos guardas e nos telhados.</small></div></div>
+        <div class="card"><div class="sec">Bandeira</div><div class="hgrid">${FLAG_PATTERNS.map(([k, n]) => pick('flag', k, Heraldry.flagSvg(ci, 54, 36, { flag: k }), n, hx.flag === k)).join('')}</div></div>
+        <div class="card"><div class="sec">Brasão: divisão do escudo</div><div class="hgrid">${ARMS_DIVISIONS.map(([k, n]) => pick('division', k, Heraldry.armsSvg(ci, 34, { division: k }), n, hx.division === k)).join('')}</div>
+          <div class="sec" style="margin-top:12px">Brasão: símbolo</div><div class="hgrid">${CHARGES.map(ch => pick('charge', ch, Heraldry.armsSvg(ci, 34, { charge: ch }), '', hx.charge === ch)).join('')}</div></div>`;
     } else if (S.ksub === 'conselho') {
       sec = this.councilHtml(ci);
     } else if (S.ksub === 'obras') {
-      sec = `<p class="muted">As obras são pagas com o tesouro e os armazéns do reino, não com o seu bolso. Para mexer em casas, lojas e estradas, use Construir → Reformas e Obras.</p><div class="kgrid">${Object.entries(INVESTMENTS).map(([k, inv]) => {
+      sec = `<p class="muted">As obras são pagas com o tesouro e os armazéns do reino, não com o seu bolso. Para mexer em casas, lojas, estradas e até mudar o castelo de lugar, use Construir → Reformas e Obras.</p><div class="kgrid">${Object.entries(INVESTMENTS).map(([k, inv]) => {
         const can = Object.entries(inv.cost).every(([r, n]) => have(r) >= n);
         return `<div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">${inv.icon}</div><div><b>${inv.name}</b><div class="dt-cat">Nível ${c.invest[k]}</div></div></div>
           <p class="dt-desc">${inv.desc}</p><div class="cost">${this.fmtCost(inv.cost, have)}</div>
@@ -812,7 +832,7 @@ const UI = {
         <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🏰</div><div><b>Guardas no castelo</b><div class="dt-cat">${Guards.at(post).length} / ${Guards.cap(post)} capangas</div></div></div>
           <p class="dt-desc">Converse com um capanga e escolha "Mandar fazer guarda" para deixá-lo defendendo o castelo.</p></div></div>`;
     }
-    return this.pageHead(`<span class="cdot big" style="background:${Game.civColor(ci)}"></span>`, d.name, `Governado por ${this.esc(G.name)} · ${this.esc(d.desc)}`)
+    return this.pageHead(Heraldry.armsSvg(ci, 30), d.name, `Governado por ${this.esc(G.name)} · ${this.esc(d.desc)}`)
       + `<div class="tabs subtabs">${st}</div><div class="kbody">${sec}</div>`;
   },
   personLine(p, extra) {
@@ -840,7 +860,7 @@ const UI = {
     const vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci);
     const rv = (G.revolts || []).filter(r => !r.done && r.civ === ci);
     return this.pageHead('🗺️', 'Os 7 reinos', 'Cortes, vilas, famílias e números de cada reino') + `<div class="tabs ktabs">${tabs}</div>
-      <div class="atlas-head" style="border-color:${Game.civColor(ci)}"><b style="color:${Game.civColor(ci)}">${d.name}</b><small>${this.esc(d.desc)} · ${this.esc(c.rulerName)} · ${Game.relationText(c)}</small></div>
+      <div class="atlas-head herald" style="border-color:${Game.civColor(ci)}">${Heraldry.armsSvg(ci, 34)}${Heraldry.flagSvg(ci, 42, 28)}<div><b style="color:${Game.civColor(ci)}">${d.name}</b><small>${this.esc(d.desc)} · ${this.esc(c.rulerName)} · ${Game.relationText(c)}</small></div></div>
       ${rv.map(r => `<div class="alert">🔥 A ${this.esc(Families.name(Families.get(r.fam)))} está em revolta contra a coroa (dia ${r.days + 1}, força ${r.str}). <button data-act="famview" data-f="${r.fam}">Ver</button></div>`).join('')}
       <div class="tiles big">
         <div class="stile"><small>Pessoas</small><b>${ppl.length}</b></div>
@@ -1373,7 +1393,7 @@ const UI = {
     if (c.ruler === 'player') { this.showKingdom(ci); return; }
     RoyalCourt.visit(ci);
     const need = Game.claimNeeds(ci), canClaim = c.relation >= need.rel && P.gold >= need.gold && !c.atWar;
-    let h = `<p><i>${d.desc}</i></p>
+    let h = `<div class="castle-herald">${Heraldry.armsSvg(ci, 44)}${Heraldry.flagSvg(ci, 60, 40)}<p><i>${d.desc}</i></p></div>
       <div class="stats">
         <div>👑 Soberano: <b>${this.esc(c.rulerName)}</b></div><div>👥 População: <b>${c.pop}</b></div>
         <div>🛡️ Guarnição: <b>${c.garrison}</b> soldados</div><div>💰 Tesouro: <b>${c.treasury}</b> 🪙</div>
@@ -1785,6 +1805,9 @@ const UI = {
   act(a, d) {
     switch (a) {
       case 'close': this.close(); return;
+      case 'hset': Heraldry.set(+d.c, { [d.k]: d.v }); break;
+      case 'hname': Heraldry.rename(+d.c, (document.getElementById('hName') || {}).value, (document.getElementById('hShort') || {}).value); break;
+      case 'hreset': Dialog.confirm({ icon: '↺', title: 'Voltar ao original', text: `Voltar o reino ao nome, à cor, à bandeira e ao brasão originais (${CIV_BASE[+d.c].name})?`, ok: 'Voltar ao original' }, () => { Heraldry.reset(+d.c); this.refresh(); }); return;
       case 'cjoin': RoyalCourt.join(+d.c); break;
       case 'cdecline': RoyalCourt.decline(+d.c); break;
       case 'coffice': RoyalCourt.setOffice(d.k); break;

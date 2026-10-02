@@ -1098,3 +1098,24 @@ body.small .tc-ic { width: 24px; height: 24px; font-size: 13px; }
 .dlg-btns button { min-width: 130px; padding: 10px 16px; font-size: 14px; }
 .dlg-keys { display: block; margin-top: 10px; font-size: 11px; color: #8a7a5a; }
 @keyframes dlgin { from { opacity: 0; transform: scale(0.94) translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ================================================================ bandeiras e brasões */
+.hflag, .harms { display: inline-block; vertical-align: middle; flex: none; }
+.hflag { border-radius: 2px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45); }
+.harms { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); }
+.herald-prev .hp-row { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 10px 0; }
+.herald-prev .hp-name { text-align: center; font-family: 'Cinzel', Georgia, serif; font-size: 17px; color: var(--gold-hi); margin-bottom: 8px; }
+.hswatch { display: flex; flex-wrap: wrap; gap: 7px; }
+.hswatch .sw { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.6); box-shadow: 0 0 0 1px rgba(214, 174, 96, 0.4); }
+.hswatch .sw.on { box-shadow: 0 0 0 3px #ffd54a; }
+.hgrid { display: flex; flex-wrap: wrap; gap: 8px; }
+.hpick { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 8px; min-width: 64px; }
+.hpick small { font-size: 10.5px; color: #c9b48a; }
+.hpick small:empty { display: none; }
+.hpick.on { border-color: #ffd54a; box-shadow: 0 0 0 2px rgba(255, 213, 74, 0.4); background: rgba(80, 60, 25, 0.5); }
+.atlas-head.herald { flex-direction: row; align-items: center; gap: 12px; }
+.atlas-head.herald > div { display: flex; flex-direction: column; }
+.castle-herald { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.castle-herald p { margin: 0; }
+.pg-ic .harms { width: 30px; height: 36px; }
+.snav-i .si .harms { width: 16px; height: 19px; }

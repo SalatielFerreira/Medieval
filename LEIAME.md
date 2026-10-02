@@ -88,6 +88,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 ## Novidades desta versão
 
 - **Corte do rei:** cada reino mede o seu reconhecimento (serviços prestados, fama e relação). Com reconhecimento 40+ e relação 40+, o rei convida você para a corte. Na corte você recebe salário a cada 5 dias, escolhe um cargo conforme o reconhecimento (Conselheiro, Tesoureiro Real, General do Rei ou Embaixador), pede audiências ao rei, pede escolta (General) e propõe alianças, paz ou guerra (Embaixador). É preciso aparecer no castelo pelo menos a cada 30 dias; guerra com o reino ou relação muito baixa tiram você da corte.
+- **Bandeira e brasão:** cada reino tem a sua bandeira (tremulando nas torres do castelo e na arena) e o seu brasão (sobre o portão do castelo e nas janelas). Quando você é o rei, a aba **Reino → Bandeira e brasão** deixa mudar o nome do reino, a cor (fronteiras, mapa, telhados e guardas), o metal (segunda cor), o desenho da bandeira, a divisão do escudo e o símbolo. Tudo fica no jogo salvo e dá para voltar ao original.
 - **Tudo renasce em 1 ano:** arbustos de frutas, linho, ervas e argila agora também levam 1 ano do jogo para voltar, como árvores, pedras e minérios.
 
 - **Cada família tem sua casa:** o casal e os filhos (ou o adulto solteiro) dormem na própria casa. Quem não tem ocupa uma livre ou constrói uma nova perto da vila: a obra leva 3 dias, aparece com andaime e barra de progresso, e os moradores trabalham nela de dia. As casas novas ficam no jogo salvo.
@@ -109,7 +110,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Estradas:** B → Estradas. Clique e arraste para abrir estradas, de graça; sobre rio raso vira ponte. "Remover estrada" tira qualquer estrada ou ponte, até as do mapa (nas vilas e castelos dos outros, só o chefe ou o rei). O Muro de Pedra (e a muralha das vilas) custa só 1 pedra.
 - **Chefe de vila:** vire chefe fundando sua vila, **pela força** (converse com o chefe e desafie-o: derrote a milícia; o rei decide se o ataque é uma afronta à coroa ou se a vila se defende sozinha) ou **pela diplomacia** (no castelo, peça a chefia ao rei com boa relação e ouro). O chefe recebe os impostos dos moradores.
 - **Guardas:** como chefe de vila ou rei, converse com um capanga e escolha "Mandar fazer guarda": ele patrulha a sua vila (até 6 guardas) ou o seu castelo (até 12), enfrenta quem ameaçar e reforça a defesa quando um exército ataca. Guardas não contam no limite de seguidores, mas recebem soldo. Chame de volta pela conversa ou em Reino → Sua casa.
-- **Obras do chefe e do rei:** o chefe (dentro da vila) e o rei (no reino todo) podem abrir e remover estradas, **mudar de lugar** e **demolir** casas, lojas, tavernas, capelas, muralhas e todos os imóveis, e **erguer imóveis novos** nas vilas (B → Reformas e Obras). Castelos, cavernas, acampamentos e santuários não saem do lugar. Suas próprias construções podem ser mudadas e demolidas em qualquer lugar.
+- **Obras do chefe e do rei:** o chefe (dentro da vila) e o rei (no reino todo) podem abrir e remover estradas, **mudar de lugar** e **demolir** casas, lojas, tavernas, capelas, muralhas e todos os imóveis, e **erguer imóveis novos** nas vilas (B → Reformas e Obras). O rei também pode mudar o castelo de lugar dentro do reino. Cavernas, acampamentos e santuários não saem do lugar. Suas próprias construções podem ser mudadas e demolidas em qualquer lugar.
 
 ## Versão anterior (3)
 
@@ -191,6 +192,7 @@ js/life.js        crescimento e ruína das cidades, caravanas
 js/progress.js    conquistas, estatísticas, diário, dinastia e profissões
 js/families.js    famílias, sobrenomes, chefes de vila, revoltas, vilas fundadas e empreendimentos com funcionários
 js/royalcourt.js  convite e vida na corte dos reis (cargos, salário, audiências)
+js/heraldry.js   bandeiras e brasões dos reinos (desenho e mudanças do rei)
 js/court.js       títulos de nobreza, conselho real, conspirações, casamentos arranjados e rivalidades
 js/market.js      preços dinâmicos e caravanas do jogador
 js/events.js      eventos no mundo e rotina dos moradores

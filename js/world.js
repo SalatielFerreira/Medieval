@@ -793,8 +793,10 @@ const World = {
     const w = s.w * TILE, h = s.h * TILE;
     const civ = typeof s.owner === 'number' ? s.owner : -1;
     const ruledByPlayer = civ >= 0 && G.civs[civ] && G.civs[civ].ruler === 'player';
-    const ccol = civ >= 0 ? (ruledByPlayer ? PLAYER_COLOR : CIV_DEFS[civ].color) : PLAYER_COLOR;
-    const roofCol = civ >= 0 ? (ruledByPlayer ? '#a8791a' : CIV_DEFS[civ].roof) : '#8a5a1a';
+    const ccol = civ >= 0 ? Game.civColor(civ) : PLAYER_COLOR;
+    const roofCol = civ >= 0 ? (ruledByPlayer && !Heraldry.customColor(civ) ? '#a8791a' : CIV_DEFS[civ].roof) : '#8a5a1a';
+    // bandeira do reino num mastro (castelos e arenas)
+    const banner = (fx, fy, bw) => { if (civ < 0) { flag(fx, fy, ccol); return; } R(fx, fy - 20, 2, 20, '#3a2a1a'); Heraldry.drawFlag(ctx, X + fx + 2, Y + fy - 20, bw || 15, (bw || 15) * 0.66, civ, time); };
     const R = (x, y, ww, hh, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(X + x), Math.round(Y + y), ww, hh); };
     const shadow = () => { ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(X + 4, Y + h - 6, w - 4, 8); };
     const roof = (x, y, ww, hh, col) => {
@@ -837,13 +839,13 @@ const World = {
         R(kx + 30, 80, 16, 30, '#4a3220');
         R(kx + 10, 58, 8, 12, '#2a2a3a'); R(kx + 58, 58, 8, 12, '#2a2a3a');
         roof(kx, 14, 76, 30, roofCol);
-        flag(w / 2 - 1, 16, ccol);
+        banner(w / 2 - 1, 16, 20);
         // torres
         for (const [tx, ty] of [[4, 18], [w - 32, 18], [4, h - 48], [w - 32, h - 48]]) {
           R(tx, ty + 10, 28, 34, '#7f8187'); R(tx, ty + 40, 28, 4, dark);
           R(tx + 11, ty + 22, 6, 8, '#2a2a3a');
           ctx.fillStyle = roofCol; ctx.beginPath(); ctx.moveTo(X + tx - 2, Y + ty + 12); ctx.lineTo(X + tx + 14, Y + ty - 10); ctx.lineTo(X + tx + 30, Y + ty + 12); ctx.fill();
-          flag(tx + 13, ty - 8, ccol);
+          banner(tx + 13, ty - 8);
         }
         // portão
         R(w / 2 - 16, h - 30, 32, 26, '#2d2014');
@@ -858,6 +860,8 @@ const World = {
         }
         // tochas
         flame(w / 2 - 22, h - 20, 0.6); flame(w / 2 + 22, h - 20, 0.6);
+        // brasão do reino sobre o portão
+        if (civ >= 0) Heraldry.drawArms(ctx, X + w / 2, Y + h - 42, 18, civ);
         break;
       }
       case 'vhouse':
@@ -1177,7 +1181,7 @@ const World = {
         for (let k = 8; k < w - 6; k += 12) { R(k, 2, 4, 10, '#7a5230'); R(k, h - 8, 4, 8, '#7a5230'); }
         for (let k = 0; k < 5; k++) R(10 + k * ((w - 30) / 4), -2, 10, 6, ['#8e1f2a', '#f2efe6', '#2a4a8a', '#f2efe6', '#8e1f2a'][k]);
         R(w / 2 - 2, 10, 4, h - 18, 'rgba(255,255,255,0.35)');
-        flag(10, 4, ccol); flag(w - 14, 4, ccol);
+        banner(10, 4); banner(w - 14, 4);
         break;
       }
       case 'wall_stone': {

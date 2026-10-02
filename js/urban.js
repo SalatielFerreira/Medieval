@@ -19,7 +19,7 @@ const CIVIC = {
   field:  { name: 'Plantação', icon: '🌾', w: 3, h: 2, cost: { wood: 8 },                          desc: 'Campo de trigo da vila.' },
 };
 // construções que nunca saem do lugar
-const FIXED_STRUCTS = ['castle', 'camp', 'cave', 'cave_exit', 'tchest', 'shrine', 'dig'];
+const FIXED_STRUCTS = ['camp', 'cave', 'cave_exit', 'tchest', 'shrine', 'dig'];
 
 const Urban = {
   mode: null, pick: null, drag: false, last: null, warnT: 0,
@@ -135,13 +135,35 @@ const Urban = {
   },
   // o jogador pode mexer nesta construção?
   movable(s) {
+    if (s.type === 'castle') {
+      const a = this.authority(Math.floor(s.x + s.w / 2), Math.floor(s.y + s.h / 2));
+      return a && a.kind === 'king' && a.civ === s.owner ? null : 'Só o rei deste reino pode mudar o castelo de lugar.';
+    }
     if (FIXED_STRUCTS.includes(s.type)) return `${this.nameOf(s)} não pode ser mudado de lugar nem demolido.`;
     if (s.owner === 'player') return null;
     if (!this.authority(Math.floor(s.x + s.w / 2), Math.floor(s.y + s.h / 2))) return 'Só o chefe da vila (dentro dela) ou o rei (no reino) pode mexer nos imóveis daqui.';
     return null;
   },
   // a construção (def com w, h, blocks) cabe em (tx, ty)?  s = a que está sendo mudada; civic = imóvel de vila
+  // o castelo (7×7): árvores e pedras no lugar são retiradas; precisa de um portão livre e ficar dentro do reino
+  castleErr(s, tx, ty) {
+    for (let y = ty; y < ty + s.h; y++) for (let x = tx; x < tx + s.w; x++) {
+      if (!World.inb(x, y)) return 'Fora do mapa';
+      const i = World.idx(x, y), t = World.tiles[i];
+      if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido (água ou montanha)';
+      if (World.sgrid[i] >= 0 && World.sgrid[i] !== s.id) return 'Já há uma construção aqui';
+    }
+    const dx = tx + 3, dy = ty + 7;
+    if (!World.inb(dx, dy) || World.isWater(World.tile(dx, dy)) || !TINFO[World.tile(dx, dy)].walk || (World.sgrid[World.idx(dx, dy)] >= 0 && World.sgrid[World.idx(dx, dy)] !== s.id)) return 'A frente do portão precisa ficar livre';
+    if (P.x + P.r > tx * TILE && P.x - P.r < (tx + s.w) * TILE && P.y > ty * TILE && P.y - P.r < (ty + s.h) * TILE) return 'Você está no caminho';
+    for (const [x, y] of [[tx, ty], [tx + 6, ty], [tx, ty + 6], [tx + 6, ty + 6], [tx + 3, ty + 3]]) {
+      const a = this.authority(x, y);
+      if (!a || a.kind !== 'king' || a.civ !== s.owner) return 'O castelo precisa ficar dentro do seu reino';
+    }
+    return null;
+  },
   placeErr(def, tx, ty, s, civic) {
+    if (s && s.type === 'castle') return this.castleErr(s, tx, ty);
     for (let y = ty; y < ty + def.h; y++) for (let x = tx; x < tx + def.w; x++) {
       if (!World.inb(x, y)) return 'Fora do mapa';
       const i = World.idx(x, y), t = World.tiles[i];
@@ -179,6 +201,8 @@ const Urban = {
     if (G.storage && G.storage[ok]) { G.storage[nk] = G.storage[ok]; delete G.storage[ok]; }
     // empreendimento de família: a família guarda a posição
     if (s.fam !== undefined) { const f = Families.get(s.fam), b = f && f.biz.find(q => q.type === s.type && q.x === ox && q.y === oy); if (b) { b.x = nx; b.y = ny; } }
+    // castelo: a capital, o portão e tudo que depende deles vão junto
+    if (s.type === 'castle' && World.capitals[s.owner]) { const cp = World.capitals[s.owner]; cp.x = s.x + 3; cp.y = s.y + 3; cp.door = { x: cp.x, y: cp.y + 4 }; World.chunks.clear(); }
     if (!quiet) this.record('move', s, ox, oy);
   },
   // anota a mudança para o jogo salvo (construções do jogador e das famílias já são salvas pela posição)
@@ -196,6 +220,7 @@ const Urban = {
     else { delete E.moved[s.okey]; if (!E.removed.includes(s.okey)) E.removed.push(s.okey); }
   },
   demolish(s) {
+    if (s.type === 'castle') { UI.msg('O castelo não pode ser demolido, só mudado de lugar (pelo rei).', 'bad'); return false; }
     const err = this.movable(s);
     if (err) { UI.msg(err, 'bad'); return false; }
     Dialog.confirm({ icon: '💥', title: 'Demolir', text: `Demolir ${this.nameOf(s)}? Você recebe de volta metade do material.`, ok: 'Demolir', danger: true }, () => this.doDemolish(s));
@@ -375,7 +400,7 @@ const Urban = {
     if (k === 'u:unroad') return { name: 'Remover estrada', icon: '⛏️', sub: 'reforma', can: true, btn: '⛏️ Remover estradas',
       desc: 'Remove qualquer estrada ou ponte, inclusive as que já vêm no mapa (o terreno volta a ser campo, floresta ou rio). Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode remover.' };
     if (k === 'u:move') return { name: 'Mudar de lugar', icon: '🔀', sub: 'reforma', can: true, btn: '🔀 Escolher a construção',
-      desc: 'Clique numa construção e depois no novo lugar. As suas mudam em qualquer lugar; casas, lojas, muralhas e outros imóveis das vilas só como chefe (dentro da vila) ou rei (no reino todo). Castelos, cavernas, acampamentos e santuários não saem do lugar.' };
+      desc: 'Clique numa construção e depois no novo lugar. As suas mudam em qualquer lugar; casas, lojas, muralhas e outros imóveis das vilas só como chefe (dentro da vila) ou rei (no reino todo). O castelo só o rei muda de lugar, sempre dentro do reino. Cavernas, acampamentos e santuários não saem do lugar.' };
     if (k === 'u:demolish') return { name: 'Demolir', icon: '💥', sub: 'reforma', can: true, btn: '💥 Escolher a construção',
       desc: 'Derruba uma construção e devolve metade do material. As suas podem ser demolidas em qualquer lugar; imóveis das vilas só pelo chefe ou pelo rei.' };
     const d = CIVIC[k.slice(2)];
