@@ -849,9 +849,6 @@ body.small .inv3 { grid-template-columns: 1fr !important; }
 .menu-wrap.compact .mt-line { margin-top: 2px; }
 /* o "I" do título: haste reta e o ponto centralizado sobre ela */
 .mt-i { position: relative; display: inline-block; font-family: 'Cinzel', Georgia, serif; font-weight: 700; }
-.mt-i::before { content: ''; position: absolute; left: calc(50% - 3px); top: -0.05em; width: 0.15em; height: 0.15em; transform: translate(-50%, 0) rotate(45deg);
-  background: linear-gradient(135deg, #fff3c4, #f2c45a 55%, #b8741e); border-radius: 2px; box-shadow: 0 0 10px rgba(255, 170, 60, .7); }
-.menu-wrap.compact .mt-i::before { left: calc(50% - 2px); }
 
 .menu-card { position: relative; max-height: none; overflow: visible; padding: 26px 30px 22px; border: 1px solid rgba(214, 174, 96, 0.75);
   background: radial-gradient(ellipse at 50% 0%, rgba(90, 60, 25, .55), transparent 60%), linear-gradient(180deg, rgba(36, 24, 14, 0.94), rgba(16, 10, 6, 0.95)); }
@@ -937,7 +934,9 @@ body.small .inv3 { grid-template-columns: 1fr !important; }
   .hk-grid { grid-template-columns: 1fr; } .hs-list { columns: 1; }
 }
 .mt-i { line-height: 1; vertical-align: baseline; }
-.mt-i::before { top: -0.12em; }
+/* a flor de lis é o pingo do "I", centrada na haste */
+.mt-fl { position: absolute; left: 50%; top: -0.78em; transform: translateX(-50%); font-family: "Segoe UI Symbol", "Noto Sans Symbols", Georgia, serif; font-size: 0.46em; font-weight: 400; line-height: 1;
+  color: #f2c45a; -webkit-text-fill-color: #f2c45a; text-shadow: 0 0 14px rgba(255, 150, 60, 0.75); pointer-events: none; }
 @media (max-height: 520px) { .menu-wrap { gap: 8px; padding: 10px 16px; } .menu-wrap .mt-line { display: none; } }
 /* mapa aberto ocupa a tela inteira */
 #mapView { inset: 0 !important; border-radius: 0 !important; border: none !important; }

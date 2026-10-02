@@ -32,7 +32,7 @@ const Menu = {
     const m = document.getElementById('menu');
     m.innerHTML = `<canvas id="menuBg"></canvas>
       <div class="menu-wrap" id="menuWrap">
-        <div class="menu-title"><div class="mt-orn">⚜</div><h1>MED<span class="mt-i">I</span>EVAL</h1><div class="mt-line"></div><h4>Os Sete Reinos</h4></div>
+        <div class="menu-title"><h1>MED<span class="mt-i">I<span class="mt-fl">⚜</span></span>EVAL</h1><div class="mt-line"></div><h4>Os Sete Reinos</h4></div>
         <div class="menu-card" id="menuCard"></div>
       </div>
       <div class="upd-modal hidden" id="updModal"></div>`;
