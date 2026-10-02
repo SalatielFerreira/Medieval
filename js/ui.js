@@ -87,16 +87,17 @@ const UI = {
     const clock = document.getElementById('clock');
     clock.classList.add('glass');
     clock.innerHTML = `
-      <div class="clk-top"><span id="clkIcon"></span><div><b id="clkDay">Dia 1</b><small id="clkPhase">Manhã</small></div><span class="clk-time" id="clkTime">06:00</span></div>
+      <div class="clk-top"><span id="clkIcon"></span><b id="clkDay">1 Mar</b><small id="clkPhase"></small><span class="clk-time" id="clkTime">06:00</span></div>
       <div class="clk-bar"><i id="clkProg"></i></div>
       <div class="clk-zone" id="clkZone"></div>`;
     const quick = document.getElementById('quick');
     quick.classList.add('glass');
-    quick.innerHTML = `<div class="q-tool" data-qt="1" title="Trocar ferramenta (Q)">
-        <span class="q-ic" id="qToolIc"></span><div><small>FERRAMENTA</small><b id="qToolName"></b><em id="qToolSub"></em></div></div>
-      <div class="q-ord" data-qo="1" title="Ordem aos capangas (T)"><small>ORDEM</small><b id="qOrder"></b></div>
-      <div class="q-load"><small>CARGA</small><span id="qLoadT"></span><div class="q-lbar"><i id="qLoad"></i></div></div>
-      <div class="q-bag"><small>ALGIBEIRA</small><div class="q-slots">${[0, 1, 2, 3].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span></div>`).join('')}</div></div>`;
+    quick.innerHTML = `<div class="q-row">
+        <div class="q-tool" data-qt="1" id="qToolBox" title="Ferramenta em mãos — clique ou Q para trocar"><span class="q-ic" id="qToolIc"></span><b id="qToolName"></b><em id="qToolSub"></em></div>
+        <div class="q-load" id="qLoadBox" title="Carga da mochila"><span id="qLoadT"></span><div class="q-lbar"><i id="qLoad"></i></div></div></div>
+      <div class="q-row">
+        <div class="q-slots" title="Algibeira: teclas 1 a 4 (arraste comidas para cá na Mochila)">${[0, 1, 2, 3].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span></div>`).join('')}</div>
+        <div class="q-ord" data-qo="1" id="qOrdBox" title="Ordem aos capangas — clique ou T para trocar"><b id="qOrder"></b></div></div>`;
     quick.addEventListener('click', e => {
       if (G.state !== 'play' || G.paused) return;
       if (e.target.closest('[data-qt]')) Game.cycleTool();
@@ -221,9 +222,12 @@ const UI = {
     const hh = String(Math.floor(h)).padStart(2, '0'), mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
     const night = G.darkness > 0.3;
     html('clkIcon', night ? icon('moon', 'moon') : icon('sun', 'sun'));
-    txt('clkDay', Calendar.text(G.day));
+    const cdt = Calendar.of(G.day);
+    txt('clkDay', `${cdt.day} ${MONTHS[cdt.month][0].slice(0, 3)}`);
+    const ck = document.getElementById('clock'), ct = `${Calendar.full(G.day)} · ${Season.cur().name}`;
+    if (ck.title !== ct) ck.title = ct;
     const se = Season.cur();
-    txt('clkPhase', `${se.icon} ${se.name} · Ano ${Calendar.of(G.day).year}`);
+    txt('clkPhase', `${se.icon} Ano ${cdt.year}`);
     txt('clkTime', hh + ':' + mm);
     $('clkProg').style.width = (G.time / DAY_LEN * 100) + '%';
     const zc = G.zone >= 0 ? Game.civColor(G.zone) : '#9ad65a';
@@ -237,15 +241,18 @@ const UI = {
     html('hudBuffs', Farm.active().map(k => { const b = BUFFS[k], left = Math.ceil((P.buffs[k] - now) / 60 * 10) / 10;
       return `<span class="buff" title="${b.name}: ${b.desc}">${b.icon}<small>${Math.max(1, Math.ceil(P.buffs[k] - now))}s</small></span>`; }).join(''));
     const al = Game.allies().length;
-    txt('qOrder', al ? `${ORDERS[G.order || 'follow'].icon} ${ORDERS[G.order || 'follow'].name}` : '— sem capangas');
+    txt('qOrder', al ? `${ORDERS[G.order || 'follow'].icon} ${ORDERS[G.order || 'follow'].name}` : '');
+    $('qOrdBox').classList.toggle('hidden', !al);
     for (const b of document.querySelectorAll('#toolbar [data-tb]')) b.classList.toggle('on', !!(this.cur && this.cur.fn === b.dataset.tb));
     const tk = P.equip.tool, tit = tk && ITEMS[tk];
     const wt = Store.weight(), cap = Store.capacity();
     $('qLoad').style.width = U.clamp(wt / cap * 100, 0, 100) + '%';
     $('qLoad').classList.toggle('over', wt > cap);
-    txt('qLoadT', `${wt} / ${cap}${P.horse ? (P.mounted ? ' · 🐴 montado' : ' · 🐴 R monta') : ''}`);
+    txt('qLoadT', `${P.horse ? (P.mounted ? '🐎 ' : '🐴 ') : '🎒 '}${wt}/${cap}`);
+    $('qLoadBox').classList.toggle('over', wt > cap);
     html('qToolIc', tit ? tit.icon : '✋');
     txt('qToolName', tit ? tit.name : 'Mãos livres');
+    { const tb = $('qToolBox'), tt = `${tit ? tit.name + ' (' + TOOL_NAMES[tit.tool] + ' · ' + TIER_NAMES[tit.tier] + ')' : 'Mãos livres'} — clique ou Q para trocar`; if (tb.title !== tt) tb.title = tt; }
     txt('qToolSub', tit ? `${TOOL_NAMES[tit.tool]} · ${TIER_NAMES[tit.tier]}` : 'Sem ferramenta');
     for (let q = 0; q < 4; q++) {
       const k = P.quick[q];

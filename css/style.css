@@ -992,3 +992,32 @@ button.stile.link:hover { border-color: rgba(255, 213, 74, 0.6); background: rgb
 body.small .navlay { grid-template-columns: 1fr !important; }
 body.small .snav-body { overflow-y: visible; }
 .ledger { display: flex; flex-direction: column; gap: 8px; }
+
+/* ================================================================ relógio e quadro rápido compactos (coluna da direita) */
+#rightcol { gap: 6px; }
+#clock { padding: 6px 10px 5px; border-radius: 9px; }
+#clock .clk-top { gap: 6px; }
+#clock .clk-top .ico { width: 16px; height: 16px; }
+#clock .clk-top b { display: inline; font-size: 13.5px; white-space: nowrap; }
+#clock .clk-top small { font-size: 11px; color: #c9b48a; white-space: nowrap; }
+#clock .clk-time { font-size: 14px; }
+#clock .clk-bar { height: 2px; margin: 5px 0 4px; }
+#clock .clk-zone { font-size: 11px; gap: 4px; }
+#clock .clk-zone .ico { width: 11px; height: 11px; }
+#clock .badge { font-size: 9px; padding: 0 5px; }
+#quick { padding: 6px 8px; border-radius: 9px; display: flex; flex-direction: column; gap: 6px; }
+.q-row { display: flex; align-items: center; gap: 8px; }
+#quick .q-tool { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; padding: 2px 2px; margin: 0; border: 0; border-radius: 6px; }
+#quick .q-tool .q-ic { width: 24px; height: 24px; font-size: 14px; border-radius: 6px; }
+#quick .q-tool b { margin: 0; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#quick .q-tool em { display: none; }
+#quick .q-load { flex: none; width: 50px; margin: 0; padding: 0; border: 0; }
+#quick .q-load span { float: none; display: block; font-size: 10px; text-align: right; color: #d8c49a; white-space: nowrap; }
+#quick .q-load .q-lbar { height: 3px; margin-top: 2px; }
+#quick .q-load.over span { color: #ff7b6b; }
+#quick .q-slots { flex: 1; grid-template-columns: repeat(4, 26px); gap: 4px; margin: 0; }
+#quick .q-slot .q-ic { width: 26px; height: 26px; aspect-ratio: auto; font-size: 14px; border-radius: 6px; }
+#quick .q-slot .q-n { font-size: 9px; right: 2px; bottom: 0; }
+#quick .q-ord { flex: none; padding: 2px 6px; border: 1px solid rgba(214, 174, 96, 0.3); border-radius: 6px; background: rgba(0, 0, 0, 0.3); }
+#quick .q-ord b { font-size: 11px; white-space: nowrap; }
+body.small #quick .q-load, body.small #quick .q-slots { display: revert; }
