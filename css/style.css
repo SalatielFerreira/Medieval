@@ -1021,3 +1021,15 @@ body.small .snav-body { overflow-y: visible; }
 #quick .q-ord { flex: none; padding: 2px 6px; border: 1px solid rgba(214, 174, 96, 0.3); border-radius: 6px; background: rgba(0, 0, 0, 0.3); }
 #quick .q-ord b { font-size: 11px; white-space: nowrap; }
 body.small #quick .q-load, body.small #quick .q-slots { display: revert; }
+
+/* ================================================================ barras de rolagem no tema do jogo (finas, dourado envelhecido) */
+/* Firefox usa o padrão simples; Chrome e Edge usam o estilo completo abaixo (o padrão simples desligaria ele) */
+@supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: rgba(214, 174, 96, 0.5) transparent; } }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(214, 174, 96, 0.55), rgba(140, 104, 46, 0.55)); border-radius: 8px;
+  border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(255, 213, 74, 0.8), rgba(184, 134, 42, 0.8)); background-clip: padding-box; }
+::-webkit-scrollbar-thumb:active { background: #ffd54a; background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
