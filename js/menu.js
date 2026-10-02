@@ -90,7 +90,7 @@ const Menu = {
     const opt = (m, ic, title, sub, cls, extra) => `<button class="mc-opt ${cls || ''}" data-m="${m}" ${extra || ''}><span class="mo-ic">${ic}</span><span class="mo-tx"><b>${title}</b><small>${sub}</small></span><span class="mo-go">›</span></button>`;
     this.setCard(`
       <div class="mc-orn"><span></span>⚜<span></span></div>
-      <p class="mc-intro"><strong class="mi-lead">Sua história começa agora.</strong><span>Escolha seu reino.</span><strong>Conquiste seu destino.</strong></p>
+      <p class="mc-intro"><strong class="mi-lead">Sua história começa agora</strong><span>Conquiste seu destino</span></p>
       <div class="mc-opts">
         ${info ? opt('load', '▶', 'Continuar a jornada', `${UI.esc(info.name)}${info.age ? ` · ${info.age} anos` : ''} · ${Calendar.short(info.day)} · nível ${info.level || 1}`, 'main', `data-n="${info.slot}"`) : ''}
         ${opt('create', '⚔️', 'Novo jogo', 'Crie seu herói e comece do zero', info ? '' : 'main')}
