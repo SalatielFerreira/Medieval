@@ -29,7 +29,7 @@ const Pad = {
     if (hit(4)) Game.cycleTool();
     this.block = !!b[5];
     if (hit(6)) Ride.toggle();
-    if (hit(7)) Moves.startCharge();
+    if (hit(7)) Moves.startHeavy();
     if (!b[7] && was(7)) Moves.release();
     if (hit(8)) UI.toggle('showMap');
     if (hit(9)) UI.showSettings();
@@ -53,6 +53,7 @@ const Touch = {
         <button class="tc-b sm" data-tc="tool">⛏️</button>
         <button class="tc-b sm" data-tc="order">👣</button>
         <button class="tc-b sm" data-tc="eat">🍎</button>
+        <button class="tc-b sm" data-tc="heavy" title="Golpe forte: segure e solte">💥</button>
       </div>`;
     const stick = document.getElementById('tcStick'), knob = document.getElementById('tcKnob');
     const moveStick = (cx, cy) => {
@@ -73,7 +74,8 @@ const Touch = {
       b.addEventListener('pointerdown', e => {
         e.preventDefault(); Sound.init();
         if (G.state !== 'play' || G.paused) return;
-        if (k === 'atk') { if (this.meleeWeapon()) Moves.startCharge(); else { G.keys.Space = true; Game.playerAction(false, true); } }
+        if (k === 'atk') { G.keys.Space = true; Game.playerAction(false, true); } // segurar repete o golpe
+        if (k === 'heavy') Moves.startHeavy();
         if (k === 'use') Game.interact();
         if (k === 'block') this.block = true;
         if (k === 'dodge') Moves.dodge();
@@ -83,13 +85,13 @@ const Touch = {
         if (k === 'eat') Game.eatBest();
       });
       const up = () => {
-        if (k === 'atk') { G.keys.Space = false; if (P.charging) Moves.release(); P.gatherHold = false; }
+        if (k === 'atk') G.keys.Space = false;
+        if (k === 'heavy' && P.charging) Moves.release();
         if (k === 'block') this.block = false;
       };
       b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
     });
   },
-  meleeWeapon() { const w = P.equip.weapon && ITEMS[P.equip.weapon]; return !w || !w.ranged; },
   show(on) {
     this.on = on;
     document.getElementById('touch').classList.toggle('hidden', !on);

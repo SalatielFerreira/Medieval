@@ -64,7 +64,10 @@ const Game = {
       if (!e.repeat) this.onKey(e.code);
       G.keys[e.code] = true;
     });
-    window.addEventListener('keyup', e => { G.keys[e.code] = false; });
+    window.addEventListener('keyup', e => {
+      G.keys[e.code] = false;
+      if (e.code === 'KeyV' && P.charging && G.state === 'play' && !G.paused) Moves.release();
+    });
     window.addEventListener('blur', () => { G.keys = {}; G.mouse.down = false; });
     this.canvas.addEventListener('mousemove', e => { G.mouse.x = e.clientX; G.mouse.y = e.clientY; });
     // roda do mouse: aproxima ou afasta a câmera do personagem
@@ -89,18 +92,13 @@ const Game = {
       const car = G.ents.find(c => c.kind === 'caravan' && !c.dead && U.dist(c.x, c.y - 14, G.mouse.wx, G.mouse.wy) < 30 && U.dist(c.x, c.y, P.x, P.y) < 4 * TILE);
       if (car && !car.hostileToPlayer) { UI.showCaravan(car); return; }
       G.mouse.down = true;
-      // com arma corpo a corpo, segurar o clique carrega um golpe forte
-      const w = P.equip.weapon && ITEMS[P.equip.weapon];
-      const mx = Math.floor(G.mouse.wx / TILE), my = Math.floor(G.mouse.wy / TILE);
-      const overRes = World.inb(mx, my) && (World.obj[World.idx(mx, my)] || G.plots[World.idx(mx, my)]) && U.dist(P.x, P.y, G.mouse.wx, G.mouse.wy) < 2.4 * TILE;
-      const tool = P.equip.tool && ITEMS[P.equip.tool].tool;
-      if ((!w || !w.ranged) && !overRes && !P.mounted && tool !== 'rod' && !P.fishing) { Moves.startCharge(); return; }
+      // segurar o clique repete o golpe: ataca e coleta sem precisar clicar de novo (golpe forte: tecla V)
       this.playerAction(true, true);
     });
     window.addEventListener('mouseup', e => {
       if (e.button === 2) { G.mouse.right = false; return; }
       Urban.drag = false;
-      G.mouse.down = false; P.gatherHold = false;
+      G.mouse.down = false;
       if (P.charging && G.state === 'play' && !G.paused) Moves.release();
       P.charging = false;
     });
@@ -383,6 +381,7 @@ const Game = {
     else if (code === 'KeyQ') this.cycleTool();
     else if (code === 'KeyR') Ride.toggle();
     else if (code === 'KeyZ') Moves.dodge();
+    else if (code === 'KeyV') Moves.startHeavy();
     else if (code === 'KeyG') Sieges.deploy(Inv.count('ram') > 0 ? 'ram' : 'catapult');
     else if (code === 'KeyT') Orders.cycle();
     else if (code === 'KeyJ') UI.toggle('showDiary');
@@ -515,7 +514,7 @@ const Game = {
     } else if (P.hunger > 30 && P.hp < P.maxHp) P.hp = Math.min(P.maxHp, P.hp + dt * 0.6 * (Farm.has('regen') ? 3 : Farm.has('mead') || Farm.has('blessed') ? 2 : 1));
 
     this.updateFishing(dt);
-    if ((G.keys.Space || (G.mouse.down && !P.charging) || P.gatherHold) && P.atkCd <= 0 && !G.placing && !Urban.mode && !P.blocking) this.playerAction(G.mouse.down, false);
+    if ((G.keys.Space || G.mouse.down) && !P.charging && P.atkCd <= 0 && !G.placing && !Urban.mode && !P.blocking) this.playerAction(G.mouse.down, false);
   },
 
   // ================================================================ ações do jogador

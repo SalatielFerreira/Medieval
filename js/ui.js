@@ -1446,7 +1446,7 @@ const UI = {
       <small class="muted">Se vencer: ouro, experiência e +15 de relação. ${Diplo.name(opp)} perde 20 de relação com você.</small></div>`;
     this.open('⚔️ Batalha em campo aberto', `<p>Os exércitos de <b>${Diplo.name(b.a)}</b> e <b>${Diplo.name(b.b)}</b> estão prestes a se enfrentar aqui perto!</p>
       <div class="kgrid two">${side(b.a, b.b)}${side(b.b, b.a)}</div>
-      <p class="muted">Seus capangas lutam com você. Use <b>T</b> para mudar a ordem (seguir, atacar, aguardar), clique com o botão direito para <b>bloquear</b>, <b>Z</b> para esquivar e segure o clique para um <b>golpe forte</b>.</p>
+      <p class="muted">Seus capangas lutam com você. Use <b>T</b> para mudar a ordem (seguir, atacar, aguardar), clique com o botão direito para <b>bloquear</b>, <b>Z</b> para esquivar, segure o clique para bater sem parar e segure <b>V</b> para um <b>golpe forte</b>.</p>
       <div class="act-row"><button data-act="batjoin" data-b="${b.id}" data-side="none">Ficar de fora</button></div>`, 'showBattle', [b], 'Escolha um lado ou fique neutro');
   },
 
@@ -1844,7 +1844,8 @@ const HELP_HTML = `
 <table class="keys">
 <tr><td>W A S D / Setas</td><td>Andar</td></tr>
 <tr><td>Shift</td><td>Correr (gasta vigor)</td></tr>
-<tr><td>Clique esquerdo / Espaço</td><td>Atacar e coletar recursos (segure o clique para um <b>golpe forte</b>)</td></tr>
+<tr><td>Clique esquerdo / Espaço</td><td>Atacar e coletar recursos (segure para repetir o golpe)</td></tr>
+<tr><td>V (segure e solte)</td><td><b>Golpe forte</b> com arma corpo a corpo</td></tr>
 <tr><td>Botão direito / X (segure)</td><td>Bloquear com o escudo</td></tr>
 <tr><td>Z</td><td>Esquivar (rolamento rápido)</td></tr>
 <tr><td>T</td><td>Ordem aos capangas: seguir, atacar, aguardar</td></tr>
@@ -1888,7 +1889,7 @@ const HELP_HTML = `
 <li>A economia (impostos, soldos, salários, colheitas) anda a cada 5 dias; veja o resumo em Diário → Contas. As pessoas envelhecem um ano a cada mês do calendário.</li>
 <li>Fique atento aos <b>eventos</b>: mercadores perdidos, tesouros enterrados, lobos atacando vilas e até dragões. Eles aparecem marcados no mapa.</li>
 <li>Capangas sobem de nível lutando. Escolha a <b>postura</b> de cada um (agressivo, equilibrado ou defensivo) conversando com eles.</li>
-<li>Segure o clique perto de árvores e rochas para coletar sem parar.</li>
+<li>Segure o clique (ou o Espaço) para atacar e coletar sem parar. Para o <b>golpe forte</b>, segure V e solte.</li>
 <li><b>Caravanas</b> viajam entre os reinos: escolte-as contra bandidos ou assalte-as.</li>
 <li>Reinos em guerra travam <b>batalhas em campo aberto</b>: escolha um lado e lute com seus capangas.</li>
 <li>Escolha a <b>profissão dos filhos</b> conversando com eles (a partir dos 12 anos).</li>

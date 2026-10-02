@@ -698,6 +698,7 @@ table.keys td { padding: 4px 12px 4px 0; border-bottom: 1px solid rgba(214, 174,
 .tc-b[data-tc="tool"] { right: 160px; bottom: 58px; }
 .tc-b[data-tc="order"] { right: 150px; bottom: 112px; }
 .tc-b[data-tc="eat"] { right: 98px; bottom: 148px; }
+.tc-b[data-tc="heavy"] { right: 40px; bottom: 170px; }
 /* com toque: barra de botões vai para o topo, mensagens sobem */
 body.touchui #toolbar { top: 10px; bottom: auto; right: 50%; transform: translateX(50%); }
 body.touchui #log { bottom: 170px; }

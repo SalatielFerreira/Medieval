@@ -12,7 +12,8 @@ Dê dois cliques em `index.html`. O jogo abre no Chrome ou no Edge e funciona of
 |---|---|
 | W A S D / Setas | Andar |
 | Shift | Correr (gasta vigor) |
-| Clique esquerdo / Espaço | Atacar e coletar recursos (segure o clique para um **golpe forte**) |
+| Clique esquerdo / Espaço | Atacar e coletar recursos (segure para repetir o golpe) |
+| V (segure e solte) | **Golpe forte** com arma corpo a corpo |
 | Botão direito / X (segure) | Bloquear com o escudo |
 | Z | Esquivar |
 | T | Ordem aos capangas: seguir, atacar, aguardar aqui |
@@ -92,7 +93,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Eventos no mundo:** mercador perdido para escoltar até uma vila, tesouro enterrado para cavar (picareta ou enxada), alcateia com Lobo Alfa atacando uma vila e, raramente, um Dragão Ancestral fora das cavernas. Cada evento aparece marcado no mapa.
 - **Capangas mais fortes:** sobem de nível com a experiência (mais dano, defesa e vida) e têm postura: Agressivo, Equilibrado ou Defensivo (converse com eles ou use Equipar e treinar).
 - **Rotina dos moradores:** trabalham de dia, ao entardecer muitos vão à taverna (o padre vai à capela) e à noite entram em casa para dormir. As janelas acendem quando há gente em casa.
-- **Coletar segurando o botão:** segure o clique (ou o botão de ataque) perto de árvores, rochas e plantações para coletar sem parar. Com inimigo por perto, segurar continua sendo golpe forte.
+- **Segurar para repetir:** segure o clique, o Espaço ou o botão Atacar para bater e coletar sem parar. O golpe forte agora é segurando V (no controle, RT; no celular, o botão 💥).
 - **Ícone do jogo** na aba do navegador.
 
 - **Calendário de verdade:** os 12 meses do ano (janeiro a dezembro, 365 dias) e cada dia dura 1 minuto real. O jogo começa em 1º de março. As estações seguem os meses: primavera (março a maio), verão (junho a agosto), outono (setembro a novembro) e inverno (dezembro a fevereiro). O aniversário de todos é no 1º de janeiro, e o Grande Torneio começa em 24 de junho.
@@ -143,7 +144,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **NPCs espalhados:** cada morador fica perto da própria casa e eles se afastam uns dos outros. Clique direto numa pessoa para conversar (um anel dourado mostra quem está sob o cursor).
 - **Cidades vivas:** vilas prósperas ganham casas novas e um poço (nível 2) e depois muralhas (nível 3). Vilas atacadas na guerra ficam com casas em ruínas, que se reconstroem com o tempo.
 - **Batalhas em campo aberto:** reinos em guerra mandam exércitos se enfrentarem. Ao chegar perto, escolha um lado ou fique de fora; vencendo, você ganha ouro, experiência e relação.
-- **Combate novo:** escudos (Madeira, Ferro e Aço) com bloqueio pelo botão direito, golpe forte carregado (segure o clique) e esquiva (Z). Ordens aos capangas com T.
+- **Combate novo:** escudos (Madeira, Ferro e Aço) com bloqueio pelo botão direito, golpe forte carregado (segure V) e esquiva (Z). Ordens aos capangas com T.
 - **Lavoura:** Enxada para arar, plantar (trigo, cenoura, repolho e cevada) e colher; Regador (encha na água). A chuva também rega e no inverno a terra congela. **Criação:** Galinheiro (ovos), Curral (leite de vaca e lã de ovelha) e Colmeia (mel). Os animais passeiam perto das construções.
 - **Culinária e bebidas:** Forno a Lenha (sopa, omelete, ensopado, torta de carne, bolo de mel) e Cervejaria (cerveja, hidromel, vinho). Cada prato dá um efeito temporário (força, defesa, vigor, cura, sabedoria, coragem, charme), mostrado embaixo do painel do herói. **Sua Taverna** vende os pratos e bebidas do balcão todo amanhecer.
 - **Caravanas:** viajam entre as capitais. Escolte-as contra bandidos para ganhar recompensa, ou assalte-as (o reino fica furioso).

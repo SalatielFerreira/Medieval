@@ -10,23 +10,16 @@ const Moves = {
     const wantBlock = G.mouse.right || G.keys.KeyX || Touch.block || Pad.block;
     P.blocking = !!wantBlock && !P.mounted && !P.sailing && P.stamina > 2 && !P.fishing;
     if (P.blocking) P.aim = Math.atan2(G.mouse.wy - (P.y - 14), G.mouse.wx - P.x);
-    if (P.charging && !P.gatherHold && (P.charge || 0) > 0.12 && this.gatherInstead()) { P.charging = false; P.charge = 0; P.gatherHold = true; }
     if (P.charging) {
       P.charge = Math.min(1.2, (P.charge || 0) + dt);
       if (P.charge > 0.45 && !P.chargeSnd) { P.chargeSnd = true; Sound.play('ui'); }
     }
   },
-  // segurar o botão perto de recursos coleta sem parar (se não houver inimigo por perto)
-  gatherInstead() {
-    if (P.mounted || P.sailing || P.fishing) return false;
-    if (G.ents.some(e => !e.dead && canHit(e) && U.dist(e.x, e.y, P.x, P.y) < 4 * TILE)) return false;
-    const px = P.x / TILE, py = (P.y - 8) / TILE, tool = P.equip.tool && ITEMS[P.equip.tool].tool;
-    for (let y = Math.floor(py) - 2; y <= Math.floor(py) + 2; y++) for (let x = Math.floor(px) - 2; x <= Math.floor(px) + 2; x++) {
-      if (!World.inb(x, y) || U.dist(x + 0.5, y + 0.5, px, py) > 1.9) continue;
-      const i = World.idx(x, y);
-      if (World.obj[i] || ((tool === 'hoe' || tool === 'water') && G.plots[i])) return true;
-    }
-    return false;
+  // golpe forte: segure V (ou RT no controle, ou o botão 💥 no celular) e solte; só com arma corpo a corpo
+  startHeavy() {
+    const w = P.equip.weapon && ITEMS[P.equip.weapon];
+    if (P.charging || P.mounted || P.sailing || P.fishing || (w && w.ranged)) return;
+    this.startCharge();
   },
   dodge() {
     if ((P.dodgeCd || 0) > 0 || P.stamina < 18 || P.mounted || P.sailing || P.dead) return;
