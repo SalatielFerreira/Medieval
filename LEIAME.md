@@ -87,6 +87,9 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Corte do rei:** cada reino mede o seu reconhecimento (serviços prestados, fama e relação). Com reconhecimento 40+ e relação 40+, o rei convida você para a corte. Na corte você recebe salário a cada 5 dias, escolhe um cargo conforme o reconhecimento (Conselheiro, Tesoureiro Real, General do Rei ou Embaixador), pede audiências ao rei, pede escolta (General) e propõe alianças, paz ou guerra (Embaixador). É preciso aparecer no castelo pelo menos a cada 30 dias; guerra com o reino ou relação muito baixa tiram você da corte.
+- **Tudo renasce em 1 ano:** arbustos de frutas, linho, ervas e argila agora também levam 1 ano do jogo para voltar, como árvores, pedras e minérios.
+
 - **Cada família tem sua casa:** o casal e os filhos (ou o adulto solteiro) dormem na própria casa. Quem não tem ocupa uma livre ou constrói uma nova perto da vila: a obra leva 3 dias, aparece com andaime e barra de progresso, e os moradores trabalham nela de dia. As casas novas ficam no jogo salvo.
 - **Avisos em janelinhas:** as mensagens aparecem em janelinhas flutuantes no tema do jogo, com ícone, botão de fechar e uma barrinha do tempo; avisos repetidos mostram ×2, ×3...
 - **Relógio alinhado:** data, estação, ano e hora numa linha só.
@@ -187,6 +190,7 @@ js/combat2.js     bloqueio, esquiva, golpe forte, ordens e batalhas em campo abe
 js/life.js        crescimento e ruína das cidades, caravanas
 js/progress.js    conquistas, estatísticas, diário, dinastia e profissões
 js/families.js    famílias, sobrenomes, chefes de vila, revoltas, vilas fundadas e empreendimentos com funcionários
+js/royalcourt.js  convite e vida na corte dos reis (cargos, salário, audiências)
 js/court.js       títulos de nobreza, conselho real, conspirações, casamentos arranjados e rivalidades
 js/market.js      preços dinâmicos e caravanas do jogador
 js/events.js      eventos no mundo e rotina dos moradores

@@ -46,8 +46,8 @@ const OBJ = [null,
   /* 18 */{ name: 'Linho',                         blocks: false, tool: null,   min: 0, hp: 1,  drops: { fiber: [2, 3] },                    regrow: 150,  pc: '#6a8fd0' },
   /* 19 */{ name: 'Erva Medicinal',                blocks: false, tool: null,   min: 0, hp: 1,  drops: { herb: [1, 2] },                     regrow: 200,  pc: '#7ac070' },
 ];
-// árvores, rochas e minérios só voltam a crescer 1 ano (do calendário do jogo) depois de coletados
-for (const o of OBJ) if (o && (o.tree || o.tool === 'pick')) o.regrow = YEAR_DAYS * DAY_LEN;
+// tudo que se coleta no mapa (árvores, arbustos, linho, ervas, argila, rochas e minérios) só volta 1 ano (do calendário) depois
+for (const o of OBJ) if (o) o.regrow = YEAR_DAYS * DAY_LEN;
 
 const CH = 16; // tiles por chunk
 const HALF = TILE / 2; // resolução interna (pixel art 2x)

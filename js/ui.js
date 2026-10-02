@@ -634,6 +634,8 @@ const UI = {
       for (const r of (G.revolts || []).filter(r => !r.done && r.civ === c.id)) out.push([`🔥 ${s}: a ${Families.name(Families.get(r.fam) || { surname: '?' })} se revoltou.`, 'k:' + c.id]);
     }
     for (const a of (G.assaults || []).filter(a => a.state !== 'done')) out.push([`🚩 ${Diplo.name(a.att)} ${a.state === 'march' ? 'marcha contra' : 'ataca'} ${Sieges.targetName(a)}.`, 'villages']);
+    if (G.courtInvite) out.push([`👑 ${G.civs[G.courtInvite.civ].rulerName} convidou você para a corte de ${CIV_DEFS[G.courtInvite.civ].short} (responda no castelo).`, 'crown']);
+    { const cc = RoyalCourt.C(); if (cc && G.day - cc.lastVisit > COURT_ABSENCE.warn) out.push([`👑 A corte de ${CIV_DEFS[cc.civ].short} sente a sua falta: apareça no castelo.`, 'crown']); }
     if (G.vwar && World.villages[G.vwar.vi]) out.push([`⚔️ Ataque a ${World.villages[G.vwar.vi].name}: faltam ${G.vwar.left} milicianos.`, 'villages']);
     for (const c of G.civs) if (c.ruler !== 'player' && c.atWar) out.push([`⚔️ ${CIV_DEFS[c.id].short} está em guerra com você.`, 'crown']);
     return out;
@@ -685,6 +687,11 @@ const UI = {
         <div class="kgrid two">
           <div class="card"><div class="sec">⚔️ Coroa pela força</div><ol class="steps"><li>Reúna capangas e equipe-os bem.</li><li>No castelo, declare guerra.</li><li>Derrube o portão (aríete, catapulta) e vença a guarnição.</li><li>Derrote o soberano diante dos portões.</li></ol></div>
           <div class="card"><div class="sec">📜 Coroa pela diplomacia</div><ol class="steps"><li>Venda nas lojas, pague tributos e cace bandidos.</li><li>Alcance relação 75 (Duque: 60).</li><li>Junte 1500 moedas (Duque: 800).</li><li>Reivindique o trono no castelo.</li></ol></div></div>
+        <div class="card"><div class="sec">👑 Cortes dos reis <span>reconhecimento ${COURT_INVITE.renown}+ e relação ${COURT_INVITE.rel}+ trazem o convite</span></div>
+          ${G.civs.filter(c => c.ruler !== 'player').map(c => { const rn = RoyalCourt.renown(c.id), mem = RoyalCourt.isMember(c.id), inv = G.courtInvite && G.courtInvite.civ === c.id;
+            return `<div class="crow2"><span class="cdot" style="background:${Game.civColor(c.id)}"></span> <b>${CIV_DEFS[c.id].short}</b> <small class="muted">reconhecimento ${rn} · relação ${Math.round(c.relation)}</small>
+              ${mem ? `<span class="tag gold">${RoyalCourt.officeName(RoyalCourt.C().office)}</span>` : inv ? '<span class="tag">CONVITE!</span>' : ''}</div>`; }).join('')}
+          <small class="muted">Na corte você recebe salário, ganha um cargo e pede audiências ao rei (no castelo).</small></div>
         <div class="card"><div class="sec">Relações com os ${G.civs.length} reinos <span>📍 marca o castelo no mapa</span></div><div class="rels">${G.civs.map(relRow).join('')}</div></div>`;
     }
     if (nav === 'family') {
@@ -1364,6 +1371,7 @@ const UI = {
   showCastle(ci) {
     const c = G.civs[ci], d = CIV_DEFS[ci];
     if (c.ruler === 'player') { this.showKingdom(ci); return; }
+    RoyalCourt.visit(ci);
     const need = Game.claimNeeds(ci), canClaim = c.relation >= need.rel && P.gold >= need.gold && !c.atWar;
     let h = `<p><i>${d.desc}</i></p>
       <div class="stats">
@@ -1382,14 +1390,41 @@ const UI = {
         <button data-act="deploy" data-k="catapult" ${Inv.count('catapult') ? '' : 'disabled'}>🏹 Montar catapulta (${Inv.count('catapult')})</button>
         <small class="muted">Derrube o portão (${Math.ceil(G.siege.gate || 0)} de resistência) com aríetes, catapultas ou golpes. Enquanto ele estiver de pé, arqueiros atiram das muralhas e o soberano não sai.</small>`;
     }
-    h += this.titleCard(ci) + this.chiefCard(ci);
+    h += this.courtCard(ci) + this.titleCard(ci) + this.chiefCard(ci);
     const court = G.people.filter(q => q.alive && q.home.type === 'castle' && q.home.civ === ci).sort((a, b) => RANKS[a.rank].order - RANKS[b.rank].order);
-    h += '</div><h3>Corte real</h3><div class="list">' + court.map(q => { const rl = People.relation(q); return `<div class="item"><canvas class="mini-portrait" data-pid="${q.id}" width="44" height="44"></canvas>
+    h += '</div><h3>Corte real</h3><div class="list">' + (RoyalCourt.isMember(ci) ? `<div class="item"><span class="ic">${COURT_OFFICES[RoyalCourt.C().office].icon}</span><div class="info"><b>${UI.esc(G.name + ' ' + G.surname)}</b><small>${RoyalCourt.officeName(RoyalCourt.C().office)} · você</small></div></div>` : '') + court.map(q => { const rl = People.relation(q); return `<div class="item"><canvas class="mini-portrait" data-pid="${q.id}" width="44" height="44"></canvas>
       <div class="info"><b>${UI.esc(People.full(q))}</b><small>${People.title(q)} · ${q.age} anos · <span style="color:${rl.col}">${rl.text}</span></small></div>
       <div class="acts"><button data-act="tk" data-op="open" data-id="${q.id}">💬 Falar</button></div></div>`; }).join('') + '</div>';
     h += `<p class="muted">Para conquistar pela força, derrote toda a guarnição (${c.garrison} soldados) e depois o próprio soberano diante dos portões. Leve seguidores!</p>`;
     this.open(`🏰 Castelo — ${d.name}`, h, 'showCastle', [ci]);
     this.drawMiniPortraits();
+  },
+  // a corte do rei: convite, cargo, salário, audiências e propostas
+  courtCard(ci) {
+    const c = G.civs[ci], rn = RoyalCourt.renown(ci), cur = RoyalCourt.C(), inv = G.courtInvite && G.courtInvite.civ === ci;
+    const bar = (v, max) => `<span class="pbar" style="display:inline-block;width:120px;vertical-align:middle"><i style="width:${Math.min(100, v / max * 100)}%;background:${v >= max ? '#5fd35f' : '#d6ae60'}"></i></span>`;
+    if (!RoyalCourt.isMember(ci)) {
+      return `<div class="card court-card"><div class="sec">👑 Corte de ${CIV_DEFS[ci].short} <span>reconhecimento ${rn}</span></div>
+        ${inv ? `<div class="alert gold">👑 ${this.esc(c.rulerName)} convidou você para a corte!
+            <div class="act-row" style="margin-top:6px"><button class="primary" data-act="cjoin" data-c="${ci}">Aceitar o convite</button><button data-act="cdecline" data-c="${ci}">Recusar</button></div></div>`
+          : `<p class="dt-desc">Com reconhecimento ${COURT_INVITE.renown}+ e relação ${COURT_INVITE.rel}+, o rei convida você para a corte: salário, um cargo e a atenção do rei.</p>
+            <div class="req"><div class="req-row"><span>${rn >= COURT_INVITE.renown ? '✔' : '✖'}</span><span>Reconhecimento ${bar(rn, COURT_INVITE.renown)}</span><b class="${rn >= COURT_INVITE.renown ? 'ok' : 'bad'}">${rn}/${COURT_INVITE.renown}</b></div>
+              <div class="req-row"><span>${c.relation >= COURT_INVITE.rel ? '✔' : '✖'}</span><span>Relação com o reino</span><b class="${c.relation >= COURT_INVITE.rel ? 'ok' : 'bad'}">${Math.round(c.relation)}/${COURT_INVITE.rel}</b></div></div>
+            <small class="muted">O reconhecimento soma serviços prestados (caçar bandidos, salvar caravanas, batalhas, torneios, tributos, doações), fama e relação.${cur ? ` Você já serve à corte de ${CIV_DEFS[cur.civ].short}.` : ''}</small>`}</div>`;
+    }
+    const o = COURT_OFFICES[cur.office], away = G.day - cur.lastVisit, audOk = G.day - cur.audience >= 10;
+    const offices = Object.entries(COURT_OFFICES).map(([k, x]) => `<button class="${cur.office === k ? 'primary' : ''}" data-act="coffice" data-k="${k}" ${rn >= x.renown && cur.office !== k ? '' : 'disabled'} title="${x.desc} (reconhecimento ${x.renown}+)">${x.icon} ${RoyalCourt.officeName(k)}${rn < x.renown ? ' · ' + x.renown : ''}</button>`).join('');
+    const others = G.civs.filter(x => x.id !== ci);
+    return `<div class="card court-card"><div class="sec">👑 Você está na corte de ${CIV_DEFS[ci].short} <span>desde ${Calendar.short(cur.since)} · reconhecimento ${rn}</span></div>
+      <p class="dt-desc">${o.icon} <b>${RoyalCourt.officeName(cur.office)}</b> — ${o.desc} Salário a cada ${ECON_DAYS} dias: ~${o.pay + Math.floor(rn / 20) * 5} 🪙.</p>
+      <div class="act-row">${offices}</div>
+      <div class="act-row" style="margin-top:8px"><button data-act="caudience" ${audOk ? '' : 'disabled'}>📜 Audiência com o rei${audOk ? '' : ' (em ' + (10 - (G.day - cur.audience)) + ' dias)'}</button>
+        ${cur.office === 'general' ? `<button data-act="cescort" ${c.garrison > 2 && Game.allies().length < Game.followerCap() ? '' : 'disabled'}>⚔️ Pedir escolta</button>` : ''}
+        <button class="danger" data-act="cleave">🚪 Deixar a corte</button></div>
+      ${cur.office === 'diplomat' ? `<div class="sec" style="margin-top:10px">🤝 Propor ao rei</div>${others.map(x => { const war = Diplo.atWar(ci, x.id), al = Diplo.allied(ci, x.id);
+        return `<div class="crow2"><span class="cdot" style="background:${Game.civColor(x.id)}"></span> <b>${CIV_DEFS[x.id].short}</b> <small class="muted">relação ${Math.round(Diplo.rel(ci, x.id))}${war ? ' · em guerra' : al ? ' · aliados' : ''}</small>
+          ${war ? `<button data-act="cprop" data-o="${x.id}" data-x="peace">🕊️ Paz</button>` : `<button data-act="cprop" data-o="${x.id}" data-x="ally" ${al ? 'disabled' : ''}>🤝 Aliança</button>${x.ruler === 'player' ? '' : `<button class="danger" data-act="cprop" data-o="${x.id}" data-x="war">⚔️ Guerra</button>`}`}</div>`; }).join('')}` : ''}
+      <small class="${away > COURT_ABSENCE.warn ? 'bad' : 'muted'}">Apareça no castelo pelo menos a cada ${COURT_ABSENCE.warn} dias (última visita: ${away === 0 ? 'hoje' : 'há ' + away + ' dias'}). Guerra com o reino ou relação abaixo de 10 tiram você da corte.</small></div>`;
   },
   chiefCard(ci) {
     const c = G.civs[ci], vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci);
@@ -1750,6 +1785,13 @@ const UI = {
   act(a, d) {
     switch (a) {
       case 'close': this.close(); return;
+      case 'cjoin': RoyalCourt.join(+d.c); break;
+      case 'cdecline': RoyalCourt.decline(+d.c); break;
+      case 'coffice': RoyalCourt.setOffice(d.k); break;
+      case 'caudience': RoyalCourt.audience(); break;
+      case 'cescort': RoyalCourt.escort(); break;
+      case 'cprop': RoyalCourt.propose(+d.o, d.x); break;
+      case 'cleave': Dialog.confirm({ icon: '🚪', title: 'Deixar a corte', text: 'Deixar a corte do rei? Você perde o cargo e o salário.', ok: 'Deixar a corte', danger: true }, () => { RoyalCourt.leave('você pediu para sair', true); this.refresh(); }); return;
       case 'wnav': this.wnav(+d.d); return;
       case 'open': this[d.fn](); return;
       case 'equip': Game.equip(d.k); break;
