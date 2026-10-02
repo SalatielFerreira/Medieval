@@ -198,7 +198,10 @@ const Urban = {
   demolish(s) {
     const err = this.movable(s);
     if (err) { UI.msg(err, 'bad'); return false; }
-    if (!confirm(`Demolir ${this.nameOf(s)}? Você recebe de volta metade do material.`)) return false;
+    Dialog.confirm({ icon: '💥', title: 'Demolir', text: `Demolir ${this.nameOf(s)}? Você recebe de volta metade do material.`, ok: 'Demolir', danger: true }, () => this.doDemolish(s));
+    return false;
+  },
+  doDemolish(s) {
     for (const p of G.people) if (p.job === s.id) Biz.fire(p);
     const box = G.storage && G.storage[s.x + ',' + s.y];
     if (box) { for (const k in box) Inv.add(k, box[k]); delete G.storage[s.x + ',' + s.y]; UI.msg('O que estava guardado foi para a sua mochila.'); }

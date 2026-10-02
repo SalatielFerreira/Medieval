@@ -270,7 +270,7 @@ const Saves = {
           if (!d || !d.player || !d.seed || !d.obj) throw new Error('arquivo inválido');
           this.write(n, d);
           done(true);
-        } catch (e) { alert('Não foi possível importar: o arquivo não é um jogo salvo do MEDIEVAL.'); done(false); }
+        } catch (e) { Dialog.alert({ icon: '⚠️', title: 'Não foi possível importar', text: 'O arquivo não é um jogo salvo do MEDIEVAL.' }); done(false); }
       };
       rd.readAsText(f);
     };

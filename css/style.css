@@ -1079,3 +1079,22 @@ body.small .tc-ic { width: 24px; height: 24px; font-size: 13px; }
 .ph .nav-arr:hover:not(:disabled) { color: #fff2c8; border-color: #e8c06a; }
 .ph-nav + .x { margin-left: 6px; }
 .mv-tools .ph-nav { margin-left: 0; margin-right: 2px; }
+
+/* ================================================================ janelas de confirmação e aviso (no lugar das caixas do navegador) */
+#dialog { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: radial-gradient(ellipse at center, rgba(20, 12, 6, 0.55), rgba(6, 4, 2, 0.78)); backdrop-filter: blur(2px); }
+.dlg-box { width: min(440px, 94vw); padding: 22px 24px 16px; text-align: center; color: #f1e4c6; font-family: var(--ui-font);
+  background: radial-gradient(ellipse at 50% 0%, rgba(90, 60, 25, 0.5), transparent 60%), linear-gradient(180deg, rgba(38, 27, 16, 0.98), rgba(16, 10, 6, 0.98));
+  border: 1px solid rgba(214, 174, 96, 0.75); border-radius: 14px; box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.45), 0 30px 80px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 230, 170, 0.12);
+  animation: dlgin 0.18s ease-out; position: relative; }
+.dlg-box::before { content: ''; position: absolute; inset: 6px; border: 1px solid rgba(214, 174, 96, 0.18); border-radius: 10px; pointer-events: none; }
+.dlg-box.danger { border-color: rgba(224, 112, 96, 0.75); }
+.dlg-ic { width: 56px; height: 56px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 28px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(255, 220, 140, 0.22), rgba(0, 0, 0, 0.4)); border: 1px solid rgba(214, 174, 96, 0.55); }
+.dlg-box.danger .dlg-ic { border-color: rgba(224, 112, 96, 0.6); background: radial-gradient(circle at 40% 35%, rgba(255, 140, 120, 0.2), rgba(0, 0, 0, 0.4)); }
+.dlg-box h3 { margin: 4px 0 8px; font-family: 'Cinzel', Georgia, serif; font-size: 19px; letter-spacing: 1px; color: var(--gold-hi); }
+.dlg-box p { margin: 0 0 16px; font-size: 14px; line-height: 1.5; color: #e8d8b4; }
+.dlg-btns { display: flex; gap: 10px; justify-content: center; }
+.dlg-btns button { min-width: 130px; padding: 10px 16px; font-size: 14px; }
+.dlg-keys { display: block; margin-top: 10px; font-size: 11px; color: #8a7a5a; }
+@keyframes dlgin { from { opacity: 0; transform: scale(0.94) translateY(8px); } to { opacity: 1; transform: none; } }

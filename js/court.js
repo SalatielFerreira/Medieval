@@ -45,7 +45,15 @@ const Court = {
     const r = this.nextReq(ci);
     if (!r || !r.checks.every(x => x[1])) { UI.msg('Você ainda não cumpre as exigências para este título.', 'bad'); return false; }
     const t = this.T();
-    if (t.civ >= 0 && t.civ !== ci && t.lvl >= 0 && !confirm(`Jurar lealdade a ${CIV_DEFS[ci].short}? Você perde o título de ${this.titleName()}.`)) return false;
+    if (t.civ >= 0 && t.civ !== ci && t.lvl >= 0) {
+      Dialog.confirm({ icon: '⚜️', title: 'Jurar lealdade', text: `Jurar lealdade a ${CIV_DEFS[ci].short}? Você perde o título de ${this.titleName()}.`, ok: 'Jurar lealdade', danger: true },
+        () => { this.grantTitle(ci, r); UI.refresh(); });
+      return false;
+    }
+    return this.grantTitle(ci, r);
+  },
+  grantTitle(ci, r) {
+    const t = this.T();
     P.gold -= r.t.fee; G.civs[ci].treasury += r.t.fee;
     t.lvl = r.lvl; t.civ = ci;
     const name = this.titleName();

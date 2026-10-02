@@ -47,7 +47,7 @@ const UI = {
       const b = e.target.closest('[data-go]');
       if (!b) return;
       if (b.dataset.go === 'heir') Game.continueAs(+b.dataset.id);
-      else if (b.dataset.go === 'load') { this.hideGameOver(); this.loading('Carregando sua jornada...', async prog => { if (!(await Game.load(G.slot, prog))) { alert('Não há jogo salvo neste espaço.'); this.showGameOver(this.goCause); } }); }
+      else if (b.dataset.go === 'load') { this.hideGameOver(); this.loading('Carregando sua jornada...', async prog => { if (!(await Game.load(G.slot, prog))) { Dialog.alert({ icon: '📜', title: 'Sem jogo salvo', text: 'Não há jogo salvo neste espaço.' }, () => this.showGameOver(this.goCause)); } }); }
       else if (b.dataset.go === 'menu') { this.hideGameOver(); Game.toMenu(); }
     });
     document.getElementById('birth').addEventListener('click', e => {
@@ -447,7 +447,11 @@ const UI = {
   },
   discard(k) {
     const it = ITEMS[k], n = Inv.count(k);
-    if (!n || !confirm(`Descartar ${n}× ${it.name}?`)) return;
+    if (!n) return;
+    Dialog.confirm({ icon: '🗑️', title: 'Descartar', text: `Descartar ${n}× ${it.name}? Os itens somem para sempre.`, ok: 'Descartar', danger: true }, () => { this.doDiscard(k); this.refresh(); });
+  },
+  doDiscard(k) {
+    const it = ITEMS[k], n = Inv.count(k);
     for (const s in P.equip) if (P.equip[s] === k) P.equip[s] = null;
     for (let q = 0; q < 4; q++) if (P.quick[q] === k) P.quick[q] = null;
     Inv.add(k, -n);
@@ -1241,7 +1245,7 @@ const UI = {
       case 'flirt': r = People.flirt(p); break;
       case 'date': r = People.date(p); break;
       case 'propose': r = People.propose(p); break;
-      case 'breakup': if (!confirm('Terminar o relacionamento?')) return; r = People.breakUp(p); break;
+      case 'breakup': Dialog.confirm({ icon: '💔', title: 'Terminar', text: `Terminar o relacionamento com ${p.name}?`, ok: 'Terminar', danger: true }, () => this.showTalk(p.id, People.breakUp(p))); return;
       case 'child':
         if (!G.family.dueDay) { G.family.tryChild = true; r = { text: 'Sim... vamos aumentar a nossa família! ❤', note: 'Durmam em casa (Cabana, Casa ou Casarão) para tentar ter um filho.' }; }
         else r = { text: 'Falta pouco para o bebê chegar!', note: '' };
@@ -1267,8 +1271,9 @@ const UI = {
       case 'escort': WorldEvents.escort(); this.close(); UI.msg(`🧭 ${p.name} segue você. Leve-${p.sex === 'f' ? 'a' : 'o'} até qualquer vila ou castelo.`, 'gold'); return;
       case 'vchallenge': {
         const vi = Chiefdom.vilOf(p), v = World.villages[vi];
-        if (!v || !confirm(`Atacar ${v.name} para tomar a chefia de ${p.name}? A milícia vai lutar, e o rei decide se isso é uma afronta à coroa.`)) return;
-        this.close(); Chiefdom.challenge(vi); return;
+        if (!v) return;
+        Dialog.confirm({ icon: '⚔️', title: 'Desafiar o chefe', text: `Atacar ${v.name} para tomar a chefia de ${p.name}? A milícia vai lutar, e o rei decide se isso é uma afronta à coroa.`, ok: 'Atacar a vila', danger: true }, () => { this.close(); Chiefdom.challenge(vi); });
+        return;
       }
       case 'profmenu': this.showProf(p.id); return;
       case 'hiremenu': this.showHire(p.id); return;
@@ -1767,8 +1772,8 @@ const UI = {
       case 'tribute': Game.tribute(+d.c); break;
       case 'claim': this.close(); Game.claimThrone(+d.c); return;
       case 'war':
-        if (!confirm(`Declarar guerra contra ${CIV_DEFS[+d.c].name}? Os guardas atacarão você e o cerco começará.`)) return;
-        this.close(); Game.declareWar(+d.c); return;
+        Dialog.confirm({ icon: '⚔️', title: 'Declarar guerra', text: `Declarar guerra contra ${CIV_DEFS[+d.c].name}? Os guardas atacarão você e o cerco começará.`, ok: 'Declarar guerra', danger: true }, () => { this.close(); Game.declareWar(+d.c); });
+        return;
       case 'siege': this.close(); Game.startSiege(+d.c); return;
       case 'peace': Game.makePeace(+d.c); break;
       case 'ktab': this.sel.knav = 'k:' + d.c; this.showKingdom(); return;
@@ -1801,8 +1806,9 @@ const UI = {
       case 'ptcollect': { const s = World.structs[+d.s]; if (s.till > 0) { P.gold += s.till; this.msg(`Você recolheu ${s.till} 🪙 do caixa da taverna.`, 'gold'); s.till = 0; Sound.play('coin'); } break; }
       case 'carrob': {
         const e = G.ents.find(x => x.kind === 'caravan' && x.carId === +d.c && !x.dead);
-        if (!e || !confirm('Assaltar a caravana? Os guardas vão atacar e o reino ficará furioso com você.')) return;
-        Caravans.rob(e.car, e); this.close(); return;
+        if (!e) return;
+        Dialog.confirm({ icon: '🏴', title: 'Assaltar a caravana', text: 'Assaltar a caravana? Os guardas vão atacar e o reino ficará furioso com você.', ok: 'Assaltar', danger: true }, () => { Caravans.rob(e.car, e); this.close(); });
+        return;
       }
       case 'batjoin': { const b = Battles.list().find(x => x.id === +d.b); if (b && d.side !== 'none') Battles.join(b, +d.side); this.close(); return; }
       case 'dtab': this.sel.dtab = d.t; break;
@@ -1844,7 +1850,7 @@ const UI = {
       case 'revside': { const r = Families.revolt(+d.r); if (r && !r.side) Families.joinRevolt(r, d.side); break; }
       case 'famfavor': { const f = Families.get(+d.f); if (f && P.gold >= 200) { P.gold -= 200; f.favor = (f.favor || 0) + 25; f.loyalty = Math.min(100, f.loyalty + 15); this.msg(`A ${Families.name(f)} agradece os favores da coroa (+15 de lealdade).`, 'gold'); } break; }
       case 'fping': { const f = Families.get(+d.f), v = typeof f.seat === 'number' ? World.villages[f.seat] : null; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
-      case 'found': if (confirm(`Fundar a Vila ${G.surname} aqui? Custa ${FOUND_COST.gold} 🪙, ${FOUND_COST.wood} madeira e ${FOUND_COST.stone} pedra.`)) { if (Families.playerFound()) { this.close(); return; } } break;
+      case 'found': Dialog.confirm({ icon: '🏘️', title: `Fundar a Vila ${G.surname}`, text: `Fundar a vila aqui? Custa ${FOUND_COST.gold} 🪙, ${FOUND_COST.wood} madeira e ${FOUND_COST.stone} pedra.`, ok: 'Fundar' }, () => { if (Families.playerFound()) this.close(); else this.refresh(); }); return;
       case 'icat': this.sel.cat = d.c; this.sel.inv = null; break;
       case 'csel': this.sel.craft = +d.r; break;
       case 'cst': this.sel.st = d.s; break;
@@ -1872,7 +1878,7 @@ const UI = {
     const progress = (p, l) => { bar.classList.add('det'); bar.style.width = Math.round(p * 100) + '%'; if (l) lab.textContent = l + '...'; };
     setTimeout(async () => {
       try { await fn(progress); }
-      catch (e) { alert('Erro: ' + e.message); }
+      catch (e) { Dialog.alert({ icon: '⚠️', title: 'Algo deu errado', text: 'Erro: ' + e.message }); }
       finally { el.classList.add('hidden'); }
     }, 40);
   },

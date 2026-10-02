@@ -214,15 +214,16 @@ const Menu = {
     else if (a === 'updnow') this.updateNow(d.v);
     else if (a === 'upddismiss') { if (d.v) this.dismissed = d.v; document.getElementById('updModal').classList.add('hidden'); }
     else if (a === 'export') Saves.exportSlot(+d.n);
-    else if (a === 'del') { if (confirm(`Apagar o jogo salvo do espaço ${d.n}? Isso não pode ser desfeito.`)) { Saves.remove(+d.n); this.slotsCard(); } }
+    else if (a === 'del') Dialog.confirm({ icon: '🗑️', title: 'Apagar jogo salvo', text: `Apagar o jogo salvo do espaço ${d.n}? Isso não pode ser desfeito.`, ok: 'Apagar', danger: true }, () => { Saves.remove(+d.n); this.slotsCard(); });
     else if (a === 'import') {
-      if (Saves.info(+d.n) && !confirm(`O espaço ${d.n} já tem um jogo. Substituir pelo arquivo importado?`)) return;
-      Saves.importFile(+d.n, ok => { if (ok) this.slotsCard(); });
+      const go = () => Saves.importFile(+d.n, ok => { if (ok) this.slotsCard(); });
+      if (Saves.info(+d.n)) Dialog.confirm({ icon: '⬆️', title: 'Importar jogo', text: `O espaço ${d.n} já tem um jogo. Substituir pelo arquivo importado?`, ok: 'Substituir', danger: true }, go);
+      else go();
     }
     else if (a === 'load') {
       const n = +d.n;
       this.hide();
-      UI.loading('Carregando sua jornada...', async prog => { if (!(await Game.load(n, prog))) { alert('Não foi possível carregar este jogo salvo.'); this.show(); } });
+      UI.loading('Carregando sua jornada...', async prog => { if (!(await Game.load(n, prog))) { this.show(); Dialog.alert({ icon: '⚠️', title: 'Não foi possível carregar', text: 'Este jogo salvo não pôde ser aberto.' }); } });
     }
     else if (a === 'set') {
       this.hero[d.k] = d.k === 'slot' ? +d.v : d.v;
@@ -247,7 +248,10 @@ const Menu = {
       this.hero.surname = (this.hero.surname || '').trim().replace(/^./, c => c.toUpperCase());
       if (!name) { document.getElementById('heroName').focus(); return; }
       const slot = this.hero.slot || Saves.firstFree() || 1;
-      if (Saves.info(slot) && !confirm(`O espaço ${slot} já tem um jogo salvo. Ele será substituído quando você salvar. Continuar?`)) return;
+      if (Saves.info(slot) && !d.sure) {
+        Dialog.confirm({ icon: '📜', title: 'Espaço ocupado', text: `O espaço ${slot} já tem um jogo salvo. Ele será substituído quando você salvar. Continuar?`, ok: 'Começar mesmo assim', danger: true }, () => this.act('start', { sure: true }));
+        return;
+      }
       this.hide();
       const h = this.hero;
       const hero = Object.assign({}, h, { name, slot, diff: h.diff, style: { hair: h.hairStyle, beard: h.sex === 'f' ? 'none' : h.beardStyle, tunic: h.tunic, pants: h.pants } });
