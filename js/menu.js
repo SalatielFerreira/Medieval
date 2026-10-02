@@ -1,11 +1,15 @@
 'use strict';
 // Menu principal: fundo animado com o tema do jogo e criação do herói.
 
+// telas pequenas deitadas (celular e tablet): as janelas de novo jogo e jogos salvos ocupam quase a tela toda
+const MENU_FILL_MQ = '(max-width: 1100px) and (max-height: 700px) and (orientation: landscape)';
+// computador: altura comum das janelas do menu (inicial, novo jogo e jogos salvos)
+const MENU_DESK_MQ = '(min-width: 1101px)', MENU_DESK_H = 520;
 const SKIN_TONES = ['#f5d3ae', '#f0c896', '#d9a676', '#b07a4c', '#7a4e2e'];
 const HAIR_STYLES = [['short', 'Curto'], ['long', 'Longo'], ['ponytail', 'Rabo de cavalo'], ['braids', 'Tranças'], ['curly', 'Cacheado'], ['bun', 'Coque'], ['mohawk', 'Moicano'], ['bald', 'Careca']];
 const BEARD_STYLES = [['none', 'Sem barba'], ['short', 'Curta'], ['full', 'Cheia'], ['mustache', 'Bigode'], ['goatee', 'Cavanhaque'], ['long', 'Longa']];
-const TUNIC_COLORS = ['#3d6b8f', '#8f3d5e', '#4a7a3a', '#8e1f2a', '#6a4a8a', '#a8791a', '#5a5a62', '#2a4a6a', '#e0d4b8'];
-const PANTS_COLORS = ['#4a3a2a', '#2a2a30', '#3a4a2a', '#5a2a2a', '#6b5a45', '#2a3a5a'];
+const TUNIC_COLORS = ['#3d6b8f', '#8f3d5e', '#4a7a3a', '#8e1f2a', '#6a4a8a', '#a8791a', '#5a5a62', '#2a4a6a', '#e0d4b8', '#c8642a'];
+const PANTS_COLORS = ['#4a3a2a', '#2a2a30', '#3a4a2a', '#5a2a2a', '#6b5a45', '#2a3a5a', '#8a7a5a', '#4a2a4a', '#2a4a4a', '#a89880'];
 
 const Menu = {
   hero: { name: 'Aventureiro', sex: 'm', age: 22, hair: HAIR_COLORS.castanho, skin: '#f0c896', hairStyle: 'short', beardStyle: 'short', tunic: '#3d6b8f', pants: '#4a3a2a', diff: 'normal' },
@@ -32,7 +36,7 @@ const Menu = {
     const m = document.getElementById('menu');
     m.innerHTML = `<canvas id="menuBg"></canvas>
       <div class="menu-wrap" id="menuWrap">
-        <div class="menu-title"><h1>MED<span class="mt-i">I<span class="mt-fl">⚜</span></span>EVAL</h1><div class="mt-line"></div><h4>Os Sete Reinos</h4></div>
+        <div class="menu-title"><h1>MED<span class="mt-i">I</span>EVAL</h1><div class="mt-line"></div><h4>Os Sete Reinos</h4></div>
         <div class="menu-card" id="menuCard"></div>
       </div>
       <div class="upd-modal hidden" id="updModal"></div>`;
@@ -56,13 +60,17 @@ const Menu = {
     this.embers = [];
     this.built = true;
   },
-  // cada cartão define o tamanho da janela; o título encolhe nas telas maiores (criador, ajuda)
+  // o tamanho da janela vem da tela: é medido quando ela abre (ou a tela muda) e fica fixo enquanto se mexe nela;
+  // redesenhar o conteúdo (trocar o sexo, apagar um jogo...) não muda o tamanho, o conteúdo se ajusta por dentro
   setCard(html, kind) {
     const card = document.getElementById('menuCard'), wrap = document.getElementById('menuWrap');
+    const fx = this.fixed, same = fx && fx.kind === kind && fx.vw === window.innerWidth && fx.vh === window.innerHeight;
     card.className = 'menu-card mc-' + kind;
     wrap.className = 'menu-wrap ' + (kind === 'main' ? '' : 'compact');
-    card.style.zoom = '';
     card.innerHTML = html;
+    if (same) { card.style.height = fx.h + 'px'; card.style.marginBottom = fx.mb || ''; card.style.zoom = fx.z < 0.999 ? fx.z.toFixed(3) : ''; this.fit(); return; }
+    this.fixed = null;
+    card.style.zoom = ''; card.style.height = ''; card.style.marginBottom = '';
     this.fit();
   },
   // nunca rolar: se a tela for pequena demais, a janela inteira é reduzida para caber
@@ -70,17 +78,48 @@ const Menu = {
     const card = document.getElementById('menuCard'), wrap = document.getElementById('menuWrap');
     if (!card) return;
     const measure = () => {
-      card.style.zoom = '';
+      const kind = (card.className.match(/mc-(\w+)/) || [])[1];
+      card.style.zoom = ''; card.style.height = '';
+      card.classList.add('measuring'); // mede com tudo o que pode aparecer (ex.: a linha da barba)
+      this.wrapSwatches();
       const title = wrap.querySelector('.menu-title');
-      const gap = parseFloat(getComputedStyle(wrap).rowGap) || 0, pad = 32;
-      const avail = window.innerHeight - (title ? title.getBoundingClientRect().height : 0) - gap - pad - 10, availW = window.innerWidth - 24;
+      const ws = getComputedStyle(wrap), gap = parseFloat(ws.rowGap) || 0, pad = (parseFloat(ws.paddingTop) || 0) + (parseFloat(ws.paddingBottom) || 0);
+      // título em cima do cartão (normal) ou ao lado dele (celular deitado)
+      const side = getComputedStyle(wrap).flexDirection === 'row', tr = title ? title.getBoundingClientRect() : { width: 0, height: 0 };
+      const avail = window.innerHeight - (side ? 0 : tr.height + gap) - pad - 4, availW = window.innerWidth - 24 - (side ? tr.width + (parseFloat(getComputedStyle(wrap).columnGap) || 0) : 0);
       const r = card.getBoundingClientRect();
-      const z = Math.min(1, avail / r.height, availW / r.width);
-      if (z < 0.999) card.style.zoom = Math.max(0.3, z).toFixed(3);
+      card.classList.remove('measuring');
+      if (r.height < 20 || r.width < 20) return; // menu ainda escondido: mede de novo quando aparecer
+      // mesma janela na mesma tela: pode crescer (ex.: as fontes terminaram de carregar), nunca encolher
+      const prev = this.fixed && this.fixed.kind === kind && this.fixed.vw === window.innerWidth && this.fixed.vh === window.innerHeight ? this.fixed.h : 0;
+      const nat = Math.max(r.height, prev);
+      // computador: as três janelas têm a mesma altura (o título não pula de uma tela para outra)
+      const desk = matchMedia(MENU_DESK_MQ).matches, deskH = Math.min(avail, MENU_DESK_H);
+      // menu inicial: altura do próprio conteúdo (sem buraco quando não há jogo para continuar)
+      const own = desk && kind === 'main';
+      const z = Math.max(0.3, Math.min(1, (desk ? deskH : avail) / nat, availW / r.width));
+      if (z < 0.999) card.style.zoom = z.toFixed(3);
+      // celular e tablet deitados: novo jogo e jogos salvos ocupam toda a altura que sobra
+      const fill = kind !== 'main' && matchMedia(MENU_FILL_MQ).matches;
+      const h = own ? nat : desk ? deskH / z : fill ? Math.max(nat, avail / z) : nat;
+      // o espaço que sobra fica embaixo da janela: o título continua no mesmo lugar das outras telas
+      card.style.marginBottom = own ? Math.max(0, deskH / z - nat) + 'px' : '';
+      // guarda o tamanho: daqui em diante a janela não muda mais enquanto a tela for a mesma
+      card.style.height = h + 'px';
+      this.fixed = { kind, vw: window.innerWidth, vh: window.innerHeight, h, z, mb: card.style.marginBottom };
     };
     requestAnimationFrame(measure);
     clearTimeout(this.fitT); this.fitT = setTimeout(measure, 350);
     if (document.fonts && !this.fontHook) { this.fontHook = true; document.fonts.ready.then(() => this.fit()); }
+  },
+  // cabeçalho igual em todas as janelas do menu: ornamento ⚜, título dourado e subtítulo em itálico
+  head(title, sub) {
+    return `<div class="mc-orn"><span></span>⚜<span></span></div>${title ? `<div class="mc-intro mc-head"><h2 class="mi-lead">${title}</h2><span>${sub}</span></div>` : ''}`;
+  },
+  // túnica e calça: 10 cores numa linha; se não couber, duas linhas de 5
+  wrapSwatches() {
+    const go = () => { for (const el of document.querySelectorAll('#menuCard .swatches.sw10')) { el.classList.remove('wrap5'); if (el.scrollWidth > el.clientWidth + 1) el.classList.add('wrap5'); } };
+    go();
   },
   versionText() { const v = window.GAME_VERSION || 'local'; return v === 'local' ? 'versão local' : 'versão ' + v; },
 
@@ -89,12 +128,12 @@ const Menu = {
     const info = Game.saveInfo();
     const opt = (m, ic, title, sub, cls, extra) => `<button class="mc-opt ${cls || ''}" data-m="${m}" ${extra || ''}><span class="mo-ic">${ic}</span><span class="mo-tx"><b>${title}</b><small>${sub}</small></span><span class="mo-go">›</span></button>`;
     this.setCard(`
-      <div class="mc-orn"><span></span>⚜<span></span></div>
-      <p class="mc-intro"><strong class="mi-lead">Sua história começa agora</strong><span>Conquiste seu destino</span></p>
+      ${this.head()}
+      <p class="mc-intro"><strong class="mi-lead">Sua história começa agora</strong><span>Explore e conquiste seu destino</span></p>
       <div class="mc-opts">
         ${info ? opt('load', '▶', 'Continuar a jornada', `${UI.esc(info.name)}${info.age ? ` · ${info.age} anos` : ''} · ${Calendar.short(info.day)} · nível ${info.level || 1}`, 'main', `data-n="${info.slot}"`) : ''}
-        ${opt('create', '⚔️', 'Novo jogo', 'Crie seu herói e comece do zero', info ? '' : 'main')}
-        ${opt('slots', '📜', 'Jogos salvos', 'Carregar, importar e exportar · 3 espaços')}
+        ${opt('create', '⚔️', 'Novo jogo', 'Crie seu herói', info ? '' : 'main')}
+        ${opt('slots', '📜', 'Jogos salvos', 'Carregar dados')}
       </div>
       <div class="mc-foot"><span>${this.versionText()}</span></div>`, 'main');
   },
@@ -103,13 +142,13 @@ const Menu = {
     const rows = Saves.list().map((inf, i) => {
       const n = i + 1;
       return `<div class="slotrow ${inf ? '' : 'empty'}"><div class="sr-n">${n}</div>
-        <div class="sr-info">${inf ? `<b>${UI.esc(inf.name)}</b><small>${inf.sex === 'f' ? 'Heroína' : 'Herói'} · ${inf.age} anos · nível ${inf.level || 1} · ${Calendar.short(inf.day)}${inf.ruled ? ` · 👑 ${inf.ruled} reino(s)` : ''} · salvo em ${fmt(inf.savedAt)}${Saves.size(n) ? ` · ${Saves.size(n)} KB` : ''}</small>` : '<b>Espaço vazio</b><small>Comece um novo jogo ou importe um arquivo</small>'}</div>
-        <div class="sr-acts">${inf ? `<button class="mc-main" data-m="load" data-n="${n}">▶ Carregar</button><button data-m="export" data-n="${n}" title="Baixar arquivo">⬇️ Exportar</button><button data-m="del" data-n="${n}" title="Apagar">🗑️</button>`
-          : ''}<button data-m="import" data-n="${n}" title="Importar arquivo para este espaço">⬆️ Importar</button></div></div>`;
+        <div class="sr-info">${inf ? `<b>${UI.esc(inf.name)}</b><small>${inf.sex === 'f' ? 'Heroína' : 'Herói'} · ${inf.age} anos · nível ${inf.level || 1} · ${Calendar.short(inf.day)}${inf.ruled ? ` · 👑 ${inf.ruled} reino(s)` : ''} · salvo em ${fmt(inf.savedAt).replace(" ", "&nbsp;")}${Saves.size(n) ? `&nbsp;·&nbsp;${Saves.size(n)}&nbsp;KB` : ''}</small>` : '<b>Espaço vazio</b><small>Comece um novo jogo ou importe um arquivo</small>'}</div>
+        <div class="sr-acts">${inf ? `<button class="mc-main" data-m="load" data-n="${n}">Carregar</button><button data-m="export" data-n="${n}" title="Baixar arquivo">Exportar</button><button class="sr-del" data-m="del" data-n="${n}" title="Apagar" aria-label="Apagar">${icon('trash')}</button>`
+          : ''}<button data-m="import" data-n="${n}" title="Importar arquivo para este espaço">Importar</button></div></div>`;
     }).join('');
-    this.setCard(`<h2 class="mc-h">📜 Jogos salvos</h2><div class="slotlist">${rows}</div>
+    this.setCard(`${this.head('Jogos salvos', 'Continue de onde parou')}<div class="slotlist">${rows}</div>
       <p class="mc-note">Exportar baixa um arquivo .json (bom para guardar ou levar para outro computador) · Importar coloca um arquivo no espaço · Dormir em casa salva automaticamente.</p>
-      <div class="mc-btns row"><button data-m="back">← Voltar</button></div>`, 'slots');
+      <div class="mc-btns row"><button data-m="back">Voltar</button></div>`, 'slots');
   },
   createCard() {
     const h = this.hero;
@@ -118,7 +157,7 @@ const Menu = {
     const picker = (key, list, label, id) => `<div class="cr-row" ${id ? `id="${id}"` : ''}><label>${label}</label><div class="picker"><button data-m="cyc" data-k="${key}" data-d="-1">‹</button><b id="pk_${key}">${list.find(x => x[0] === h[key])[1]}</b><button data-m="cyc" data-k="${key}" data-d="1">›</button></div></div>`;
     const slot = h.slot || Saves.firstFree() || 1;
     this.setCard(`
-      <h2 class="mc-h">⚔️ Crie seu herói</h2>
+      ${this.head('Crie seu herói', 'Quem vai escrever esta história?')}
       <div class="cr3">
         <div class="cr-prev">
           <canvas id="heroPrev" width="220" height="260"></canvas>
@@ -127,26 +166,26 @@ const Menu = {
         </div>
         <div class="cr-col">
           <div class="cr-sec">📜 Identidade</div>
-          <div class="cr-names"><label>Nome<input id="heroName" maxlength="18" value="${UI.esc(h.name)}"></label>
-            <label>Sobrenome da família<input id="heroSurname" maxlength="16" value="${UI.esc(h.surname || '')}"></label></div>
+          <div class="cr-names"><label><span>Nome</span><input id="heroName" maxlength="18" placeholder="Nome" value="${UI.esc(h.name)}"></label>
+            <label><span>Sobrenome da família</span><input id="heroSurname" maxlength="16" placeholder="Sobrenome da família" value="${UI.esc(h.surname || '')}"></label></div>
           <div class="cr-row"><label>Sexo</label><div class="seg"><button class="${h.sex === 'm' ? 'on' : ''}" data-m="set" data-k="sex" data-v="m">♂ Masculino</button><button class="${h.sex === 'f' ? 'on' : ''}" data-m="set" data-k="sex" data-v="f">♀ Feminino</button></div></div>
           <div class="cr-row"><label>Idade <b id="ageVal">${h.age} anos</b></label><input type="range" id="heroAge" min="16" max="80" value="${h.age}"></div>
           <div class="cr-row"><label>Dificuldade</label><div class="seg">${Object.entries(DIFFICULTY).map(([k, d]) => `<button class="${h.diff === k ? 'on' : ''}" data-m="set" data-k="diff" data-v="${k}">${d.name}</button>`).join('')}</div>
             <small class="cr-diff" id="diffNote">${DIFFICULTY[h.diff].desc}</small></div>
-          <div class="cr-row"><label>Espaço de salvamento</label><div class="seg">${Saves.list().map((inf, i) => `<button class="${slot === i + 1 ? 'on' : ''}" data-m="set" data-k="slot" data-v="${i + 1}" title="${inf ? 'Ocupado: ' + UI.esc(inf.name) : 'Vazio'}">${i + 1}${inf ? ' · ocupado' : ' · livre'}</button>`).join('')}</div></div>
+          <div class="cr-row"><label>Espaço de salvamento</label><div class="seg">${Saves.list().map((inf, i) => `<button class="${slot === i + 1 ? 'on' : ''} ${inf ? 'occ' : ''}" data-m="set" data-k="slot" data-v="${i + 1}" title="${inf ? 'Ocupado: ' + UI.esc(inf.name) : 'Vazio'}">${i + 1}<span class="sl-st">${inf ? ' · ocupado' : ' · livre'}</span></button>`).join('')}</div></div>
         </div>
         <div class="cr-col">
           <div class="cr-sec">🎨 Aparência</div>
-          <div class="cr-row"><label>Cor do cabelo</label><div class="swatches">${sw('hair', Object.entries(HAIR_COLORS).map(([n, c]) => [c, n]))}</div></div>
+          <div class="cr-row"><label>Cor do cabelo</label><div class="swatches">${sw('hair', Object.entries(HAIR_COLORS).map(([n, c]) => [c, n]).concat([['#e8e4dc', 'branco']]))}</div></div>
           ${picker('hairStyle', HAIR_STYLES, 'Penteado')}
-          ${h.sex === 'f' ? '' : picker('beardStyle', BEARD_STYLES, 'Barba', 'beardRow')}
+          ${picker('beardStyle', BEARD_STYLES, 'Barba', 'beardRow').replace('class="cr-row"', h.sex === 'f' ? 'class="cr-row cr-off" aria-hidden="true"' : 'class="cr-row"')}
           <div class="cr-row"><label>Tom de pele</label><div class="swatches">${sw('skin', SKIN_TONES.map(c => [c, 'pele']))}</div></div>
-          <div class="cr-row"><label>Cor da túnica</label><div class="swatches">${sw('tunic', TUNIC_COLORS.map(c => [c, 'túnica']))}</div></div>
-          <div class="cr-row"><label>Cor da calça</label><div class="swatches">${sw('pants', PANTS_COLORS.map(c => [c, 'calça']))}</div></div>
+          <div class="cr-row"><label>Cor da túnica</label><div class="swatches sw10">${sw('tunic', TUNIC_COLORS.map(c => [c, 'túnica']))}</div></div>
+          <div class="cr-row"><label>Cor da calça</label><div class="swatches sw10">${sw('pants', PANTS_COLORS.map(c => [c, 'calça']))}</div></div>
         </div>
       </div>
-      <div class="mc-btns row"><button data-m="back">← Voltar</button><button class="mc-main" data-m="start">⚔️ Começar a jornada</button></div>`, 'create');
-    this.ageNote(); this.nameTag();
+      <div class="mc-btns row"><button data-m="back">Voltar</button><button class="mc-main" data-m="start">Começar a jornada</button></div>`, 'create');
+    this.ageNote(); this.nameTag(); this.wrapSwatches();
   },
   nameTag() {
     const el = document.getElementById('heroTag');

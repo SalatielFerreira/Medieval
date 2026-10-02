@@ -931,9 +931,6 @@ body.small .inv3 { grid-template-columns: 1fr !important; }
   .hk-grid { grid-template-columns: 1fr; } .hs-list { columns: 1; }
 }
 .mt-i { line-height: 1; vertical-align: baseline; }
-/* a flor de lis é o pingo do "I", centrada na haste */
-.mt-fl { position: absolute; left: 50%; top: -1.05em; transform: translateX(-50%); font-family: "Segoe UI Symbol", "Noto Sans Symbols", Georgia, serif; font-size: 0.46em; font-weight: 400; line-height: 1;
-  color: #f2c45a; -webkit-text-fill-color: #f2c45a; text-shadow: 0 0 14px rgba(255, 150, 60, 0.75); pointer-events: none; }
 @media (max-height: 520px) { .menu-wrap { gap: 8px; padding: 10px 16px; } .menu-wrap .mt-line { display: none; } }
 /* mapa aberto ocupa a tela inteira */
 #mapView { inset: 0 !important; border-radius: 0 !important; border: none !important; }
@@ -1115,3 +1112,415 @@ body.small .tc-ic { width: 24px; height: 24px; font-size: 13px; }
 .castle-herald p { margin: 0; }
 .pg-ic .harms { width: 30px; height: 36px; }
 .snav-i .si .harms { width: 16px; height: 19px; }
+
+/* ================================================================ menu inicial responsivo (do celular à TV) */
+.menu-wrap { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); gap: clamp(10px, 2.4vh, 22px); }
+.menu-title h1 { font-size: clamp(40px, min(11vw, 13vh), 108px); letter-spacing: clamp(2px, .6vw, 6px); line-height: 1.05; }
+.menu-title h4 { font-size: clamp(12px, 1.9vw, 22px); letter-spacing: clamp(4px, 1vw, 8px); margin-top: clamp(2px, .8vh, 8px); }
+.menu-card.mc-main { width: min(540px, 100%); padding: clamp(18px, 3.2vw, 28px) clamp(16px, 4vw, 32px) clamp(14px, 2.6vw, 22px); }
+/* título e subtítulo da abertura: juntos, como um par */
+.mc-intro { margin: 0 0 clamp(14px, 2.6vh, 22px); line-height: 1.25; }
+.mc-intro .mi-lead { margin: 0; font-size: clamp(17px, 4.4vw, 23px); line-height: 1.2; letter-spacing: .05em; text-wrap: balance; }
+.mc-intro .mi-lead + span { margin-top: 5px; font-family: Georgia, serif; font-style: italic; font-size: clamp(13.5px, 3.4vw, 16px); color: #d9c49a; letter-spacing: .02em; }
+.mc-opts { gap: clamp(8px, 1.4vh, 12px); }
+.mc-foot { justify-content: center; }
+.mo-tx small { text-wrap: pretty; }
+@media (hover: none) { .menu-card button.mc-opt:hover { transform: none; } }
+
+/* celulares em pé */
+@media (max-width: 480px) {
+  .menu-wrap { gap: 12px; }
+  .menu-title h1 { font-size: clamp(40px, 14vw, 64px); }
+  .menu-title h4 { letter-spacing: 5px; }
+  .mt-line { width: 84%; }
+  .mc-orn { margin: -4px 0 8px; font-size: 17px; }
+  .menu-card.mc-main::before { inset: 5px; }
+  .menu-card button.mc-opt { grid-template-columns: 40px 1fr 14px; gap: 12px; padding: 10px 12px 10px 10px; }
+  .mo-ic { width: 40px; height: 40px; font-size: 19px; }
+  .mo-tx b { font-size: 15.5px; }
+  .mo-tx small { font-size: 11.5px; line-height: 1.35; }
+  .mo-go { font-size: 20px; }
+  .mc-foot { margin-top: 12px; padding-top: 8px; justify-content: center; }
+}
+/* celulares bem estreitos */
+@media (max-width: 350px) {
+  .mc-intro .mi-lead { font-size: 16px; letter-spacing: .02em; }
+  .mo-tx b { font-size: 14px; letter-spacing: 0; }
+  .mo-tx small { font-size: 11px; }
+  .menu-card button.mc-opt { grid-template-columns: 34px 1fr 10px; gap: 10px; }
+  .mo-ic { width: 34px; height: 34px; font-size: 16px; }
+}
+/* celulares deitados e telas baixas */
+@media (max-height: 520px) {
+  .menu-wrap { gap: 8px; }
+  .menu-title h1 { font-size: clamp(28px, 11vh, 48px); }
+  .menu-card.mc-main { padding: 14px 22px 12px; }
+  .mc-orn { display: none; }
+  .mc-intro { margin-bottom: 10px; }
+  .mc-intro .mi-lead { font-size: 17px; }
+  .mc-intro .mi-lead + span { margin-top: 2px; font-size: 13.5px; }
+  .menu-card button.mc-opt { padding: 7px 14px 7px 10px; grid-template-columns: 36px 1fr 14px; }
+  .mo-ic { width: 36px; height: 36px; font-size: 17px; }
+  .mc-foot { margin-top: 8px; padding-top: 6px; }
+}
+/* telas grandes: o cartão acompanha o tamanho do título */
+@media (min-width: 1600px) and (min-height: 900px) {
+  .menu-card.mc-main { width: 600px; }
+  .mc-intro .mi-lead { font-size: 26px; }
+  .mc-intro .mi-lead + span { font-size: 17px; }
+  .mo-tx b { font-size: 18.5px; }
+  .mo-tx small { font-size: 13px; }
+}
+/* celular e tablet deitados (tela baixa): título à esquerda e o cartão à direita */
+@media (max-height: 560px) and (orientation: landscape) {
+  .menu-wrap:not(.compact) { flex-direction: row; justify-content: center; align-items: center; gap: clamp(18px, 5vw, 56px); padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .menu-wrap:not(.compact) .menu-title { flex: 0 0 auto; }
+  .menu-wrap:not(.compact) .menu-title h1 { white-space: nowrap; font-size: clamp(30px, min(6.2vw, 15vh), 66px); letter-spacing: clamp(1px, .3vw, 4px); }
+  .menu-wrap:not(.compact) .menu-title h4 { display: block; font-size: clamp(11px, 1.7vw, 16px); letter-spacing: clamp(3px, .8vw, 6px); margin-top: 6px; }
+  .menu-wrap:not(.compact) .mt-line { display: block; width: 86%; margin-top: 4px; }
+  .menu-wrap:not(.compact) .menu-card.mc-main { width: min(440px, 52vw); flex: 0 0 auto; }
+  .menu-wrap:not(.compact) .mc-orn { display: flex; margin: -4px 0 6px; font-size: 15px; }
+}
+/* telas baixas com o título em cima (criação do herói e jogos salvos): o título continua inteiro, só menor */
+@media (max-height: 520px) {
+  .menu-wrap.compact .menu-title h4 { display: block; font-size: 10px; letter-spacing: 4px; margin-top: 1px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .menu-wrap:not(.compact) { gap: clamp(14px, 4vw, 48px); }
+  .menu-wrap:not(.compact) .menu-title h1 { font-size: clamp(28px, min(5.6vw, 15vh), 62px); }
+  .menu-wrap:not(.compact) .menu-title h4 { white-space: nowrap; font-size: clamp(9.5px, 1.45vw, 15px); letter-spacing: clamp(2px, .55vw, 6px); }
+  .menu-wrap:not(.compact) .menu-card.mc-main { width: min(450px, 56vw); padding: 14px clamp(14px, 2.4vw, 22px) 10px; }
+  .menu-wrap:not(.compact) .mc-intro .mi-lead { font-size: clamp(14.5px, 2.3vw, 18px); }
+  .menu-wrap:not(.compact) .mc-intro .mi-lead + span { font-size: clamp(12px, 1.8vw, 14px); }
+  .menu-wrap:not(.compact) .menu-card button.mc-opt { grid-template-columns: 32px 1fr 10px; gap: 10px; padding: 7px 10px 7px 8px; }
+  .menu-wrap:not(.compact) .mo-ic { width: 32px; height: 32px; font-size: 15px; }
+  .menu-wrap:not(.compact) .mo-tx b { font-size: clamp(13px, 2vw, 16px); letter-spacing: .2px; white-space: nowrap; }
+  .menu-wrap:not(.compact) .mo-tx small { font-size: clamp(10.5px, 1.5vw, 12px); line-height: 1.3; }
+  .menu-wrap:not(.compact) .mo-go { font-size: 18px; }
+}
+/* jogos salvos: botão de apagar com ícone de lixeira */
+.menu-card .sr-acts button.sr-del { display: inline-flex; align-items: center; justify-content: center; padding: 7px 9px; color: #e0a090; }
+.menu-card .sr-acts button.sr-del .ico { width: 17px; height: 17px; }
+.menu-card .sr-acts button.sr-del:hover { color: #fff; background: linear-gradient(180deg, #8a2a22, #5a1812); border-color: #e07a6a; }
+
+/* ================================================================ jogos salvos responsivo */
+.menu-card.mc-slots { width: min(780px, 100%); padding: clamp(16px, 3vw, 26px) clamp(14px, 3.4vw, 30px) clamp(14px, 2.6vw, 22px); }
+.mc-slots .mc-h { font-size: clamp(18px, 2.6vw, 24px); }
+.slotrow { gap: clamp(8px, 1.4vw, 12px); padding: clamp(7px, 1.2vw, 10px) clamp(8px, 1.4vw, 12px); }
+.sr-info { min-width: 0; }
+.sr-info b { font-size: clamp(14px, 1.9vw, 16.5px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-info small { display: block; margin-top: 2px; text-wrap: pretty; }
+.sr-acts { flex-wrap: wrap; justify-content: flex-end; }
+.menu-card .sr-acts button { white-space: nowrap; }
+.mc-slots .mc-btns.row button { padding: 10px 16px; }
+
+/* telas estreitas: os botões descem para baixo do nome */
+@media (max-width: 620px) {
+  .slotrow { grid-template-columns: 30px 1fr; grid-template-areas: "n info" "acts acts"; row-gap: 8px; }
+  .slotrow .sr-n { grid-area: n; align-self: start; }
+  .slotrow .sr-info { grid-area: info; }
+  .slotrow .sr-acts { grid-area: acts; justify-content: stretch; }
+  .slotrow .sr-acts button { flex: 1 1 auto; }
+  .slotrow .sr-acts button.sr-del { flex: 0 0 auto; }
+  .slotrow.empty { grid-template-columns: 30px 1fr auto; grid-template-areas: "n info acts"; }
+  .slotrow.empty .sr-acts button { flex: 0 0 auto; }
+}
+
+/* celular e tablet deitados: tudo mais baixo para caber sem encolher */
+@media (max-height: 560px) and (orientation: landscape) {
+  .menu-wrap.compact { gap: 6px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  .menu-wrap.compact .menu-title h1 { font-size: clamp(24px, min(4.4vw, 9vh), 44px); }
+  .menu-card.mc-slots { width: min(760px, 100%); padding: 10px 16px 10px; }
+  .mc-slots .mc-h { font-size: 17px; margin: 0 0 8px; }
+  .mc-slots .slotlist { gap: 6px; }
+  .mc-slots .slotrow { padding: 6px 10px; gap: 10px; grid-template-columns: 26px 1fr auto; }
+  .mc-slots .sr-n { width: 26px; height: 26px; font-size: 13px; }
+  .mc-slots .sr-info b { font-size: 14px; }
+  .mc-slots .sr-info small { font-size: 11px; line-height: 1.3; }
+  .menu-card .sr-acts button { padding: 6px 10px; font-size: 12px; }
+  .menu-card .sr-acts button.sr-del { padding: 5px 7px; }
+  .menu-card .sr-acts button.sr-del .ico { width: 15px; height: 15px; }
+  .mc-slots .mc-note { display: none; }
+  .mc-slots .mc-btns.row { margin-top: 8px; }
+  .mc-slots .mc-btns.row button { padding: 7px 14px; font-size: 14px; }
+}
+@media (max-width: 620px) {
+  .slotrow .sr-acts { flex-wrap: nowrap; gap: 5px; }
+  .menu-card .slotrow .sr-acts button { padding: 7px 6px; font-size: 12px; min-width: 0; }
+}
+@media (max-width: 620px) and (max-height: 560px) and (orientation: landscape) {
+  .mc-slots .slotrow { row-gap: 5px; }
+  .menu-card .slotrow .sr-acts button { padding: 5px 6px; }
+  .menu-wrap.compact .menu-title h4 { display: none; }
+}
+/* deitado e estreito: botões na mesma linha do nome (empilhar só com o aparelho em pé) */
+@media (max-width: 620px) and (orientation: landscape) {
+  .mc-slots .slotrow, .mc-slots .slotrow.empty { grid-template-columns: 24px 1fr auto; grid-template-areas: "n info acts"; }
+  .mc-slots .slotrow .sr-n { align-self: center; width: 24px; height: 24px; }
+  .mc-slots .slotrow .sr-acts { flex-wrap: nowrap; }
+  .menu-card .slotrow .sr-acts button { flex: 0 0 auto; padding: 5px 7px; font-size: 11.5px; }
+  .mc-slots .sr-info small { font-size: 10.5px; }
+  .menu-wrap.compact .menu-title h1 { font-size: 26px; }
+}
+@media (min-width: 1200px) { .menu-card.mc-slots { width: 900px; } }
+
+/* ================================================================ criar herói responsivo (mesmo padrão dos jogos salvos) */
+.menu-card.mc-create { width: min(1180px, 100%); padding: clamp(16px, 2.6vw, 26px) clamp(14px, 3vw, 30px) clamp(14px, 2.4vw, 22px); }
+.mc-create .mc-h { font-size: clamp(18px, 2.6vw, 24px); }
+
+/* celular e tablet deitados: sem o título do jogo (nas duas janelas), tudo compacto e em uma tela só */
+@media (max-height: 700px) and (orientation: landscape) {
+  .menu-wrap.compact .menu-title { display: none; }
+  .menu-wrap.compact { justify-content: center; }
+  .menu-card.mc-create { width: min(980px, 100%); padding: 10px 14px 10px; }
+  .mc-create .mc-h { font-size: 17px; margin: 0 0 8px; }
+  .cr3 { grid-template-columns: clamp(104px, 17vw, 170px) 1fr 1fr; gap: 8px; }
+  .cr3 .cr-prev { padding: 6px 4px; }
+  .cr3 .cr-prev canvas { width: clamp(84px, 14vw, 140px); height: auto; aspect-ratio: 220 / 260; }
+  .cr-tag { font-size: 13px; margin-top: 2px; }
+  .cr3 .cr-note { font-size: 10.5px; line-height: 1.3; }
+  .cr-col { gap: 6px; padding: 8px 10px; }
+  .cr-sec { font-size: 11px; padding-bottom: 4px; }
+  /* cada opção numa linha: nome à esquerda, escolha à direita */
+  .cr3 .cr-row { display: grid; grid-template-columns: minmax(58px, 30%) 1fr; align-items: center; column-gap: 8px; }
+  .cr3 .cr-row > label { margin: 0; font-size: 11.5px; line-height: 1.2; }
+  .cr3 .cr-row > label b { float: none; display: block; font-size: 11px; }
+  .cr3 .cr-row .cr-diff { grid-column: 1 / -1; min-height: 0; margin-top: 3px; font-size: 10.5px; line-height: 1.3; }
+  .cr-names { gap: 6px; }
+  .cr-names label { margin: 0; font-size: 11px; }
+  .cr-names input { padding: 5px 8px; font-size: 13px; margin-top: 2px; }
+  .menu-card .cr3 .seg button { font-size: 11px; padding: 5px 2px; }
+  .menu-card .cr3 .sw { width: 20px; height: 20px; }
+  .cr3 .swatches { gap: 5px; }
+  .cr3 .picker button { width: 24px; height: 24px; font-size: 15px; }
+  .cr3 .picker b { min-width: 0; font-size: 12px; }
+  .mc-create .mc-btns.row { margin-top: 8px; }
+  .mc-create .mc-btns.row button { font-size: 14px; padding: 8px 12px; }
+}
+/* jogos salvos sem o título também até 700px de altura deitado (mesmo padrão do criar herói) */
+@media (max-height: 700px) and (orientation: landscape) {
+  .menu-wrap.compact .menu-title { display: none; }
+}
+/* telas muito baixas: nome e sobrenome com o texto dentro do campo, sem as descrições longas */
+@media (max-height: 420px) and (orientation: landscape) {
+  .cr-names label > span { display: none; }
+  .cr3 .cr-row .cr-diff, .cr3 .cr-note { display: none; }
+  .cr-col { gap: 5px; padding: 6px 9px; }
+  .mc-create .mc-h { font-size: 15px; margin-bottom: 6px; }
+  .menu-card.mc-create { padding: 8px 12px; }
+  .mc-create .mc-btns.row { margin-top: 6px; }
+  .mc-create .mc-btns.row button { padding: 6px 12px; font-size: 13px; }
+  .menu-card .cr3 .sw { width: 18px; height: 18px; }
+  .cr3 .swatches { gap: 4px; }
+}
+/* criar herói deitado: botões sempre numa linha; em telas estreitas os espaços mostram só o número (ponto = ocupado) */
+@media (max-height: 700px) and (orientation: landscape) {
+  .menu-card .cr3 .seg button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cr3 .cr-row { grid-template-columns: minmax(50px, 27%) 1fr; }
+}
+@media (max-height: 700px) and (max-width: 900px) and (orientation: landscape) {
+  .cr3 .sl-st { display: none; }
+  .menu-card .cr3 .seg button.occ { position: relative; }
+  .menu-card .cr3 .seg button.occ::after { content: ''; position: absolute; top: 3px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: #e07a6a; box-shadow: 0 0 4px #e07a6a; }
+}
+@media (max-height: 700px) and (orientation: landscape) {
+  .cr3 { grid-template-columns: clamp(92px, 14vw, 160px) 1.32fr 1fr; }
+  .menu-card .cr3 .seg button { letter-spacing: 0; padding: 5px 2px; text-overflow: clip; }
+  .cr3 .cr-col:nth-child(2) .cr-row { grid-template-columns: minmax(50px, 24%) 1fr; }
+}
+@media (max-height: 420px) and (orientation: landscape) {
+  .menu-card .cr3 .seg button { font-size: 10.5px; }
+}
+@media (max-height: 700px) and (orientation: landscape) {
+  .cr-tag { font-size: clamp(10px, 1.6vw, 14px); letter-spacing: 0; overflow-wrap: break-word; padding: 0 2px; }
+}
+
+/* ================================================================ janelas do menu com tamanho fixo (vem da tela, não do conteúdo) */
+.menu-card { box-sizing: border-box; }
+.menu-card.mc-create, .menu-card.mc-slots { display: flex; flex-direction: column; }
+.menu-card.mc-create > .mc-h, .menu-card.mc-slots > .mc-h, .menu-card.mc-create > .mc-btns, .menu-card.mc-slots > .mc-btns, .menu-card.mc-slots > .mc-note { flex: none; }
+/* o conteúdo ocupa o espaço que sobra; se um dia não couber, rola por dentro sem crescer a janela */
+.mc-create .cr3 { flex: 1 1 auto; min-height: 0; }
+.mc-create .cr3 > .cr-col { min-height: 0; overflow-y: auto; }
+.mc-slots .slotlist { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+/* barba de uma heroína: a linha continua ocupando o lugar, só fica invisível */
+.cr-row.cr-off { display: none; }
+.menu-card.measuring .cr-row.cr-off { display: revert; visibility: hidden; }
+/* computador com janela baixa (ex.: notebook com a barra do navegador): o título continua nas duas janelas.
+   Só some em celular e tablet deitados (tela estreita e baixa). */
+@media (min-width: 1101px) {
+  .menu-wrap.compact .menu-title { display: block; }
+  .menu-wrap.compact .menu-title h4 { display: block; }
+}
+@media (min-width: 1101px) and (max-height: 700px) {
+  .menu-wrap.compact { gap: 8px; }
+  .menu-wrap.compact .menu-title h1 { font-size: clamp(28px, 7vh, 46px); }
+  .menu-wrap.compact .menu-title h4 { font-size: 11px; letter-spacing: 5px; margin-top: 1px; }
+  .menu-wrap.compact .mt-line { display: block; margin-top: 2px; }
+}
+
+/* ================================================================ novo jogo e jogos salvos no mesmo estilo do menu inicial */
+.mc-intro h2.mi-lead { display: block; margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 700; color: var(--gold-hi, #ffd36b); letter-spacing: .05em; }
+.mc-head { margin-bottom: clamp(12px, 2.2vh, 20px); }
+/* linhas dos jogos salvos com o visual das opções do menu */
+.mc-slots .slotlist { gap: clamp(8px, 1.4vh, 12px); }
+.mc-slots .slotrow { grid-template-columns: 46px 1fr auto; gap: 14px; padding: 10px 14px 10px 12px; border-radius: 9px; border: 1px solid rgba(214, 174, 96, 0.55);
+  background: linear-gradient(180deg, #3b2e1f, #1f170e); box-shadow: inset 0 1px 0 rgba(255, 230, 170, 0.12), 0 2px 0 #0c0805; }
+.mc-slots .slotrow.empty { opacity: 1; background: linear-gradient(180deg, rgba(59, 46, 31, .55), rgba(31, 23, 14, .55)); border-color: rgba(214, 174, 96, 0.3); }
+.mc-slots .sr-n { width: 46px; height: 46px; border-radius: 50%; font-family: 'Cinzel', Georgia, serif; font-size: 19px; font-weight: 700;
+  background: radial-gradient(circle at 40% 35%, #fff6d0, #e8b040); border: 1px solid #fff0b0; color: #3a2408; }
+.mc-slots .slotrow.empty .sr-n { background: radial-gradient(circle at 40% 35%, rgba(255, 220, 140, .25), rgba(0, 0, 0, .35)); border: 1px solid rgba(214, 174, 96, .55); color: #d6ae60; }
+.mc-slots .sr-info b { font-family: 'Cinzel', Georgia, serif; font-size: 17px; letter-spacing: .5px; color: #f1d79a; }
+.mc-slots .sr-info small { font-family: var(--ui-font); font-size: 12px; color: #c9b48a; }
+.mc-slots .slotrow.empty .sr-info b { color: #c9b48a; }
+/* colunas do criar herói com o mesmo acabamento */
+.mc-create .cr3 > .cr-prev, .mc-create .cr-col { border-radius: 9px; border: 1px solid rgba(214, 174, 96, 0.45);
+  background: linear-gradient(180deg, rgba(59, 46, 31, .7), rgba(31, 23, 14, .75)); box-shadow: inset 0 1px 0 rgba(255, 230, 170, 0.1); }
+.mc-create .cr-sec { font-size: 12.5px; }
+
+/* celular e tablet deitados: as duas janelas ocupam quase a tela toda, com o mesmo tamanho de letra do menu */
+@media (max-width: 1100px) and (max-height: 700px) and (orientation: landscape) {
+  .menu-wrap.compact { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
+  .menu-card.mc-create, .menu-card.mc-slots { width: 100%; }
+  .mc-create .mc-orn, .mc-slots .mc-orn { display: flex; margin: -4px 0 4px; font-size: 13px; }
+  .mc-head { margin-bottom: 8px; }
+  .mc-head h2.mi-lead { font-size: clamp(14.5px, 2.3vw, 18px); }
+  .mc-head .mi-lead + span { font-size: clamp(12px, 1.8vw, 14px); margin-top: 2px; }
+  .mc-slots .slotrow { grid-template-columns: 32px 1fr auto; gap: 10px; padding: 7px 10px 7px 8px; }
+  .mc-slots .sr-n { width: 32px; height: 32px; font-size: 14px; }
+  .mc-slots .sr-info b { font-size: clamp(13px, 2vw, 16px); }
+  .mc-slots .sr-info small { font-size: clamp(10.5px, 1.5vw, 12px); }
+}
+@media (max-width: 1100px) and (max-height: 420px) and (orientation: landscape) {
+  .mc-create .mc-orn, .mc-slots .mc-orn { display: none; }
+  .mc-head .mi-lead + span { display: none; }
+  .mc-head { margin-bottom: 6px; }
+}
+@media (max-width: 1100px) and (max-height: 700px) and (orientation: landscape) {
+  /* com a janela mais alta, as linhas dos jogos crescem um pouco para preencher */
+  .mc-slots .slotlist > .slotrow { flex: 1 1 auto; max-height: 92px; }
+}
+@media (max-width: 1100px) and (max-height: 700px) and (orientation: landscape) {
+  /* janela alta: as opções se espalham pela coluna em vez de ficarem amontoadas em cima */
+  .mc-create .cr-col { justify-content: space-evenly; }
+}
+/* celular grande e tablet deitados com mais altura: letras e controles maiores, linhas agrupadas */
+@media (max-width: 1100px) and (min-height: 481px) and (max-height: 700px) and (orientation: landscape) {
+  .mc-create .cr-col { justify-content: flex-start; gap: clamp(10px, 2.6vh, 18px); padding: 12px 14px; }
+  .mc-create .cr-sec { font-size: 13px; padding-bottom: 6px; }
+  .cr3 .cr-row > label { font-size: 13px; }
+  .cr3 .cr-row > label b { font-size: 12.5px; }
+  .cr-names label { font-size: 12.5px; }
+  .cr-names input { padding: 7px 10px; font-size: 14.5px; }
+  .menu-card .cr3 .seg button { font-size: 12.5px; padding: 7px 4px; }
+  .menu-card .cr3 .sw { width: 26px; height: 26px; }
+  .cr3 .swatches { gap: 7px; }
+  .cr3 .picker button { width: 28px; height: 28px; font-size: 17px; }
+  .cr3 .picker b { font-size: 13.5px; }
+  .cr3 .cr-row .cr-diff { font-size: 12px; }
+  .cr-tag { font-size: 16px; }
+  .cr3 .cr-note { font-size: 12px; }
+  .mc-create .mc-btns.row button { font-size: 16px; padding: 11px 14px; }
+}
+@media (max-width: 1100px) and (min-height: 481px) and (max-height: 700px) and (orientation: landscape) {
+  .mc-slots .slotlist > .slotrow { max-height: none; }
+  .mc-slots .slotrow { grid-template-columns: 42px 1fr auto; gap: 14px; padding: 10px 14px 10px 12px; }
+  .mc-slots .sr-n { width: 42px; height: 42px; font-size: 18px; }
+  .mc-slots .sr-info b { font-size: 17px; }
+  .mc-slots .sr-info small { font-size: 12.5px; }
+  .menu-card .sr-acts button { padding: 8px 12px; font-size: 13px; }
+  .mc-slots .mc-btns.row button { padding: 11px 14px; font-size: 16px; }
+}
+
+/* ================================================================ computador: título igual (tamanho e posição) nas três janelas do menu */
+@media (min-width: 1101px) {
+  .menu-wrap, .menu-wrap.compact { justify-content: flex-start; gap: clamp(10px, 2vh, 20px); padding-top: clamp(14px, 3.5vh, 40px); }
+  .menu-wrap .menu-title h1, .menu-wrap.compact .menu-title h1 { font-size: clamp(40px, min(6.4vw, 10.5vh), 100px); letter-spacing: clamp(3px, .4vw, 6px); line-height: 1.05; }
+  .menu-wrap .menu-title h4, .menu-wrap.compact .menu-title h4 { display: block; font-size: clamp(13px, min(1.5vw, 2.6vh), 22px); letter-spacing: clamp(5px, .6vw, 8px); margin-top: clamp(2px, .6vh, 6px); }
+  .menu-wrap .mt-line, .menu-wrap.compact .mt-line { display: block; width: 70%; margin-top: clamp(3px, .6vh, 6px); }
+  /* o cartão fica centrado no espaço abaixo do título */
+  .menu-wrap > .menu-card { margin-block: auto; }
+  /* novo jogo e jogos salvos com a mesma largura */
+  .menu-card.mc-create, .menu-card.mc-slots { width: min(1060px, 100%); }
+}
+/* cores da túnica e da calça (10): se não couberem numa linha, quebram de 5 em 5 */
+.cr3 .swatches.sw10 { display: grid; grid-template-columns: repeat(10, max-content); }
+.cr3 .swatches.sw10.wrap5 { grid-template-columns: repeat(5, max-content); }
+.cr3 .cr-row > .swatches.sw10 { min-width: 0; overflow: hidden; }
+.mc-create .cr3 > .cr-col { min-width: 0; }
+/* espaço para o anel da cor escolhida não ser cortado */
+.cr3 .cr-row > .swatches { overflow: visible; padding: 4px; margin: -4px; }
+.cr3 .cr-row > .swatches.sw10 { overflow: visible; }
+/* telas bem baixas: título da janela com as linhas douradas dos lados (no lugar do ornamento de cima) */
+@media (max-width: 1100px) and (max-height: 480px) and (orientation: landscape) {
+  .mc-create .mc-orn, .mc-slots .mc-orn { display: none; }
+  .mc-head { display: flex; align-items: center; gap: 12px; margin: 2px 0 8px; }
+  .mc-head::before, .mc-head::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(242, 196, 90, .8)); }
+  .mc-head::after { background: linear-gradient(90deg, rgba(242, 196, 90, .8), transparent); }
+  .mc-head h2.mi-lead { flex: none; font-size: clamp(15px, 2.6vw, 18px); letter-spacing: .08em; }
+  .mc-head h2.mi-lead::before, .mc-head h2.mi-lead::after { content: '⚜'; font-size: .7em; margin: 0 10px; vertical-align: .15em; color: #f2c45a; }
+  .mc-head .mi-lead + span { display: none; }
+  .menu-card.mc-create, .menu-card.mc-slots { padding-top: 12px; }
+}
+@media (max-width: 1100px) and (max-height: 480px) and (orientation: landscape) {
+  .mc-head h2.mi-lead::before, .mc-head h2.mi-lead::after { font-family: "Segoe UI Symbol", "Noto Sans Symbols", "DejaVu Sans", serif; font-weight: 400; }
+}
+
+/* ================================================================ computador: três janelas da mesma altura, título + janela centralizados */
+@media (min-width: 1101px) {
+  .menu-wrap, .menu-wrap.compact { justify-content: center; padding-top: 16px; gap: clamp(14px, 3vh, 30px); }
+  .menu-wrap > .menu-card { margin-block: 0; }
+  .menu-card.mc-create, .menu-card.mc-slots { width: min(980px, 100%); }
+  .menu-card.mc-main { width: 560px; display: flex; flex-direction: column; justify-content: center; }
+  .menu-card.mc-main > .mc-foot { margin-top: auto; }
+  .menu-card.mc-main > .mc-orn { margin-top: auto; }
+  /* o conteúdo preenche a altura: colunas esticam, linhas dos jogos crescem um pouco */
+  .mc-create .cr-col { justify-content: space-evenly; overflow: visible; }
+  .mc-slots .slotlist > .slotrow { flex: 1 1 auto; max-height: 96px; }
+  .mc-slots .slotlist { justify-content: flex-start; }
+}
+@media (min-width: 1101px) {
+  .cr3 { grid-template-columns: 220px 1.15fr 1fr; gap: 14px; }
+  .cr3 .cr-prev canvas { width: 176px; height: 208px; }
+  .cr3 .cr-row { display: grid; grid-template-columns: 108px 1fr; align-items: center; column-gap: 12px; }
+  .cr3 .cr-row > label { margin: 0; font-size: 13px; }
+  .cr3 .cr-row > label b { float: none; display: block; font-size: 12.5px; }
+  .cr3 .cr-row .cr-diff { grid-column: 1 / -1; min-height: 0; margin-top: 4px; }
+  .mc-create .cr-col { gap: 10px; padding: 12px 16px; }
+  .mc-create .mc-head { margin-bottom: 12px; }
+}
+@media (min-width: 1101px) {
+  .cr3 { grid-template-columns: 210px 1fr 1.12fr; }
+  .cr3 .cr-row { grid-template-columns: 96px 1fr; }
+  .menu-card .cr3 .sw { width: 24px; height: 24px; }
+  .cr3 .swatches { gap: 6px; }
+}
+@media (min-width: 1101px) {
+  /* menu inicial na mesma altura: o espaço se divide entre o cabeçalho, os botões e o rodapé */
+  .menu-card.mc-main { justify-content: space-between; }
+  .menu-card.mc-main > .mc-orn { margin-top: 0; }
+  .menu-card.mc-main .mc-opts { flex: 1; justify-content: center; gap: 14px; }
+  .menu-card.mc-main .mc-intro { margin-bottom: 0; }
+  .menu-card.mc-main button.mc-opt { padding-top: 12px; padding-bottom: 12px; }
+  /* criar herói: identidade mais larga, nome e sobrenome com o texto dentro do campo */
+  .cr3 { grid-template-columns: 200px 1.12fr 1fr; gap: 12px; }
+  .cr3 .cr-row { grid-template-columns: 88px 1fr; column-gap: 10px; }
+  .cr-names label > span { display: none; }
+  .cr-names input { margin-top: 0; }
+  .menu-card .cr3 .seg button { white-space: nowrap; font-size: 12px; padding: 7px 4px; }
+  .cr3 .cr-prev canvas { width: 160px; height: 189px; }
+  .mc-create .cr-col { gap: 8px; padding: 10px 14px; }
+  .mc-create .mc-head { margin-bottom: 10px; }
+  .mc-create .mc-btns.row { margin-top: 12px; }
+  .mc-create .mc-btns.row button { padding: 10px; }
+  .mc-slots .slotlist > .slotrow { max-height: 84px; }
+}
+.cr3 .cr-row.cr-off { display: none; }
+.menu-card.measuring .cr3 .cr-row.cr-off { display: grid; visibility: hidden; }
+@media (min-width: 1101px) {
+  /* menu inicial na altura do conteúdo: espaçamento normal entre cabeçalho, botões e versão */
+  .menu-card.mc-main { justify-content: flex-start; }
+  .menu-card.mc-main .mc-intro { margin-bottom: 20px; }
+  .menu-card.mc-main .mc-opts { flex: none; gap: 12px; }
+  .menu-card.mc-main > .mc-foot { margin-top: 16px; }
+}

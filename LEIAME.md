@@ -4,7 +4,7 @@ RPG medieval 2D (visão de cima, estilo pixel art) feito em HTML5 Canvas e JavaS
 
 ## Como jogar
 
-Dê dois cliques em `index.html`. O jogo abre no Chrome ou no Edge e funciona offline. O jogo salvo fica guardado no próprio navegador (localStorage).
+Dê dois cliques em `index.html`. O jogo abre no Chrome ou no Edge e funciona offline. O jogo salvo fica guardado no próprio navegador (localStorage), e o jogo pede ao navegador para tratar esses dados como permanentes, para não serem apagados sozinhos.
 
 ## Controles
 

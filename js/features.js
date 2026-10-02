@@ -235,8 +235,20 @@ const Saves = {
   write(n, data) {
     const packed = 'LZ1:' + LZ.compress(JSON.stringify(data));
     localStorage.setItem(this.key(n), packed);
+    this.persist();
     try { localStorage.setItem(this.metaKey(n), JSON.stringify(this.infoOf(data, n))); } catch (e) { /* o resumo é opcional */ }
     return packed.length;
+  },
+  // pede ao navegador para guardar os jogos como dados permanentes (não apagar sozinho quando falta espaço
+  // ou o site fica um tempo sem ser aberto). Uma vez por sessão, quando há um jogo para guardar.
+  persist() {
+    if (this.persistAsked) return;
+    this.persistAsked = true;
+    try {
+      const st = navigator.storage;
+      if (!st || !st.persist) return;
+      (st.persisted ? st.persisted() : Promise.resolve(false)).then(ok => ok ? true : st.persist()).then(ok => { this.persistent = !!ok; }).catch(() => {});
+    } catch (e) { /* navegador sem esse recurso: os jogos continuam salvos normalmente */ }
   },
   remove(n) { localStorage.removeItem(this.key(n)); localStorage.removeItem(this.metaKey(n)); },
   firstFree() { const l = this.list(); const i = l.findIndex(x => !x); return i < 0 ? 0 : i + 1; },
