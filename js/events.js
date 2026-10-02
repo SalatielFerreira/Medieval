@@ -232,6 +232,15 @@ const Routine = {
   occ: new Set(),
   phase() { const h = Game.hour(); return h >= 21 || h < 6 ? 'night' : h >= 17 ? 'evening' : 'day'; },
   door(s) { return { x: (s.x + s.w / 2) * TILE, y: (s.y + s.h + 0.7) * TILE }; },
+  // anda até um lugar; se ficar 4 s sem avançar (preso atrás de casas), contorna e aparece perto do destino
+  go(e, tx, ty, sp, dt) {
+    const d = U.dist(e.x, e.y, tx, ty);
+    if (!e.goT || e.goT.x !== tx || e.goT.y !== ty) e.goT = { x: tx, y: ty, d, t: 0 };
+    const g = e.goT;
+    g.t += dt;
+    if (g.t > 4) { if (g.d - d < 24) { const s = freeSpotNear(tx, ty, 40); e.x = s.x; e.y = s.y; } g.d = U.dist(e.x, e.y, tx, ty); g.t = 0; }
+    e.moveToward(tx, ty, sp, dt);
+  },
   // ao aparecer à noite, a pessoa já está dormindo em casa
   placed(e) {
     if (this.phase() === 'night' && e.house && !G.dungeon) { const d = this.door(e.house); e.x = d.x; e.y = d.y; e.sleeping = true; }
@@ -248,7 +257,13 @@ const Routine = {
     if (G.dungeon || e.vi === undefined || !e.npc) return false;
     const ph = this.phase();
     if (e.sleeping) { if (ph === 'night' && e.house && !e.house.removed) return true; e.sleeping = false; return false; }
-    if (ph === 'day') { e.nightT = 0; return false; }
+    if (ph === 'day') {
+      e.nightT = 0;
+      // quem está construindo a casa da família trabalha na obra
+      const b = e.npc.age >= 16 && !SHOP_RANKS.includes(e.npc.rank) && e.npc.rank !== 'priest' ? Homes.buildOf(e.npc) : null;
+      return b ? Homes.work(e, b, dt, sp) : false;
+    }
+    e.house = Homes.houseOf(e.npc); // a casa pode ter ficado pronta (ou ter sido demolida)
     // larga o trabalho: o que estava carregando vai para a vila
     if (e.work && e.work.mode !== 'idle') { if (e.work.carry) NPCWork.deposit(e, e.work); e.work.mode = 'idle'; e.work.t = 5; }
     const tg = ph === 'night' ? (e.house && !e.house.removed ? this.door(e.house) : null) : this.eveningTarget(e);
@@ -257,7 +272,7 @@ const Routine = {
     // quem ficar preso no caminho também acaba entrando em casa
     if (ph === 'night') e.nightT = (e.nightT || 0) + dt;
     if (ph === 'night' && (d < 16 || e.nightT > 25)) { e.sleeping = true; e.x = tg.x; e.y = tg.y; return true; }
-    if (d > 44) { e.moveToward(tg.x, tg.y, Math.max(sp, 34), dt); return true; }
+    if (d > 44) { this.go(e, tg.x, tg.y, Math.max(sp, 34), dt); return true; }
     // chegou: fica conversando por ali
     const r = e.rt || (e.rt = { t: 0, x: tg.x, y: tg.y });
     r.t -= dt;

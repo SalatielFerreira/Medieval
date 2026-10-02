@@ -292,6 +292,7 @@ const CIV_STRUCTS = {
   shrine: { name: 'Santuário', blocks: true },
   arena:  { name: 'Arena',    blocks: false },
   vhouse: { name: 'Casa',     blocks: true },
+  vbuild: { name: 'Casa em obras', blocks: true },
   store:  { name: 'Armazém',  blocks: true },
   smith:  { name: 'Ferreiro', blocks: true },
   lumber: { name: 'Madeireira', blocks: true },

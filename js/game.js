@@ -163,6 +163,7 @@ const Game = {
     G.surname = (opts.surname || '').trim() || Families.newSurname();
     Arena.init(); Faith.init();
     Families.init(); Families.ensurePlayer(); Faith.ensurePriests();
+    G.homes = {}; G.npcHouses = []; G.npcHouseSeq = 0; Homes.touch(); Homes.dayTick(false);
     G.title = { lvl: -1, civ: -1 }; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
     G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; Urban.stop(); WorldEvents.reset();
     const d = World.start.door;
@@ -189,7 +190,7 @@ const Game = {
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
-      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [],
+      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
@@ -275,7 +276,9 @@ const Game = {
     G.stats = s.stats || {}; G.ach = s.ach || {}; G.diary = s.diary || []; G.dynasty = s.dynasty || []; G.diff = s.diff || 'normal';
     (s.vlife || []).forEach((l, i) => { if (World.villages[i]) Object.assign(World.villages[i], l); });
     Towns.init(); Towns.applyAll();
-    Urban.restore(); Families.refresh();
+    G.homes = s.homes || {}; G.npcHouses = s.npcHouses || []; G.npcHouseSeq = s.npcHouseSeq || 0;
+    Homes.restore();
+    Urban.restore(); Families.refresh(); Homes.dayTick(false);
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
     UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
@@ -1160,10 +1163,9 @@ const Game = {
         return this.spawn('guard', s.x, s.y, { civ: v.raid.by, leash: 14, tag: 'raid' + vi, archer: Math.random() < 0.3 });
       });
       // cada morador tem a sua casa (mendigos dormem na praça); de dia fica no trabalho ou perto de casa
-      const hs = World.structs.filter(h => h.type === 'vhouse' && h.village === vi && !h.hidden && !h.ruined);
       for (const p of People.residents(vi)) {
         if (G.spawned.has(p.id)) continue;
-        const h = hs.length && p.rank !== 'beggar' ? hs[(typeof p.id === 'number' ? p.id : String(p.id).length * 7) % hs.length] : null;
+        const h = Homes.houseOf(p); // a casa da família (pode ainda não ter: aí fica pela praça)
         const work = { merchant: v.store, smith: v.smith, lumber: v.lumber, mason: v.quarry, innkeeper: v.tavern, priest: v.chapel }[p.rank];
         let e;
         if (work && !work.removed && p.age >= 14) e = spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ);
@@ -1374,7 +1376,7 @@ const Game = {
     for (const camp of World.camps) if (camp.cleared && G.day >= camp.respawnDay) { camp.cleared = false; camp.left = 4; }
     // a vida (envelhecer, casar, ter filhos) anda um ano a cada mês do calendário
     if (Calendar.of(G.day).day === 1 && G.day > 1) People.tickYear();
-    Arena.dayTick(); Progress.dayTick(); Guards.dayTick();
+    Arena.dayTick(); Progress.dayTick(); Guards.dayTick(); Homes.dayTick(true);
     G.econT = (G.econT || 0) + 1;
     if (G.econT >= ECON_DAYS) { G.econT = 0; this.econTick(); }
     if (G.family.dueDay && G.day >= G.family.dueDay) { G.family.dueDay = 0; setTimeout(() => UI.showBirth(), 50); }

@@ -87,6 +87,10 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Cada família tem sua casa:** o casal e os filhos (ou o adulto solteiro) dormem na própria casa. Quem não tem ocupa uma livre ou constrói uma nova perto da vila: a obra leva 3 dias, aparece com andaime e barra de progresso, e os moradores trabalham nela de dia. As casas novas ficam no jogo salvo.
+- **Avisos em janelinhas:** as mensagens aparecem em janelinhas flutuantes no tema do jogo, com ícone, botão de fechar e uma barrinha do tempo; avisos repetidos mostram ×2, ×3...
+- **Relógio alinhado:** data, estação, ano e hora numa linha só.
+
 - **Economia no ritmo de antes:** impostos, soldos, salários, renda dos reinos, guerras, revoltas e colheitas andam a cada 5 dias (5 minutos reais, como era antes do calendário novo).
 - **Resumo das contas:** em vez de uma mensagem a cada minuto, aparece um resumo a cada 5 dias (ouro e itens). Os detalhes ficam no Diário → Contas. Avisos importantes continuam aparecendo na hora.
 - **Vida em ritmo próprio:** as pessoas envelhecem, casam e têm filhos a cada mês do calendário (1 ano de vida por mês), então as famílias e a dinastia continuam vivas.
@@ -185,6 +189,8 @@ js/progress.js    conquistas, estatísticas, diário, dinastia e profissões
 js/families.js    famílias, sobrenomes, chefes de vila, revoltas, vilas fundadas e empreendimentos com funcionários
 js/court.js       títulos de nobreza, conselho real, conspirações, casamentos arranjados e rivalidades
 js/market.js      preços dinâmicos e caravanas do jogador
+js/events.js      eventos no mundo e rotina dos moradores
+js/homes.js       casas dos moradores (cada família constrói a sua)
 js/urban.js       estradas, chefia das vilas e obras de chefes e reis (mover, criar e demolir imóveis)
 js/siege.js       portões, aríetes, catapultas e ataques inimigos às suas terras
 js/arena.js       arenas, duelos, justas, Grande Torneio e apostas

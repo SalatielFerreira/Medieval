@@ -183,6 +183,7 @@ const Urban = {
   },
   // anota a mudança para o jogo salvo (construções do jogador e das famílias já são salvas pela posição)
   record(op, s, ox, oy) {
+    if (s.npcBuilt) { if (op === 'move') Homes.moved(s); else Homes.removed(s); return; }
     if (s.built || s.fam !== undefined) return;
     const E = this.E();
     if (s.added) {

@@ -87,7 +87,7 @@ const UI = {
     const clock = document.getElementById('clock');
     clock.classList.add('glass');
     clock.innerHTML = `
-      <div class="clk-top"><span id="clkIcon"></span><b id="clkDay">1 Mar</b><small id="clkPhase"></small><span class="clk-time" id="clkTime">06:00</span></div>
+      <div class="clk-top"><span class="clk-ic" id="clkIcon"></span><span class="clk-txt"><b id="clkDay">1 Mar</b><small id="clkPhase"></small></span><span class="clk-time" id="clkTime">06:00</span></div>
       <div class="clk-bar"><i id="clkProg"></i></div>
       <div class="clk-zone" id="clkZone"></div>`;
     const quick = document.getElementById('quick');
@@ -173,15 +173,35 @@ const UI = {
   isOpen() { return !!this.cur; },
   refresh() { if (this.cur) this[this.cur.fn](...this.cur.args); },
 
+  // avisos em janelinhas flutuantes no canto: ícone, texto, fechar e uma barrinha do tempo restante
   msg(text, cls) {
+    const last = this.log.lastElementChild;
+    if (last && last.dataset.t === text && !last.classList.contains('out')) {
+      const n = (+last.dataset.n || 1) + 1; last.dataset.n = n; last.querySelector('.tc-n').textContent = '×' + n;
+      this.toastLife(last); return;
+    }
+    const m = text.match(/^((?:\p{Extended_Pictographic}|️|‍)+)\s*/u);
     const d = document.createElement('div');
-    d.className = 'm ' + (cls || '');
-    d.textContent = text;
+    d.className = 'toast ' + (cls || '');
+    d.dataset.t = text; d.dataset.cls = cls || '';
+    d.innerHTML = '<span class="tc-ic"></span><span class="tc-tx"></span><span class="tc-n"></span><button class="tc-x" title="Fechar">✕</button><i class="tc-life"></i>';
+    d.querySelector('.tc-ic').textContent = m ? m[1] : cls === 'bad' ? '⚠️' : cls === 'gold' ? '✨' : '📜';
+    d.querySelector('.tc-tx').textContent = m ? text.slice(m[0].length) : text;
+    d.querySelector('.tc-x').addEventListener('click', ev => { ev.stopPropagation(); this.toastOut(d); });
+    d.addEventListener('mouseenter', () => { clearTimeout(d._t); d.classList.add('hold'); });
+    d.addEventListener('mouseleave', () => { d.classList.remove('hold'); this.toastLife(d); });
     this.log.appendChild(d);
-    while (this.log.children.length > 7) this.log.removeChild(this.log.firstChild);
-    setTimeout(() => d.classList.add('fade'), 7000);
-    setTimeout(() => d.remove(), 8500);
+    const live = [...this.log.children].filter(x => !x.classList.contains('out'));
+    while (live.length > 5) this.toastOut(live.shift());
+    this.toastLife(d);
   },
+  toastLife(d) {
+    clearTimeout(d._t);
+    const ms = d.dataset.cls === 'bad' ? 9000 : 6500, bar = d.querySelector('.tc-life');
+    bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = `tclife ${ms}ms linear forwards`;
+    d._t = setTimeout(() => this.toastOut(d), ms);
+  },
+  toastOut(d) { if (!d || d.classList.contains('out')) return; clearTimeout(d._t); d.classList.add('out'); setTimeout(() => d.remove(), 320); },
   banner(text) {
     this.bannerEl.textContent = text;
     this.bannerEl.classList.remove('show'); void this.bannerEl.offsetWidth;
@@ -1136,7 +1156,7 @@ const UI = {
           <div class="tk-tags">${Families.of(p) ? `<span class="famchip" data-act="famview" data-f="${p.fam}" style="border-color:${Families.of(p).color}">🏛️ ${UI.esc(Families.name(Families.of(p)))}</span>` : ''}
             ${Families.isChief(p) ? `<span class="tag">Chefe de ${UI.esc(World.villages.find(v => v.chief === p.id).name)}</span>` : ''}
             ${p.job !== undefined && p.job !== null && World.structs[p.job] ? `<span>💼 Trabalha no seu <b>${UI.esc(BUILDINGS[World.structs[p.job].type].name)}</b></span>` : ''}
-            ${p.capanga ? `<span>⭐ Nível <b>${p.clvl || 1}</b> · ${STANCES[p.stance] ? STANCES[p.stance].icon + ' ' + STANCES[p.stance].name : '⚖️ Equilibrado'}</span>` : ''}<span>Personalidade: <b>${t.name}</b></span><span>Gosta de: <b>${p.aff >= 35 || p.kin ? ITEMS[p.fav].icon + ' ' + ITEMS[p.fav].name : '???'}</b></span>
+            ${p.capanga ? `<span>⭐ Nível <b>${p.clvl || 1}</b> · ${STANCES[p.stance] ? STANCES[p.stance].icon + ' ' + STANCES[p.stance].name : '⚖️ Equilibrado'}</span>` : ''}${p.home.type === 'village' && p.age >= 16 && !p.capanga ? `<span>🏠 ${Homes.status(p)}</span>` : ''}<span>Personalidade: <b>${t.name}</b></span><span>Gosta de: <b>${p.aff >= 35 || p.kin ? ITEMS[p.fav].icon + ' ' + ITEMS[p.fav].name : '???'}</b></span>
             ${st ? `<span>⚔️ Dano <b>${st.dmg}</b> · 🛡️ Defesa <b>${st.def}</b></span>` : ''}${p.hostile ? '<span class="bad">Hostil!</span>' : ''}</div>
           ${affBar}${romBar}
           <div class="speech">“${UI.esc(text)}”</div>

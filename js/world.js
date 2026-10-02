@@ -1072,6 +1072,20 @@ const World = {
         if (!s.opened) { const gl = 0.4 + Math.sin(time * 4) * 0.25; ctx.fillStyle = `rgba(255,220,100,${gl})`; ctx.fillRect(X + 6, Y + 4, 2, 2); ctx.fillRect(X + 24, Y + 6, 2, 2); }
         break;
       }
+      case 'vbuild': {
+        // casa em obras: alicerce, paredes subindo, andaime e telhado no fim
+        const pr = s.progress || 0;
+        shadow();
+        R(4, h - 12, w - 8, 8, '#7a6a52'); R(4, h - 12, w - 8, 2, '#9a8a72');
+        const top = h - 12 - Math.round(34 * Math.min(1, pr * 1.5));
+        if (top < h - 12) { R(8, top, w - 16, h - 12 - top, '#d8c39a'); for (let k = top + 5; k < h - 12; k += 6) R(8, k, w - 16, 1, 'rgba(0,0,0,0.12)'); }
+        for (const px of [5, w / 2 - 2, w - 9]) R(px, h - 52, 4, 42, '#6b4423');
+        R(3, h - 52, w - 6, 3, '#7a5230'); R(3, h - 32, w - 6, 2, '#7a5230');
+        if (pr > 0.66) { const k = Math.min(1, (pr - 0.66) / 0.34); roof(4, 26 - 24 * k, w - 8, 24 * k, roofCol); }
+        ctx.font = '12px sans-serif'; ctx.fillText('🔨', X + w - 18, Y + 10);
+        R(6, h - 3, w - 12, 3, 'rgba(0,0,0,0.5)'); R(6, h - 3, Math.round((w - 12) * pr), 3, '#ffd54a');
+        break;
+      }
       case 'dig': {
         // monte de terra com um X marcado
         ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 26, 13, 4, 0, 0, Math.PI * 2); ctx.fill();
