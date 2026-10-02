@@ -864,6 +864,9 @@ body.small .inv3 { grid-template-columns: 1fr !important; }
 .mc-orn span { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(242, 196, 90, .8)); }
 .mc-orn span:last-child { background: linear-gradient(90deg, rgba(242, 196, 90, .8), transparent); }
 .mc-intro em { color: #ffe9b0; }
+.mc-intro span, .mc-intro strong { display: block; }
+.mc-intro strong { color: #ffe9b0; font-family: 'Cinzel', Georgia, serif; letter-spacing: .04em; }
+.mc-intro .mi-lead { font-size: 19px; color: var(--gold-hi, #ffd36b); margin-bottom: 8px; text-shadow: 0 0 12px rgba(255, 190, 80, .35); }
 .mc-opts { display: flex; flex-direction: column; gap: 10px; }
 .menu-card button.mc-opt { display: grid; grid-template-columns: 46px 1fr 18px; align-items: center; gap: 14px; text-align: left; padding: 10px 16px 10px 12px; transition: transform .12s, box-shadow .12s; }
 .menu-card button.mc-opt:hover { transform: translateX(3px); box-shadow: 0 0 0 1px #e8c06a, 0 0 22px rgba(255, 190, 80, .25); }
