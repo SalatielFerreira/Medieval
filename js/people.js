@@ -333,6 +333,7 @@ const People = {
     G.family.spouse = p.id;
     // quem casa com o herói passa a fazer parte da casa dele (e leva o sobrenome)
     if (p.surname !== G.surname) { p.maiden = p.maiden || p.surname; p.surname = G.surname; }
+    if (p.fam !== undefined && p.fam !== G.playerFam) p.maidenFam = p.fam; // a casa de onde veio vira parente da sua
     p.fam = G.playerFam;
     Progress.add('marriages'); Progress.diary(`💍 Casou-se com ${this.full(p)}.`);
     UI.banner(`💍 Você se casou com ${p.name}!`);

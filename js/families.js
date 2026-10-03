@@ -105,6 +105,7 @@ const Families = {
     const from = keepHers ? h : w, to = keepHers ? w : h;
     if (from.fam !== to.fam || from.surname !== to.surname) {
       if (from === w && !w.maiden) w.maiden = w.surname;
+      if (from === w && from.fam !== to.fam) w.maidenFam = from.fam; // a casa de onde ela veio
       from.surname = to.surname; from.fam = to.fam;
     }
   },
@@ -352,7 +353,7 @@ const Families = {
     Diplo.chronicle(`🔥 A ${this.name(f)} declarou guerra à coroa de ${Diplo.name(f.civ)}!`, true);
     UI.banner(`🔥 Revolta da ${this.name(f)}!`);
     UI.msg(mine ? `A ${this.name(f)} se revoltou contra você em ${CIV_DEFS[f.civ].short}! Vá até ${this.seatName(f)} e derrote os rebeldes, ou perderá o trono.`
-      : `A ${this.name(f)} quer tomar o trono de ${CIV_DEFS[f.civ].short}. Fale com um membro da família (ou veja em Reino → Famílias) para escolher um lado.`, 'bad');
+      : `A ${this.name(f)} quer tomar o trono de ${CIV_DEFS[f.civ].short}. Fale com um membro da família (ou veja em Portfólio → Grandes Casas) para escolher um lado.`, 'bad');
   },
   revolt(id) { return (G.revolts || []).find(r => r.id === id); },
   activeRevoltOf(f) { return (G.revolts || []).find(r => !r.done && r.fam === f.id); },

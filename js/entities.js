@@ -71,6 +71,7 @@ function canHit(e) {
   if (e.tag && e.tag.startsWith('crw')) { const r = Families.revolt(+e.tag.slice(3)); if (r && !r.done && r.side === 'rebel') return true; }
   if (e.angry || e.hostileToPlayer) return true;
   if (e.npc && e.npc.hostile) return true;
+  if (e.npc && Court.enemyPerson(e.npc)) return true;
   if (e.kind === 'villager') return false;
   const f = fac(e);
   if (f === 'player') return false;

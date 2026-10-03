@@ -2212,3 +2212,163 @@ body.small .ph { border-radius: 0 !important; } /* barra do título também sem 
   body.small .bz-card .bz-ic { width: 32px; height: 32px; font-size: 17px; border-width: 1.5px; }
   body.small .bz-tx { gap: 0; }
 }
+
+/* ================================================================ Reino — os sete reinos (telas pequenas) */
+.atl-m { display: none; }
+@media (orientation: landscape) {
+  body.small .atl-d { display: none; }
+  body.small .atl-m { display: contents; }
+  body.small .kpages > .kpage[data-nav="atlas"] { height: 100%; padding-bottom: 12px; }
+  body.small .kpages > .kpage[data-nav="atlas"] > .card { flex: 1; min-height: 0; display: flex; flex-direction: column; border-top: 3px solid var(--kc); }
+  /* página 1: escudos, estandarte e números */
+  body.small .at-pick { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  body.small .at-pick button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 2px 3px; border-radius: 8px; min-width: 0; background: rgba(0, 0, 0, .3); border: 1px solid rgba(201, 162, 74, .2); opacity: .7; }
+  body.small .at-pick button.on { opacity: 1; border-color: var(--oc); background: color-mix(in srgb, var(--oc) 22%, rgba(0, 0, 0, .35)); box-shadow: 0 0 10px color-mix(in srgb, var(--oc) 45%, transparent); }
+  body.small .at-pick small { font-size: 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e8dcc0; }
+  body.small .at-banner { display: flex; align-items: center; gap: 10px; margin: 8px 0; padding: 7px 10px; border-radius: 10px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--kc) 30%, transparent), rgba(0, 0, 0, .3)); border: 1px solid color-mix(in srgb, var(--kc) 50%, transparent); }
+  body.small .at-bt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  body.small .at-bt b { font-family: 'Cinzel', Georgia, serif; font-size: 16px; color: #f6ead0; }
+  body.small .at-bt small { font-size: 11.5px; color: #d8c8a4; }
+  body.small .at-bt .at-desc { color: #a8987a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.small .at-revolt { font-size: 11.5px; color: #ffb27a; padding: 4px 8px; margin-bottom: 6px; border-radius: 7px; background: rgba(160, 60, 30, .25); }
+  body.small .at-stats { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 5px; }
+  body.small .at-st { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; border-radius: 8px; background: rgba(0, 0, 0, .28); border: 1px solid rgba(201, 162, 74, .2); line-height: 1.15; }
+  body.small .at-st span { font-size: 15px; }
+  body.small .at-st b { font-size: 15px; color: #f1e4c6; font-variant-numeric: tabular-nums; }
+  body.small .at-st b.bad { color: #ff8a7a; }
+  body.small .at-st small { font-size: 10px; color: #c9b48a; }
+  /* página 2: corte e famílias lado a lado */
+  body.small .at-cols { flex: 1; display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; min-height: 0; }
+  body.small .at-cols > div { display: flex; flex-direction: column; min-width: 0; }
+  body.small .at-list { display: flex; flex-direction: column; gap: 4px; }
+  body.small .at-row { display: flex; align-items: center; gap: 7px; padding: 4px 7px; border-radius: 8px; background: rgba(0, 0, 0, .28); }
+  body.small .at-row > span:not(.at-ic):not(.at-rank) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  body.small .at-row b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.small .at-row small { font-size: 10.5px; color: #c9b48a; }
+  body.small .at-ic { font-size: 16px; width: 22px; text-align: center; }
+  body.small .at-rank { font-family: 'Cinzel', Georgia, serif; color: var(--gold-hi); font-size: 13px; width: 22px; text-align: center; }
+  body.small .at-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+  body.small .at-row button { padding: 3px 8px; font-size: 11.5px; }
+  /* página 3: vilas */
+  body.small .at-vgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-content: start; }
+  body.small .at-v { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 9px; background: rgba(0, 0, 0, .28); border: 1px solid color-mix(in srgb, var(--kc) 35%, transparent); }
+  body.small .at-v.ruin { opacity: .65; border-style: dashed; }
+  body.small .at-v > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  body.small .at-v b { font-size: 12.5px; }
+  body.small .at-v small { font-size: 10.5px; color: #c9b48a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.small .at-lv { flex: none; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 14px;
+    color: #1a140a; background: radial-gradient(circle at 40% 35%, #ffe08a, #b8892a); border: 2px solid var(--kc); }
+  body.small .at-bar { display: block; height: 4px; border-radius: 2px; background: rgba(0, 0, 0, .5); overflow: hidden; }
+  body.small .at-bar i { display: block; height: 100%; background: var(--kc); }
+}
+@media (orientation: landscape) {
+  body.small .kpage[data-nav="atlas"] .at-banner { margin: 6px 0; padding: 5px 10px; }
+  body.small .kpage[data-nav="atlas"] .at-bt b { font-size: 15px; }
+  body.small .kpage[data-nav="atlas"] .at-st { flex-direction: row; flex-wrap: wrap; justify-content: center; column-gap: 4px; padding: 3px 2px; }
+  body.small .kpage[data-nav="atlas"] .at-st small { flex-basis: 100%; text-align: center; }
+  body.small .kpage[data-nav="atlas"] .at-row { padding: 3px 7px; }
+}
+@media (orientation: landscape) {
+  body.small .kpage[data-nav="atlas"] .at-lv { font-family: inherit; font-size: 13px; }
+  body.small .kpage[data-nav="atlas"] .at-lv::before { content: 'nv'; font-size: 8px; font-weight: 600; margin-right: 1px; }
+}
+
+/* ================================================================ Grandes Casas (telas pequenas) */
+.gc-m { display: none; }
+@media (orientation: landscape) {
+  body.small .gc-d { display: none; }
+  body.small .gc-m { display: contents; }
+  body.small .kpages > .kpage[data-nav="families"] { height: 100%; padding-bottom: 12px; }
+  body.small .kpages > .kpage[data-nav="families"] > .card { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  body.small .gc-crest { flex: none; width: var(--s); height: calc(var(--s) * 1.15); display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', Georgia, serif; font-weight: 700;
+    font-size: calc(var(--s) * .5); color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); background: linear-gradient(160deg, var(--c), color-mix(in srgb, var(--c) 45%, #000));
+    border: 2px solid #d9b45a; border-radius: 4px 4px 50% 50% / 4px 4px 40% 40%; }
+  /* página 1: pódio e a sua casa */
+  body.small .gc-top { flex-direction: row !important; gap: 10px; }
+  body.small .gc-podium { flex: 2.2; display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 6px; align-items: end; }
+  body.small .gc-pod { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; padding: 8px 4px; border-radius: 10px 10px 4px 4px; min-width: 0; text-align: center; }
+  body.small .gc-pod.p1 { height: 100%; background: linear-gradient(180deg, rgba(255, 213, 74, .22), rgba(0, 0, 0, .35)); border-color: #d9b45a; }
+  body.small .gc-pod.p2 { height: 86%; background: linear-gradient(180deg, rgba(200, 210, 225, .16), rgba(0, 0, 0, .35)); }
+  body.small .gc-pod.p3 { height: 74%; background: linear-gradient(180deg, rgba(205, 127, 50, .18), rgba(0, 0, 0, .35)); }
+  body.small .gc-medal { font-size: 20px; line-height: 1; }
+  body.small .gc-pod b { font-size: 12.5px; line-height: 1.15; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.small .gc-pod.p1 b { font-family: 'Cinzel', Georgia, serif; font-size: 13px; color: var(--gold-hi); }
+  body.small .gc-pod small { font-size: 10.5px; color: #c9b48a; }
+  body.small .gc-pod em { font-style: normal; font-size: 12px; font-weight: 700; color: #ffd54a; margin-top: auto; }
+  body.small .gc-side { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  body.small .gc-you { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px; border-radius: 10px; background: linear-gradient(160deg, rgba(201, 162, 74, .2), rgba(0, 0, 0, .35)); border: 1px solid rgba(201, 162, 74, .45); }
+  body.small .gc-you > div { display: flex; flex-direction: column; line-height: 1.15; }
+  body.small .gc-you b { font-family: 'Cinzel', Georgia, serif; font-size: 24px; color: var(--gold-hi); }
+  body.small .gc-you small { font-size: 10.5px; color: #c9b48a; }
+  body.small .gc-num { display: flex; flex-direction: column; gap: 4px; }
+  body.small .gc-num span { font-size: 11.5px; padding: 4px 8px; border-radius: 7px; background: rgba(0, 0, 0, .28); color: #d8c8a4; }
+  body.small .gc-num b { color: #f1e4c6; }
+  body.small .gc-num .bad b { color: #ff8a7a; }
+  /* páginas 2 e 3: linhas em duas colunas */
+  body.small .gc-grid { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 5px; }
+  body.small .gc-rank .gc-grid { flex: 1; min-height: 0; }
+  body.small .gc-row { display: flex; align-items: center; gap: 7px; padding: 3px 8px; border-radius: 8px; min-width: 0; text-align: left; }
+  body.small .gc-row.you { border-color: #d9b45a; background: rgba(201, 162, 74, .18); }
+  body.small .gc-row.revolt { border-color: #c0392b; background: rgba(160, 40, 30, .2); }
+  body.small .gc-n { font-family: 'Cinzel', Georgia, serif; font-size: 12px; color: var(--gold-hi); width: 24px; flex: none; }
+  body.small .gc-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+  body.small .gc-tx b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.small .gc-tx small { font-size: 10px; color: #c9b48a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.small .gc-row em { flex: none; font-style: normal; font-size: 11.5px; font-weight: 700; color: #ffd54a; }
+  body.small .gc-loy { display: block; height: 3px; margin-top: 2px; border-radius: 2px; background: rgba(0, 0, 0, .5); overflow: hidden; }
+  body.small .gc-loy i { display: block; height: 100%; }
+  body.small .gc-calm { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center; }
+  body.small .gc-calm span { font-size: 34px; }
+  body.small .gc-calm b { font-family: 'Cinzel', Georgia, serif; color: var(--gold-hi); }
+  body.small .gc-calm small { color: #c9b48a; }
+  body.small .gc-note { margin-top: auto; padding-top: 6px; font-size: 11px; }
+}
+
+/* ================================================================ Linhagens (telas pequenas) */
+.ln-m { display: none; }
+@media (orientation: landscape) {
+  body.small .ln-d { display: none; }
+  body.small .ln-m { display: contents; }
+  body.small .kpages > .kpage[data-nav="tree"] { height: 100%; padding-bottom: 12px; }
+  body.small .kpages > .kpage[data-nav="tree"] > .card { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  /* página 1: árvore por gerações, ligadas por um tronco */
+  body.small .ln-gens { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 4px; position: relative; }
+  body.small .ln-gens::before { content: ''; position: absolute; left: 62px; right: 12px; top: 50%; height: 0; }
+  body.small .ln-gen { display: flex; align-items: center; gap: 8px; position: relative; }
+  body.small .ln-gen + .ln-gen::before { content: ''; position: absolute; left: 50%; top: -6px; width: 2px; height: 6px; background: rgba(155, 227, 122, .45); }
+  body.small .ln-lab { flex: none; width: 50px; font-family: 'Cinzel', Georgia, serif; font-size: 10.5px; letter-spacing: .5px; text-transform: uppercase; color: #9be37a; text-align: right; }
+  body.small .ln-row { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; padding: 4px 6px; border-radius: 10px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(155, 227, 122, .15); }
+  body.small .ln-node { display: flex; align-items: center; gap: 6px; padding: 3px 9px 3px 4px; border-radius: 18px; min-width: 0; max-width: 150px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(201, 162, 74, .35); }
+  body.small .ln-node[data-act] { cursor: pointer; }
+  body.small .ln-node.m { border-color: rgba(111, 168, 255, .55); }
+  body.small .ln-node.f { border-color: rgba(240, 130, 180, .55); }
+  body.small .ln-node.hero { border: 2px solid #ffd54a; background: linear-gradient(135deg, rgba(255, 213, 74, .22), rgba(0, 0, 0, .35)); box-shadow: 0 0 10px rgba(255, 213, 74, .25); }
+  body.small .ln-node.dead { opacity: .65; filter: grayscale(.5); }
+  body.small .ln-node.ghost { border-style: dashed; opacity: .6; padding-right: 12px; }
+  body.small .ln-face { flex: none; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; background: rgba(255, 255, 255, .08); }
+  body.small .ln-tx { min-width: 0; display: flex; flex-direction: column; line-height: 1.1; }
+  body.small .ln-tx b { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.small .ln-tx small { font-size: 9.5px; color: #c9b48a; white-space: nowrap; }
+  body.small .ln-ring { font-size: 14px; }
+  body.small .ln-more { font-size: 11px; font-weight: 700; color: #c9b48a; padding: 3px 7px; border-radius: 10px; background: rgba(0, 0, 0, .35); }
+  body.small .ln-first { font-size: 11.5px; color: #a8987a; font-style: italic; }
+  /* página 2: laços em três colunas */
+  body.small .ln-cols { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; min-height: 0; }
+  body.small .ln-col { display: flex; flex-direction: column; gap: 5px; padding: 8px; border-radius: 10px; min-width: 0; background: rgba(0, 0, 0, .28); border: 1px solid var(--lc); border-top-width: 3px; }
+  body.small .ln-col.kin { --lc: rgba(95, 211, 95, .5); }
+  body.small .ln-col.ally { --lc: rgba(111, 168, 255, .5); }
+  body.small .ln-col.rival { --lc: rgba(224, 72, 72, .55); }
+  body.small .ln-ch { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+  body.small .ln-ch span { font-size: 18px; }
+  body.small .ln-ch b { flex: 1; font-family: 'Cinzel', Georgia, serif; font-size: 13px; }
+  body.small .ln-ch em { font-style: normal; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--lc); color: #fff; }
+  body.small .ln-house { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.small .ln-house i { flex: none; width: 9px; height: 9px; border-radius: 50%; }
+  body.small .ln-col .muted { font-size: 11px; line-height: 1.35; }
+  /* página 3: o mapa */
+  body.small .ln-leg { display: flex; align-items: center; gap: 4px; font-size: 10px; }
+  body.small .ln-leg i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; margin-left: 4px; }
+  body.small .ln-cv { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: radial-gradient(ellipse at center, rgba(201, 162, 74, .08), rgba(0, 0, 0, .3)); overflow: hidden; }
+  body.small .ln-cv canvas { max-width: 100%; max-height: 100%; height: 100%; width: auto; }
+}

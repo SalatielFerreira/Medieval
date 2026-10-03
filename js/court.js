@@ -267,7 +267,7 @@ const Court = {
       const mine = G.civs.find(c => c.ruler === 'player');
       if (mine) { Diplo.addRel(mine.id, civ, 30); if (!Diplo.atWar(mine.id, civ)) Diplo.ally(mine.id, civ); }
     }
-    if (f) { f.loyalty = Math.min(100, f.loyalty + 35); f.favor = (f.favor || 0) + 25; f.allies = [...new Set([...(f.allies || []), G.playerFam])]; if (f.rival === G.playerFam) f.rival = null; }
+    if (f) { f.loyalty = Math.min(100, f.loyalty + 35); f.favor = (f.favor || 0) + 25; if (f.rival === G.playerFam) f.rival = null; this.endFeud(f); }
     const where = royal ? `${People.title(p)} de ${CIV_DEFS[civ].short}` : `da ${f ? Families.name(f) : 'família'}`;
     UI.banner(`💒 Casamento: ${child.name} e ${p.name}`);
     UI.msg(`${child.name} casou-se com ${People.full(p)}, ${where}.${royal ? ' Os reinos selam uma aliança!' : ' A família agora é leal a você.'}`, 'gold');
@@ -288,18 +288,77 @@ const Court = {
       }
     }
   },
+  // ------------------------------------------------------------ alianças e inimizades da sua casa
+  ALLY_COST: 250,
+  isAlly(f) { return !!f && (Families.ensurePlayer().allies || []).includes(f.id); },
+  isEnemy(f) { return !!f && (Families.ensurePlayer().enemies || []).includes(f.id); },
+  // alguém de uma casa inimiga, que você pode enfrentar (crianças, parentes e capangas ficam de fora)
+  enemyPerson(p) { return !!p && p.alive && p.age >= 14 && !p.kin && p.spouse !== 'player' && !p.capanga && this.isEnemy(Families.of(p)); },
+  // pode tratar de aliança ou inimizade com esta casa?
+  canDeal(f) { return !!f && !f.player; },
+  allyWith(f) {
+    const pf = Families.ensurePlayer();
+    if (this.isEnemy(f)) return { text: 'Aliança? Depois de tudo o que você fez à nossa casa?', note: 'Faça as pazes primeiro.' };
+    if (this.isAlly(f)) return { text: 'Nossas casas já são aliadas.', note: '' };
+    if (P.gold < this.ALLY_COST) return { text: 'Uma aliança se sela com presentes à altura.', note: `Você precisa de ${this.ALLY_COST} 🪙.` };
+    P.gold -= this.ALLY_COST;
+    pf.allies = [...new Set([...(pf.allies || []), f.id])]; f.allies = [...new Set([...(f.allies || []), pf.id])];
+    if (f.rival === pf.id) f.rival = null;
+    f.loyalty = Math.min(100, (f.loyalty || 50) + 10);
+    UI.banner(`🤝 Aliança com a ${Families.name(f)}`);
+    Diplo.chronicle(`🤝 A ${Families.name(pf)} e a ${Families.name(f)} selaram uma aliança.`, true);
+    Progress.diary(`🤝 Aliança com a ${Families.name(f)}.`);
+    return { text: 'Que nossas casas prosperem juntas!', note: `Agora a ${Families.name(f)} é aliada da sua casa.` };
+  },
+  unally(f) {
+    const pf = Families.ensurePlayer();
+    pf.allies = (pf.allies || []).filter(id => id !== f.id); f.allies = (f.allies || []).filter(id => id !== pf.id);
+    for (const p of Families.members(f)) People.addAff(p, -10);
+    Diplo.chronicle(`💔 A ${Families.name(pf)} desfez a aliança com a ${Families.name(f)}.`, true);
+    return { text: 'Então é assim que termina... Não esqueceremos.', note: `A aliança com a ${Families.name(f)} acabou.` };
+  },
+  declareEnemy(f) {
+    const pf = Families.ensurePlayer();
+    pf.allies = (pf.allies || []).filter(id => id !== f.id); f.allies = (f.allies || []).filter(id => id !== pf.id);
+    pf.enemies = [...new Set([...(pf.enemies || []), f.id])];
+    for (const p of Families.members(f)) People.addAff(p, -25);
+    UI.banner(`😠 A ${Families.name(f)} agora é sua inimiga`);
+    Diplo.chronicle(`😠 A ${Families.name(pf)} declarou a ${Families.name(f)} inimiga.`, true);
+    Progress.diary(`😠 Declarou a ${Families.name(f)} inimiga.`);
+    return { text: 'Que seja! A partir de hoje, nossas casas são inimigas.', note: 'Os adultos dessa casa podem ser enfrentados até a morte. Peça paz para voltar ao normal.' };
+  },
+  // fim da inimizade: ninguém daquela casa continua brigando com você
+  endFeud(f) {
+    const pf = Families.ensurePlayer();
+    if (!(pf.enemies || []).includes(f.id)) return false;
+    pf.enemies = pf.enemies.filter(id => id !== f.id);
+    for (const e of G.ents) if (e.npc && e.npc.fam === f.id && e.angry) { e.angry = false; e.target = null; }
+    return true;
+  },
+  // a paz só é aceita se a sua casa for mais influente que a inimiga
+  canPeace(f) { return Families.influence(Families.ensurePlayer()) > Families.influence(f); },
+  peace(f) {
+    if (!this.isEnemy(f)) return { text: 'Não estamos em guerra com você.', note: '' };
+    if (!this.canPeace(f)) return { text: 'Paz? Com uma casa mais fraca que a nossa? Nunca!', note: `Sua casa precisa ser mais influente que a ${Families.name(f)} (⭐ ${Families.influence(Families.ensurePlayer())} contra ⭐ ${Families.influence(f)}).` };
+    this.endFeud(f);
+    for (const p of Families.members(f)) if (p.aff < -10) p.aff = -10;
+    UI.banner(`🕊️ Paz com a ${Families.name(f)}`);
+    Diplo.chronicle(`🕊️ A ${Families.name(Families.ensurePlayer())} e a ${Families.name(f)} fizeram as pazes.`, true);
+    return { text: 'Está bem. Que haja paz entre nossas casas.', note: `A inimizade com a ${Families.name(f)} acabou.` };
+  },
+
   // famílias ligadas por casamento (alguém nasceu numa e vive na outra)
   linked(a, b) {
-    return G.people.some(p => p.alive && ((p.fam === a.id && p.maiden === b.surname) || (p.fam === b.id && p.maiden === a.surname)));
+    return G.people.some(p => p.alive && p.maidenFam !== undefined && ((p.fam === a.id && p.maidenFam === b.id) || (p.fam === b.id && p.maidenFam === a.id)));
   },
   relationsOf(f) {
     const out = [];
     for (const o of Object.values(G.fams)) {
       if (o === f || !Families.members(o).length && !o.player) continue;
       let kind = null;
-      if (f.rival === o.id || o.rival === f.id) kind = 'rival';
-      else if ((f.allies || []).includes(o.id) || (o.allies || []).includes(f.id)) kind = 'ally';
+      if (f.rival === o.id || o.rival === f.id || (f.enemies || []).includes(o.id) || (o.enemies || []).includes(f.id)) kind = 'rival';
       else if (this.linked(f, o)) kind = 'kin';
+      else if ((f.allies || []).includes(o.id) || (o.allies || []).includes(f.id)) kind = 'ally';
       if (kind) out.push({ f: o, kind });
     }
     return out;

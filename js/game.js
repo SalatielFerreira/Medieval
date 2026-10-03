@@ -982,6 +982,7 @@ const Game = {
       const a = Math.atan2(target.y - src.y, target.x - src.x);
       moveEnt(target, Math.cos(a) * 8, Math.sin(a) * 8);
       if (target.kind === 'boar') target.provoked = true;
+      if (target.npc && (src === P || fac(src) === 'player') && Court.enemyPerson(target.npc)) target.angry = true; // inimigo golpeado revida
       if (target.def.dmg > 0 && hostile(target, src)) target.target = src;
     }
     if (src === P && target.kind === 'rebel') { const r = Families.revolt(target.revolt); if (r && !r.side && G.civs[r.civ].ruler !== 'player') Families.joinRevolt(r, 'crown'); }
@@ -1740,8 +1741,9 @@ const Game = {
     if (e.npc) {
       const p = e.npc, rel = People.relation(p);
       name = `${p.name} · ${p.age} ${p.age === 1 ? 'ano' : 'anos'}`;
-      sub = People.title(p) + (p.hostile ? ' · HOSTIL' : rel.text !== 'Estranho' && rel.text !== 'Estranha' ? ' · ' + rel.text : '');
-      col = p.hostile ? '#ff5d5d' : rel.col;
+      const foe = Court.enemyPerson(p);
+      sub = People.title(p) + (p.hostile ? ' · HOSTIL' : foe ? ' · INIMIGO' : rel.text !== 'Estranho' && rel.text !== 'Estranha' ? ' · ' + rel.text : '');
+      col = p.hostile || foe ? '#ff5d5d' : rel.col;
     } else {
       if (!e.tmp) e.tmp = { name: U.pick(Math.random() < 0.8 ? NAMES_M : NAMES_F), age: U.rint(19, 45) };
       name = `${e.tmp.name} · ${e.tmp.age} anos`;
