@@ -3260,3 +3260,39 @@ body.small .cr3 .cpick .cp-cur small { font-size: 12px; }
   color: #ffe9a8; background: linear-gradient(180deg, rgba(201, 162, 74, .28), rgba(90, 66, 24, .35)); border: 1px solid rgba(232, 192, 106, .6); }
 .mc-install .ico { width: 14px; height: 14px; }
 .mc-install:hover { border-color: #ffd54a; color: #fff6dc; }
+
+/* ================================================================ telas pequenas: barra do rodapé um pouco maior */
+body.small #toolbar { gap: 5px; padding: 6px; }
+body.small #toolbar button { width: 54px; height: 52px; }
+body.small #toolbar .ico { width: 26px; height: 26px; }
+body.small #prompt, body.touchui.small #prompt { bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+/* ================================================================ controles de toque na posição e no tamanho escolhidos (Ajustes → Controles) */
+#touch.tcl .tc-btns { inset: 0; width: auto; height: auto; transform: none !important; }
+#touch.tcl .tc-stick, #touch.tcl .tc-b { transform-origin: center; }
+#touch.tcl .tc-b:active:not(:disabled) { filter: brightness(1.35); }
+/* modo de edição: tudo aparece, com contorno; o escolhido brilha em dourado */
+body.tc-edit #touch { display: block !important; z-index: 30; }
+body.tc-edit #touch::before { content: ''; position: fixed; inset: 0; background: rgba(8, 6, 4, .45); pointer-events: auto; }
+body.tc-edit .tc-stick, body.tc-edit .tc-b { pointer-events: auto !important; opacity: 1 !important; cursor: grab; outline: 2px dashed rgba(255, 233, 168, .6); outline-offset: 4px; z-index: 1; }
+body.tc-edit .tc-b.hidden { display: flex !important; }
+body.tc-edit .tce-on { outline: 3px solid #ffd54a !important; box-shadow: 0 0 22px rgba(255, 213, 74, .7) !important; }
+body.tc-edit #hud, body.tc-edit #rightcol, body.tc-edit #toolbar, body.tc-edit #log, body.tc-edit #talkBtn { opacity: .25; pointer-events: none; }
+#tcEdit { position: fixed; z-index: 31; left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px;
+  border-radius: 14px; background: linear-gradient(180deg, rgba(58, 44, 26, .97), rgba(26, 19, 11, .97)); border: 1px solid #c9a24a; box-shadow: 0 6px 20px rgba(0, 0, 0, .55); color: #f1e4c6; white-space: nowrap; font-family: var(--ui-font); }
+#tcEdit.hidden { display: none; }
+.tce-info { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.tce-info b { font-family: 'Cinzel', Georgia, serif; font-size: 14px; color: #ffe9a8; }
+.tce-info small { font-size: 10.5px; color: #c9b48a; }
+.tce-size { display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: 10px; background: rgba(0, 0, 0, .35); }
+.tce-size button { width: 32px; height: 30px; padding: 0; font-size: 18px; font-weight: 700; }
+.tce-size span { min-width: 46px; text-align: center; font-weight: 700; font-size: 13px; color: #fff6dc; font-variant-numeric: tabular-nums; }
+#tcEdit > button { height: 34px; padding: 0 12px; font-size: 13px; font-weight: 700; }
+/* Ajustes → Controles: o botão que abre o editor */
+.st-edit { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; margin-bottom: 8px; border-radius: 12px; text-align: left;
+  background: linear-gradient(135deg, rgba(201, 162, 74, .3), rgba(58, 40, 14, .5)); border: 1px solid #c9a24a; }
+.st-eic { flex: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #2a1a06; background: radial-gradient(circle at 40% 35%, #ffe08a, #b8892a); }
+.st-edit .st-go { margin-left: auto; font-size: 20px; color: #ffd54a; }
+
+/* o lar: duas ações (dormir e baú) */
+.rest-acts { grid-template-columns: 1.3fr 1fr; }

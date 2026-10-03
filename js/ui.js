@@ -1240,7 +1240,8 @@ const UI = {
       const h = this.helpParts();
       page = this.pageHead('🎮', 'Controles', small ? 'Controles de toque' : 'Teclado e mouse')
         + (small ? '' : `<div class="card st-keys"><div class="sec">⌨️ Teclado e mouse</div><div class="hk-grid">${h.rows.map(([k, v]) => `<div class="hk"><kbd>${k}</kbd><span>${v}</span></div>`).join('')}</div></div>`)
-        + (small ? `<div class="card st-touch kalone"><div class="sec">👆 Controles de toque <span>ligam sozinhos no celular</span></div><div class="st-tgrid">${[['🕹️', 'Joystick', 'à esquerda: arraste para andar'], ['⚔️', 'Atacar', 'golpeia e coleta recursos'], ['✋', 'Interagir', 'conversar, abrir e usar'], ['🛡️', 'Bloquear e esquivar', 'botões ao lado do ataque'], ['🗺️', 'Minimapa', 'toque para abrir o mapa'], ['☰', 'Barra de baixo', 'mochila, criar, construir e mais']].map(([i, t, d]) => `<div class="st-tip"><span class="st-ic">${i}</span><div class="st-tx"><b>${t}</b><small>${d}</small></div></div>`).join('')}</div></div>` : '');
+        + (small ? `<div class="card st-touch kalone"><div class="sec">👆 Controles de toque <span>ligam sozinhos no celular</span></div>
+          <button class="st-edit" data-act="tcedit"><span class="st-eic">✥</span><span class="st-tx"><b>Ajustar posição e tamanho</b><small>${G.settings.touchLayout ? 'Do seu jeito · toque para mudar' : 'Arraste o joystick e os botões para onde preferir'}</small></span><span class="st-go">›</span></button><div class="st-tgrid">${[['🕹️', 'Joystick', 'à esquerda: arraste para andar'], ['⚔️', 'Atacar', 'golpeia e coleta recursos'], ['✋', 'Interagir', 'conversar, abrir e usar'], ['🛡️', 'Bloquear e esquivar', 'botões ao lado do ataque'], ['🗺️', 'Minimapa', 'toque para abrir o mapa'], ['☰', 'Barra de baixo', 'mochila, criar, construir e mais']].map(([i, t, d]) => `<div class="st-tip"><span class="st-ic">${i}</span><div class="st-tx"><b>${t}</b><small>${d}</small></div></div>`).join('')}</div></div>` : '');
     } else {
       const h = this.helpParts();
       page = this.pageHead('❓', 'Como jogar', 'Primeiros passos e dicas')
@@ -1284,9 +1285,8 @@ const UI = {
       <div class="rest-acts">
         ${act('main', `data-act="sleep" data-s="${sid}"`, '🛏️', 'Dormir até o amanhecer', `${hurt ? 'Recupera toda a vida · ' : ''}salva no espaço ${G.slot}`)}
         ${act('', `data-act="chest" data-s="${sid}"`, '📦', `Baú da ${place}`, stored ? `${stored} itens · ${kinds} tipos guardados` : 'Vazio · guarde o que pesa')}
-        ${act('fire', 'data-act="craftat" data-st="fogueira"', '🍖', 'Cozinhar na lareira', 'Carne, peixe e pratos')}
       </div></div>`;
-    this.open(cabin ? 'Cabana' : s.type === 'manor' ? 'Casarão' : 'Casa', body, 'showRest', [sid], 'Seu lar: descanse, cozinhe e guarde itens');
+    this.open(cabin ? 'Cabana' : s.type === 'manor' ? 'Casarão' : 'Casa', body, 'showRest', [sid], 'Seu lar: descanse e guarde itens');
   },
 
   showChest(sid) {
@@ -2095,6 +2095,7 @@ const UI = {
       case 'knav': this.sel.knav = d.k; this.showKingdom(); return;
       case 'dnav': this.sel.dtab = d.k; this.showDiary(); return;
       case 'stab': this.showSettings(d.k); return;
+      case 'tcedit': Touch.edit(); return;
       case 'setopt': Game.setSetting(d.k, d.v); this.showSettings(); return;
       case 'bcat': this.sel.bcat = d.k; this.sel.build = null; this.showBuild(); return;
       case 'vping': { const v = World.villages[+d.v]; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
