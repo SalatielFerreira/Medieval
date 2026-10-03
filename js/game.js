@@ -26,7 +26,32 @@ const Inv = {
     if (P.inv[k] <= 0) {
       delete P.inv[k];
       for (const s in P.equip) if (P.equip[s] === k) P.equip[s] = null;
+      for (let q = 0; q < P.quick.length; q++) if (P.quick[q] === k) P.quick[q] = null;
     }
+  },
+  // a mochila tem casas fixas (P.bag): cada item fica onde você colocou. Itens nos bolsos ou equipados saem da
+  // mochila; quando voltam (ou chegam itens novos) ocupam a primeira casa livre. São 18 casas (crescem de 6 em 6 se precisar).
+  bag() {
+    const out = new Set([...P.quick, ...Object.values(P.equip)].filter(Boolean));
+    const want = Object.keys(P.inv).filter(k => P.inv[k] > 0 && ITEMS[k] && !out.has(k));
+    const fresh = !P.bag || !P.bag.length;
+    const seen = new Set(), b = (P.bag || []).map(k => { if (!k || !want.includes(k) || seen.has(k)) return null; seen.add(k); return k; });
+    const missing = want.filter(k => !seen.has(k));
+    if (fresh && missing.length) { const ord = UI.invKeys(['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos']); missing.sort((a, c) => ord.indexOf(a) - ord.indexOf(c)); }
+    for (const k of missing) { const i = b.indexOf(null); if (i >= 0) b[i] = k; else b.push(k); }
+    while (b.length > 18 && b[b.length - 1] === null) b.pop();
+    const n = Math.max(18, Math.ceil(b.length / 6) * 6);
+    while (b.length < n) b.push(null);
+    P.bag = b;
+    return b;
+  },
+  // devolve um item à mochila numa casa escolhida (ou na primeira livre)
+  toBag(k, at) {
+    const b = this.bag();
+    const i = at !== undefined && at !== null && at >= 0 ? at : b.indexOf(null);
+    const cur = b.indexOf(k); if (cur >= 0) b[cur] = null;
+    if (i >= 0 && i < b.length) { const other = b[i]; b[i] = k; if (other && other !== k) { const j = b.indexOf(null); if (j >= 0) b[j] = other; else b.push(other); } }
+    else b.push(k);
   },
   has(cost) {
     for (const k in cost) {
@@ -128,8 +153,8 @@ const Game = {
   resetPlayer(x, y) {
     Object.assign(P, {
       x, y, r: 10, hp: 100, maxHp: 100, stamina: 100, hunger: 100, gold: 20, level: 1, xp: 0,
-      inv: {}, equip: { weapon: null, tool: null, head: null, torso: null, legs: null, feet: null },
-      quick: [null, null, null, null], sailing: false, fishing: null, sex: 'm', age: 25, hairBase: '#5a3a1a', skin: '#f0c896',
+      inv: {}, equip: { weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null }, bag: [],
+      quick: [null, null], sailing: false, fishing: null, sex: 'm', age: 25, hairBase: '#5a3a1a', skin: '#f0c896',
       aim: 0, dir: 1, atkCd: 0, swing: 0, hurt: 0, moving: false, anim: 0, dead: false, toolAnim: null,
       horse: null, cart: false, mounted: false, stepT: 0, bagLvl: 1, invOrder: [],
     });
@@ -185,7 +210,7 @@ const Game = {
     return {
       v: 5, slot: G.slot, savedAt: Date.now(), seed: World.seed, terrain: G.terrain || TERRAIN_V, ping: G.ping, name: G.name, surname: G.surname, time: G.time, day: G.day, spawn: G.spawn,
       player: { x: P.x, y: P.y, hp: P.hp, maxHp: P.maxHp, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
-        quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
+        quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
       urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
@@ -237,6 +262,9 @@ const Game = {
     this.resetPlayer(s.player.x, s.player.y);
     Object.assign(P, s.player);
     P.mounted = false; P.hx = P.x - 30; P.hy = P.y;
+    P.quick = [(P.quick || [])[0] || null, (P.quick || [])[1] || null];
+    P.equip = Object.assign({ weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null }, P.equip || {});
+    P.bag = P.bag || [];
     (s.vlife || []).forEach((l, i) => { if (World.villages[i]) Object.assign(World.villages[i], l); });
     Towns.init(); Towns.applyAll();
     Arena.init(); Faith.init();
@@ -300,6 +328,7 @@ const Game = {
       .sort((a, b) => (ITEMS[a].tool + ITEMS[a].tier).localeCompare(ITEMS[b].tool + ITEMS[b].tier));
   },
   cycleTool() {
+    if (P.equip.tool2) { const a = P.equip.tool; P.equip.tool = P.equip.tool2; P.equip.tool2 = a; if (P.fishing) P.fishing = null; UI.msg('Em mãos: ' + (P.equip.tool ? ITEMS[P.equip.tool].name : 'nenhuma ferramenta')); return; }
     const list = [null, ...this.toolList()];
     const i = list.indexOf(P.equip.tool);
     P.equip.tool = list[(i + 1) % list.length];
@@ -314,7 +343,7 @@ const Game = {
     this.eat(k);
   },
   // empunha a ferramenta (sem aviso: o ícone na mão já mostra)
-  wield(k) { if (P.equip.tool !== k) { P.equip.tool = k; if (P.fishing) P.fishing = null; } },
+  wield(k) { if (P.equip.tool !== k) { if (P.equip.tool2 === k) P.equip.tool2 = P.equip.tool; P.equip.tool = k; if (P.fishing) P.fishing = null; } },
   // dá para usar esta ferramenta agora? (árvore ou rocha por perto, terra para arar, água para pescar/encher)
   toolUsable(k) {
     const it = ITEMS[k], type = it && it.tool;
@@ -342,7 +371,8 @@ const Game = {
     return !!this.boatAction();
   },
   setQuick(slot, k) {
-    for (let s = 0; s < 4; s++) if (P.quick[s] === k) P.quick[s] = null;
+    for (let s = 0; s < P.quick.length; s++) if (P.quick[s] === k) P.quick[s] = null;
+    for (const s in P.equip) if (P.equip[s] === k) P.equip[s] = null;
     P.quick[slot] = k;
   },
   gainXp(n) {
@@ -423,7 +453,7 @@ const Game = {
     else if (code === 'KeyG') Sieges.deploy(Inv.count('ram') > 0 ? 'ram' : 'catapult');
     else if (code === 'KeyT') Orders.cycle();
     else if (code === 'KeyJ') UI.toggle('showDiary');
-    else if (/^Digit[1-4]$/.test(code)) this.useQuick(+code.slice(5) - 1);
+    else if (/^Digit[1-2]$/.test(code)) this.useQuick(+code.slice(5) - 1);
   },
 
   // ================================================================ atualização
@@ -642,6 +672,7 @@ const Game = {
       P.dir = (tx + 0.5) * TILE < P.x ? -1 : 1;
       P.swing = 0.25; P.atkCd = 0.42;
       const need = OBJ[World.obj[ti]].tool;
+      if (need && P.equip.tool2 && ITEMS[P.equip.tool2].tool === need && !(P.equip.tool && ITEMS[P.equip.tool].tool === need)) { const a = P.equip.tool; P.equip.tool = P.equip.tool2; P.equip.tool2 = a; }
       P.toolAnim = need && P.equip.tool && ITEMS[P.equip.tool].tool === need ? need : null;
       this.gather(ti);
       return;
@@ -799,7 +830,15 @@ const Game = {
       U.dist(P.x, P.y, (s.x + s.w / 2) * TILE, (s.y + s.h / 2) * TILE) < 4.5 * TILE);
   },
 
-  equip(k) { const it = ITEMS[k]; if (it.slot && Inv.count(k) > 0) { P.equip[it.slot] = k; UI.msg('Equipado: ' + it.name); } },
+  equip(k, slot) {
+    const it = ITEMS[k]; if (!it.slot || Inv.count(k) <= 0) return;
+    slot = slot || it.slot;
+    if (it.slot === 'tool' && !slot.startsWith('tool')) return;
+    if (it.slot === 'tool' && slot === 'tool' && P.equip.tool2 === k) P.equip.tool2 = null;
+    if (slot === 'tool2' && P.equip.tool === k) P.equip.tool = null;
+    for (let q = 0; q < P.quick.length; q++) if (P.quick[q] === k) P.quick[q] = null;
+    P.equip[slot] = k; UI.msg('Equipado: ' + it.name);
+  },
   eat(k) {
     const it = ITEMS[k];
     if ((!it.food && !it.heal) || Inv.count(k) <= 0) return;

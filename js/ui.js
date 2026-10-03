@@ -100,7 +100,7 @@ const UI = {
         <div class="q-tool" data-qt="1" id="qToolBox" title="Ferramenta em mãos — clique ou Q para trocar"><span class="q-ic" id="qToolIc"></span><b id="qToolName"></b><em id="qToolSub"></em></div>
         <div class="q-load" id="qLoadBox" title="Carga da mochila"><span id="qLoadT"></span><div class="q-lbar"><i id="qLoad"></i></div></div></div>
       <div class="q-row">
-        <div class="q-slots" title="Algibeira: teclas 1 a 4 (arraste comidas para cá na Mochila)">${[0, 1, 2, 3].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span></div>`).join('')}</div>
+        <div class="q-slots" title="Bolsos: teclas 1 e 2 (arraste comidas e ferramentas para cá na Mochila)">${[0, 1].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span></div>`).join('')}</div>
         <div class="q-ord" data-qo="1" id="qOrdBox" title="Ordem aos capangas — clique ou T para trocar"><b id="qOrder"></b></div></div>`;
     quick.addEventListener('click', e => {
       if (G.state !== 'play' || G.paused) return;
@@ -301,7 +301,7 @@ const UI = {
     txt('qToolName', tit ? tit.name : 'Mãos livres');
     { const tb = $('qToolBox'), tt = `${tit ? tit.name + ' (' + TOOL_NAMES[tit.tool] + ' · ' + TIER_NAMES[tit.tier] + ')' : 'Mãos livres'} — clique ou Q para trocar`; if (tb.title !== tt) tb.title = tt; }
     txt('qToolSub', tit ? `${TOOL_NAMES[tit.tool]} · ${TIER_NAMES[tit.tier]}` : 'Sem ferramenta');
-    for (let q = 0; q < 4; q++) {
+    for (let q = 0; q < 2; q++) {
       const k = P.quick[q];
       html('qs' + q, k ? ITEMS[k].icon : '');
       txt('qn' + q, k ? Inv.count(k) : '');
@@ -317,22 +317,22 @@ const UI = {
     const order = ['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos'];
     const keys = this.invKeys(order), S = this.sel;
     const eqOf = k => Object.keys(P.equip).find(s => P.equip[s] === k);
-    const glyph = { weapon: '⚔️', tool: '⛏️', head: '🪖', torso: '👕', legs: '👖', feet: '🥾', shield: '🛡️' };
+    const glyph = { weapon: '⚔️', tool: '⛏️', tool2: '🪓', head: '🪖', torso: '👕', legs: '👖', feet: '🥾', shield: '🛡️' };
     const slot = key => {
       const sl = EQUIP_SLOTS.find(x => x.key === key), k = P.equip[key], it = k && ITEMS[k];
       return `<div class="pd-slot ${it ? 'full' : ''} ${it && S.inv === k ? 'on' : ''}" data-drop="equip" data-slot="${key}" ${it ? `data-drag="eq" data-k="${k}" data-act="isel"` : ''} title="${sl.name} — ${sl.sub}${it ? ': ' + it.name + ' (arraste para fora para tirar)' : ' (arraste um item para cá)'}">
-        <span class="pd-ic">${it ? it.icon : `<i class="pd-empty">${glyph[key]}</i>`}</span><small>${sl.name}</small></div>`;
+        <span class="pd-ic">${it ? it.icon : `<i class="pd-empty">${glyph[key]}</i>`}</span>${it && P.inv[k] > 1 ? `<span class="tn">${P.inv[k]}</span>` : ''}<small>${key === 'tool2' ? 'Ferram. 2' : sl.name}</small></div>`;
     };
     this.showInventoryGrid(keys, slot, eqOf, Game.playerTitle(), Store.weight(), Store.capacity());
   },
   showInventoryGrid(keys, slot, eqOf, t, w, cap) {
     const S = this.sel;
     if (!S.inv || !P.inv[S.inv]) S.inv = keys[0] || null;
-    const cell = k => { const it = ITEMS[k]; return `<div class="tile ${S.inv === k ? 'on' : ''}" data-act="isel" data-k="${k}" data-drag="inv" data-drop="tile" title="${it.name}">${it.icon}<span class="tn">${P.inv[k]}</span>${eqOf(k) ? '<span class="te">EQ</span>' : ''}</div>`; };
-    // grade fixa como numa mochila de verdade: as casas vazias também aparecem
-    const cols = 6, n = Math.max(cols * 3, Math.ceil(keys.length / cols) * cols);
-    const cells = keys.map(cell).join('') + '<div class="tile empty" data-drop="grid"></div>'.repeat(n - keys.length);
-    const quick = [0, 1, 2, 3].map(q => {
+    // casas fixas como numa mochila de verdade: cada item fica onde você colocou (as vazias também aparecem)
+    const cells = Inv.bag().map((k, i) => { const it = k && ITEMS[k];
+      return it ? `<div class="tile ${S.inv === k ? 'on' : ''}" data-act="isel" data-k="${k}" data-i="${i}" data-drag="inv" data-drop="tile" title="${it.name}">${it.icon}<span class="tn">${P.inv[k]}</span></div>`
+        : `<div class="tile empty" data-drop="tile" data-i="${i}"></div>`; }).join('');
+    const quick = [0, 1].map(q => {
       const k = P.quick[q], it = k && ITEMS[k];
       return `<div class="tile qtile ${it && S.inv === k ? 'on' : ''}" data-drop="quick" data-q="${q}" ${it ? `data-drag="quick" data-k="${k}" data-act="isel"` : ''}>${it ? `${it.icon}<span class="tn">${Inv.count(k)}</span>` : ''}</div>`;
     }).join('');
@@ -352,7 +352,7 @@ const UI = {
         <div class="ldi-head"><span class="ldi-lv">${String(P.level).padStart(2, '0')}</span>
           <div class="ldi-who"><b>${this.esc(G.name)}</b><small>${this.esc(t.text)} · ${P.age} anos</small><div class="ldi-xp"><i style="width:${xpPct}%"></i></div></div>
           <span class="ldi-chip">🍎 ${Math.round(P.hunger)}</span><span class="ldi-chip">⚡ ${Math.round(P.stamina)}</span></div>
-        <div class="ldi-doll"><div class="pd-col">${slot('weapon')}${slot('shield')}${slot('tool')}</div>
+        <div class="ldi-doll"><div class="pd-col">${slot('weapon')}${slot('shield')}${slot('tool')}${slot('tool2')}</div>
           <div class="pd-mid"><canvas id="invDoll" width="120" height="170"></canvas></div>
           <div class="pd-col">${slot('head')}${slot('torso')}${slot('legs')}${slot('feet')}</div></div>
         <div class="ldi-stats"><span title="Vida">❤ ${Math.ceil(P.hp)}/${P.maxHp}</span><span title="Dano">⚔ ${Math.round(Game.pDmg())}</span><span title="Defesa">🛡 ${Game.pDef()}</span><span title="Carga" class="${w > cap ? 'bad' : ''}">🎒 ${w}/${cap}</span></div>
@@ -380,7 +380,7 @@ const UI = {
     const pan = this.panel;
     let drag = null;
     const start = (e, el) => {
-      drag = { el, kind: el.dataset.drag, k: el.dataset.k, slot: el.dataset.slot, q: el.dataset.q, x: e.clientX, y: e.clientY, on: false, touch: e.pointerType === 'touch', t0: performance.now(), id: e.pointerId, scroller: el.closest('.scroll') };
+      drag = { el, kind: el.dataset.drag, k: el.dataset.k, slot: el.dataset.slot, q: el.dataset.q, i: el.dataset.i, x: e.clientX, y: e.clientY, on: false, touch: e.pointerType === 'touch', t0: performance.now(), id: e.pointerId, scroller: el.closest('.scroll') };
     };
     pan.addEventListener('pointerdown', e => {
       const el = e.target.closest('[data-drag]');
@@ -427,25 +427,43 @@ const UI = {
   dropItem(d, t) {
     const k = d.k, it = ITEMS[k];
     const where = t ? t.drop : null;
+    const fits = (x, slot) => ITEMS[x].slot === slot || (ITEMS[x].slot === 'tool' && slot === 'tool2');
+    const pocketOk = x => !!(ITEMS[x].food || ITEMS[x].heal || ITEMS[x].tool);
+    const bagAt = t && where === 'tile' ? +t.i : null;
+    const eqSlot = Object.keys(P.equip).find(s => P.equip[s] === k);
+    if (where === 'trash') { this.discard(k); return; }
     if (d.kind === 'inv') {
+      const b = Inv.bag(), from = +d.i;
       if (where === 'equip') {
-        if (it.slot === t.slot) { Game.equip(k); Sound.play('ui'); }
-        else this.msg(it.slot ? `${it.name} vai no espaço ${EQUIP_SLOTS.find(x => x.key === it.slot).name}.` : `${it.name} não é equipável.`, 'bad');
+        if (!fits(k, t.slot)) { this.msg(it.slot ? `${it.name} vai no espaço ${EQUIP_SLOTS.find(x => x.key === it.slot).name}.` : `${it.name} não é equipável.`, 'bad'); return; }
+        const old = P.equip[t.slot]; Game.equip(k, t.slot); b[from] = old || null; Sound.play('ui');
       } else if (where === 'quick') {
-        if (it.food || it.heal || it.tool) Game.setQuick(+t.q, k); else this.msg('Na algibeira vão comidas, remédios e ferramentas.', 'bad');
-      } else if (where === 'trash') this.discard(k);
-      else if (where === 'tile' && t.k !== k) {
-        const order = this.invKeys(['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos']).filter(x => x !== k);
-        order.splice(order.indexOf(t.k), 0, k);
-        P.invOrder = order;
-      }
+        if (!pocketOk(k)) { this.msg('Nos bolsos vão comidas, remédios e ferramentas.', 'bad'); return; }
+        const old = P.quick[+t.q]; Game.setQuick(+t.q, k); b[from] = old || null;
+      } else if (bagAt !== null && bagAt !== from) { const other = b[bagAt]; b[bagAt] = k; b[from] = other || null; }
     } else if (d.kind === 'eq') {
-      if (where === 'trash') this.discard(k);
-      else if (where !== 'equip') { const sl = Object.keys(P.equip).find(s => P.equip[s] === k); if (sl) { P.equip[sl] = null; this.msg(`Você tirou ${it.name}.`); } }
+      if (where === 'equip') {
+        if (t.slot === eqSlot) return;
+        if (!fits(k, t.slot)) { this.msg(`${it.name} não vai nesse espaço.`, 'bad'); return; }
+        const other = P.equip[t.slot]; P.equip[eqSlot] = other && fits(other, eqSlot) ? other : null; P.equip[t.slot] = k;
+        if (other && !fits(other, eqSlot)) Inv.toBag(other);
+      } else if (where === 'quick') {
+        if (!pocketOk(k)) { this.msg('Nos bolsos vão comidas, remédios e ferramentas.', 'bad'); return; }
+        const old = P.quick[+t.q]; P.equip[eqSlot] = null; Game.setQuick(+t.q, k); if (old) Inv.toBag(old);
+      } else { P.equip[eqSlot] = null; Inv.toBag(k, bagAt); this.msg(`Você tirou ${it.name}.`); }
     } else if (d.kind === 'quick') {
       const from = P.quick.indexOf(k);
       if (where === 'quick') { const to = +t.q, other = P.quick[to]; P.quick[to] = k; P.quick[from] = other || null; }
-      else if (from >= 0) P.quick[from] = null;
+      else if (where === 'equip') {
+        if (!fits(k, t.slot)) { this.msg(`${it.name} não vai nesse espaço.`, 'bad'); return; }
+        const old = P.equip[t.slot]; P.quick[from] = null; Game.equip(k, t.slot); if (old) Inv.toBag(old);
+      } else {
+        // de volta para a mochila; se a casa tem outro item que cabe no bolso, eles trocam
+        P.quick[from] = null;
+        const b = Inv.bag(), other = bagAt !== null ? b[bagAt] : null;
+        if (other && pocketOk(other)) { b[bagAt] = k; P.quick[from] = other; }
+        else Inv.toBag(k, bagAt);
+      }
     }
     this.sel.inv = k;
     this.refresh();
@@ -458,7 +476,7 @@ const UI = {
   doDiscard(k) {
     const it = ITEMS[k], n = Inv.count(k);
     for (const s in P.equip) if (P.equip[s] === k) P.equip[s] = null;
-    for (let q = 0; q < 4; q++) if (P.quick[q] === k) P.quick[q] = null;
+    for (let q = 0; q < P.quick.length; q++) if (P.quick[q] === k) P.quick[q] = null;
     Inv.add(k, -n);
     this.msg(`Você descartou ${n}× ${it.name}.`);
   },
@@ -1466,7 +1484,7 @@ const UI = {
       <small class="muted">${(STANCES[p.stance] || STANCES.normal).desc}. Capangas ganham experiência derrotando inimigos (quem dá o golpe final leva mais).</small>
       <div class="sec" style="margin-top:10px">Equipamento</div><div class="equip6">`;
     for (const sl of EQUIP_SLOTS) {
-      if (sl.key === 'tool') continue;
+      if (sl.key === 'tool' || sl.key === 'tool2') continue;
       const k = p.equip[sl.key], it = k && ITEMS[k];
       h += `<div class="eslot ${it ? 'full' : ''}"><span class="eic">${it ? it.icon : '·'}</span><div class="info"><small>${sl.name}</small><b>${it ? it.name : 'Nada'}</b><small>${it ? (it.dmg ? 'Dano ' + it.dmg : 'Defesa +' + it.def) : ''}</small></div>
         ${it ? `<button data-act="tk" data-op="cun" data-k="${sl.key}" data-id="${id}">✕</button>` : ''}</div>`;
@@ -2119,7 +2137,7 @@ const UI = {
       case 'iuse': {
         const k = this.sel.inv, it = k && ITEMS[k]; if (!it) break;
         const eq = Object.keys(P.equip).find(s => P.equip[s] === k);
-        if (it.food || it.heal) Game.eat(k); else if (it.slot) { if (eq) P.equip[eq] = null; else Game.equip(k); } else if (it.seed) P.seed = k;
+        if (it.food || it.heal) Game.eat(k); else if (it.slot) { if (eq) { P.equip[eq] = null; Inv.toBag(k); } else { const old = P.equip[it.slot]; Game.equip(k); if (old) Inv.toBag(old); } } else if (it.seed) P.seed = k;
         break;
       }
       case 'itrash': if (this.sel.inv) this.discard(this.sel.inv); return;

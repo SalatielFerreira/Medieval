@@ -33,7 +33,7 @@ const Pad = {
     if (!b[7] && was(7)) Moves.release();
     if (hit(8)) UI.toggle('showMap');
     if (hit(9)) UI.showSettings();
-    [12, 13, 14, 15].forEach((i, q) => { if (hit(i)) Game.useQuick(q); });
+    [12, 13].forEach((i, q) => { if (hit(i)) Game.useQuick(q); });
     this.prev = b;
   },
 };

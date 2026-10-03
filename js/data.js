@@ -8,6 +8,7 @@ const WORLD_SEED = 20261001; // mapa fixo: o mesmo mundo em todas as partidas
 const EQUIP_SLOTS = [
   { key: 'weapon', name: 'Arma',       sub: 'Mão direita' },
   { key: 'tool',   name: 'Ferramenta', sub: 'Mão esquerda' },
+  { key: 'tool2',  name: 'Ferramenta 2', sub: 'Na cintura (troca sozinha quando precisa)' },
   { key: 'head',   name: 'Elmo',       sub: 'Cabeça' },
   { key: 'torso',  name: 'Gibão',      sub: 'Torso' },
   { key: 'legs',   name: 'Calções',    sub: 'Pernas' },
