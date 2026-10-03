@@ -37,6 +37,8 @@ const UI = {
     this.panel.addEventListener('change', e => {
       const el = e.target.closest('[data-set]');
       if (el) Game.setSetting(el.dataset.set, el.type === 'checkbox' ? el.checked : el.value);
+      // Ajustes no celular: a prévia da tela acompanha a mudança
+      if (el && el.type === 'checkbox' && this.cur && this.cur.fn === 'showSettings' && this.sel.stab === 'tela') this.showSettings();
     });
     this.buildHud();
     this.initDrag();
@@ -660,10 +662,10 @@ const UI = {
     const head = [], units = [];
     for (const el of flat) (units.length === 0 && isHead(el) ? head : units).push(el);
     const bottom = () => body.getBoundingClientRect().bottom - 2;
-    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
+    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
     const deepList = (el, tiles) => lists(el, tiles).sort((x, y) => y.children.length - x.children.length)[0] || null;
     if (!small) {
-      const on = nav.startsWith('d:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
+      const on = nav.startsWith('d:') || nav.startsWith('s:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
       body.classList.toggle('kfit', on); box.classList.toggle('kdesk', on);
       if (on) box.dataset.nav = nav;
       return;
@@ -1202,60 +1204,58 @@ const UI = {
 
   // ============================================================ Ajustes: Jogo · Tela · Som · Controles · Como jogar
   showSettings(tab) {
-    const S = this.sel, s = G.settings;
+    const S = this.sel;
     if (tab) S.stab = tab;
     else if (!(this.cur && this.cur.fn === 'showSettings')) S.stab = 'jogo'; // Esc e o botão Ajustes abrem na aba Jogo
     S.stab = S.stab || 'jogo';
-    const sw = (key, label, sub) => `<div class="set-row"><div><b>${label}</b><small>${sub}</small></div>
+    this.showSettingsM();
+  },
+  // menu de ícones à esquerda e cada assunto em quadros; escolhas viram botões (o paginador arruma: páginas no celular, uma página no computador)
+  showSettingsM() {
+    const S = this.sel, s = G.settings, tab = S.stab, small = document.body.classList.contains('small');
+    const sw = (key, ic, label, sub) => `<div class="st-row"><span class="st-ic">${ic}</span><div class="st-tx"><b>${label}</b><small>${sub}</small></div>
       <label class="switch"><input type="checkbox" data-set="${key}" ${s[key] ? 'checked' : ''}><span></span></label></div>`;
-    const sel = (key, label, sub, opts) => `<div class="set-row"><div><b>${label}</b><small>${sub}</small></div>
-      <select data-set="${key}">${opts.map(([v, t]) => `<option value="${v}" ${String(s[key]) === String(v) ? 'selected' : ''}>${t}</option>`).join('')}</select></div>`;
-    const range = (key, label, sub) => `<div class="set-row"><div><b>${label}</b><small>${sub}</small></div>
-      <div class="range-box"><input type="range" min="0" max="1" step="0.05" data-set="${key}" value="${+s[key]}"><span class="rv">${Math.round(+s[key] * 100)}%</span></div></div>`;
-    let body = '';
-    if (S.stab === 'jogo') {
+    const chips = (key, opts, cur) => `<div class="st-chips">${opts.map(([v, t, sub]) => `<button class="st-chip ${String(cur) === String(v) ? 'on' : ''}" data-act="setopt" data-k="${key}" data-v="${v}"><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</button>`).join('')}</div>`;
+    const range = (key, ic, label, sub) => `<div class="st-vol"><span class="st-ic big">${ic}</span><div class="st-tx"><b>${label}</b><small>${sub}</small>
+      <div class="range-box"><input type="range" min="0" max="1" step="0.05" data-set="${key}" value="${+s[key]}"><span class="rv">${Math.round(+s[key] * 100)}%</span></div></div></div>`;
+    let page = '';
+    if (tab === 'jogo') {
       const inf = Saves.info(G.slot), blocked = G.dungeon ? 'Dentro de cavernas não dá para salvar.' : G.siege ? 'Durante um cerco não dá para salvar.' : '';
       const when = inf && inf.savedAt ? new Date(inf.savedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca';
-      body = this.pageHead('▶', 'Jogo', `${this.esc(G.name)} ${this.esc(G.surname || '')} · ${Calendar.full(G.day)} · espaço ${G.slot}`)
-        + `<div class="set-actions">
-          <button class="primary big" data-act="close">▶ Continuar jogando</button>
-          <button class="big" data-act="savenow" ${blocked ? 'disabled' : ''}>💾 Salvar agora</button>
-          <button class="big" data-act="export" ${G.dungeon ? 'disabled' : ''}>⬇️ Exportar arquivo</button>
-          <button class="danger big" data-act="quit">🚪 Sair para o menu</button></div>
-        <small class="muted">${blocked || `Último salvamento no espaço ${G.slot}: ${when}. Dormir em casa também salva.`} Ao sair para o menu, o que não foi salvo se perde.</small>
-        <div class="card"><div class="sec">Partida</div>
-          <div class="set-row"><div><b>Dificuldade</b><small>${DIFFICULTY[G.diff || 'normal'].desc}</small></div>
-            <select data-set="diff">${Object.entries(DIFFICULTY).map(([k, d]) => `<option value="${k}" ${G.diff === k ? 'selected' : ''}>${d.name}</option>`).join('')}</select></div>
-          <div class="set-row"><div><b>Exportar</b><small>Baixa um arquivo .json com o progresso de agora. Ele pode ser importado no menu principal (Jogos salvos).</small></div><button data-act="export" ${G.dungeon ? 'disabled' : ''}>⬇️ Exportar</button></div></div>`;
-    } else if (S.stab === 'tela') {
-      body = this.pageHead('🖥️', 'Tela e interface', 'Tamanho, minimapa e o que aparece na tela')
-        + `<div class="card"><div class="sec">Tamanho</div>
-          ${sel('uiScale', 'Escala da interface', 'Automática se ajusta ao tamanho da tela (celular, notebook, monitor)', [['auto', 'Automática'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']])}</div>
-        <div class="card"><div class="sec">Minimapa</div>
-          ${sw('minimap', 'Mostrar o minimapa', 'Mapa pequeno no canto superior direito (clique nele para abrir o mapa completo)')}
-          ${sel('miniSize', 'Tamanho do minimapa', 'Em telas pequenas ele fica menor automaticamente', [[140, 'Pequeno'], [180, 'Médio'], [230, 'Grande']])}</div>
-        <div class="card"><div class="sec">Informações na tela</div>
-          ${sw('numbers', 'Números nas barras', 'Mostra os valores de vida, energia e fome')}
-          ${sw('keysbar', 'Barra de atalhos no rodapé', 'Lista das teclas na parte de baixo da tela')}</div>`;
-    } else if (S.stab === 'som') {
-      body = this.pageHead('🔊', 'Som', 'Música e efeitos, todos criados pelo próprio jogo')
-        + `<div class="card">
-          ${range('music', 'Música', 'Trilha medieval que muda de dia, à noite, nas cavernas e em batalha')}
-          ${range('sfx', 'Efeitos', 'Passos, golpes, machado, picareta, fogueira, chuva...')}
-          ${sw('mute', 'Silenciar tudo', 'Desliga todo o áudio do jogo')}</div>`;
-    } else if (S.stab === 'controles') {
+      const big = (cls, act, ic, label, sub, dis) => `<button class="st-big ${cls}" data-act="${act}" ${dis ? 'disabled' : ''}><span class="st-bic">${ic}</span><b>${label}</b><small>${sub}</small></button>`;
+      page = this.pageHead('▶', 'Jogo', `${this.esc(G.name)} ${this.esc(G.surname || '')} · ${Calendar.full(G.day)} · espaço ${G.slot}`)
+        + `<div class="card st-play kalone"><div class="st-bigs">
+          ${big('go', 'close', '▶', 'Continuar jogando', 'Voltar para a aventura')}
+          ${big('', 'savenow', '💾', 'Salvar agora', blocked || `Espaço ${G.slot} · último: ${when}`, blocked)}
+          ${big('', 'export', '⬇️', 'Exportar arquivo', 'Um .json para importar no menu', G.dungeon)}
+          ${big('quit', 'quit', icon('run'), 'Sair para o menu', 'O que não foi salvo se perde')}</div></div>`;
+    } else if (tab === 'tela') {
+      page = this.pageHead('🖥️', 'Tela e interface', 'Minimapa e o que aparece na tela')
+        + `<div class="card st-screen kalone"><div class="st-cols">${small ? '' : `<div class="st-col"><div class="sec">🔍 Escala</div><small class="st-hint">A automática se ajusta ao tamanho da tela</small>${chips('uiScale', [['auto', 'Auto'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']], s.uiScale)}</div>`}<div class="st-col"><div class="sec">🗺️ Minimapa</div>${sw('minimap', '👁️', 'Mostrar', 'toque nele para abrir o mapa')}${chips('miniSize', [[140, 'P', 'pequeno'], [180, 'M', 'médio'], [230, 'G', 'grande']], s.miniSize)}</div><div class="st-col"><div class="sec">📋 Informações</div>${sw('numbers', '🔢', 'Números nas barras', 'vida, energia e fome')}${sw('keysbar', '⌨️', 'Barra de atalhos', 'teclas no rodapé')}</div><div class="st-col st-pcol"><div class="sec">👀 Prévia</div><div class="sp-screen"><div class="sp-hud">${[['hp', 100], ['en', 80], ['fo', 60]].map(([k, v]) => `<div class="sp-bar ${k}"><i style="width:${v}%"></i>${s.numbers ? `<em>${v}</em>` : ''}</div>`).join('')}</div>${s.minimap ? `<div class="sp-mini" style="--m:${s.miniSize / 230}"></div>` : ''}<div class="sp-hero"></div>${s.keysbar ? '<div class="sp-keys"><i></i><i></i><i></i><i></i><i></i></div>' : ''}</div></div></div></div>`;
+    } else if (tab === 'som') {
+      page = this.pageHead('🔊', 'Som', 'Música e efeitos, todos criados pelo próprio jogo')
+        + `<div class="card st-sound kalone">${range('music', '🎵', 'Música', 'Muda de dia, à noite, nas cavernas e em batalha')}${range('sfx', '🔔', 'Efeitos', 'Passos, golpes, machado, fogueira, chuva...')}
+          ${sw('mute', '🔇', 'Silenciar tudo', 'Desliga todo o áudio do jogo')}</div>`;
+    } else if (tab === 'controles') {
       const h = this.helpParts();
-      body = this.pageHead('🎮', 'Controles', 'Teclado e mouse, controle (gamepad) e toque')
-        + `${sel('touch', 'Controles de toque', 'Joystick e botões na tela para celular e tablet', [['auto', 'Automático'], ['on', 'Sempre'], ['off', 'Nunca']])}
-        <div class="card"><div class="sec">Teclado e mouse</div><div class="hk-grid">${h.rows.map(([k, v]) => `<div class="hk"><kbd>${k}</kbd><span>${v}</span></div>`).join('')}</div></div>
-        <div class="card"><div class="sec">Controle (gamepad)</div><p class="dt-desc">Analógico esquerdo anda e o direito mira · A/✕ ataca · B/○ esquiva · X/□ interage · Y/△ mochila · LB troca a ferramenta · RB bloqueia · LT monta · RT (segure) golpe forte · Back abre o mapa · Start abre os ajustes · setas usam a algibeira.</p></div>`;
+      page = this.pageHead('🎮', 'Controles', small ? 'Controles de toque' : 'Teclado e mouse')
+        + (small ? '' : `<div class="card st-keys"><div class="sec">⌨️ Teclado e mouse</div><div class="hk-grid">${h.rows.map(([k, v]) => `<div class="hk"><kbd>${k}</kbd><span>${v}</span></div>`).join('')}</div></div>`)
+        + (small ? `<div class="card st-touch kalone"><div class="sec">👆 Controles de toque <span>ligam sozinhos no celular</span></div><div class="st-tgrid">${[['🕹️', 'Joystick', 'à esquerda: arraste para andar'], ['⚔️', 'Atacar', 'golpeia e coleta recursos'], ['✋', 'Interagir', 'conversar, abrir e usar'], ['🛡️', 'Bloquear e esquivar', 'botões ao lado do ataque'], ['🗺️', 'Minimapa', 'toque para abrir o mapa'], ['☰', 'Barra de baixo', 'mochila, criar, construir e mais']].map(([i, t, d]) => `<div class="st-tip"><span class="st-ic">${i}</span><div class="st-tx"><b>${t}</b><small>${d}</small></div></div>`).join('')}</div></div>` : '');
     } else {
       const h = this.helpParts();
-      body = this.pageHead('❓', 'Como jogar', 'Primeiros passos e dicas')
-        + `<div class="card"><ol class="hs-list">${h.steps.map(x => `<li>${x}</li>`).join('')}</ol>${h.paras.map(x => `<p class="muted">${x}</p>`).join('')}</div>`;
+      page = this.pageHead('❓', 'Como jogar', 'Primeiros passos e dicas')
+        + `<div class="card st-steps"><div class="sec">🧭 Primeiros passos</div><div class="st-list">${h.steps.map((x, i) => `<div class="st-step"><span class="st-n">${i + 1}</span><span>${x}</span></div>`).join('')}${small ? '' : h.paras.map(x => `<div class="st-step tip"><span class="st-n">💡</span><span>${x}</span></div>`).join('')}</div></div>
+        ${small && h.paras.length ? `<div class="card st-tipsc"><div class="sec">💡 Dicas</div><div class="st-list">${h.paras.map(x => `<div class="st-step tip"><span class="st-n">💡</span><span>${x}</span></div>`).join('')}</div></div>` : ''}`;
     }
     const groups = [[null, [['jogo', '▶', 'Jogo'], ['tela', '🖥️', 'Tela e interface'], ['som', '🔊', 'Som'], ['controles', '🎮', 'Controles'], ['ajuda', '❓', 'Como jogar']]]];
-    this.open('Ajustes', this.navHtml(groups, S.stab, 'stab', body), 'showSettings', [], 'Jogo, tela, som e controles');
+    this.open('Ajustes', `<div class="iconnav st">${this.navHtml(groups, tab, 'stab', `<div class="kpg">${page}</div>`)}</div>`, 'showSettings', [], 'Jogo, tela, som e controles');
+    this.fitReino('s:' + tab, 'set/' + tab);
+    // computador, Como jogar: a letra dos passos diminui um pouco até todos caberem na página
+    if (!small && tab === 'ajuda') {
+      const l = this.panel.querySelector('.st-steps .st-list');
+      const out = () => { const r = l.getBoundingClientRect(), c = l.lastElementChild.getBoundingClientRect(); return c.right > r.right + 1 || c.bottom > r.bottom + 1; };
+      for (let px = 12; px >= 9.5 && out(); px -= 0.5) l.style.fontSize = px + 'px';
+    }
   },
   // partes do texto de ajuda (tabela de teclas, passos e parágrafos)
   helpParts() {
@@ -1267,23 +1267,26 @@ const UI = {
     return this._help;
   },
 
+  // o lar: uma cena com a lareira (o céu muda com a hora) e três ações grandes; dormir já salva o jogo
   showRest(sid) {
-    const s = World.structs[sid];
-    const slots = Saves.list().map((inf, i) => `<button class="slotbtn ${G.slot === i + 1 ? 'on' : ''}" data-act="setslot" data-n="${i + 1}" title="${inf ? this.esc(inf.name) + ', dia ' + inf.day : 'vazio'}">
-      <b>Espaço ${i + 1}</b><small>${inf ? `${this.esc(inf.name)} · ${Calendar.short(inf.day)}` : 'vazio'}</small></button>`).join('');
-    const h = `<p>Um lugar seguro para descansar. ${s.type === 'cabin' ? 'O fogo da lareira ainda crepita.' : 'Sua casa está aquecida e arrumada.'}</p>
-      <div class="kgrid two">
-        <div class="card"><div class="sec">Descanso</div><div class="btns col">
-          <button class="primary" data-act="sleep" data-s="${sid}">🛏️ Dormir até o amanhecer</button>
-          <button data-act="chest" data-s="${sid}">📦 Abrir o baú da ${s.type === 'cabin' ? 'cabana' : 'casa'}</button>
-          <button data-act="craftat" data-st="fogueira">🔥 Cozinhar na lareira</button></div>
-          <small class="muted">Dormir recupera a vida, passa a noite (e o resto do dia) e salva automaticamente.</small></div>
-        <div class="card"><div class="sec">Salvar jogo <span>espaço atual: ${G.slot}</span></div>
-          <div class="slots3">${slots}</div>
-          <div class="btns"><button class="primary" data-act="save" data-s="${sid}">💾 Salvar no espaço ${G.slot}</button>
-          <button data-act="export">⬇️ Exportar para arquivo</button></div></div>
-      </div>`;
-    this.open(s.type === 'cabin' ? 'Cabana' : s.type === 'manor' ? 'Casarão' : 'Casa', h, 'showRest', [sid], 'Seu lar: salve, descanse e guarde itens');
+    const s = World.structs[sid], cabin = s.type === 'cabin', place = cabin ? 'cabana' : s.type === 'manor' ? 'casarão' : 'casa';
+    const h = Game.hour(), hh = String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor(h % 1 * 60)).padStart(2, '0');
+    const sky = h >= 21 || h < 5 ? 'night' : h < 7 ? 'dawn' : h < 18 ? 'day' : 'dusk';
+    const box = Store.box(s), stored = Object.values(box).reduce((a, n) => a + (n || 0), 0), kinds = Object.keys(box).filter(k => box[k] > 0).length;
+    const hurt = P.hp < P.maxHp;
+    const line = sky === 'night' ? 'A noite caiu lá fora. O fogo da lareira ainda crepita.' : sky === 'dusk' ? 'O sol se põe atrás das árvores. Hora de descansar?' : sky === 'dawn' ? 'O dia está nascendo. A lareira ainda está morna.' : `O sol entra pela janela da ${place}. Tudo arrumado e quente.`;
+    const chip = (ic, v, cls) => `<span class="rh-chip ${cls || ''}">${ic} <b>${v}</b></span>`;
+    const act = (cls, attrs, ic, label, sub) => `<button class="ra ${cls}" ${attrs}><span class="ra-ic">${ic}</span><span class="ra-t"><b>${label}</b><small>${sub}</small></span></button>`;
+    const body = `<div class="rest">
+      <div class="rest-hero ${sky}"><div class="rh-stars"></div><div class="rh-fire"><span class="rh-glow"></span><span class="rh-flame">🔥</span></div>
+        <div class="rh-t"><small class="rh-time">🕯️ ${hh} · ${Calendar.full(G.day)}</small><b>${cabin ? 'Sua Cabana' : s.type === 'manor' ? 'Seu Casarão' : 'Sua Casa'}</b><small>${line}</small>
+          <div class="rh-chips">${chip('❤️', Math.round(P.hp) + '/' + P.maxHp, hurt ? 'bad' : '')}${chip('🍎', Math.round(P.hunger))}${chip('⚡', Math.round(P.stamina))}</div></div></div>
+      <div class="rest-acts">
+        ${act('main', `data-act="sleep" data-s="${sid}"`, '🛏️', 'Dormir até o amanhecer', `${hurt ? 'Recupera toda a vida · ' : ''}salva no espaço ${G.slot}`)}
+        ${act('', `data-act="chest" data-s="${sid}"`, '📦', `Baú da ${place}`, stored ? `${stored} itens · ${kinds} tipos guardados` : 'Vazio · guarde o que pesa')}
+        ${act('fire', 'data-act="craftat" data-st="fogueira"', '🍖', 'Cozinhar na lareira', 'Carne, peixe e pratos')}
+      </div></div>`;
+    this.open(cabin ? 'Cabana' : s.type === 'manor' ? 'Casarão' : 'Casa', body, 'showRest', [sid], 'Seu lar: descanse, cozinhe e guarde itens');
   },
 
   showChest(sid) {
@@ -2092,6 +2095,7 @@ const UI = {
       case 'knav': this.sel.knav = d.k; this.showKingdom(); return;
       case 'dnav': this.sel.dtab = d.k; this.showDiary(); return;
       case 'stab': this.showSettings(d.k); return;
+      case 'setopt': Game.setSetting(d.k, d.v); this.showSettings(); return;
       case 'bcat': this.sel.bcat = d.k; this.sel.build = null; this.showBuild(); return;
       case 'vping': { const v = World.villages[+d.v]; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
       case 'tax': Game.setTax(+d.c, +d.d); break;
