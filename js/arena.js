@@ -55,7 +55,7 @@ const Arena = {
     P.gold += t.prize + won; Court.addFame(t.fame); Court.addService(d.ci, 2); Game.gainXp(20 + d.tier * 20);
     Progress.add('duelsWon');
     P.hp = Math.max(P.hp, P.maxHp * 0.5);
-    UI.msg(`🏆 Vitória na arena! Prêmio ${t.prize} 🪙${won ? ` + aposta ${won} 🪙` : ''} · +${t.fame} de fama.`, 'gold');
+    UI.msg(`🏆 Vitória na arena! Prêmio ${t.prize} 🪙${won ? ` + aposta ${won} 🪙` : ''} · +${t.fame} de fama.`, 'gold', true);
     Sound.play('levelup');
     if (d.tourney) this.tourneyNext(d.ci, d.round);
   },
@@ -85,12 +85,12 @@ const Arena = {
   // ------------------------------------------------------------ Grande Torneio (uma capital por ano)
   tourney() { const t = G.tourney; return t && G.day <= t.until ? t : null; },
   dayTick() {
-    // uma vez por ano, o mês de junho inteiro (5 minutos reais)
+    // uma vez por ano, o mês de junho inteiro
     const cd = Calendar.of(G.day);
-    if (cd.month === 5 && cd.day === 1 && !this.tourney()) {
+    if (cd.month === 5 && !this.tourney()) {
       const ci = U.rint(0, CIV_DEFS.length - 1);
-      G.tourney = { ci, until: G.day + 29, round: 0, out: false, won: false };
-      Diplo.chronicle(`🏟️ O Grande Torneio acontece em ${Diplo.name(ci)} até ${Calendar.text(G.day + 29)}! Prêmio: 500 🪙 e muita fama.`, true);
+      G.tourney = { ci, until: G.day, round: 0, out: false, won: false };
+      Diplo.chronicle(`🏟️ O Grande Torneio acontece em ${Diplo.name(ci)} durante todo o mês de ${Calendar.text(G.day)}! Prêmio: 500 🪙 e muita fama.`, true);
     }
   },
   enterTourney(ci) {

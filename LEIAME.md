@@ -58,7 +58,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Pessoas com identidade:** cerca de 450 NPCs com nome, sobrenome de família, idade, hierarquia (Rei, Rainha, Príncipe, Princesa, Cavaleiro, Ferreiro, Madeireiro, Pedreiro, Comerciante, Taverneiro, Caçador, Camponês, Andarilho, Mendigo...), personalidade e presente favorito. Eles envelhecem, têm filhos e morrem. Quando morrem, só os filhos dão continuidade ao ofício.
 - **Conversa (E ou balão 💬):** conversar, elogiar, presentear, paquerar, namorar, casar (com Anel de Prata), terminar, insultar (pessoas orgulhosas ou corajosas podem partir para a briga), negociar e recrutar capangas que você equipa com armas e armaduras.
 - **Lojas especializadas** em cada vila (Armazém, Madeireira, Pedreira, Ferreiro e Taverna) e **caçadores** que vendem peles, ossos, chifres e presas. A amizade com o dono dá desconto.
-- **Família e linhagem:** case-se, tenha filhos (sexo aleatório, você escolhe o nome). O ano segue o calendário de 12 meses (360 dias, 1 mês = 5 minutos reais). Morrer é fim de jogo, mas você pode continuar como seu filho ou filha, que herda tudo.
+- **Família e linhagem:** case-se, tenha filhos (sexo aleatório, você escolhe o nome). O ano segue o calendário de 12 meses (12 meses; cada mês dura 6 minutos reais). Morrer é fim de jogo, mas você pode continuar como seu filho ou filha, que herda tudo.
 
 - **Mapa fixo** de 320×320 tiles, o mesmo em todas as partidas: cerca de 73% de terra, com campos, florestas, colinas, montanhas, neve, rios e lagos. Há **8 ilhas** no mar que só se alcançam de barco e guardam prata, ouro, gemas e carvalhos anciões.
 - **7 reinos:** Valdória, Karthum, Nordheim, Elvaren, Mordrak, Brennor e Valtaris. Cada um tem castelo, 3 vilas espaçadas (Armazém, Ferreiro, Madeireira, Pedreira, Taverna, casas e plantações), território com fronteiras, estradas e economia própria. Há 14 acampamentos de bandidos.
@@ -95,16 +95,16 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Avisos em janelinhas:** as mensagens aparecem em janelinhas flutuantes no tema do jogo, com ícone, botão de fechar e uma barrinha do tempo; avisos repetidos mostram ×2, ×3...
 - **Relógio alinhado:** data, estação, ano e hora numa linha só.
 
-- **Economia no ritmo de antes:** impostos, soldos, salários, renda dos reinos, guerras, revoltas e colheitas andam uma vez por mês (5 minutos reais).
+- **Economia no ritmo de antes:** impostos, soldos, salários, renda dos reinos, guerras, revoltas e colheitas andam uma vez por mês.
 - **Resumo das contas:** em vez de uma mensagem a cada minuto, aparece um resumo a cada mês (ouro e itens). Os detalhes ficam no Diário → Contas. Avisos importantes continuam aparecendo na hora.
-- **Vida em ritmo próprio:** as pessoas envelhecem, casam e têm filhos a cada 6 meses do calendário (1 ano de vida em 1º de janeiro e em 1º de julho, ou seja, a cada 30 minutos reais), então as famílias e a dinastia continuam vivas.
+- **Vida em ritmo próprio:** as pessoas envelhecem, casam e têm filhos uma vez por ano do calendário, em janeiro (a cada 72 minutos reais), então as famílias e a dinastia continuam vivas.
 - **Eventos no mundo:** mercador perdido para escoltar até uma vila, tesouro enterrado para cavar (picareta ou enxada), alcateia com Lobo Alfa atacando uma vila e, raramente, um Dragão Ancestral fora das cavernas. Cada evento aparece marcado no mapa.
 - **Capangas mais fortes:** sobem de nível com a experiência (mais dano, defesa e vida) e têm postura: Agressivo, Equilibrado ou Defensivo (converse com eles ou use Equipar e treinar).
 - **Rotina dos moradores:** trabalham de dia, ao entardecer muitos vão à taverna (o padre vai à capela) e à noite entram em casa para dormir. As janelas acendem quando há gente em casa.
 - **Segurar para repetir:** segure o clique, o Espaço ou o botão Atacar para bater e coletar sem parar. O golpe forte agora é segurando V (no controle, RT; no celular, o botão 💥).
 - **Ícone do jogo** na aba do navegador.
 
-- **Calendário de verdade:** 12 meses de 30 dias (janeiro a dezembro, 360 dias). Cada mês dura 5 minutos reais (1 dia = 10 segundos), então 1 ano dura 1 hora. O jogo começa em 7 de dezembro. As estações seguem os meses: primavera (março a maio), verão (junho a agosto), outono (setembro a novembro) e inverno (dezembro a fevereiro). O aniversário de todos é no 1º de janeiro, e o Grande Torneio dura o mês de junho inteiro.
+- **Calendário de verdade:** o jogo conta meses, não dias. O relógio tem uma pizza que se enche em 5 minutos de dia; quando ela completa, escurece, vira o mês e vem 1 minuto de noite. Cada mês dura 6 minutos e o ano (12 meses) 72 minutos. O jogo começa em dezembro. As estações seguem os meses: primavera (março a maio), verão (junho a agosto), outono (setembro a novembro) e inverno (dezembro a fevereiro). O aniversário de todos é em janeiro, e o Grande Torneio dura o mês de junho inteiro.
 - **Metade das montanhas:** as montanhas mais baixas viraram colinas (ou neve, no norte), com minérios. Vale também para jogos salvos antigos; castelos, vilas e cavernas continuam no mesmo lugar.
 - **Recursos renascem em 1 ano:** árvores, pedras e minérios coletados só voltam a crescer 1 ano (do jogo) depois.
 - **Estradas:** B → Estradas. Clique e arraste para abrir estradas, de graça; sobre rio raso vira ponte. "Remover estrada" tira qualquer estrada ou ponte, até as do mapa (nas vilas e castelos dos outros, só o chefe ou o rei). O Muro de Pedra (e a muralha das vilas) custa só 1 pedra.

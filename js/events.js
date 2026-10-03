@@ -21,7 +21,7 @@ const WorldEvents = {
     this.t = U.rnd(240, 420);
     if (Math.random() < 0.25) return; // às vezes nada acontece
     const r = Math.random();
-    const kind = r < 0.3 ? 'lost' : r < 0.6 ? 'treasure' : r < 0.93 || G.day < 20 ? 'wolves' : 'dragon';
+    const kind = r < 0.3 ? 'lost' : r < 0.6 ? 'treasure' : r < 0.93 || G.day < 4 ? 'wolves' : 'dragon';
     this.start(kind);
   },
   // lugar livre e aberto a uma certa distância do jogador (em blocos)
@@ -49,7 +49,7 @@ const WorldEvents = {
       this.spawnLost(G.wevent);
       this.ping(s.x, s.y, 'Mercador perdido');
       UI.banner('🧭 Alguém pede socorro');
-      UI.msg(`🧭 ${p.name}, ${p.sex === 'f' ? 'uma mercadora perdida' : 'um mercador perdido'}, grita por ajuda aqui perto (marcado no mapa). Converse e leve-${p.sex === 'f' ? 'a' : 'o'} até uma vila ou castelo.`, 'gold');
+      UI.msg(`🧭 ${p.name}, ${p.sex === 'f' ? 'uma mercadora perdida' : 'um mercador perdido'}, grita por ajuda aqui perto (marcado no mapa). Converse e leve-${p.sex === 'f' ? 'a' : 'o'} até uma vila ou castelo.`, 'gold', true);
     } else if (kind === 'treasure') {
       const s = this.spotAround(18, 34);
       if (!s) return false;
@@ -57,7 +57,7 @@ const WorldEvents = {
       G.wevent = { kind, sid: st.id, x: s.x, y: s.y, until: G.realTime + 900 };
       this.ping(s.x, s.y, 'Tesouro enterrado');
       UI.banner('🗺️ Um tesouro enterrado!');
-      UI.msg('🗺️ Um andarilho contou onde há um tesouro enterrado aqui perto (marcado no mapa). Leve uma picareta ou uma enxada para cavar.', 'gold');
+      UI.msg('🗺️ Um andarilho contou onde há um tesouro enterrado aqui perto (marcado no mapa). Leve uma picareta ou uma enxada para cavar.', 'gold', true);
     } else if (kind === 'wolves') {
       let vi = -1, bd = 45;
       World.villages.forEach((v, i) => { const d = U.dist(P.x / TILE, P.y / TILE, v.x, v.y); if (d < bd) { bd = d; vi = i; } });
@@ -214,7 +214,7 @@ const WorldEvents = {
         const gold = 400;
         P.gold += gold; Court.addFame(15); Game.gainXp(150);
         UI.banner('🐉 O dragão caiu!');
-        UI.msg(`Você derrotou o Dragão Ancestral! +${gold} 🪙, escamas de dragão e muita fama.`, 'gold');
+        UI.msg(`Você derrotou o Dragão Ancestral! +${gold} 🪙, escamas de dragão e muita fama.`, 'gold', true);
         Diplo.chronicle(`🐉 ${G.name} ${G.surname} derrotou um Dragão Ancestral fora das cavernas!`, true);
         Progress.diary('🐉 Derrotou um dragão fora das cavernas.');
       } else {

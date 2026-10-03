@@ -433,7 +433,7 @@ const Chiefdom = {
       this.grant(vi, `${c.rulerName} entregou a você a chefia de ${v.name}.`);
     } else {
       G.askDay[vi] = G.day + ECON_DAYS; Game.addRelation(v.civ, -3);
-      UI.msg(`${c.rulerName} recusa: "Ainda não confio tanto em você." Tente de novo em 7 dias.`, 'bad');
+      UI.msg(`${c.rulerName} recusa: "Ainda não confio tanto em você." Tente de novo no próximo mês.`, 'bad');
     }
   },
   // pela força: desafiar o chefe e derrotar a milícia da vila
@@ -500,7 +500,7 @@ const Chiefdom = {
     v.lord = 'player'; v.lordFam = undefined;
     Families.refresh();
     UI.banner(`🏘️ Chefe de ${v.name}!`);
-    UI.msg(`${why} Agora você é o chefe da vila: recebe impostos dos moradores e pode criar, mudar e demolir estradas e imóveis dentro dela (B → Obras).`, 'gold');
+    UI.msg(`${why} Agora você é o chefe da vila: recebe impostos dos moradores e pode criar, mudar e demolir estradas e imóveis dentro dela (B → Obras).`, 'gold', true);
     Progress.diary(`🏘️ Tornou-se chefe de ${v.name}.`);
     Diplo.chronicle(`🏘️ ${G.name} ${G.surname} é o novo chefe de ${v.name} (${Diplo.name(v.civ)}).`, true);
     Sound.play('levelup');

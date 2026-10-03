@@ -324,7 +324,7 @@ const Families = {
     P.y += 2 * TILE;
     Diplo.chronicle(`🏘️ ${G.name} ${G.surname} fundou a ${v.name}, em ${Diplo.name(v.civ)}.`, true);
     UI.banner(`🏘️ ${v.name} foi fundada!`);
-    UI.msg(`Você é o senhor da ${v.name}. Os moradores pagam 2 🪙 por pessoa todo dia, e a vila cresce com o tempo.`, 'gold');
+    UI.msg(`Você é o senhor da ${v.name}. Os moradores pagam 2 🪙 por pessoa todo mês, e a vila cresce com o tempo.`, 'gold', true);
     Progress.diary(`🏘️ Fundou a ${v.name}.`);
     Progress.add('villages');
     return true;
@@ -388,14 +388,14 @@ const Families = {
       Diplo.chronicle(`👑 A ${this.name(f)} tomou o trono de ${Diplo.name(r.civ)}! ${c.rulerName} ${f.surname} inicia uma nova dinastia.`, true);
       UI.banner(`👑 Nova dinastia em ${CIV_DEFS[r.civ].short}: Casa ${f.surname}`);
       if (wasMine) { c.relation = -60; UI.msg(`Você perdeu o trono de ${CIV_DEFS[r.civ].name} para a ${this.name(f)}!`, 'bad'); Progress.diary(`🔥 Perdeu o trono de ${CIV_DEFS[r.civ].short} para a Casa ${f.surname}.`); }
-      else if (r.side === 'rebel') { const g = 250; P.gold += g; c.relation = 70; Game.gainXp(80); UI.msg(`A nova dinastia agradece seu apoio: ${g} 🪙 e relação 70 com ${CIV_DEFS[r.civ].short}.`, 'gold'); Progress.diary(`🔥 Ajudou a Casa ${f.surname} a tomar o trono de ${CIV_DEFS[r.civ].short}.`); }
+      else if (r.side === 'rebel') { const g = 250; P.gold += g; c.relation = 70; Game.gainXp(80); UI.msg(`A nova dinastia agradece seu apoio: ${g} 🪙 e relação 70 com ${CIV_DEFS[r.civ].short}.`, 'gold', true); Progress.diary(`🔥 Ajudou a Casa ${f.surname} a tomar o trono de ${CIV_DEFS[r.civ].short}.`); }
       else if (r.side === 'crown') { c.relation = -40; UI.msg(`Você lutou pela coroa derrotada. A Casa ${f.surname} não esquecerá (−40 de relação).`, 'bad'); }
     } else if (f) {
       f.wealth = 0; f.loyalty = 55; f.favor = 0;
       const h = this.head(f);
       if (h && Math.random() < 0.5) People.die(h, 'executado pela coroa');
       Diplo.chronicle(`⚔️ A coroa de ${Diplo.name(r.civ)} esmagou a revolta da ${this.name(f)}.`, true);
-      if (r.side === 'crown' || wasMine) { const g = wasMine ? 0 : 150; if (!wasMine) Court.addService(r.civ, 12); P.gold += g; if (!wasMine) Game.addRelation(r.civ, 20); Game.gainXp(60); UI.msg(wasMine ? `Você esmagou a revolta da ${this.name(f)}! Seu trono está seguro.` : `A coroa vence e agradece: ${g} 🪙 e +20 de relação.`, 'gold'); }
+      if (r.side === 'crown' || wasMine) { const g = wasMine ? 0 : 150; if (!wasMine) Court.addService(r.civ, 12); P.gold += g; if (!wasMine) Game.addRelation(r.civ, 20); Game.gainXp(60); UI.msg(wasMine ? `Você esmagou a revolta da ${this.name(f)}! Seu trono está seguro.` : `A coroa vence e agradece: ${g} 🪙 e +20 de relação.`, 'gold', true); }
       else if (r.side === 'rebel') { Game.addRelation(r.civ, -30); UI.msg(`A revolta que você apoiou fracassou. ${CIV_DEFS[r.civ].short} está furioso (−30).`, 'bad'); }
     }
   },
@@ -527,7 +527,7 @@ const Biz = {
     s.workers = (s.workers || []).filter(id => G.people[id] && G.people[id].alive && G.people[id].job === s.id);
     s.workers.push(p.id); p.job = s.id; p.met = true;
     const e = G.spawned.get(p.id); if (e) { e.dead = true; G.spawned.delete(p.id); }
-    UI.msg(`💼 ${People.full(p)} agora trabalha no seu ${this.name(s)} (${this.wage(p, s)} 🪙 por dia).`, 'gold');
+    UI.msg(`💼 ${People.full(p)} agora trabalha no seu ${this.name(s)} (${this.wage(p, s)} 🪙 por mês).`, 'gold');
     Progress.add('hired');
     return true;
   },

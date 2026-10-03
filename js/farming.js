@@ -33,7 +33,7 @@ const Farm = {
         Progress.add('planted');
         return true;
       }
-      Game.addText(px, py - 10, `${CROPS[p.crop].name}: ${p.stage}/${CROPS[p.crop].days} (cresce a cada ${ECON_DAYS} dias)${p.watered ? ' · regado' : ''}`, '#ffe9a8');
+      Game.addText(px, py - 10, `${CROPS[p.crop].name}: ${p.stage}/${CROPS[p.crop].days} (cresce a cada ${daysText(ECON_DAYS)})${p.watered ? ' · regado' : ''}`, '#ffe9a8');
       return true;
     }
     if (!this.tillable(t) || World.obj[i] || World.sgrid[i] >= 0 || G.dungeon) return false;

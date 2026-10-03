@@ -64,7 +64,7 @@ const Progress = {
       if (!ok) continue;
       G.ach[a.id] = G.day;
       UI.banner(`${a.icon} Conquista: ${a.name}`);
-      UI.msg(`🏆 Conquista desbloqueada: ${a.name} — ${a.desc}`, 'gold');
+      UI.msg(`🏆 Conquista desbloqueada: ${a.name} — ${a.desc}`, 'gold', true);
       Sound.play('levelup');
       this.diary(`🏆 Conquista: ${a.name}.`);
     }

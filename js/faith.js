@@ -42,7 +42,7 @@ const Faith = {
   addPiety(n) { G.piety = Math.max(0, (G.piety || 0) + n); },
   priestOf(vi) { return G.people.find(p => p.alive && p.rank === 'priest' && p.home.type === 'village' && p.home.idx === vi); },
   pray() {
-    if (G.prayDay === G.day) { UI.msg('Você já rezou hoje. Volte amanhã.'); return; }
+    if (G.prayDay === G.day) { UI.msg('Você já rezou este mês. Volte no próximo.'); return; }
     G.prayDay = G.day; this.addPiety(2); Farm.addBuff('blessed');
     UI.msg('🙏 Você rezou em silêncio. Sente o coração mais leve.', 'gold');
   },
@@ -93,7 +93,7 @@ const Faith = {
     P.maxHp += 15; P.hp = P.maxHp; this.addPiety(20); Farm.addBuff('holy'); Court.addFame(5);
     if (G.pilgrim === s.shrine) { G.pilgrim = null; G.ping = null; P.gold += 60; }
     UI.banner(`🕯️ ${s.sname}`);
-    UI.msg(`Peregrinação completa! +15 de vida máxima para sempre, +20 de devoção e a Graça Divina.`, 'gold');
+    UI.msg(`Peregrinação completa! +15 de vida máxima para sempre, +20 de devoção e a Graça Divina.`, 'gold', true);
     Progress.add('pilgrimages'); Progress.diary(`🕯️ Peregrinação ao ${s.sname}.`);
     Sound.play('levelup');
   },

@@ -94,6 +94,7 @@ const MapView = {
     if (!this.inited) this.init();
     this.el.classList.remove('hidden');
     this.isOpen = true;
+    document.body.classList.add('win-open');
     this.chunkCache = new Map(); // o mundo pode ter mudado (estação, construções) desde a última vez
     this.resize();
     const fit = this.fitZoom();
@@ -107,6 +108,7 @@ const MapView = {
     if (!this.isOpen) return;
     this.isOpen = false; this.drag = null; this.hover = null;
     this.el.classList.add('hidden');
+    if (UI.panel.classList.contains('hidden')) document.body.classList.remove('win-open');
   },
 
   resize() {

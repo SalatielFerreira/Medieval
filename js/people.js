@@ -260,7 +260,7 @@ const People = {
   },
   talk(p) {
     p.met = true;
-    if (p.talkDay === G.day) return { text: this.say(p), note: 'Vocês já conversaram hoje.' };
+    if (p.talkDay === G.day) return { text: this.say(p), note: 'Vocês já conversaram este mês.' };
     p.talkDay = G.day;
     if (p.aff <= -50 && !p.kin) { this.addAff(p, 1); return { text: this.say(p), note: 'Não quis papo.' }; }
     const gain = Math.round(U.rint(3, 7) * TRAITS[p.trait].talk);
@@ -269,7 +269,7 @@ const People = {
     return { text: this.say(p), note: `Amizade +${gain}` };
   },
   compliment(p) {
-    if (p.complDay === G.day) return { text: 'Você já me elogiou hoje... está querendo algo?', note: '' };
+    if (p.complDay === G.day) return { text: 'Você já me elogiou este mês... está querendo algo?', note: '' };
     p.complDay = G.day;
     const ok = Math.random() < 0.55 + p.aff / 250 + (p.trait === 'orgulhoso' ? 0.2 : 0) - (p.trait === 'desconfiado' ? 0.25 : 0);
     if (!ok) { this.addAff(p, -4); return { text: U.pick(['Isso foi estranho.', 'Elogio barato, hein?', 'Hum... obrigado, eu acho.']), note: 'Amizade −4' }; }
@@ -421,7 +421,7 @@ const People = {
     if (!next) next = this.create({ rank: 'ruler', civ: ci, home: { type: 'castle', civ: ci }, age: U.rint(30, 50) });
     next.rank = 'ruler'; next.home = { type: 'castle', civ: ci };
     c.rulerId = next.id; c.rulerName = this.title(next) + ' ' + next.name;
-    UI.msg(`👑 ${c.rulerName} é o novo soberano de ${CIV_DEFS[ci].name}.`, 'gold');
+    UI.msg(`👑 ${c.rulerName} é o novo soberano de ${CIV_DEFS[ci].name}.`, 'gold', true);
   },
   // um ano se passa para todos
   tickYear() {

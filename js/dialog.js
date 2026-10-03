@@ -46,6 +46,7 @@ const Dialog = {
         <button class="${d.danger ? 'danger' : 'primary'}" data-dlg="ok">${esc(d.ok)}</button></div>
       <small class="dlg-keys">${d.kind === 'confirm' ? 'Enter confirma · Esc cancela' : 'Enter fecha'}</small></div>`;
     el.classList.remove('hidden');
+    document.body.classList.add('dlg-open');
     // o jogo pausa enquanto a pergunta está na tela
     this.prevPaused = typeof G !== 'undefined' ? G.paused : false;
     this.prevModal = typeof UI !== 'undefined' ? UI.modal : false;
@@ -61,6 +62,7 @@ const Dialog = {
     this.cur = null;
     const el = this.el();
     el.classList.add('hidden'); el.innerHTML = '';
+    document.body.classList.remove('dlg-open');
     if (typeof G !== 'undefined') G.paused = this.prevPaused;
     if (typeof UI !== 'undefined') UI.modal = this.prevModal;
     try { if (ok && d.onOk) d.onOk(); else if (!ok && d.onCancel) d.onCancel(); }

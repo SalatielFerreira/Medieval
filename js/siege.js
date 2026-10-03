@@ -23,7 +23,7 @@ const Sieges = {
     if (s.gate <= 0) {
       this.castleStruct(s.civ).gateBroken = true;
       UI.banner('💥 O portão caiu!');
-      UI.msg(`O portão do castelo de ${CIV_DEFS[s.civ].short} foi derrubado! Avance contra a guarnição.`, 'gold');
+      UI.msg(`O portão do castelo de ${CIV_DEFS[s.civ].short} foi derrubado! Avance contra a guarnição.`, 'gold', true);
       Sound.play('roar', { vol: 0.5 });
     }
   },
@@ -159,7 +159,7 @@ const Sieges = {
       G.assaults.push(a);
       c.atWar = true;
       UI.banner(`🚩 ${Diplo.name(c.id)} marcha contra ${this.targetName(a)}!`);
-      UI.msg(`Espiões avisam: o exército de ${Diplo.name(c.id)} (${a.str} soldados, ${a.engines} máquina(s) de cerco) chega em ${ECON_DAYS} dias a ${this.targetName(a)}.`, 'bad');
+      UI.msg(`Espiões avisam: o exército de ${Diplo.name(c.id)} (${a.str} soldados, ${a.engines} máquina(s) de cerco) chega em ${daysText(ECON_DAYS)} a ${this.targetName(a)}.`, 'bad');
       Diplo.chronicle(`🚩 ${Diplo.name(c.id)} marcha contra ${this.targetName(a)}.`);
       break;
     }
@@ -179,7 +179,7 @@ const Sieges = {
     const att = G.civs[a.att];
     if (a.str <= 0 || defense >= attack) {
       att.garrison = Math.max(0, att.garrison - 3);
-      UI.msg(`🛡️ ${this.targetName(a)} resistiu ao ataque de ${Diplo.name(a.att)}!`, 'gold');
+      UI.msg(`🛡️ ${this.targetName(a)} resistiu ao ataque de ${Diplo.name(a.att)}!`, 'gold', true);
       Diplo.chronicle(`🛡️ ${this.targetName(a)} resistiu ao ataque de ${Diplo.name(a.att)}.`, true);
       if (a.fought) { Court.addFame(8); Progress.add('defenses'); }
     } else if (a.target.kind === 'village') {

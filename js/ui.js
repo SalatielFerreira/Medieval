@@ -81,6 +81,7 @@ const UI = {
       ${stat('huBar', 'hu', 'food', 'Fome')}
       <div class="hud-res">
         <div class="gold" title="Ouro pessoal">${icon('coin')}<b id="hudGold">0</b></div>
+        <div class="fame" title="Fama">${icon('star')}<b id="hudFame">0</b></div>
         <div title="Seguidores">${icon('users')}<b id="hudFol">0/2</b></div>
         <div title="Dano">${icon('sword')}<b id="hudAtk">0</b></div>
         <div title="Defesa">${icon('shield')}<b id="hudDef">0</b></div>
@@ -89,8 +90,7 @@ const UI = {
     const clock = document.getElementById('clock');
     clock.classList.add('glass');
     clock.innerHTML = `
-      <div class="clk-top"><span class="clk-ic" id="clkIcon"></span><span class="clk-txt"><b id="clkDay">1 Mar</b><small id="clkPhase"></small></span><span class="clk-time" id="clkTime">06:00</span></div>
-      <div class="clk-bar"><i id="clkProg"></i></div>
+      <div class="clk-top"><span class="clk-ic" id="clkIcon"></span><span class="clk-txt"><b id="clkDay">Dezembro</b><small id="clkPhase"></small></span><span class="clk-pie" id="clkPie"><i></i></span></div>
       <div class="clk-zone" id="clkZone"></div>`;
     const quick = document.getElementById('quick');
     quick.classList.add('glass');
@@ -148,11 +148,11 @@ const UI = {
     if (it.dmg) p.push(`Dano ${it.dmg}`);
     if (it.def) p.push(`Defesa ${it.def}`);
     if (it.food) p.push(`+${it.food} fome${it.heal ? `, +${it.heal} vida` : ''}`);
-    if (it.tool) p.push(`${TOOL_NAMES[it.tool]} · ${TIER_NAMES[it.tier]}${it.tool !== 'rod' ? ` (força ${it.power})` : ''}`);
+    if (it.tool) p.push(TOOL_NAMES[it.tool]); // só o uso (Corte, Mineração...); o material já está no nome
     if (it.fish) p.push('peixe cru — asse na fogueira');
     if (it.block) p.push(`bloqueia ${Math.round(it.block * 100)}%`);
     if (it.buff) p.push(`${BUFFS[it.buff].icon} ${BUFFS[it.buff].desc}`);
-    if (it.seed) p.push(`plante com a enxada · ${CROPS[it.seed].days * ECON_DAYS} dias`);
+    if (it.seed) p.push(`plante com a enxada · ${daysText(CROPS[it.seed].days * ECON_DAYS)}`);
     return p.join(' · ');
   },
   bar(v, max, cls) { return `<div class="mbar ${cls || ''}"><i style="width:${U.clamp(v / max * 100, 0, 100)}%"></i></div>`; },
@@ -168,6 +168,7 @@ const UI = {
     this.panel.innerHTML = `<div class="ph"><div class="ph-ic">${icon(ic)}</div><div class="ph-t"><h2>${clean}</h2>${sub ? `<small>${sub}</small>` : ''}</div>
       ${this.winNavHtml(fn)}<button class="x" data-act="close" title="Fechar (Esc)">${icon('x')}</button></div><div class="pb">${body}</div>`;
     this.panel.classList.remove('hidden');
+    document.body.classList.add('win-open'); // os controles de toque somem enquanto a janela está aberta
     for (const el of this.panel.querySelectorAll('[data-scroll], .pb')) { const k = el.dataset.scroll || 'pb'; if (scrolls[k]) el.scrollTop = scrolls[k]; }
     G.paused = true;
   },
@@ -188,12 +189,14 @@ const UI = {
     this[fn]();
     Sound.play('ui');
   },
-  close() { this.panel.classList.add('hidden'); MapView.hide(); this.cur = null; G.paused = false; },
+  close() { this.panel.classList.add('hidden'); MapView.hide(); this.cur = null; G.paused = false; document.body.classList.remove('win-open'); },
   isOpen() { return !!this.cur; },
   refresh() { if (this.cur) this[this.cur.fn](...this.cur.args); },
 
-  // avisos em janelinhas flutuantes no canto: ícone, texto, fechar e uma barrinha do tempo restante
-  msg(text, cls) {
+  // avisos em janelinhas flutuantes no canto: ícone, texto, fechar e uma barrinha do tempo restante.
+  // Só aparecem na tela os de problema ('bad') e os importantes (big = true); os de rotina ficam só no histórico.
+  msg(text, cls, big) {
+    if (cls !== 'bad' && !big) { this.hist = this.hist || []; this.hist.push({ day: G.day, text }); if (this.hist.length > 60) this.hist.shift(); return; }
     const last = this.log.lastElementChild;
     if (last && last.dataset.t === text && !last.classList.contains('out')) {
       const n = (+last.dataset.n || 1) + 1; last.dataset.n = n; last.querySelector('.tc-n').textContent = '×' + n;
@@ -234,6 +237,7 @@ const UI = {
   },
 
   updateHUD() {
+    if (Touch.on) Touch.update();
     const $ = id => document.getElementById(id);
     const txt = (id, v) => { const el = $(id); if (el.textContent !== String(v)) el.textContent = v; };
     const html = (id, v) => { const el = $(id); if (el._h !== v) { el._h = v; el.innerHTML = v; } };
@@ -252,23 +256,25 @@ const UI = {
     $('hudXp').style.width = U.clamp(P.xp / Game.xpNext() * 100, 0, 100) + '%';
     txt('hudXpT', `Nível ${P.level} · ${P.xp} / ${Game.xpNext()} XP`);
     txt('hudGold', P.gold);
+    txt('hudFame', Court.fame());
     txt('hudFol', Game.allies().length + '/' + Game.followerCap());
     txt('hudAtk', Math.round(Game.pDmg()));
     txt('hudDef', Game.pDef());
     Game.drawPortrait($('portrait'));
 
-    const h = Game.hour();
-    const hh = String(Math.floor(h)).padStart(2, '0'), mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
-    const night = G.darkness > 0.3;
+    const night = Game.isNight();
     html('clkIcon', night ? icon('moon', 'moon') : icon('sun', 'sun'));
     const cdt = Calendar.of(G.day);
-    txt('clkDay', `${cdt.day} ${MONTHS[cdt.month][0].slice(0, 3)}`);
+    txt('clkDay', MONTHS[cdt.month][0]);
     const ck = document.getElementById('clock'), ct = `${Calendar.full(G.day)} · ${Season.cur().name}`;
     if (ck.title !== ct) ck.title = ct;
     const se = Season.cur();
     txt('clkPhase', `${se.icon} Ano ${cdt.year}`);
-    txt('clkTime', hh + ':' + mm);
-    $('clkProg').style.width = (G.time / DAY_LEN * 100) + '%';
+    // a pizza: de dia se enche em 5 minutos; à noite mostra quanto falta para amanhecer
+    const pie = $('clkPie'), fill = night ? G.time / NIGHT_LEN : Game.dayFill();
+    pie.classList.toggle('night', night);
+    pie.style.setProperty('--fill', (fill * 360).toFixed(1) + 'deg');
+    pie.title = night ? 'Noite: o dia volta em ' + Math.ceil(NIGHT_LEN - G.time) + 's' : 'O mês vira em ' + Math.ceil(DAY_LEN - G.time) + 's';
     const zc = G.zone >= 0 ? Game.civColor(G.zone) : '#9ad65a';
     const zone = G.dungeon ? '🕯️ ' + G.dungeon.name : G.zone >= 0 ? CIV_DEFS[G.zone].name : 'Terras Selvagens';
     html('clkZone', `${icon('compass')}<span style="color:${zc}">${zone}</span>` +
@@ -303,16 +309,11 @@ const UI = {
 
   // ------------------------------------------------------------ painéis
   // ============================================================ janelas principais (padrão único)
-  // Mochila: ficha do personagem + grade de itens + detalhes do item selecionado
+  // Mochila (inventário): bolsos, grade de itens e o herói equipado
+  // inventário no estilo "Last Day on Earth": bolsos e mochila em grade à esquerda, o herói equipado à direita
   showInventory() {
-    const S = this.sel;
     const order = ['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos'];
-    const keys = this.invKeys(order);
-    const counts = {};
-    for (const k of keys) counts[ITEMS[k].cat] = (counts[ITEMS[k].cat] || 0) + 1;
-    if (S.cat !== 'Todos' && !counts[S.cat]) S.cat = 'Todos';
-    const shown = keys.filter(k => S.cat === 'Todos' || ITEMS[k].cat === S.cat);
-    if (!S.inv || !P.inv[S.inv]) S.inv = shown[0] || null;
+    const keys = this.invKeys(order), S = this.sel;
     const eqOf = k => Object.keys(P.equip).find(s => P.equip[s] === k);
     const glyph = { weapon: '⚔️', tool: '⛏️', head: '🪖', torso: '👕', legs: '👖', feet: '🥾', shield: '🛡️' };
     const slot = key => {
@@ -320,39 +321,41 @@ const UI = {
       return `<div class="pd-slot ${it ? 'full' : ''} ${it && S.inv === k ? 'on' : ''}" data-drop="equip" data-slot="${key}" ${it ? `data-drag="eq" data-k="${k}" data-act="isel"` : ''} title="${sl.name} — ${sl.sub}${it ? ': ' + it.name + ' (arraste para fora para tirar)' : ' (arraste um item para cá)'}">
         <span class="pd-ic">${it ? it.icon : `<i class="pd-empty">${glyph[key]}</i>`}</span><small>${sl.name}</small></div>`;
     };
-    const t = Game.playerTitle(), w = Store.weight(), cap = Store.capacity(), bag = Store.bag(), nb = Store.nextBag();
-    const left = `<div class="col inv-left">
-      <div class="card">
-        <div class="paperdoll">
-          <div class="pd-col">${slot('head')}${slot('torso')}${slot('legs')}${slot('feet')}</div>
-          <div class="pd-mid"><canvas id="invDoll" width="120" height="170"></canvas><div class="pd-name">${this.esc(G.name)}</div><small>${this.esc(t.text)} · ${P.age} anos</small></div>
-          <div class="pd-col">${slot('weapon')}${slot('shield')}${slot('tool')}</div>
-        </div>
-        <div class="tiles">
-          <div class="stile"><small>Vida</small><b>${Math.ceil(P.hp)}/${P.maxHp}</b></div>
-          <div class="stile"><small>Dano</small><b>${Math.round(Game.pDmg())}</b></div>
-          <div class="stile"><small>Defesa</small><b>${Game.pDef()}</b></div>
-        </div>
+    this.showInventoryGrid(keys, slot, eqOf, Game.playerTitle(), Store.weight(), Store.capacity());
+  },
+  showInventoryGrid(keys, slot, eqOf, t, w, cap) {
+    const S = this.sel;
+    if (!S.inv || !P.inv[S.inv]) S.inv = keys[0] || null;
+    const cell = k => { const it = ITEMS[k]; return `<div class="tile ${S.inv === k ? 'on' : ''}" data-act="isel" data-k="${k}" data-drag="inv" data-drop="tile" title="${it.name}">${it.icon}<span class="tn">${P.inv[k]}</span>${eqOf(k) ? '<span class="te">EQ</span>' : ''}</div>`; };
+    // grade fixa como numa mochila de verdade: as casas vazias também aparecem
+    const cols = 6, n = Math.max(cols * 3, Math.ceil(keys.length / cols) * cols);
+    const cells = keys.map(cell).join('') + '<div class="tile empty" data-drop="grid"></div>'.repeat(n - keys.length);
+    const quick = [0, 1, 2, 3].map(q => {
+      const k = P.quick[q], it = k && ITEMS[k];
+      return `<div class="tile qtile ${it && S.inv === k ? 'on' : ''}" data-drop="quick" data-q="${q}" ${it ? `data-drag="quick" data-k="${k}" data-act="isel"` : ''}>${it ? `${it.icon}<span class="tn">${Inv.count(k)}</span>` : ''}</div>`;
+    }).join('');
+    // o botão principal muda conforme o item escolhido
+    const k = S.inv, it = k && ITEMS[k], eq = k && eqOf(k);
+    const use = !it ? '' : it.food || it.heal ? (it.food ? 'Comer' : 'Usar') : it.slot ? (eq ? 'Tirar' : it.slot === 'tool' ? 'Empunhar' : 'Equipar') : it.seed ? 'Plantar' : '';
+    const xpPct = U.clamp(P.xp / Game.xpNext() * 100, 0, 100);
+    const body = `<div class="ldi">
+      <div class="ldi-l">
+        <div class="ldi-sec"><span class="ldi-lab">Bolsos</span><div class="ldi-row">${quick}</div></div>
+        <div class="ldi-sec grow"><span class="ldi-lab">Mochila</span><div class="ldi-grid" data-scroll="inv" data-drop="grid">${cells}</div></div>
+        <div class="ldi-bar"><button class="primary" data-act="iuse" ${use ? '' : 'disabled'}>${use || 'Usar'}</button>
+          <span class="ldi-sel">${it ? `<b>${this.esc(it.name)}</b> ×${Inv.count(k)}` : '<span class="muted">Toque num item</span>'}</span>
+          <button class="ldi-trash" data-act="itrash" ${it ? '' : 'disabled'} title="Descartar">${icon('trash')}</button></div>
       </div>
-      <div class="card bagcard"><div class="sec">🎒 ${this.esc(bag.name)} <span>nível ${Store.bagLvl()}/10</span></div>
-        <div class="q-lbar"><i class="${w > cap ? 'over' : ''}" style="width:${U.clamp(w / cap * 100, 0, 100)}%"></i></div>
-        <small class="muted">Carga ${w} / ${cap}${nb ? ` · próximo: ${nb.cap} (na Bancada)` : ' · nível máximo!'}</small></div>
-      <div class="card"><div class="sec">Algibeira <span>arraste comida para cá</span></div><div class="bag4">${[0, 1, 2, 3].map(q => {
-        const k = P.quick[q], it = k && ITEMS[k];
-        return `<div class="tile qtile ${it && S.inv === k ? 'on' : ''}" data-drop="quick" data-q="${q}" ${it ? `data-drag="quick" data-k="${k}" data-act="isel"` : ''} title="${it ? it.name + ' (arraste para fora para tirar)' : 'Vazio — arraste uma comida para cá'}">
-          ${it ? `${it.icon}<span class="tn">${Inv.count(k)}</span>` : '<span class="muted">+</span>'}</div>`;
-      }).join('')}</div></div></div>`;
-    const tabs = ['Todos', ...order].filter(c => c === 'Todos' || counts[c])
-      .map(c => `<button class="tab ${S.cat === c ? 'on' : ''}" data-act="icat" data-c="${c}">${c}<span class="cnt">${c === 'Todos' ? keys.length : counts[c]}</span></button>`).join('');
-    const grid = shown.length ? shown.map(k => {
-      const it = ITEMS[k];
-      return `<div class="tile ${S.inv === k ? 'on' : ''}" data-act="isel" data-k="${k}" data-drag="inv" data-drop="tile" title="${it.name}">${it.icon}<span class="tn">${P.inv[k]}</span>${eqOf(k) ? '<span class="te">EQ</span>' : ''}</div>`;
-    }).join('') : '<p class="muted">Sua mochila está vazia. Colete recursos em árvores, rochas, plantas, animais e na água.</p>';
-    const mid = `<div class="col inv-mid"><div class="tabs">${tabs}</div>
-      <div class="scroll" data-scroll="inv" data-drop="grid"><div class="tile-grid">${grid}</div></div>
-      <div class="inv-tools"><div class="trash" data-drop="trash">🗑️ Arraste aqui para descartar</div><button data-act="isort" title="Volta a ordenar por categoria">↺ Organizar</button></div></div>`;
-    const right = `<div class="card detail inv-detail">${S.inv ? this.itemDetail(S.inv) : '<p class="muted">Clique num item para ver os detalhes.</p>'}</div>`;
-    this.open('Mochila', `<div class="inv3">${left}${mid}${right}</div>`, 'showInventory', [], `${keys.length} tipos de item · ${P.gold} 🪙 · carga <b class="${w > cap ? 'bad' : ''}">${w} / ${cap}</b>${w > cap ? ' — sobrecarregado!' : ''} · arraste os itens para equipar, guardar na algibeira ou reorganizar`);
+      <div class="ldi-r">
+        <div class="ldi-head"><span class="ldi-lv">${String(P.level).padStart(2, '0')}</span>
+          <div class="ldi-who"><b>${this.esc(G.name)}</b><small>${this.esc(t.text)} · ${P.age} anos</small><div class="ldi-xp"><i style="width:${xpPct}%"></i></div></div>
+          <span class="ldi-chip">🍎 ${Math.round(P.hunger)}</span><span class="ldi-chip">⚡ ${Math.round(P.stamina)}</span></div>
+        <div class="ldi-doll"><div class="pd-col">${slot('weapon')}${slot('shield')}${slot('tool')}</div>
+          <div class="pd-mid"><canvas id="invDoll" width="120" height="170"></canvas></div>
+          <div class="pd-col">${slot('head')}${slot('torso')}${slot('legs')}${slot('feet')}</div></div>
+        <div class="ldi-stats"><span title="Vida">❤ ${Math.ceil(P.hp)}/${P.maxHp}</span><span title="Dano">⚔ ${Math.round(Game.pDmg())}</span><span title="Defesa">🛡 ${Game.pDef()}</span><span title="Carga" class="${w > cap ? 'bad' : ''}">🎒 ${w}/${cap}</span></div>
+      </div></div>`;
+    this.open('Inventário', body, 'showInventory', [], `${P.gold} 🪙`);
     const cv = document.getElementById('invDoll');
     const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
     drawHuman(g, 60, 158, Object.assign(playerLook(), { scale: 3.3, dir: 1, moving: false, swing: 0, rod: false }));
@@ -427,7 +430,7 @@ const UI = {
         if (it.slot === t.slot) { Game.equip(k); Sound.play('ui'); }
         else this.msg(it.slot ? `${it.name} vai no espaço ${EQUIP_SLOTS.find(x => x.key === it.slot).name}.` : `${it.name} não é equipável.`, 'bad');
       } else if (where === 'quick') {
-        if (it.food || it.heal) Game.setQuick(+t.q, k); else this.msg('Na algibeira só vão comidas e remédios.', 'bad');
+        if (it.food || it.heal || it.tool) Game.setQuick(+t.q, k); else this.msg('Na algibeira vão comidas, remédios e ferramentas.', 'bad');
       } else if (where === 'trash') this.discard(k);
       else if (where === 'tile' && t.k !== k) {
         const order = this.invKeys(['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos']).filter(x => x !== k);
@@ -457,45 +460,71 @@ const UI = {
     Inv.add(k, -n);
     this.msg(`Você descartou ${n}× ${it.name}.`);
   },
-  // de onde vem um item (para a pessoa saber como conseguir)
-  sourcesOf(k) {
-    const out = [];
-    const objs = OBJ.filter(o => o && o.drops[k]).map(o => o.name);
-    if (objs.length) out.push('Coleta: ' + [...new Set(objs)].slice(0, 4).join(', '));
-    const mobs = Object.values(CREATURES).filter(c => c.drops && c.drops[k]).map(c => c.name);
-    if (mobs.length) out.push('Caça: ' + mobs.join(', '));
-    const r = RECIPES.find(x => x.out === k);
-    if (r) out.push('Criação: ' + (r.station ? STATIONS[r.station].name : 'feito à mão'));
-    const shops = Object.values(SHOPS).filter(sh => sh.sells.includes(k)).map(sh => sh.name);
-    if (shops.length) out.push('À venda em: ' + shops.join(', '));
-    if (ITEMS[k].fish || k === 'goldfish' || k === 'old_boot') out.push('Pesca');
-    return out;
-  },
-  itemDetail(k) {
-    const it = ITEMS[k], eq = Object.keys(P.equip).find(s => P.equip[s] === k);
-    const kv = [];
-    if (it.dmg) kv.push(['Dano', it.dmg]);
-    if (it.def) kv.push(['Defesa', '+' + it.def]);
-    if (it.block) kv.push(['Bloqueio', Math.round(it.block * 100) + '%']);
-    if (it.tool) kv.push(['Ferramenta', `${TOOL_NAMES[it.tool]} · ${TIER_NAMES[it.tier]}`]);
-    if (it.food) kv.push(['Fome', '+' + it.food]);
-    if (it.heal) kv.push(['Vida', '+' + it.heal]);
-    if (it.seed) kv.push(['Colheita', `${CROPS[it.seed].days * ECON_DAYS} dias`]);
-    kv.push(['Quantidade', Inv.count(k)], ['Valor', '~' + it.price + ' 🪙'], ['Peso', Math.round(itemWeight(k) * 10) / 10]);
-    let acts = '';
-    if (it.slot) acts += eq ? `<button data-act="unequip" data-k="${eq}">Tirar</button>` : `<button class="primary" data-act="equip" data-k="${k}">${it.slot === 'tool' ? 'Empunhar' : 'Equipar'}</button>`;
-    if (it.food || it.heal) acts += `<button class="primary" data-act="eat" data-k="${k}">${it.food ? 'Comer' : 'Usar'}</button>`;
-    if (it.seed) acts += Farm.seed() === k ? '<span class="chip">🌱 Semente escolhida</span>' : `<button class="primary" data-act="setseed" data-k="${k}">🌱 Plantar esta</button>`;
-    const uses = RECIPES.filter(r => r.cost[k] || (it.fish && r.cost.fish)).map(r => ITEMS[r.out]);
-    const src = this.sourcesOf(k).slice(0, 3);
-    return `<div class="dt-head"><div class="dt-ic">${it.icon}</div><div><div class="dt-name">${it.name}</div><div class="dt-cat">${it.cat}${eq ? ' · equipado' : ''}</div></div></div>
-      ${it.buff ? `<div class="dt-buff">${BUFFS[it.buff].icon} ${BUFFS[it.buff].name}: ${BUFFS[it.buff].desc}</div>` : ''}
-      <div class="kv kv3">${kv.map(([a, b]) => `<div>${a}<b>${b}</b></div>`).join('')}</div>
-      ${acts ? `<div class="act-row">${acts}</div>` : ''}
-      ${uses.length ? `<div><div class="sec">Usado para criar</div><div class="chips dense">${uses.slice(0, 8).map(o => `<span class="chip" title="${o.name}">${o.icon} ${o.name}</span>`).join('')}${uses.length > 8 ? `<span class="chip">+${uses.length - 8}</span>` : ''}</div></div>` : ''}
-      ${src.length ? `<div><div class="sec">Como conseguir</div><div class="src">${src.map(x => `<div>• ${x}</div>`).join('')}</div></div>` : ''}`;
-  },
 
+  // detalhes de uma receita: nome, materiais e onde conseguir cada um
+  craftDetailHtml(r, so) {
+    const it = ITEMS[r.out];
+    const req = Object.entries(r.cost).map(([k, n]) => {
+      const info = ITEMS[k] || GROUP_INFO[k], have = Inv.count(k);
+      return `<div class="req-row"><span>${info.icon}</span><span>${info.name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;
+    }).join('');
+    return `<div class="dt-head"><div class="dt-ic">${it.icon}</div><div><div class="dt-name">${it.name}${r.n > 1 ? ' ×' + r.n : ''}</div><div class="dt-cat">${it.cat}</div></div></div>
+      <div><div class="sec">Materiais</div><div class="req">${req}</div></div>
+      <div><div class="sec">Onde conseguir</div><div class="src-list">${Object.keys(r.cost).map(k => {
+        const info = ITEMS[k] || GROUP_INFO[k];
+        return `<div class="src-row"><span>${info.icon}</span><span><b>${info.name}:</b> ${this.whereToGet(k)}</span></div>`;
+      }).join('')}</div>
+        ${!so ? `<small class="bad">Fique perto da estação (${STATIONS[r.station].name.split(' /')[0]}) para criar.</small>` : ''}</div>`;
+  },
+  // telas pequenas: amplia os detalhes da receita o máximo possível sem passar do quadro (nunca rola)
+  fitCraftDetail() {
+    const box = document.querySelector('#panel .craft-dt .cdt-in');
+    if (!box) return;
+    box.style.zoom = '';
+    const small = document.body.classList.contains('small');
+    const dt = box.parentNode, act = dt.querySelector('.act-row');
+    const right = () => dt.getBoundingClientRect().right - 6;
+    // fundo do quadro menos a altura dos botões
+    const limit = () => dt.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(dt).paddingBottom) || 0) - act.getBoundingClientRect().height - 10;
+    const fits = () => {
+      const last = box.lastElementChild;
+      if (last && last.getBoundingClientRect().bottom > limit()) return false;
+      for (const el of box.querySelectorAll('.req-row, .src-row, .dt-head, small')) if (el.getBoundingClientRect().right > right()) return false;
+      return true;
+    };
+    // mesma janela e mesma tela: reaproveita o tamanho já calculado
+    const key = this.craftList.join(',') + '|' + this.craftNear + '|' + innerWidth + 'x' + innerHeight;
+    if (this.craftZoomKey !== key) {
+      const html = box.innerHTML;
+      let z = small ? 1.45 : 1;
+      for (const i of this.craftList) {
+        box.innerHTML = this.craftInner(i);
+        box.style.zoom = z.toFixed(2);
+        while (z > 0.7 && !fits()) { z -= 0.05; box.style.zoom = z.toFixed(2); }
+      }
+      box.innerHTML = html;
+      this.craftZoomKey = key; this.craftZoom = z;
+    }
+    box.style.zoom = this.craftZoom < 0.999 || small ? this.craftZoom.toFixed(2) : '';
+  },
+  // de onde vem um material, em poucas palavras (coleta, caça, pesca, criação ou loja)
+  whereToGet(k) {
+    if (k === 'fish') return 'Pesca (vara de pesca na água)';
+    const out = [], it = ITEMS[k];
+    const objs = [...new Set(OBJ.filter(o => o && o.drops[k]).map(o => o.name))];
+    if (objs.length) out.push(objs.join(', '));
+    const mobs = Object.values(CREATURES).filter(c => c.drops && c.drops[k]).map(c => c.name);
+    if (mobs.length) out.push('caça: ' + mobs.join(', '));
+    if (it.fish || k === 'goldfish' || k === 'old_boot') out.push('pesca');
+    const crop = Object.values(CROPS).find(c => c.item === k);
+    if (crop) out.push('plantação (enxada e sementes)');
+    const animal = { egg: 'galinheiro', milk: 'curral (vacas)', wool: 'curral (ovelhas)', honey: 'colmeia' }[k];
+    if (animal) out.push(animal);
+    const rc = RECIPES.find(x => x.out === k);
+    if (rc) out.push('criar ' + (rc.station ? 'na ' + STATIONS[rc.station].name.split(' /')[0] : 'à mão'));
+    if (!out.length) { const shop = Object.values(SHOPS).find(sh => sh.sells.includes(k)); if (shop) out.push('à venda: ' + shop.name); }
+    return out.join(' · ') || 'comércio e recompensas';
+  },
   // Criar: filtros por estação, lista de receitas e painel com ingredientes
   // criação: a janela C mostra só o que se faz à mão; cada estação (fogueira, bancada, forja...) mostra só as suas receitas
   showCrafting(station) {
@@ -504,12 +533,11 @@ const UI = {
     for (const k in STATIONS) near[k] = Game.nearStation(k);
     const stOk = r => r.station === null || near[r.station];
     const maxOf = r => Math.min(...Object.entries(r.cost).map(([k, n]) => Math.floor(Inv.count(k) / n)));
-    const list = RECIPES.map((r, i) => ({ r, i })).filter(({ r }) => r.station === st && (!S.can || (stOk(r) && maxOf(r) > 0)));
+    const list = RECIPES.map((r, i) => ({ r, i })).filter(({ r }) => r.station === st);
     if (!list.some(x => x.i === S.craft)) S.craft = list.length ? list[0].i : RECIPES.findIndex(r => r.station === st);
     const stIcon = { fogueira: '🔥', bancada: '🪚', forja: '⚒️', cozinha: '🥖', cervejaria: '🍺' };
-    const others = Object.keys(STATIONS).map(k => `<span class="chip">${stIcon[k]} ${STATIONS[k].name.split(' /')[0]}: ${RECIPES.filter(r => r.station === k).length}</span>`).join('');
     const tabs = st ? `<div class="st-head">${stIcon[st]} <b>${STATIONS[st].name}</b> ${near[st] ? '<span class="ok">● por perto</span>' : '<span class="bad">● longe — volte para perto dela</span>'}</div>`
-      : `<div class="st-head">✋ <b>Criação à mão</b> <small class="muted">— o resto se faz nas estações:</small></div><div class="chips">${others}</div>`;
+      : '';
     const cats = ['Ferramentas', 'Armas', 'Armaduras', 'Materiais', 'Comida', 'Diversos'];
     let rows = '';
     for (const cat of cats) {
@@ -524,28 +552,21 @@ const UI = {
       }
     }
     if (!rows) rows = '<p class="muted">Nenhuma receita com esses filtros.</p>';
-    const r = RECIPES[S.craft], it = ITEMS[r.out], so = stOk(r), mx = maxOf(r);
-    const req = Object.entries(r.cost).map(([k, n]) => {
-      const info = ITEMS[k] || GROUP_INFO[k], have = Inv.count(k);
-      return `<div class="req-row"><span>${info.icon}</span><span>${info.name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;
-    }).join('');
-    const detail = `<div class="dt-head"><div class="dt-ic">${it.icon}</div><div><div class="dt-name">${it.name}${r.n > 1 ? ' ×' + r.n : ''}</div><div class="dt-cat">${it.cat}</div></div></div>
-      ${this.itemDesc(it) ? `<div class="chips"><span class="chip">${this.itemDesc(it)}</span></div>` : ''}
-      <div><div class="sec">Onde criar</div><div class="req-row"><span>${r.station ? { fogueira: '🔥', bancada: '🪚', forja: '⚒️', cozinha: '🥖', cervejaria: '🍺' }[r.station] : '✋'}</span>
-        <span>${r.station ? STATIONS[r.station].name : 'À mão, em qualquer lugar'}</span><b class="${so ? 'ok' : 'bad'}">${so ? '✔ ok' : '✖ longe'}</b></div>
-        ${!so ? `<small class="muted">Construa uma (tecla B) e fique perto dela para criar.</small>` : ''}</div>
-      <div><div class="sec">Ingredientes</div><div class="req">${req}</div></div>
+    const r = RECIPES[S.craft], so = stOk(r), mx = maxOf(r);
+    this.craftInner = i => this.craftDetailHtml(RECIPES[i], stOk(RECIPES[i]));
+    this.craftList = list.map(x => x.i);
+    this.craftNear = list.map(x => stOk(x.r) ? 1 : 0).join(''); // o aviso de estação muda a altura
+    const detail = `<div class="cdt-in">${this.craftDetailHtml(r, so)}</div>
       <div class="act-row"><button class="primary" data-act="craft" data-r="${S.craft}" data-n="1" ${so && mx > 0 ? '' : 'disabled'}>Criar</button>
-        <button data-act="craft" data-r="${S.craft}" data-n="5" ${so && mx > 1 ? '' : 'disabled'}>×5</button>
         <button data-act="craft" data-r="${S.craft}" data-n="${Math.max(1, mx)}" ${so && mx > 0 ? '' : 'disabled'}>Máximo (${so ? mx : 0})</button></div>`;
     const bagCard = st === 'bancada' && Store.nextBag() ? `<div class="card bagup"><div class="sec">🎒 Melhorar mochila <span>nível ${Store.bagLvl()} → ${Store.bagLvl() + 1}</span></div>
       <div class="kv"><div>Agora<b>${Store.bag().cap}</b></div><div>Depois<b class="ok">${Store.nextBag().cap}</b></div></div><div class="cost">${this.fmtCost(Store.nextBag().cost)}</div>
       <button class="primary" data-act="bagup" ${Inv.has(Store.nextBag().cost) && near.bancada ? '' : 'disabled'}>Melhorar para ${Store.nextBag().name}</button></div>` : '';
     const body = `<div class="split"><div class="col">${tabs}${bagCard}
-        <label class="chk"><input type="checkbox" data-act="ccan" ${S.can ? 'checked' : ''}> Mostrar só o que posso criar agora</label>
         <div class="scroll" data-scroll="craft">${rows}</div></div>
-      <div class="card detail">${detail}</div></div>`;
+      <div class="card detail craft-dt">${detail}</div></div>`;
     this.open(st ? STATIONS[st].name.split(' /')[0] : 'Criação', body, 'showCrafting', [st], st ? 'Receitas desta estação' : 'Itens que você faz com as próprias mãos');
+    this.fitCraftDetail();
   },
 
   // Construir: lista agrupada e detalhes com custo (inclui estradas, reformas e as obras de chefe e rei)
@@ -758,11 +779,11 @@ const UI = {
           <div class="stile"><small>População</small><b>${c.pop} / ${Game.popCap(c)}</b></div>
           <div class="stile"><small>Felicidade</small><b class="${c.happy < 30 ? 'bad' : ''}">${Math.round(c.happy)}%</b><span class="pbar"><i style="width:${c.happy}%;background:${c.happy < 30 ? '#c0392b' : '#5fd35f'}"></i></span></div>
           <div class="stile"><small>Tesouro do reino</small><b>${c.treasury} 🪙</b></div>
-          <div class="stile"><small>Saldo por dia</small><b class="${net < 0 ? 'bad' : 'ok'}">${net >= 0 ? '+' : ''}${net} 🪙</b></div>
+          <div class="stile"><small>Saldo por mês</small><b class="${net < 0 ? 'bad' : 'ok'}">${net >= 0 ? '+' : ''}${net} 🪙</b></div>
           <div class="stile"><small>Guarnição</small><b>${c.garrison} / ${Game.maxGarrison(c)}</b></div>
-          <div class="stile"><small>Trigo por dia</small><b class="${wheatNet < 0 ? 'bad' : 'ok'}">${wheatNet >= 0 ? '+' : ''}${wheatNet} 🌾</b></div>
+          <div class="stile"><small>Trigo por mês</small><b class="${wheatNet < 0 ? 'bad' : 'ok'}">${wheatNet >= 0 ? '+' : ''}${wheatNet} 🌾</b></div>
         </div>
-        ${c.rebel > 0 ? `<div class="alert">⚠️ O povo está à beira da revolta (${c.rebel}/3 dias). Baixe impostos ou faça um festival (aba Exército e povo).</div>` : ''}
+        ${c.rebel > 0 ? `<div class="alert">⚠️ O povo está à beira da revolta (${c.rebel}/3 meses). Baixe impostos ou faça um festival (aba Exército e povo).</div>` : ''}
         ${wheatNet < 0 ? '<div class="alert">⚠️ Falta trigo: o povo vai passar fome. Invista em Fazendas Reais (aba Obras) ou deposite trigo (aba Economia).</div>' : ''}
         <div class="card"><div class="sec">Impostos</div><div class="taxbox">
           <button data-act="tax" data-c="${ci}" data-d="-0.05" ${c.tax <= 0 ? 'disabled' : ''}>−5%</button><div class="val">${Math.round(c.tax * 100)}%</div>
@@ -827,7 +848,7 @@ const UI = {
           <p class="dt-desc">Um soldado da guarnição passa a seguir você como capanga.</p>
           <button class="primary" data-act="kescort" data-c="${ci}" ${c.garrison > 1 && capOk ? '' : 'disabled'}>Convocar</button></div>
         <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🎉</div><div><b>Festival</b><div class="dt-cat">Felicidade atual ${Math.round(c.happy)}%</div></div></div>
-          <p class="dt-desc">Uma grande festa: +10 de felicidade agora e mais no próximo dia.</p><div class="cost">${this.fmtCost({ gold: 100, wheat: 40 }, have)}</div>
+          <p class="dt-desc">Uma grande festa: +10 de felicidade agora e mais no próximo mês.</p><div class="cost">${this.fmtCost({ gold: 100, wheat: 40 }, have)}</div>
           <button class="primary" data-act="kfest" data-c="${ci}" ${have('gold') >= 100 && have('wheat') >= 40 ? '' : 'disabled'}>Realizar festival</button></div>
         <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🏰</div><div><b>Guardas no castelo</b><div class="dt-cat">${Guards.at(post).length} / ${Guards.cap(post)} capangas</div></div></div>
           <p class="dt-desc">Converse com um capanga e escolha "Mandar fazer guarda" para deixá-lo defendendo o castelo.</p></div></div>`;
@@ -963,7 +984,7 @@ const UI = {
         ${cands.map(({ p, d: dd }) => `<div class="crow"><span class="ri">${p.sex === 'm' ? '👨' : '👩'}</span><span><b>${this.esc(People.full(p))}</b><small>${People.title(p)}, ${p.age} anos · ${this.esc(People.homeName(p))} · ${Math.round(dd)} passos${Biz.skilled(p, s) ? ' · ⭐ especialista' : ''}</small></span>
           <span class="act-row"><button class="primary" data-act="bizhire" data-s="${sid}" data-id="${p.id}" ${ws.length < d.slots && P.gold >= 15 ? '' : 'disabled'}>Contratar</button></span></div>`).join('') || '<p class="muted">Ninguém disponível por perto. Converse com moradores e use “Contratar para trabalhar”.</p>'}</div>
       <div class="card"><div class="sec">📦 Produção</div>
-        <div class="kv"><div>Produz por dia<b>${outTxt || '—'}</b></div><div>Salários por dia<b>${fc.wages} 🪙</b></div>${d.season ? `<div>Estação<b>${Season.winter() ? '❄️ metade no inverno' : 'normal'}</b></div>` : ''}${s.type === 'ptavern' ? `<div>Vendas extras/dia<b>+${ws.length * d.sales}</b></div>` : ''}</div>
+        <div class="kv"><div>Produz por mês<b>${outTxt || '—'}</b></div><div>Salários por mês<b>${fc.wages} 🪙</b></div>${d.season ? `<div>Estação<b>${Season.winter() ? '❄️ metade no inverno' : 'normal'}</b></div>` : ''}${s.type === 'ptavern' ? `<div>Vendas extras/dia<b>+${ws.length * d.sales}</b></div>` : ''}</div>
         <div class="sec" style="margin-top:10px">Guardado</div>
         <div class="chips">${goods.map(k => `<span class="chip">${ITEMS[k].icon} ${s.goods[k]} ${ITEMS[k].name}</span>`).join('')}${s.till ? `<span class="chip">🪙 ${s.till}</span>` : ''}${!goods.length && !s.till ? '<span class="muted">Nada ainda.</span>' : ''}</div>
         <label class="chk"><input type="checkbox" data-act="bizauto" data-s="${sid}" ${s.autosell ? 'checked' : ''}> Vender a produção automaticamente (60% do preço, vai para o caixa)</label>
@@ -1059,7 +1080,7 @@ const UI = {
           <button class="primary" data-act="sleep" data-s="${sid}">🛏️ Dormir até o amanhecer</button>
           <button data-act="chest" data-s="${sid}">📦 Abrir o baú da ${s.type === 'cabin' ? 'cabana' : 'casa'}</button>
           <button data-act="craftat" data-st="fogueira">🔥 Cozinhar na lareira</button></div>
-          <small class="muted">Dormir recupera a vida, avança para o próximo dia e salva automaticamente.</small></div>
+          <small class="muted">Dormir recupera a vida, passa a noite (e o resto do dia) e salva automaticamente.</small></div>
         <div class="card"><div class="sec">Salvar jogo <span>espaço atual: ${G.slot}</span></div>
           <div class="slots3">${slots}</div>
           <div class="btns"><button class="primary" data-act="save" data-s="${sid}">💾 Salvar no espaço ${G.slot}</button>
@@ -1106,7 +1127,7 @@ const UI = {
     const cost = { gold: 35, wheat: 5 };
     const can = Inv.has(cost) && n < cap;
     this.open('🛡️ Quartel', `<p>Recrutas treinam com espadas de madeira no pátio.</p>
-      <p>Seguidores: <b>${n}/${cap}</b> · Cada soldado cobra 4 🪙 por dia.</p>
+      <p>Seguidores: <b>${n}/${cap}</b> · Cada soldado cobra 4 🪙 por mês.</p>
       <div class="btns"><button data-act="train" ${can ? '' : 'disabled'}>Treinar soldado — ${this.fmtCost(cost)}</button></div>`, 'showBarracks');
   },
 
@@ -1375,7 +1396,7 @@ const UI = {
       <button data-act="tk" data-op="open" data-id="${keeper.id}">💬 Conversar</button></div>
       <p>O cheiro de cerveja e ensopado enche o salão. Mercenários jogam dados num canto.</p>
       <blockquote>“${r}”</blockquote>
-      <p>Seguidores: <b>${n}/${cap}</b> · Cada soldado cobra 4 🪙 por dia.</p>
+      <p>Seguidores: <b>${n}/${cap}</b> · Cada soldado cobra 4 🪙 por mês.</p>
       <div class="btns col">
         <button data-act="hire" data-s="${sid}" ${P.gold >= 60 && n < cap ? '' : 'disabled'}>⚔️ Contratar mercenário — 60 🪙</button>
         <button data-act="buyride" data-k="horse" data-p="250" ${!P.horse && P.gold >= 250 ? '' : 'disabled'}>🐴 ${P.horse ? 'Você já tem ' + this.esc(P.horse.name) : 'Comprar um cavalo — 250 🪙'}</button>
@@ -1436,7 +1457,7 @@ const UI = {
     const offices = Object.entries(COURT_OFFICES).map(([k, x]) => `<button class="${cur.office === k ? 'primary' : ''}" data-act="coffice" data-k="${k}" ${rn >= x.renown && cur.office !== k ? '' : 'disabled'} title="${x.desc} (reconhecimento ${x.renown}+)">${x.icon} ${RoyalCourt.officeName(k)}${rn < x.renown ? ' · ' + x.renown : ''}</button>`).join('');
     const others = G.civs.filter(x => x.id !== ci);
     return `<div class="card court-card"><div class="sec">👑 Você está na corte de ${CIV_DEFS[ci].short} <span>desde ${Calendar.short(cur.since)} · reconhecimento ${rn}</span></div>
-      <p class="dt-desc">${o.icon} <b>${RoyalCourt.officeName(cur.office)}</b> — ${o.desc} Salário a cada ${ECON_DAYS} dias: ~${o.pay + Math.floor(rn / 20) * 5} 🪙.</p>
+      <p class="dt-desc">${o.icon} <b>${RoyalCourt.officeName(cur.office)}</b> — ${o.desc} Salário todo mês: ~${o.pay + Math.floor(rn / 20) * 5} 🪙.</p>
       <div class="act-row">${offices}</div>
       <div class="act-row" style="margin-top:8px"><button data-act="caudience" ${audOk ? '' : 'disabled'}>📜 Audiência com o rei${audOk ? '' : ' (em ' + (COURT_AUDIENCE_DAYS - (G.day - cur.audience)) + ' dias)'}</button>
         ${cur.office === 'general' ? `<button data-act="cescort" ${c.garrison > 2 && Game.allies().length < Game.followerCap() ? '' : 'disabled'}>⚔️ Pedir escolta</button>` : ''}
@@ -1444,7 +1465,7 @@ const UI = {
       ${cur.office === 'diplomat' ? `<div class="sec" style="margin-top:10px">🤝 Propor ao rei</div>${others.map(x => { const war = Diplo.atWar(ci, x.id), al = Diplo.allied(ci, x.id);
         return `<div class="crow2"><span class="cdot" style="background:${Game.civColor(x.id)}"></span> <b>${CIV_DEFS[x.id].short}</b> <small class="muted">relação ${Math.round(Diplo.rel(ci, x.id))}${war ? ' · em guerra' : al ? ' · aliados' : ''}</small>
           ${war ? `<button data-act="cprop" data-o="${x.id}" data-x="peace">🕊️ Paz</button>` : `<button data-act="cprop" data-o="${x.id}" data-x="ally" ${al ? 'disabled' : ''}>🤝 Aliança</button>${x.ruler === 'player' ? '' : `<button class="danger" data-act="cprop" data-o="${x.id}" data-x="war">⚔️ Guerra</button>`}`}</div>`; }).join('')}` : ''}
-      <small class="${away > COURT_ABSENCE.warn ? 'bad' : 'muted'}">Apareça no castelo pelo menos a cada ${COURT_ABSENCE.warn} dias (última visita: ${away === 0 ? 'hoje' : 'há ' + away + ' dias'}). Guerra com o reino ou relação abaixo de 10 tiram você da corte.</small></div>`;
+      <small class="${away > COURT_ABSENCE.warn ? 'bad' : 'muted'}">Apareça no castelo pelo menos a cada ${COURT_ABSENCE.warn} meses (última visita: ${away === 0 ? 'este mês' : 'há ' + away + ' dias'}). Guerra com o reino ou relação abaixo de 10 tiram você da corte.</small></div>`;
   },
   chiefCard(ci) {
     const c = G.civs[ci], vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci);
@@ -1487,12 +1508,12 @@ const UI = {
   // ------------------------------------------------------------ galinheiro, curral e colmeia
   showAnimals(sid) {
     const s = World.structs[sid], cap = Farm.cap(s), a = s.animals || {}, g = s.goods || {};
-    const names = { chicken: ['🐔', 'Galinha', 'põe 1 ovo por dia'], cow: ['🐄', 'Vaca', 'dá 1 leite por dia'], sheep: ['🐑', 'Ovelha', 'dá 2 lãs a cada 2 dias'] };
+    const names = { chicken: ['🐔', 'Galinha', 'põe 1 ovo por mês'], cow: ['🐄', 'Vaca', 'dá 1 leite por mês'], sheep: ['🐑', 'Ovelha', 'dá 2 lãs a cada 2 meses'] };
     const animals = Object.keys(cap).map(k => `<div class="crow"><span class="ri">${names[k][0]}</span><span><b>${names[k][1]} — ${a[k] || 0}/${cap[k]}</b><small>${names[k][2]}</small></span>
       <span class="act-row"><button class="primary" data-act="buyanimal" data-s="${sid}" data-k="${k}" ${P.gold >= ANIMAL_PRICES[k] && (a[k] || 0) < cap[k] ? '' : 'disabled'}>Comprar — ${ANIMAL_PRICES[k]} 🪙</button></span></div>`).join('');
     const goods = Object.keys(g).filter(k => g[k] > 0);
     const title = { coop: '🐔 Galinheiro', pen: '🐄 Curral', beehive: '🐝 Colmeia' }[s.type];
-    this.open(title, `${s.type === 'beehive' ? '<p>As abelhas produzem 1 mel por dia (menos no inverno).</p>' : `<div class="list">${animals}</div>`}
+    this.open(title, `${s.type === 'beehive' ? '<p>As abelhas produzem 1 mel por mês (menos no inverno).</p>' : `<div class="list">${animals}</div>`}
       <div class="card" style="margin-top:10px"><div class="sec">Produção guardada</div>
         <div class="chips">${goods.length ? goods.map(k => `<span class="chip">${ITEMS[k].icon} ${g[k]} ${ITEMS[k].name}</span>`).join('') : '<span class="muted">Nada ainda — volte amanhã.</span>'}</div>
         <div class="act-row" style="margin-top:8px"><button class="primary" data-act="collect" data-s="${sid}" ${goods.length ? '' : 'disabled'}>🧺 Recolher tudo</button></div></div>
@@ -1575,10 +1596,10 @@ const UI = {
         <div class="sec" style="margin-top:12px">Filhos <span>${kids.filter(k => k.alive).length} vivos</span></div>
         <div class="list">${kids.length ? kids.map(k => `<div class="item"><span class="ic">${k.sex === 'm' ? '👦' : '👧'}</span><div class="info"><b>${this.esc(k.name)}</b> · ${k.age} anos${k.alive ? '' : ' · ✝'}
           <small>${k.prof ? PROFESSIONS[k.prof].icon + ' ' + (k.sex === 'f' ? PROFESSIONS[k.prof].f : PROFESSIONS[k.prof].name) : k.age >= 12 ? 'Sem profissão — converse para escolher' : 'Ainda é criança'}</small></div></div>`).join('') : '<p class="muted">Nenhum filho ainda.</p>'}</div>
-        <div class="kv" style="margin-top:12px"><div>Dias de história<b>${G.day}</b></div><div>Data<b>${Calendar.full(G.day)}</b></div><div>Reinos governados<b>${G.civs.filter(c => c.ruler === 'player').length}</b></div><div>Ouro<b>${P.gold}</b></div><div>Dificuldade<b>${DIFFICULTY[G.diff || 'normal'].name}</b></div></div>`;
+        <div class="kv" style="margin-top:12px"><div>Meses de história<b>${G.day}</b></div><div>Data<b>${Calendar.full(G.day)}</b></div><div>Reinos governados<b>${G.civs.filter(c => c.ruler === 'player').length}</b></div><div>Ouro<b>${P.gold}</b></div><div>Dificuldade<b>${DIFFICULTY[G.diff || 'normal'].name}</b></div></div>`;
     } else if (tab === 'contas') {
       const L = G.ledger || [];
-      body = `<p class="muted">A cada ${ECON_DAYS} dias a economia anda: impostos, soldos, salários, colheitas e vendas. Aqui fica o resumo de cada período.</p>` + (L.length ? `<div class="ledger">${L.map(e => `<div class="card"><div class="sec">${Calendar.short(e.day)} <span class="${e.gold < 0 ? 'bad' : e.gold > 0 ? 'ok' : ''}">${e.gold > 0 ? '+' : ''}${e.gold} 🪙</span></div>${e.got.length ? `<div class="chips dense">${e.got.map(g => `<span class="chip">${this.esc(g)}</span>`).join('')}</div>` : ''}${e.notes.map(n => `<div class="crow2">${this.esc(n)}</div>`).join('')}</div>`).join('')}</div>` : '<p class="muted">Ainda não houve nenhum período completo.</p>');
+      body = `<p class="muted">Todo mês a economia anda: impostos, soldos, salários, colheitas e vendas. Aqui fica o resumo de cada mês.</p>` + (L.length ? `<div class="ledger">${L.map(e => `<div class="card"><div class="sec">${Calendar.short(e.day)} <span class="${e.gold < 0 ? 'bad' : e.gold > 0 ? 'ok' : ''}">${e.gold > 0 ? '+' : ''}${e.gold} 🪙</span></div>${e.got.length ? `<div class="chips dense">${e.got.map(g => `<span class="chip">${this.esc(g)}</span>`).join('')}</div>` : ''}${e.notes.map(n => `<div class="crow2">${this.esc(n)}</div>`).join('')}</div>`).join('')}</div>` : '<p class="muted">Ainda não houve nenhum período completo.</p>');
     } else {
       body = (G.diary || []).length ? `<div class="diary">${G.diary.map(e => `<div><em>${Calendar.short(e.day)}</em><span>${this.esc(e.text)}</span></div>`).join('')}</div>` : '<p class="muted">Nada escrito ainda.</p>';
     }
@@ -1682,7 +1703,7 @@ const UI = {
         <span class="muted">${priest ? `${People.title(priest)} ${this.esc(People.full(priest))} cuida da igreja.` : 'O bispo celebra a missa.'} · sua devoção: 🙏 ${Faith.piety()}</span></div></div>
       <div class="kgrid two">
         <div class="card"><div class="sec">🙏 Fé</div><div class="btns col">
-          <button data-act="pray" ${G.prayDay === G.day ? 'disabled' : ''}>🙏 Rezar (uma vez por dia · Bênção)</button>
+          <button data-act="pray" ${G.prayDay === G.day ? 'disabled' : ''}>🙏 Rezar (uma vez por mês · Bênção)</button>
           <button data-act="bless">✨ Pedir a bênção do padre — ${Faith.piety() >= 50 ? 'grátis' : '40 🪙'} (Graça Divina)</button>
           <div class="act-row">${[10, 50, 200].map(n => `<button data-act="donate" data-c="${ci}" data-n="${n}" ${P.gold >= n ? '' : 'disabled'}>💛 Doar ${n}</button>`).join('')}</div></div>
           <small class="muted">Doações aumentam a devoção, a felicidade do reino e contam como serviço prestado para títulos.</small></div>
@@ -1862,7 +1883,14 @@ const UI = {
       case 'export': if (!G.dungeon) Saves.download(Game.snapshot()); return;
       case 'dipl': Diplo.playerAction(+d.c, +d.o, d.x); break;
       case 'isel': this.sel.inv = d.k; break;
-      case 'isort': P.invOrder = []; break;
+      // botão "Usar" da mochila do celular: come, equipa/tira ou escolhe a semente
+      case 'iuse': {
+        const k = this.sel.inv, it = k && ITEMS[k]; if (!it) break;
+        const eq = Object.keys(P.equip).find(s => P.equip[s] === k);
+        if (it.food || it.heal) Game.eat(k); else if (it.slot) { if (eq) P.equip[eq] = null; else Game.equip(k); } else if (it.seed) P.seed = k;
+        break;
+      }
+      case 'itrash': if (this.sel.inv) this.discard(this.sel.inv); return;
       case 'setseed': P.seed = d.k; this.msg(`🌱 Semente escolhida: ${ITEMS[d.k].name}. Use a enxada num canteiro arado.`); break;
       case 'savenow': if (G.siege) { this.msg('Não é possível salvar durante um cerco.', 'bad'); return; } Game.save(null); break;
       case 'buyanimal': Farm.buyAnimal(World.structs[+d.s], d.k); break;
@@ -1916,10 +1944,8 @@ const UI = {
       case 'famfavor': { const f = Families.get(+d.f); if (f && P.gold >= 200) { P.gold -= 200; f.favor = (f.favor || 0) + 25; f.loyalty = Math.min(100, f.loyalty + 15); this.msg(`A ${Families.name(f)} agradece os favores da coroa (+15 de lealdade).`, 'gold'); } break; }
       case 'fping': { const f = Families.get(+d.f), v = typeof f.seat === 'number' ? World.villages[f.seat] : null; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
       case 'found': Dialog.confirm({ icon: '🏘️', title: `Fundar a Vila ${G.surname}`, text: `Fundar a vila aqui? Custa ${FOUND_COST.gold} 🪙, ${FOUND_COST.wood} madeira e ${FOUND_COST.stone} pedra.`, ok: 'Fundar' }, () => { if (Families.playerFound()) this.close(); else this.refresh(); }); return;
-      case 'icat': this.sel.cat = d.c; this.sel.inv = null; break;
       case 'csel': this.sel.craft = +d.r; break;
       case 'cst': this.sel.st = d.s; break;
-      case 'ccan': this.sel.can = !this.sel.can; break;
       case 'bsel': this.sel.build = d.k; break;
       case 'ksub': this.sel.ksub = d.s; break;
       case 'kping': {
@@ -1972,7 +1998,7 @@ const HELP_HTML = `
 <tr><td>F</td><td>Comer a melhor comida da mochila</td></tr>
 <tr><td>Q</td><td>Trocar a ferramenta empunhada (machado, picareta, vara de pesca)</td></tr>
 <tr><td>R</td><td>Montar / desmontar do cavalo</td></tr>
-<tr><td>1 2 3 4</td><td>Usar o item guardado na algibeira</td></tr>
+<tr><td>1 2 3 4</td><td>Usar o item da algibeira (come a comida ou empunha a ferramenta)</td></tr>
 <tr><td>Esc</td><td>Fechar janelas / pausa</td></tr>
 </table>
 <h3>Primeiros passos</h3>
@@ -1990,14 +2016,14 @@ const HELP_HTML = `
 <li>Com um <b>arco</b> equipado, clique para atirar flechas (ou segure Espaço para mirar no inimigo mais próximo).</li>
 <li>Explore as <b>cavernas</b> nas montanhas e ilhas: monstros, minérios raros, baús de tesouro e chefes com itens lendários.</li>
 <li>A mochila tem <b>limite de peso</b>: guarde itens no Baú, ou compre um <b>cavalo</b> e uma <b>carroça</b> na taverna.</li>
-<li>O <b>calendário</b> tem 12 meses de 30 dias: cada mês dura 5 minutos (1 dia = 10 segundos) e o ano inteiro dura 1 hora. O jogo começa em 7 de dezembro. As <b>estações</b> seguem os meses: primavera (março a maio), verão, outono e inverno (dezembro a fevereiro). No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem. Árvores, pedras e minérios coletados só renascem depois de 1 ano.</li>
+<li>O <b>calendário</b> conta meses, não dias: a pizza do relógio se enche em 5 minutos de dia; quando completa, escurece, vira o mês e vem 1 minuto de noite. O ano (12 meses) dura 72 minutos. O jogo começa em dezembro. As <b>estações</b> seguem os meses: primavera (março a maio), verão, outono e inverno (dezembro a fevereiro). No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem. Árvores, pedras e minérios coletados só renascem depois de 1 ano.</li>
 <li>Abra <b>estradas</b> (B → Estradas): de graça; sobre rio raso vira ponte. Clique e arraste.</li>
 <li>Como chefe ou rei, mande capangas <b>fazer guarda</b> na sua vila ou no seu castelo (converse com o capanga).</li>
 <li>Vire <b>chefe de uma vila</b> fundando a sua, conquistando (converse com o chefe e desafie-o) ou pedindo ao rei no castelo. O chefe (na vila) e o rei (no reino todo) podem criar, mudar de lugar e demolir estradas e imóveis (B → Reformas e Obras).</li>
 <li>Com a <b>Enxada</b>, are a terra, plante sementes e colha; regue com o <b>Regador</b> (encha na água). Chuva também rega.</li>
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
 <li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas.</li>
-<li>A economia (impostos, soldos, salários, colheitas) anda uma vez por mês; veja o resumo em Diário → Contas. As pessoas envelhecem um ano a cada 6 meses do calendário (em 1º de janeiro e 1º de julho).</li>
+<li>A economia (impostos, soldos, salários, colheitas) anda uma vez por mês; veja o resumo em Diário → Contas. As pessoas envelhecem um ano em janeiro.</li>
 <li>Fique atento aos <b>eventos</b>: mercadores perdidos, tesouros enterrados, lobos atacando vilas e até dragões. Eles aparecem marcados no mapa.</li>
 <li>Capangas sobem de nível lutando. Escolha a <b>postura</b> de cada um (agressivo, equilibrado ou defensivo) conversando com eles.</li>
 <li>Segure o clique (ou o Espaço) para atacar e coletar sem parar. Para o <b>golpe forte</b>, segure V e solte.</li>

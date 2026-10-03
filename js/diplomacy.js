@@ -20,7 +20,7 @@ const Diplo = {
     const D = this.D();
     D.log.unshift({ day: G.day, text });
     if (D.log.length > 80) D.log.length = 80;
-    if (important) UI.msg('📜 ' + text, 'gold');
+    if (important) UI.msg('📜 ' + text, 'gold', true);
   },
   // o jogador sente as notícias dos reinos que governa ou onde está
   involves(...cs) { return cs.some(c => G.civs[c] && G.civs[c].ruler === 'player'); },

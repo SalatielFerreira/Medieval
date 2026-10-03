@@ -43,17 +43,14 @@ const Touch = {
   isTouch() { return ('ontouchstart' in window) || (window.matchMedia && matchMedia('(pointer: coarse)').matches); },
   init() {
     const el = document.getElementById('touch');
-    el.innerHTML = `<div class="tc-stick" id="tcStick"><div class="tc-knob" id="tcKnob"></div></div>
+    // joystick translúcido com setas; à direita, botões redondos e meio transparentes (estilo "Last Day on Earth")
+    el.innerHTML = `<div class="tc-stick" id="tcStick"><span class="tc-ar up"></span><span class="tc-ar dn"></span><span class="tc-ar lf"></span><span class="tc-ar rt"></span><div class="tc-knob" id="tcKnob"></div></div>
       <div class="tc-btns">
-        <button class="tc-b tc-main" data-tc="atk">⚔️<small>Atacar</small></button>
-        <button class="tc-b" data-tc="use">✋<small>Usar</small></button>
-        <button class="tc-b" data-tc="block">🛡️<small>Bloquear</small></button>
-        <button class="tc-b" data-tc="dodge">💨<small>Esquiva</small></button>
-        <button class="tc-b sm" data-tc="ride">🐴</button>
-        <button class="tc-b sm" data-tc="tool">⛏️</button>
-        <button class="tc-b sm" data-tc="order">👣</button>
-        <button class="tc-b sm" data-tc="eat">🍎</button>
-        <button class="tc-b sm" data-tc="heavy" title="Golpe forte: segure e solte">💥</button>
+        <button class="tc-b tc-main" data-tc="atk" aria-label="Atacar">${icon('sword')}</button>
+        <button class="tc-b" data-tc="use" aria-label="Interagir">${icon('hand')}</button>
+        <button class="tc-b" data-tc="run" aria-label="Correr">${icon('run')}</button>
+        <button class="tc-b tc-bag hidden" data-tc="q0" aria-label="Algibeira 1"></button>
+        <button class="tc-b tc-bag hidden" data-tc="q1" aria-label="Algibeira 2"></button>
       </div>`;
     const stick = document.getElementById('tcStick'), knob = document.getElementById('tcKnob');
     const moveStick = (cx, cy) => {
@@ -75,22 +72,35 @@ const Touch = {
         e.preventDefault(); Sound.init();
         if (G.state !== 'play' || G.paused) return;
         if (k === 'atk') { G.keys.Space = true; Game.playerAction(false, true); } // segurar repete o golpe
-        if (k === 'heavy') Moves.startHeavy();
         if (k === 'use') Game.interact();
-        if (k === 'block') this.block = true;
-        if (k === 'dodge') Moves.dodge();
-        if (k === 'ride') Ride.toggle();
-        if (k === 'tool') Game.cycleTool();
-        if (k === 'order') Orders.cycle();
-        if (k === 'eat') Game.eatBest();
+        if (k === 'run') { G.touchSprint = !G.touchSprint; b.classList.toggle('on', G.touchSprint); }
+        if (k === 'q0' || k === 'q1') {
+          const it = P.quick[+k[1]] && ITEMS[P.quick[+k[1]]];
+          if (it && it.tool) { Game.wield(P.quick[+k[1]]); G.keys.Space = true; Game.playerAction(false, true); } // empunha e já trabalha; segurar continua
+          else Game.useQuick(+k[1]);
+        }
       });
       const up = () => {
-        if (k === 'atk') G.keys.Space = false;
-        if (k === 'heavy' && P.charging) Moves.release();
-        if (k === 'block') this.block = false;
+        if (k === 'atk' || k === 'q0' || k === 'q1') G.keys.Space = false;
       };
       b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
     });
+  },
+  // mostra só o que dá para usar agora: algibeira com item, ferramenta com alvo, interação com algo por perto
+  update() {
+    const el = document.getElementById('touch');
+    if (!el || !el.firstChild) return;
+    el.querySelector('[data-tc="use"]').classList.toggle('off', !Game.canInteract());
+    el.querySelector('[data-tc="run"]').classList.toggle('on', !!G.touchSprint);
+    for (const q of [0, 1]) {
+      const b = el.querySelector(`[data-tc="q${q}"]`), k = P.quick[q], it = k && ITEMS[k], n = k ? Inv.count(k) : 0;
+      b.classList.toggle('hidden', !it || n <= 0);
+      if (!it || n <= 0) continue;
+      const key = k + ':' + n;
+      if (b.dataset.k !== key) { b.dataset.k = key; b.innerHTML = `<span class="tc-it">${it.icon}</span><span class="tc-n">${n}</span>`; b.title = it.name; }
+      b.classList.toggle('off', !!it.tool && !Game.toolUsable(k));
+      b.classList.toggle('eq', !!it.tool && P.equip.tool === k);
+    }
   },
   show(on) {
     this.on = on;

@@ -135,7 +135,7 @@ const Battles = {
     const enemy = side === b.a ? b.b : b.a;
     b.prevWar = G.civs[enemy].atWar;
     G.civs[enemy].atWar = true;
-    UI.msg(`Você luta por ${Diplo.name(side)}! Seus capangas atacarão os soldados de ${Diplo.name(enemy)}. (T muda as ordens)`, 'gold');
+    UI.msg(`Você luta por ${Diplo.name(side)}! Seus capangas atacarão os soldados de ${Diplo.name(enemy)}. (T muda as ordens)`, 'gold', true);
   },
   resolve(b, winner) {
     b.done = true;
@@ -154,7 +154,7 @@ const Battles = {
       if (b.side === winner) {
         const g = U.rint(80, 160);
         P.gold += g; Game.gainXp(60); Game.addRelation(winner, 15);
-        UI.banner('🏆 Vitória!'); UI.msg(`Seu lado venceu! ${Diplo.name(winner)} recompensa você com ${g} 🪙 (+15 relação).`, 'gold');
+        UI.banner('🏆 Vitória!'); UI.msg(`Seu lado venceu! ${Diplo.name(winner)} recompensa você com ${g} 🪙 (+15 relação).`, 'gold', true);
         Progress.add('battlesWon'); Court.addService(winner, 8);
       } else UI.msg(`Seu lado perdeu a batalha. ${Diplo.name(winner)} guardará rancor (−20 relação).`, 'bad');
       Game.addRelation(enemy, -20);

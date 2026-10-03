@@ -58,7 +58,7 @@ const Court = {
     t.lvl = r.lvl; t.civ = ci;
     const name = this.titleName();
     UI.banner(`${r.t.icon} ${G.name}, ${name}!`);
-    UI.msg(`${G.civs[ci].rulerName} concede a você o título de ${name}. ${r.t.perks}.`, 'gold');
+    UI.msg(`${G.civs[ci].rulerName} concede a você o título de ${name}. ${r.t.perks}.`, 'gold', true);
     Progress.diary(`${r.t.icon} Recebeu o título de ${name}.`);
     Diplo.chronicle(`${r.t.icon} ${G.name} ${G.surname} foi nomead${P.sex === 'f' ? 'a' : 'o'} ${name}.`);
     Game.addRelation(ci, 5);

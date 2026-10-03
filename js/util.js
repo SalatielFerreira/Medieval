@@ -5,28 +5,27 @@ const TILE = 32;
 const WORLD_W = 320, WORLD_H = 320;
 const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
-// Calendário: 12 meses de 30 dias. 1 mês = 5 minutos reais (1 dia = 10 segundos), 1 ano = 1 hora real.
-// O jogo começa em 7 de dezembro.
-const DAY_LEN = 10; // segundos reais por dia de jogo
-// a economia (impostos, soldos, salários, guerras, revoltas, colheitas) anda uma vez por mês = 5 minutos reais
-const ECON_DAYS = 30;
-const MONTHS = [['Janeiro', 30], ['Fevereiro', 30], ['Março', 30], ['Abril', 30], ['Maio', 30], ['Junho', 30],
-  ['Julho', 30], ['Agosto', 30], ['Setembro', 30], ['Outubro', 30], ['Novembro', 30], ['Dezembro', 30]];
-const YEAR_DAYS = 360;
-const CAL_START = 11 * 30 + 6; // dias do ano antes de 7 de dezembro
+// Calendário sem dias: cada ciclo é um mês. Primeiro 1 minuto de noite (o mês acabou de virar) e depois
+// 5 minutos de dia, com a "pizza" do relógio se enchendo. Quando ela completa, escurece e vira o mês.
+// G.day conta os meses desde o começo; 12 meses = 1 ano = 72 minutos reais. O jogo começa em dezembro.
+const NIGHT_LEN = 60, DAYLIGHT_LEN = 300;
+const DAY_LEN = NIGHT_LEN + DAYLIGHT_LEN; // segundos reais por mês
+// a economia (impostos, soldos, salários, guerras, revoltas, colheitas) anda uma vez por mês
+const ECON_DAYS = 1;
+const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map(m => [m, 1]);
+const YEAR_DAYS = 12;
+const CAL_START = 11; // o primeiro mês do jogo é dezembro
+// '1 mês' / '3 meses'
+const daysText = n => n + (n === 1 ? ' mês' : ' meses');
 const Calendar = {
-  // dia de jogo (1, 2, 3...) -> { year, month (0 = janeiro), day (1..31) }
+  // mês de jogo (1, 2, 3...) -> { year, month (0 = janeiro) }
   of(day) {
-    let d = day - 1 + CAL_START;
-    const year = Math.floor(d / YEAR_DAYS) + 1;
-    d %= YEAR_DAYS;
-    let m = 0;
-    while (d >= MONTHS[m][1]) { d -= MONTHS[m][1]; m++; }
-    return { year, month: m, day: d + 1 };
+    const d = day - 1 + CAL_START;
+    return { year: Math.floor(d / YEAR_DAYS) + 1, month: ((d % YEAR_DAYS) + YEAR_DAYS) % YEAR_DAYS, day: 1 };
   },
-  text(day) { const c = this.of(day); return `${c.day} de ${MONTHS[c.month][0]}`; },
-  full(day) { const c = this.of(day); return `${c.day} de ${MONTHS[c.month][0]} do ano ${c.year}`; },
-  short(day) { const c = this.of(day); return `${c.day}/${MONTHS[c.month][0].slice(0, 3)} · ano ${c.year}`; },
+  text(day) { return MONTHS[this.of(day).month][0]; },
+  full(day) { const c = this.of(day); return `${MONTHS[c.month][0]} do ano ${c.year}`; },
+  short(day) { const c = this.of(day); return `${MONTHS[c.month][0].slice(0, 3)} · ano ${c.year}`; },
   isNewYear(day) { return (day - 1 + CAL_START) % YEAR_DAYS === 0; },
   // estações do hemisfério norte: primavera (mar–mai), verão (jun–ago), outono (set–nov), inverno (dez–fev)
   season(day) { return Math.floor(((this.of(day).month + 10) % 12) / 3); },

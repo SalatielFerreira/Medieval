@@ -3,7 +3,7 @@
 // Quem não tem casa ocupa uma livre da vila ou constrói uma nova perto dela: a obra leva alguns dias, aparece no
 // mapa com andaime e os moradores trabalham nela durante o dia. As casas construídas ficam no jogo salvo.
 
-const HOUSE_BUILD_DAYS = 18; // 3 minutos reais
+const HOUSE_BUILD_DAYS = 1; // 5 minutos reais
 const HOUSE_BUILDS_PER_VILLAGE = 2; // obras ao mesmo tempo em cada vila
 
 const Homes = {

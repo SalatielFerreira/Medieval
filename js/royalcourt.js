@@ -4,7 +4,7 @@
 // e a obrigação de aparecer no castelo de tempos em tempos. Só se serve a uma corte por vez.
 
 const COURT_INVITE = { renown: 40, rel: 40 };
-const COURT_ABSENCE = { warn: 3 * ECON_DAYS, expel: 5 * ECON_DAYS }; // dias sem aparecer no castelo (3 e 5 meses)
+const COURT_ABSENCE = { warn: 3 * ECON_DAYS, expel: 5 * ECON_DAYS }; // meses sem aparecer no castelo
 const COURT_AUDIENCE_DAYS = ECON_DAYS; // uma audiência por mês
 const COURT_OFFICES = {
   advisor:   { name: 'Conselheiro do Rei',  f: 'Conselheira do Rei',  icon: '📜', renown: 40, pay: 20, desc: 'Aconselha o rei: +2 de serviço prestado e +1 de relação por mês.' },
@@ -43,7 +43,7 @@ const RoyalCourt = {
     if (c.atWar || c.relation < 10) { this.leave(c.atWar ? 'você está em guerra com o reino' : 'o rei perdeu a confiança em você'); return; }
     const away = G.day - cur.lastVisit;
     if (away > COURT_ABSENCE.expel) { this.leave('você sumiu do castelo por tempo demais'); Game.addRelation(cur.civ, -10); return; }
-    if (away > COURT_ABSENCE.warn) UI.msg(`👑 ${c.rulerName} estranha a sua ausência na corte de ${CIV_DEFS[cur.civ].short}. Apareça no castelo logo (${COURT_ABSENCE.expel - away} dias).`, 'bad');
+    if (away > COURT_ABSENCE.warn) UI.msg(`👑 ${c.rulerName} estranha a sua ausência na corte de ${CIV_DEFS[cur.civ].short}. Apareça no castelo logo (${daysText(COURT_ABSENCE.expel - away)}).`, 'bad');
     // salário e o efeito do cargo
     const o = COURT_OFFICES[cur.office], fc = Game.civForecast(c);
     const pay = Math.min(o.pay + Math.floor(this.renown(cur.civ) / 20) * 5, Math.max(0, c.treasury - 40));
@@ -57,7 +57,7 @@ const RoyalCourt = {
   invite(ci) {
     G.courtInvite = { civ: ci, day: G.day };
     const c = G.civs[ci], other = this.C();
-    UI.msg(`👑 ${c.rulerName} convida você para a corte de ${CIV_DEFS[ci].short}!`, 'gold');
+    UI.msg(`👑 ${c.rulerName} convida você para a corte de ${CIV_DEFS[ci].short}!`, 'gold', true);
     Dialog.confirm({ icon: '👑', title: 'Convite da corte',
       text: `${c.rulerName} reconhece seus serviços e convida você para fazer parte da corte de ${CIV_DEFS[ci].name}. Na corte você recebe salário, ganha um cargo e tem a atenção do rei, mas precisa aparecer no castelo pelo menos a cada ${COURT_ABSENCE.warn} dias.${other ? ` Você deixará a corte de ${CIV_DEFS[other.civ].short}.` : ''}`,
       ok: 'Aceitar o convite', cancel: 'Responder depois' }, () => this.join(ci));

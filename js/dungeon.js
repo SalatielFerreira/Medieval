@@ -185,7 +185,7 @@ const Dungeon = {
     st.cleared = true;
     Inv.add(th.loot, 1);
     UI.banner(`⚔️ ${e.def.name} foi derrotado!`);
-    UI.msg(`Você venceu ${e.def.name} e conquistou: ${ITEMS[th.loot].name}! A caverna está livre.`, 'gold');
+    UI.msg(`Você venceu ${e.def.name} e conquistou: ${ITEMS[th.loot].name}! A caverna está livre.`, 'gold', true);
     if (typeof Diplo !== 'undefined') Diplo.chronicle(`⚔️ ${G.name} derrotou ${e.def.name} em ${G.dungeon.name}.`);
   },
 };

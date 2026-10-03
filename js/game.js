@@ -171,12 +171,9 @@ const Game = {
     G.spawn = { x: P.x, y: P.y };
     Object.assign(P, { sex: opts.sex, age: opts.age, hairBase: opts.hair, skin: opts.skin || '#f0c896', style: opts.style || null });
     Progress.diary(`🛖 ${name} ${G.surname} chegou à sua cabana, com ${opts.age} anos, para começar uma nova vida.`);
-    G.time = 0; G.day = 1; G.ents = []; G.texts = []; G.parts = []; G.siege = null; G.placing = null; G.groups = {}; G.zone = -2;
+    G.time = NIGHT_LEN; G.day = 1; G.ents = []; G.texts = []; G.parts = []; G.siege = null; G.placing = null; G.groups = {}; G.zone = -2;
     Ranged.projs = []; World.season = -1; Season.apply(false);
     G.state = 'play'; G.paused = false; G.ping = null; UI.showGameUI(true);
-    UI.msg('Bem-vindo, ' + name + '! Esta cabana é seu lar. Aperte E perto dela para salvar (espaço ' + G.slot + ').', 'gold');
-    UI.msg('Colete madeira nas árvores e pedra nas rochas (clique ou segure Espaço).');
-    UI.msg('Aperte C para criar ferramentas e B para construir. M abre o mapa.');
   },
 
   toMenu() { Urban.stop(); UI.close(); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
@@ -220,7 +217,7 @@ const Game = {
     if (at) G.spawn = { x: (at.x + at.w / 2) * TILE, y: (at.y + at.h + 0.9) * TILE };
     try {
       Saves.write(G.slot || 1, this.snapshot());
-      UI.msg(quiet ? `💾 Salvamento automático (espaço ${G.slot}).` : `💾 Jogo salvo no espaço ${G.slot}.`, 'gold');
+      UI.msg(quiet ? `💾 Salvamento automático (espaço ${G.slot}).` : `💾 Jogo salvo no espaço ${G.slot}.`, 'gold', !quiet);
       return true;
     } catch (e) {
       UI.msg('Erro ao salvar: o armazenamento do navegador está cheio. Exporte e apague um espaço antigo.', 'bad');
@@ -312,7 +309,36 @@ const Game = {
     const k = P.quick[slot];
     if (!k) { UI.msg(`O espaço ${slot + 1} da algibeira está vazio. Use o inventário (I) para guardar itens nele.`); return; }
     if (Inv.count(k) <= 0) { UI.msg(`Acabou: ${ITEMS[k].name}.`, 'bad'); return; }
+    if (ITEMS[k].tool) { this.wield(k); return; }
     this.eat(k);
+  },
+  // empunha a ferramenta (sem aviso: o ícone na mão já mostra)
+  wield(k) { if (P.equip.tool !== k) { P.equip.tool = k; if (P.fishing) P.fishing = null; } },
+  // dá para usar esta ferramenta agora? (árvore ou rocha por perto, terra para arar, água para pescar/encher)
+  toolUsable(k) {
+    const it = ITEMS[k], type = it && it.tool;
+    if (!type || Inv.count(k) <= 0 || G.dungeon || P.mounted || P.sailing) return false;
+    const ptx = P.x / TILE, pty = (P.y - 8) / TILE;
+    if (type === 'axe' || type === 'pick') {
+      for (let y = Math.floor(pty) - 2; y <= Math.floor(pty) + 2; y++) for (let x = Math.floor(ptx) - 2; x <= Math.floor(ptx) + 2; x++) {
+        if (!World.inb(x, y)) continue;
+        const o = World.obj[World.idx(x, y)];
+        if (o && OBJ[o].tool === type && U.dist(x + 0.5, y + 0.5, ptx, pty) < 1.8) return true;
+      }
+      return false;
+    }
+    const fx = Math.floor((P.x + (P.dir > 0 ? 26 : -26)) / TILE), fy = Math.floor((P.y - 8) / TILE);
+    if (!World.inb(fx, fy)) return false;
+    const i = World.idx(fx, fy);
+    if (type === 'hoe') return !!Farm.plots()[i] || (Farm.tillable(World.tiles[i]) && !World.obj[i] && World.sgrid[i] < 0);
+    if (type === 'rod' || type === 'water') return !!this.findNearTile((x, y) => World.isWater(World.tile(x, y))) || (type === 'water' && !!Farm.plots()[i]);
+    return false;
+  },
+  // há alguém ou algo para interagir aqui perto?
+  canInteract() {
+    if (this.nearestNpc() || this.nearestInteract()) return true;
+    if (G.ents.some(c => c.kind === 'caravan' && !c.dead && !c.hostileToPlayer && U.dist(c.x, c.y, P.x, P.y) < 2.4 * TILE)) return true;
+    return !!this.boatAction();
   },
   setQuick(slot, k) {
     for (let s = 0; s < 4; s++) if (P.quick[s] === k) P.quick[s] = null;
@@ -325,7 +351,7 @@ const Game = {
       P.xp -= this.xpNext(); P.level++; P.maxHp += 10; P.hp = P.maxHp;
       Sound.play('levelup');
       UI.banner('⭐ Nível ' + P.level + '!');
-      UI.msg(`Você subiu para o nível ${P.level}! Vida máxima +10, dano +1.5.`, 'gold');
+      UI.msg(`Você subiu para o nível ${P.level}! Vida máxima +10, dano +1.5.`, 'gold', true);
     }
   },
   allies() { return G.ents.filter(e => e.kind === 'ally' && !e.dead); },
@@ -334,14 +360,21 @@ const Game = {
   },
   // cor do reino: a escolhida pelo rei; reinos do jogador sem cor própria usam o dourado do jogador
   civColor(ci) { return G.civs[ci] && G.civs[ci].ruler === 'player' && !Heraldry.customColor(ci) ? PLAYER_COLOR : CIV_DEFS[ci].color; },
-  hour() { return (6 + G.time / DAY_LEN * 24) % 24; },
+  // G.time: 0..NIGHT_LEN é a noite (21h às 6h), depois vem o dia (6h às 21h)
+  hour() { const t = G.time; return t < NIGHT_LEN ? (21 + t / NIGHT_LEN * 9) % 24 : 6 + (t - NIGHT_LEN) / DAYLIGHT_LEN * 15; },
+  isNight() { return G.time < NIGHT_LEN; },
+  // põe o relógio numa hora do dia (6h–21h é dia, 21h–6h é noite)
+  setHour(h) { h = ((h % 24) + 24) % 24; G.time = h >= 6 && h < 21 ? NIGHT_LEN + (h - 6) / 15 * DAYLIGHT_LEN : ((h - 21 + 24) % 24) / 9 * NIGHT_LEN; },
+  // quanto do dia já passou (a "pizza" do relógio): 0 no amanhecer, 1 quando escurece
+  dayFill() { return G.time < NIGHT_LEN ? 0 : U.clamp((G.time - NIGHT_LEN) / DAYLIGHT_LEN, 0, 1); },
+  // escurece só quando o dia acaba; clareia nos últimos segundos da noite
   calcDarkness() {
     if (G.dungeon) return 0.86;
-    const h = this.hour(), M = 0.62;
-    if (h >= 7 && h < 18) return 0;
-    if (h >= 18 && h < 20.5) return (h - 18) / 2.5 * M;
-    if (h >= 20.5 || h < 4.5) return M;
-    return (1 - (h - 4.5) / 2.5) * M;
+    const t = G.time, M = 0.62, fade = 6;
+    if (t < NIGHT_LEN - fade) return M;
+    if (t < NIGHT_LEN) return (NIGHT_LEN - t) / fade * M;
+    if (t > DAY_LEN - 2) return M * (t - (DAY_LEN - 2)) / 2;
+    return 0;
   },
   relationText(c) {
     if (c.ruler === 'player') return '<span class="ok">Seu reino</span>';
@@ -465,7 +498,7 @@ const Game = {
       const boat = s || npc ? null : this.boatAction();
       UI.prompt(Urban.mode ? Urban.prompt() : G.placing ? `Posicionando <b>${BUILDINGS[G.placing].name}</b> — clique para construir · botão direito/Esc cancela`
         : P.fishing ? (P.fishing.state === 'bite' ? '<b>❗ O peixe mordeu! Clique ou aperte Espaço AGORA!</b>' : '🎣 Pescando... espere o peixe morder (andar recolhe a linha)')
-        : npc ? `Conversar com ${npc.npc.name}` : s ? this.interactLabel(s) : boat ? boat.label : null);
+        : npc ? `${npc.npc.name} - Interagir` : s ? `${this.interactName(s)} - Interagir` : boat ? 'Barco - Interagir' : null);
     }
   },
 
@@ -482,7 +515,7 @@ const Game = {
     const an = G.padMove || G.touchMove;
     if (an && !dx && !dy) { dx = an.x; dy = an.y; }
     P.moving = !!(dx || dy) && !(P.dodgeT > 0);
-    const sprint = (k.ShiftLeft || k.ShiftRight) && P.moving && P.stamina > 1;
+    const sprint = (k.ShiftLeft || k.ShiftRight || G.touchSprint) && P.moving && P.stamina > 1;
     if (P.moving && P.fishing) { P.fishing = null; UI.msg('Você recolheu a linha.'); }
     const heavy = Store.over();
     const run = sprint && !heavy;
@@ -689,6 +722,18 @@ const Game = {
     }
     if (BIZ_TYPES[s.type] && s.owner === 'player') return `💼 ${BUILDINGS[s.type].name} — ${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários`;
     return '';
+  },
+  // só o nome da coisa (sem emoji e sem a explicação depois do travessão)
+  interactName(s) {
+    switch (s.type) {
+      case 'cave': return s.cname;
+      case 'cave_exit': return 'Saída da caverna';
+      case 'tchest': return 'Baú de tesouro';
+      case 'dig': return 'Tesouro enterrado';
+      case 'castle': return 'Castelo de ' + CIV_DEFS[s.owner].short;
+      case 'shrine': return s.sname;
+    }
+    return this.interactLabel(s).replace(/^[^\p{L}\p{N}]+/u, '').split(' — ')[0].trim();
   },
   nearestInteract() {
     const ptx = P.x / TILE, pty = (P.y - 6) / TILE;
@@ -1049,7 +1094,7 @@ const Game = {
     UI.hideGameOver();
     G.paused = false;
     UI.banner(`👑 ${c.name} continua o legado de ${oldName}`);
-    UI.msg(years ? `⏳ ${years} anos se passaram. ${c.name}, agora com ${c.age} anos, herdou tudo de ${oldName}.` : `${c.name} herdou tudo de ${oldName}: ouro, itens, construções e reinos.`, 'gold');
+    UI.msg(years ? `⏳ ${years} anos se passaram. ${c.name}, agora com ${c.age} anos, herdou tudo de ${oldName}.` : `${c.name} herdou tudo de ${oldName}: ouro, itens, construções e reinos.`, 'gold', true);
     this.save(null);
   },
   birth(name, sex) {
@@ -1062,7 +1107,7 @@ const Game = {
     Progress.add('children'); Progress.diary(`👶 Nasceu ${name}.`);
     if (sp) sp.children.push(c.id);
     UI.banner(`👶 Nasceu ${sex === 'm' ? 'o' : 'a'} pequen${sex === 'm' ? 'o' : 'a'} ${name}!`);
-    UI.msg(`${name} nasceu! ${sex === 'm' ? 'É um menino' : 'É uma menina'}. Se você morrer, poderá continuar a jornada como ${sex === 'm' ? 'ele' : 'ela'}.`, 'gold');
+    UI.msg(`${name} nasceu! ${sex === 'm' ? 'É um menino' : 'É uma menina'}. Se você morrer, poderá continuar a jornada como ${sex === 'm' ? 'ele' : 'ela'}.`, 'gold', true);
   },
 
   // ================================================================ criaturas
@@ -1221,7 +1266,7 @@ const Game = {
     if (P.gold < 300) return;
     P.gold -= 300; c.treasury += 300; c.atWar = false; c.relation = Math.max(c.relation, -20);
     if (G.siege && G.siege.civ === ci) this.endSiege(null);
-    UI.msg(`Paz selada com ${CIV_DEFS[ci].name}.`, 'gold');
+    UI.msg(`Paz selada com ${CIV_DEFS[ci].name}.`, 'gold', true);
   },
   updateSiege(dt) {
     const s = G.siege;
@@ -1257,7 +1302,7 @@ const Game = {
     c.ruler = 'player'; c.atWar = false; c.rulerName = G.name; c.rulerId = null; c.relation = 100; c.rebel = 0;
     if (G.siege && G.siege.civ === ci) { for (const e of G.ents) if (e.siegeOf === ci) e.dead = true; G.siege = null; }
     UI.banner(`👑 ${G.name}, soberano de ${CIV_DEFS[ci].short}!`);
-    UI.msg(`${how} Você agora governa ${CIV_DEFS[ci].name}! Aperte K para administrar o reino.`, 'gold');
+    UI.msg(`${how} Você agora governa ${CIV_DEFS[ci].name}! Aperte K para administrar o reino.`, 'gold', true);
   },
   conquer(ci) {
     const c = G.civs[ci];
@@ -1376,16 +1421,16 @@ const Game = {
     G.day++;
     Season.apply(true);
     for (const camp of World.camps) if (camp.cleared && G.day >= camp.respawnDay) { camp.cleared = false; camp.left = 4; }
-    // a vida (envelhecer, casar, ter filhos) anda um ano a cada 6 meses do calendário (1º de janeiro e 1º de julho = 30 minutos reais)
-    { const cd = Calendar.of(G.day); if (cd.day === 1 && cd.month % 6 === 0 && G.day > 1) People.tickYear(); }
+    // a vida (envelhecer, casar, ter filhos) anda um ano a cada ano do calendário (em janeiro)
+    if (Calendar.of(G.day).month === 0 && G.day > 1) People.tickYear();
     Arena.dayTick(); Progress.dayTick(); Guards.dayTick(); Homes.dayTick(true);
     G.econT = (G.econT || 0) + 1;
     if (G.econT >= ECON_DAYS) { G.econT = 0; this.econTick(); }
     if (G.family.dueDay && G.day >= G.family.dueDay) { G.family.dueDay = 0; setTimeout(() => UI.showBirth(), 50); }
     const cd = Calendar.of(G.day);
-    if (cd.day === 1) UI.banner(`📅 ${MONTHS[cd.month][0]} do ano ${cd.year}`);
+    UI.banner(`📅 ${MONTHS[cd.month][0]} do ano ${cd.year}`);
   },
-  // uma vez por mês (5 minutos reais): a economia e o mundo andam
+  // uma vez por mês: a economia e o mundo andam
   econTick() {
     const gold0 = P.gold, inv0 = Object.assign({}, P.inv);
     this.ledger = [];
@@ -1419,24 +1464,25 @@ const Game = {
       G.ledger.unshift({ day: G.day, gold: dg, got, notes });
       if (G.ledger.length > 30) G.ledger.length = 30;
       const parts = [dg ? `${dg > 0 ? '+' : ''}${dg} 🪙` : '', ...got.slice(0, 3)].filter(Boolean);
-      UI.msg(`📒 Resumo dos últimos ${ECON_DAYS} dias: ${parts.join(' · ') || 'sem mudanças no seu bolso'}${got.length > 3 ? ' ...' : ''} (Diário → Contas)`, dg < 0 ? 'bad' : '');
+      UI.msg(`📒 Resumo do mês: ${parts.join(' · ') || 'sem mudanças no seu bolso'}${got.length > 3 ? ' ...' : ''} (Diário → Contas)`, dg < 0 ? 'bad' : '');
     }
   },
   // mensagens de rotina durante o resumo vão para o Diário; fora dele aparecem normalmente
   note(text) { if (this.ledger) this.ledger.push(text); else UI.msg(text); },
   sleep(s) {
     P.hp = P.maxHp; P.stamina = 100; P.hunger = Math.max(0, P.hunger - 20);
-    World.updateRegrow(DAY_LEN - G.time, P.x, P.y); // o resto da noite também conta para as plantas crescerem
-    G.time = 0;
+    const night = this.isNight();
+    World.updateRegrow(night ? NIGHT_LEN - G.time : DAY_LEN - G.time + NIGHT_LEN, P.x, P.y); // o tempo pulado também conta para as plantas crescerem
+    G.time = NIGHT_LEN;
     const f = G.family, sp = f.spouse !== null ? People.get(f.spouse) : null;
     if (sp && sp.alive && f.tryChild && !f.dueDay) {
       f.tryChild = false;
-      if (Math.random() < 0.65) { f.dueDay = G.day + 2 * ECON_DAYS + 1; UI.msg(`💕 Uma criança está a caminho! Ela chegará em ${2 * ECON_DAYS} dias.`, 'gold'); }
+      if (Math.random() < 0.65) { f.dueDay = G.day + 2 * ECON_DAYS + 1; UI.msg(`💕 Uma criança está a caminho! Ela chegará em ${daysText(2 * ECON_DAYS)}.`, 'gold', true); }
       else UI.msg('Nenhum bebê desta vez... conversem e tentem de novo.');
     }
-    this.onNewDay();
+    if (!night) this.onNewDay();
     this.save(s, true);
-    UI.banner(`🛏️ ${Calendar.text(G.day)}`);
+    UI.banner(`🛏️ ${Calendar.full(G.day)}`);
   },
 
   // ---------------------------------------------------------------- ações do painel do reino
@@ -1825,8 +1871,9 @@ const Game = {
     const s = G.settings, root = document.documentElement.style;
     // o zoom do CSS também escala top/right/largura; compensamos para a coluna da direita ficar sempre logo abaixo do minimapa
     // escala automática conforme o tamanho da tela
-    const z = s.uiScale === 'auto' ? U.clamp(Math.min(window.innerWidth / 1400, window.innerHeight / 820) * 1.02, 0.55, 1) : +s.uiScale;
     const small = window.innerWidth < 760 || window.innerHeight < 520;
+    // telas pequenas (celular deitado) encolhem menos: os painéis já são compactos e o texto precisa ser legível
+    const z = s.uiScale === 'auto' ? (small ? U.clamp(Math.min(window.innerWidth / 1000, window.innerHeight / 560), 0.6, 0.9) : U.clamp(Math.min(window.innerWidth / 1400, window.innerHeight / 820) * 1.02, 0.55, 1)) : +s.uiScale;
     const miniSize = small ? Math.min(+s.miniSize, 120) : +s.miniSize;
     this.miniSizeNow = miniSize;
     Touch.show(G.state === 'play' && (s.touch === 'on' || (s.touch === 'auto' && Touch.isTouch())));
@@ -1838,7 +1885,8 @@ const Game = {
     const rc = document.getElementById('rightcol');
     rc.style.top = ((14 + miniH) / z) + 'px';
     rc.style.right = (14 / z) + 'px';
-    rc.style.width = (Math.max(186, miniW) / z) + 'px';
+    // em telas pequenas a coluna da direita (tempo e algibeira) tem exatamente a largura do minimapa
+    rc.style.width = ((small && s.minimap ? miniW : Math.max(186, miniW)) / z) + 'px';
     document.body.classList.toggle('nonum', !s.numbers);
     document.body.classList.toggle('keysbar', !!s.keysbar && G.state === 'play');
     document.getElementById('keys').classList.toggle('hidden', !s.keysbar || G.state !== 'play');
@@ -1853,4 +1901,9 @@ const Game = {
 };
 
 // os scripts podem chegar depois do evento load (carregador com versão), então inicia de qualquer jeito
+// textos do jogo não podem ser selecionados, copiados ou arrastados (só os campos de digitar)
+{
+  const typing = t => t && t.closest && t.closest('input, textarea, [contenteditable="true"]');
+  for (const ev of ['selectstart', 'copy', 'cut', 'dragstart']) document.addEventListener(ev, e => { if (!typing(e.target)) e.preventDefault(); });
+}
 if (document.readyState === 'complete') Game.boot(); else window.addEventListener('load', () => Game.boot());
