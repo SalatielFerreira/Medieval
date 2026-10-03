@@ -110,7 +110,8 @@ const Game = {
     UI.init();
     Touch.init();
     window.addEventListener('resize', () => this.applySettings());
-    UI.showMainMenu();
+    if (!Resume.restore()) UI.showMainMenu();
+    Resume.watch();
     let last = performance.now();
     const loop = now => {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -176,7 +177,7 @@ const Game = {
     G.state = 'play'; G.paused = false; G.ping = null; UI.showGameUI(true);
   },
 
-  toMenu() { Urban.stop(); UI.close(); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
+  toMenu() { Resume.clear(); Urban.stop(); UI.close(); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
 
   // ================================================================ salvar / carregar (3 espaços)
   saveInfo() { return Saves.list().filter(Boolean).sort((a, b) => b.savedAt - a.savedAt)[0] || null; },
@@ -224,8 +225,8 @@ const Game = {
       return false;
     }
   },
-  async load(slot, onProgress) {
-    const s = Saves.read(slot);
+  async load(slot, onProgress, data) {
+    const s = data || Saves.read(slot);
     if (!s) return false;
     // jogos salvos antes da mudança das montanhas não têm "terrain": usam o terreno antigo (versão 1)
     G.terrain = s.terrain || 1;
@@ -258,7 +259,7 @@ const Game = {
     G.surname = s.surname || Families.newSurname();
     if (!s.fams) Families.init(); else { for (const p of G.people) Families.attach(p); }
     Families.ensurePlayer(); Families.refresh(); Faith.ensurePriests();
-    G.title = s.title || { lvl: -1, civ: -1 }; G.civilTitles = s.civilTitles || {}; if (!s.titleV && G.title.lvl >= 3) G.title.lvl++; // Marquês entrou antes do Duque G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
+    G.title = s.title || { lvl: -1, civ: -1 }; G.civilTitles = s.civilTitles || {}; if (!s.titleV && G.title.lvl >= 3) G.title.lvl++; /* Marquês entrou antes do Duque */ G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
@@ -278,7 +279,7 @@ const Game = {
     Urban.restore(); Families.refresh(); Homes.dayTick(false);
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
-    UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
+    if (!data) UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
     return true;
   },
 
@@ -1900,6 +1901,52 @@ const Game = {
     Sound.setVol({ music: +G.settings.music, sfx: +G.settings.sfx, mute: !!G.settings.mute });
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(G.settings)); } catch (e) { /* armazenamento indisponível: vale só nesta sessão */ }
     this.applySettings();
+  },
+};
+
+// ================================================================ recarregar a página volta para onde você estava
+// A cópia fica só nesta aba (sessionStorage) e não mexe nos espaços de salvamento: é a partida como estava,
+// a janela aberta e, no menu, a tela em que você estava (com o herói que estava criando).
+const Resume = {
+  KEY: 'medieval_resume',
+  write() {
+    try {
+      let st;
+      if (G.state === 'play') {
+        if (G.dungeon) return; // dentro de cavernas fica valendo a última cópia de fora
+        const win = UI.cur && !UI.panel.classList.contains('hidden') ? { fn: UI.cur.fn, args: UI.cur.args || [] } : null;
+        st = { kind: 'game', slot: G.slot, win, map: !!MapView.isOpen, sel: UI.sel, data: 'LZ1:' + LZ.compress(JSON.stringify(Game.snapshot())) };
+      } else if (G.state === 'menu') st = { kind: 'menu', card: Menu.card || 'main', hero: Menu.hero };
+      if (st) sessionStorage.setItem(this.KEY, JSON.stringify(st));
+    } catch (e) { /* sem espaço na aba: recarregar volta ao menu */ }
+  },
+  clear() { try { sessionStorage.removeItem(this.KEY); } catch (e) { /* nada guardado */ } },
+  watch() {
+    window.addEventListener('pagehide', () => this.write());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) this.write(); });
+    setInterval(() => { if (G.state === 'play' && !G.paused) this.write(); }, 20000);
+  },
+  // devolve true se voltou para algum lugar (senão o jogo abre no menu inicial)
+  restore() {
+    let st = null;
+    try { st = JSON.parse(sessionStorage.getItem(this.KEY) || 'null'); } catch (e) { st = null; }
+    if (!st) return false;
+    if (st.kind === 'menu') {
+      Menu.show();
+      if (st.hero) Menu.hero = st.hero;
+      if (st.card === 'create') Menu.createCard(); else if (st.card === 'slots') Menu.slotsCard();
+      return true;
+    }
+    if (st.kind !== 'game' || !st.data) return false;
+    let data;
+    try { data = JSON.parse(LZ.decompress(st.data.slice(4))); } catch (e) { return false; }
+    UI.loading('Voltando para a sua jornada...', async prog => {
+      if (!(await Game.load(st.slot, prog, data))) { this.clear(); UI.showMainMenu(); return; }
+      if (st.sel) Object.assign(UI.sel, st.sel);
+      if (st.map) UI.toggle('showMap');
+      else if (st.win && typeof UI[st.win.fn] === 'function') { try { UI[st.win.fn](...st.win.args); } catch (e) { UI.close(); } }
+    });
+    return true;
   },
 };
 

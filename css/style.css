@@ -3243,3 +3243,13 @@ body:not(.small) .kpg.kdesk[data-nav="s:controles"] .st-keys .hk-grid { grid-tem
   body.small #panel:has(.rest) .pb { flex: 1; min-height: 0; }
   body.small #panel:has(.rest) .pb > .rest { height: auto; }
 }
+
+/* ================================================================ criar herói: cores num seletor discreto (‹ bolinha ›), como o penteado */
+.cpick .cp-cur { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.cpick .cp-cur i { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255, 233, 168, .8); box-shadow: 0 0 0 2px rgba(0, 0, 0, .35); transition: background .15s; }
+.cpick .cp-cur small { font-size: 13px; color: #ffe9a8; font-weight: 700; text-transform: capitalize; }
+.cr3 .cpick .cp-cur small { font-size: 13px; font-family: inherit; }
+body.small .cpick .cp-cur i { width: 15px; height: 15px; }
+body.small .cpick .cp-cur small { font-size: 12px; }
+.cpick .cp-cur small { font-family: var(--ui-font); }
+body.small .cr3 .cpick .cp-cur small { font-size: 12px; }

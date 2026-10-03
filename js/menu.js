@@ -63,6 +63,7 @@ const Menu = {
   // o tamanho da janela vem da tela: é medido quando ela abre (ou a tela muda) e fica fixo enquanto se mexe nela;
   // redesenhar o conteúdo (trocar o sexo, apagar um jogo...) não muda o tamanho, o conteúdo se ajusta por dentro
   setCard(html, kind) {
+    this.card = kind;
     const card = document.getElementById('menuCard'), wrap = document.getElementById('menuWrap');
     const fx = this.fixed, same = fx && fx.kind === kind && fx.vw === window.innerWidth && fx.vh === window.innerHeight;
     card.className = 'menu-card mc-' + kind;
@@ -116,6 +117,13 @@ const Menu = {
   head(title, sub) {
     return `<div class="mc-orn"><span></span>⚜<span></span></div>${title ? `<div class="mc-intro mc-head"><h2 class="mi-lead">${title}</h2><span>${sub}</span></div>` : ''}`;
   },
+  // as cores de cada parte do herói, com um nome curto para o seletor
+  colorList(key) {
+    const num = (arr, w) => arr.map((c, i) => [c, `${w} ${i + 1}`]);
+    if (key === 'hair') return Object.entries(HAIR_COLORS).map(([n, c]) => [c, n]).concat([['#e8e4dc', 'branco']]);
+    if (key === 'skin') return num(SKIN_TONES, 'tom');
+    return num(key === 'tunic' ? TUNIC_COLORS : PANTS_COLORS, 'cor');
+  },
   // túnica e calça: 10 cores numa linha; se não couber, duas linhas de 5
   wrapSwatches() {
     const go = () => { for (const el of document.querySelectorAll('#menuCard .swatches.sw10')) { el.classList.remove('wrap5'); if (el.scrollWidth > el.clientWidth + 1) el.classList.add('wrap5'); } };
@@ -153,8 +161,10 @@ const Menu = {
   createCard() {
     const h = this.hero;
     if (h.surname === undefined) h.surname = U.pick(SURNAMES);
-    const sw = (key, list) => list.map(([v, label]) => `<button class="sw ${h[key] === v ? 'on' : ''}" data-m="set" data-k="${key}" data-v="${v}" title="${label}" style="background:${v}"></button>`).join('');
     const picker = (key, list, label, id) => `<div class="cr-row" ${id ? `id="${id}"` : ''}><label>${label}</label><div class="picker"><button data-m="cyc" data-k="${key}" data-d="-1">‹</button><b id="pk_${key}">${list.find(x => x[0] === h[key])[1]}</b><button data-m="cyc" data-k="${key}" data-d="1">›</button></div></div>`;
+    // cores: um seletor discreto por linha (‹ bolinha da cor ›), no mesmo jeito do penteado e da barba
+    const cpick = (key, label) => { const list = this.colorList(key), i = Math.max(0, list.findIndex(c => c[0] === h[key]));
+      return `<div class="cr-row"><label>${label}</label><div class="picker cpick"><button data-m="ccyc" data-k="${key}" data-d="-1">‹</button><span class="cp-cur"><i id="cd_${key}" style="background:${list[i][0]}"></i><small id="cn_${key}">${list[i][1]}</small></span><button data-m="ccyc" data-k="${key}" data-d="1">›</button></div></div>`; };
     const slot = h.slot || Saves.firstFree() || 1;
     this.setCard(`
       ${this.head('Crie seu herói', 'Quem vai escrever esta história?')}
@@ -176,12 +186,12 @@ const Menu = {
         </div>
         <div class="cr-col">
           <div class="cr-sec">🎨 Aparência</div>
-          <div class="cr-row"><label>Cor do cabelo</label><div class="swatches">${sw('hair', Object.entries(HAIR_COLORS).map(([n, c]) => [c, n]).concat([['#e8e4dc', 'branco']]))}</div></div>
+          ${cpick('hair', 'Cor do cabelo')}
           ${picker('hairStyle', HAIR_STYLES, 'Penteado')}
           ${picker('beardStyle', BEARD_STYLES, 'Barba', 'beardRow').replace('class="cr-row"', h.sex === 'f' ? 'class="cr-row cr-off" aria-hidden="true"' : 'class="cr-row"')}
-          <div class="cr-row"><label>Tom de pele</label><div class="swatches">${sw('skin', SKIN_TONES.map(c => [c, 'pele']))}</div></div>
-          <div class="cr-row"><label>Cor da túnica</label><div class="swatches sw10">${sw('tunic', TUNIC_COLORS.map(c => [c, 'túnica']))}</div></div>
-          <div class="cr-row"><label>Cor da calça</label><div class="swatches sw10">${sw('pants', PANTS_COLORS.map(c => [c, 'calça']))}</div></div>
+          ${cpick('skin', 'Tom de pele')}
+          ${cpick('tunic', 'Cor da túnica')}
+          ${cpick('pants', 'Cor da calça')}
         </div>
       </div>
       <div class="mc-btns row"><button data-m="back">Voltar</button><button class="mc-main" data-m="start">Começar a jornada</button></div>`, 'create');
@@ -252,6 +262,11 @@ const Menu = {
         if (d.v === 'm' && this.hero.hairStyle === 'long') this.hero.hairStyle = 'short';
         this.createCard();
       }
+    } else if (a === 'ccyc') {
+      const list = this.colorList(d.k), i = Math.max(0, list.findIndex(c => c[0] === this.hero[d.k]));
+      const n = list[(i + +d.d + list.length) % list.length];
+      this.hero[d.k] = n[0];
+      document.getElementById('cd_' + d.k).style.background = n[0]; document.getElementById('cn_' + d.k).textContent = n[1];
     } else if (a === 'cyc') {
       const list = d.k === 'hairStyle' ? HAIR_STYLES : BEARD_STYLES;
       const i = list.findIndex(x => x[0] === this.hero[d.k]);
