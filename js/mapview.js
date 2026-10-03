@@ -10,8 +10,8 @@ const MapView = {
   init() {
     this.el = document.getElementById('mapView');
     this.el.innerHTML = `
-      <div class="mv-head">
-        <div class="mv-title">${icon('map')}<span>Mapa do Mundo</span></div>
+      <div class="mv-head ph">
+        <div class="ph-ic">${icon('map')}</div><div class="ph-t"><h2>Mapa</h2><small id="mvSub">Os sete reinos e o seu destino</small></div>
         <div class="mv-tools">
           <button data-mv="out" title="Afastar (−)">${icon('minus')}</button>
           <div class="mv-zoom" id="mvZoom">100%</div>
@@ -21,6 +21,7 @@ const MapView = {
           <button data-mv="fit" title="Ver o mundo inteiro">${icon('layers')}<span>Mundo inteiro</span></button>
           <button data-mv="goping" title="Mostrar a marcação">${icon('pin')}<span>Marcação</span></button>
           <button data-mv="clear" title="Remover a marcação">${icon('trash')}</button>
+          <button data-mv="places" title="Lugares">${icon('castle')}<span>Lugares</span></button>
           <span class="sep"></span>
           ${UI.winNavHtml('showMap', 'data-mv="wnav"')}<button data-mv="close" class="mv-close" title="Fechar (M ou Esc)">${icon('x')}</button>
         </div>
@@ -29,7 +30,10 @@ const MapView = {
         <div class="mv-canvas" id="mvWrap">
           <canvas id="mvCanvas"></canvas>
           <div class="mv-tip" id="mvTip"></div>
-          <div class="mv-hint">${icon('pin')} Clique para marcar um destino · Arraste para mover · Roda do mouse para zoom · Botão direito remove a marcação</div>
+          <div class="mv-hint">${icon('pin')} Clique para marcar um destino · Clique no pino para tirar · Arraste para mover · Roda do mouse ou clique duplo para zoom</div>
+          <div class="mv-thint" id="mvTHint"><span>☝️ Toque para marcar</span><span>📍 Toque no pino para tirar</span><span>🤏 Dois dedos para zoom</span></div>
+          <div class="mv-thint mv-mhint" id="mvMHint"><span>🖱️ Clique para marcar</span><span>📍 Clique no pino para tirar</span><span>🔍 Roda do mouse ou clique duplo para zoom</span></div>
+          <div class="mv-card hidden" id="mvCard"></div>
         </div>
         <aside class="mv-side" id="mvSide"></aside>
       </div>`;
@@ -37,6 +41,8 @@ const MapView = {
     this.wrap = document.getElementById('mvWrap');
     this.tip = document.getElementById('mvTip');
     this.side = document.getElementById('mvSide');
+    this.card = document.getElementById('mvCard');
+    this.touchInit();
 
     this.el.addEventListener('click', e => {
       const b = e.target.closest('[data-mv]');
@@ -47,6 +53,7 @@ const MapView = {
         const [x, y] = r.dataset.goto.split(',').map(Number);
         if (e.target.closest('.pinbtn')) this.setPing(x, y, r.dataset.name);
         else this.centerOn(x, y, Math.max(this.z, 8));
+        this.el.classList.remove('side-open');
       }
     });
     const cv = this.cv;
@@ -55,8 +62,9 @@ const MapView = {
       this.zoomAt(e.deltaY < 0 ? 1.25 : 1 / 1.25, e.offsetX, e.offsetY);
     }, { passive: false });
     cv.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
-      this.drag = { x: e.clientX, y: e.clientY, ox: this.ox, oy: this.oy, moved: false };
+      if (e.button !== 0 || document.body.classList.contains('small')) return;
+      this.drag = { x: e.clientX, y: e.clientY, ox: this.ox, oy: this.oy, moved: false, lx: e.clientX, ly: e.clientY, lt: performance.now(), vx: 0, vy: 0 };
+      this.vel = null; this.zAnim = null;
     });
     window.addEventListener('mousemove', e => {
       if (!this.isOpen) return;
@@ -66,6 +74,8 @@ const MapView = {
         if (this.drag.moved) {
           this.ox = this.drag.ox - dx / this.z; this.oy = this.drag.oy - dy / this.z;
           this.clamp();
+          const d = this.drag, now = performance.now(), dt = Math.max(1, now - d.lt);
+          d.vx = d.vx * 0.5 + (e.clientX - d.lx) / dt * 0.5; d.vy = d.vy * 0.5 + (e.clientY - d.ly) / dt * 0.5; d.lx = e.clientX; d.ly = e.clientY; d.lt = now;
         }
       }
       const r = cv.getBoundingClientRect();
@@ -78,10 +88,10 @@ const MapView = {
       const d = this.drag;
       this.drag = null; this.wrap.classList.remove('dragging');
       if (!d.moved && e.target === cv) {
-        const r = cv.getBoundingClientRect();
-        const tx = this.ox + (e.clientX - r.left) / this.z, ty = this.oy + (e.clientY - r.top) / this.z;
-        if (World.inb(Math.floor(tx), Math.floor(ty))) this.setPing(Math.floor(tx) + 0.5, Math.floor(ty) + 0.5);
-      }
+        const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, now = performance.now(), lc = this.lastClick;
+        if (lc && now - lc.t < 300 && Math.hypot(x - lc.x, y - lc.y) < 12) { clearTimeout(lc.timer); this.lastClick = null; this.zoomTo(this.z * 2, x, y); }
+        else this.lastClick = { t: now, x, y, timer: setTimeout(() => { this.lastClick = null; this.tapAt(x, y); }, 260) };
+      } else if (d.moved && performance.now() - d.lt < 90) this.vel = { x: d.vx, y: d.vy };
     });
     cv.addEventListener('contextmenu', e => { e.preventDefault(); this.clearPing(); });
     cv.addEventListener('mouseleave', () => { this.hover = null; this.updateTip(); });
@@ -101,7 +111,13 @@ const MapView = {
     if (!this.z) this.centerOn(P.x / TILE, P.y / TILE, Math.min(MAP_MAX_ZOOM, fit * 2.2));
     else this.centerOn(P.x / TILE, P.y / TILE, this.z);
     this.renderSide();
-    const loop = () => { if (!this.isOpen) return; this.draw(); requestAnimationFrame(loop); };
+    this.vel = null; this.zAnim = null; this.taps = [];
+    const zone = G.zone >= 0 && CIV_DEFS[G.zone] ? (G.zone === G.civs.findIndex(c => c.ruler === 'player') ? 'no seu reino, ' : 'em ') + CIV_DEFS[G.zone].name : 'nas Terras Selvagens';
+    document.getElementById('mvSub').textContent = `Você está ${zone} · marque seu destino`;
+    this.el.classList.remove('side-open');
+    const ths = [document.getElementById('mvTHint'), document.getElementById('mvMHint')];
+    ths.forEach(h => h.classList.remove('gone')); clearTimeout(this._th); this._th = setTimeout(() => ths.forEach(h => h.classList.add('gone')), 4500);
+    const loop = () => { if (!this.isOpen) return; this.step(); this.draw(); requestAnimationFrame(loop); };
     requestAnimationFrame(loop);
   },
   hide() {
@@ -141,6 +157,8 @@ const MapView = {
       case 'fit': this.centerOn(WORLD_W / 2, WORLD_H / 2, this.fitZoom()); break;
       case 'goping': if (G.ping) this.centerOn(G.ping.x, G.ping.y, Math.max(this.z, 8)); break;
       case 'clear': this.clearPing(); break;
+      case 'places': this.el.classList.toggle('side-open'); break;
+      case 'goto': if (G.ping) { this.zAnim = { tx: G.ping.x, ty: G.ping.y, z: Math.max(this.z, 8), t0: performance.now(), z0: this.z, ox0: this.ox, oy0: this.oy }; } break;
       case 'close': UI.close(); break;
     }
   },
@@ -156,6 +174,110 @@ const MapView = {
     if (!G.ping) return;
     G.ping = null;
     this.renderSide();
+  },
+
+  // ------------------------------------------------------------ telas pequenas: dedos
+  // um dedo arrasta (e o mapa continua deslizando um pouco ao soltar), dois dedos dão zoom (pinça),
+  // toque duplo aproxima; um toque marca o destino — no pino, tira a marcação; em outro ponto, muda para lá
+  touchInit() {
+    const cv = this.cv, pts = new Map();
+    let gest = null, lastTap = null;
+    const small = () => document.body.classList.contains('small');
+    const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    const pinch = () => { const [a, b] = [...pts.values()]; return { d: Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; };
+    const pan = (p, moved) => ({ kind: 'pan', sx: p.x, sy: p.y, ox: this.ox, oy: this.oy, moved, t: performance.now(), lx: p.x, ly: p.y, lt: performance.now(), vx: 0, vy: 0 });
+    const finger = e => small() || e.pointerType === 'touch';
+    cv.addEventListener('pointerdown', e => {
+      if (!finger(e)) return;
+      e.preventDefault();
+      try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+      pts.set(e.pointerId, pos(e)); this.vel = null; this.zAnim = null;
+      if (pts.size === 1) gest = pan(pos(e), false);
+      else if (pts.size === 2) { const q = pinch(); gest = { kind: 'pinch', d: q.d, z: this.z, wx: this.ox + q.mx / this.z, wy: this.oy + q.my / this.z }; }
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId)) return;
+      const p = pos(e); pts.set(e.pointerId, p);
+      if (gest && gest.kind === 'pan' && pts.size === 1) {
+        const dx = p.x - gest.sx, dy = p.y - gest.sy;
+        if (!gest.moved && Math.abs(dx) + Math.abs(dy) > 8) { gest.moved = true; this.wrap.classList.add('dragging'); }
+        if (gest.moved) {
+          this.ox = gest.ox - dx / this.z; this.oy = gest.oy - dy / this.z; this.clamp();
+          const now = performance.now(), dt = Math.max(1, now - gest.lt);
+          gest.vx = gest.vx * 0.5 + (p.x - gest.lx) / dt * 0.5; gest.vy = gest.vy * 0.5 + (p.y - gest.ly) / dt * 0.5; gest.lx = p.x; gest.ly = p.y; gest.lt = now;
+        }
+      } else if (gest && gest.kind === 'pinch' && pts.size >= 2) {
+        const q = pinch();
+        this.z = U.clamp(gest.z * q.d / gest.d, this.fitZoom(), MAP_MAX_ZOOM);
+        this.ox = gest.wx - q.mx / this.z; this.oy = gest.wy - q.my / this.z; this.clamp();
+      }
+    });
+    const up = e => {
+      if (!pts.has(e.pointerId)) return;
+      const p = pos(e); pts.delete(e.pointerId);
+      this.wrap.classList.remove('dragging');
+      if (gest && gest.kind === 'pan' && pts.size === 0) {
+        const now = performance.now();
+        if (!gest.moved && now - gest.t < 450) {
+          if (lastTap && now - lastTap.t < 300 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 36) {
+            clearTimeout(lastTap.timer); lastTap = null; this.zoomTo(this.z * 2, p.x, p.y); // toque duplo: aproxima
+          } else lastTap = { t: now, x: p.x, y: p.y, timer: setTimeout(() => { lastTap = null; this.tapAt(p.x, p.y); }, 270) };
+        } else if (gest.moved && now - gest.lt < 90) this.vel = { x: gest.vx, y: gest.vy }; // continua deslizando
+      }
+      if (pts.size === 1) gest = pan([...pts.values()][0], true);
+      else if (!pts.size) gest = null;
+    };
+    cv.addEventListener('pointerup', up);
+    cv.addEventListener('pointercancel', up);
+  },
+  // um toque no mapa (telas pequenas)
+  tapAt(sx, sy) {
+    if (G.ping) {
+      const gx = (G.ping.x - this.ox) * this.z, gy = (G.ping.y - this.oy) * this.z;
+      if (Math.hypot(gx - sx, gy - 20 - sy) < 30 || Math.hypot(gx - sx, gy - sy) < 22) {
+        this.clearPing(); this.taps.push({ x: gx, y: gy, t: performance.now(), off: true });
+        UI.msg('📍 Marcação removida.');
+        return;
+      }
+    }
+    const tx = this.ox + sx / this.z, ty = this.oy + sy / this.z;
+    if (!World.inb(Math.floor(tx), Math.floor(ty))) return;
+    const near = this.placeAt(tx, ty, Math.max(1.5, 22 / this.z)); // tocar perto de um lugar conhecido marca o próprio lugar
+    if (near) this.setPing(near.x, near.y, near.name); else this.setPing(Math.floor(tx) + 0.5, Math.floor(ty) + 0.5);
+    this.taps.push({ x: (G.ping.x - this.ox) * this.z, y: (G.ping.y - this.oy) * this.z, t: performance.now() });
+  },
+  // zoom suave até z, mantendo parado o ponto (sx, sy) da tela
+  zoomTo(z, sx, sy) {
+    const wx = this.ox + sx / this.z, wy = this.oy + sy / this.z, z1 = U.clamp(z, this.fitZoom(), MAP_MAX_ZOOM);
+    this.zAnim = { tx: wx + (this.cw / 2 - sx) / z1, ty: wy + (this.ch / 2 - sy) / z1, z: z1, t0: performance.now(), z0: this.z, ox0: this.ox, oy0: this.oy, keep: { wx, wy, sx, sy } };
+  },
+  // a cada quadro: deslizar depois de soltar e animações de zoom
+  step() {
+    if (this.vel) {
+      this.ox -= this.vel.x * 16 / this.z; this.oy -= this.vel.y * 16 / this.z; this.clamp();
+      this.vel.x *= 0.92; this.vel.y *= 0.92;
+      if (Math.abs(this.vel.x) + Math.abs(this.vel.y) < 0.02) this.vel = null;
+    }
+    const a = this.zAnim;
+    if (a) {
+      const k = Math.min(1, (performance.now() - a.t0) / 260), e = 1 - Math.pow(1 - k, 3);
+      this.z = a.z0 + (a.z - a.z0) * e;
+      if (a.keep) { this.ox = a.keep.wx - a.keep.sx / this.z; this.oy = a.keep.wy - a.keep.sy / this.z; }
+      else { const cx0 = a.ox0 + this.cw / a.z0 / 2, cy0 = a.oy0 + this.ch / a.z0 / 2, cx = cx0 + (a.tx - cx0) * e, cy = cy0 + (a.ty - cy0) * e; this.ox = cx - this.cw / this.z / 2; this.oy = cy - this.ch / this.z / 2; }
+      this.clamp();
+      if (k >= 1) this.zAnim = null;
+    }
+  },
+  // cartão do destino (telas pequenas): nome, distância e direção
+  renderCard() {
+    if (!this.card) return;
+    if (!G.ping) { this.card.classList.add('hidden'); return; }
+    const dx = G.ping.x - P.x / TILE, dy = G.ping.y - P.y / TILE;
+    const dirs = ['leste', 'sudeste', 'sul', 'sudoeste', 'oeste', 'noroeste', 'norte', 'nordeste'];
+    const dir = dirs[(Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) + 8) % 8];
+    this.card.innerHTML = `<span class="mvc-pin">${icon('pin')}</span><div class="mvc-t"><b>${UI.esc(G.ping.name)}</b><small>${this.distText(G.ping.x, G.ping.y)} a ${dir} · ${document.body.classList.contains('small') ? 'toque' : 'clique'} no pino para tirar</small></div>
+      <button data-mv="goto">${icon('locate')}<span>Ver</span></button>`;
+    this.card.classList.remove('hidden');
   },
   distText(x, y) {
     const m = Math.round(U.dist(P.x / TILE, P.y / TILE, x, y) * METERS_PER_TILE);
@@ -186,6 +308,7 @@ const MapView = {
   },
 
   renderSide() {
+    this.renderCard();
     if (!this.side) return;
     const row = (p, extra) => `<div class="mv-row" data-goto="${p.x},${p.y}" data-name="${UI.esc(p.name)}">
         <span class="dot" style="background:${p.color}"></span>
@@ -361,6 +484,10 @@ const MapView = {
       this.drawPin(g, gx, gy, 1.15);
       label(`${G.ping.name} · ${this.distText(G.ping.x, G.ping.y)}`, gx, gy - 44, '600 13px "Segoe UI", sans-serif', '#ffe9a8');
     }
+    // toques (telas pequenas)
+    const now = performance.now();
+    this.taps = (this.taps || []).filter(q => now - q.t < 500);
+    for (const q of this.taps) { const k = (now - q.t) / 500; g.strokeStyle = q.off ? `rgba(255,110,90,${1 - k})` : `rgba(255,213,74,${1 - k})`; g.lineWidth = 3; g.beginPath(); g.arc(q.x, q.y, 8 + k * 34, 0, Math.PI * 2); g.stroke(); }
     // jogador
     const pr = (t * 1.5) % 1;
     g.strokeStyle = `rgba(120,200,255,${1 - pr})`; g.lineWidth = 2;

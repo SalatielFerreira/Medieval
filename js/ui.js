@@ -642,12 +642,13 @@ const UI = {
   },
   // ============================================================ janelas de conteúdo do Reino: nunca rolam
   // Todas usam o mesmo tamanho de ícone e texto (nada é encolhido).
-  // Telas grandes: tudo numa página só — se não couber, os quadros se dividem em duas colunas e, se ainda assim
-  // não couber, a lista mais longa mostra só o que cabe ("e mais N…").
+  // Telas grandes: o mesmo visual das telas pequenas, mas tudo numa página só — os quadros se arrumam numa grade
+  // (classe .kdesk + data-nav, ver css "Portfólio no computador").
   // Telas pequenas: o conteúdo vira páginas inteiras (um quadro nunca é cortado ao meio; só uma lista maior que a
   // tela é dividida, repetindo o título do quadro). Arraste para o lado para trocar de página; os pontinhos embaixo
   // mostram em qual você está.
-  fitReino() {
+  fitReino(nav, pkey) {
+    nav = nav || this.sel.knav;
     const body = this.panel.querySelector('.iconnav .snav-body'), box = body && body.querySelector('.kpg');
     if (!box) return;
     const small = document.body.classList.contains('small');
@@ -659,14 +660,19 @@ const UI = {
     const head = [], units = [];
     for (const el of flat) (units.length === 0 && isHead(el) ? head : units).push(el);
     const bottom = () => body.getBoundingClientRect().bottom - 2;
-    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
+    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
     const deepList = (el, tiles) => lists(el, tiles).sort((x, y) => y.children.length - x.children.length)[0] || null;
-    if (!small) { body.classList.remove('kfit'); return; }
+    if (!small) {
+      const on = nav.startsWith('d:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
+      body.classList.toggle('kfit', on); box.classList.toggle('kdesk', on);
+      if (on) box.dataset.nav = nav;
+      return;
+    }
     // telas pequenas: páginas inteiras lado a lado, trocadas arrastando
     const W = body.clientWidth, H = body.clientHeight - 14; // 14 = espaço dos pontinhos
     const pages = [];
     let cur;
-    const fresh = () => { cur = document.createElement('div'); cur.className = 'kpg kpage'; cur.style.width = W + 'px'; cur.dataset.nav = this.sel.knav; for (const h of head) cur.appendChild(h.cloneNode(true)); body.innerHTML = ''; body.appendChild(cur); };
+    const fresh = () => { cur = document.createElement('div'); cur.className = 'kpg kpage'; cur.style.width = W + 'px'; cur.dataset.nav = nav; for (const h of head) cur.appendChild(h.cloneNode(true)); body.innerHTML = ''; body.appendChild(cur); };
     const fits = () => cur.scrollHeight <= H + 1;
     const hasContent = () => cur.children.length > head.length;
     const push = () => { pages.push(cur); fresh(); };
@@ -704,7 +710,7 @@ const UI = {
     const dots = document.createElement('div'); dots.className = 'kdots';
     dots.innerHTML = pages.length > 1 ? pages.map((_, i) => `<i data-i="${i}"></i>`).join('') : '';
     body.appendChild(track); body.appendChild(dots);
-    const S = this.sel, key = S.knav + '/' + S.ksub; S.kpageOf = S.kpageOf || {};
+    const S = this.sel, key = pkey || S.knav + '/' + S.ksub; S.kpageOf = S.kpageOf || {};
     const mark = () => { const i = Math.round(track.scrollLeft / W); S.kpageOf[key] = i; dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === i)); };
     track.addEventListener('scroll', () => { clearTimeout(this._kdt); this._kdt = setTimeout(mark, 60); });
     dots.addEventListener('click', e => { const d = e.target.closest('i'); if (d) track.scrollTo({ left: +d.dataset.i * W, behavior: 'smooth' }); });
@@ -730,7 +736,12 @@ const UI = {
     const page = this.kPage(S.knav);
     this.open('Portfólio', `<div class="iconnav">${this.navHtml(groups, S.knav, 'knav', `<div class="kpg">${page}</div>`)}</div>`, 'showKingdom', [], 'Você, seus reinos e o mundo');
     this.fitReino();
-    if (S.knav === 'tree' && document.body.classList.contains('small')) this.drawRelMap(Families.ensurePlayer(), 'relMapM');
+    if (S.knav === 'tree') {
+      // no computador o mapa ocupa um quadro alto: a tela do desenho acompanha o tamanho do quadro
+      const cv = document.getElementById('relMapM');
+      if (cv && !document.body.classList.contains('small')) { const b = cv.parentElement; cv.width = Math.round(b.clientWidth * 1.4); cv.height = Math.round(b.clientHeight * 1.4); }
+      this.drawRelMap(Families.ensurePlayer(), 'relMapM');
+    }
     if (S.knav === 'tree' && S.ttab === 'relacoes') this.drawRelMap(Families.ensurePlayer());
   },
   // avisos importantes (aparecem na Visão geral)
@@ -1764,39 +1775,65 @@ const UI = {
   },
 
   // ------------------------------------------------------------ diário do herói
-  showDiary() {
-    const S = this.sel, tab = S.dtab || 'ach', st = G.stats || {};
-    const tabs = [['ach', '🏆 Conquistas'], ['stats', '📊 Estatísticas'], ['dyn', '🌳 Dinastia'], ['contas', '📒 Contas'], ['log', '📜 Diário']]
-      .map(([k, l]) => `<button class="tab ${tab === k ? 'on' : ''}" data-act="dtab" data-t="${k}">${l}</button>`).join('');
-    let body = '';
+  // Diário do Herói: menu de ícones à esquerda; nas telas pequenas em páginas de arrastar, no computador tudo numa página
+  showDiary() { this.showDiaryM(); },
+
+  // cada seção do diário em quadros (o paginador arruma: páginas nas telas pequenas, grade no computador)
+  showDiaryM() {
+    const S = this.sel, st = G.stats || {};
+    const tab = ['ach', 'stats', 'dyn', 'contas', 'log'].includes(S.dtab) ? S.dtab : 'ach';
+    const got = ACHIEVEMENTS.filter(a => G.ach[a.id]);
+    const groups = [['', [['ach', '🏆', 'Conquistas', got.length], ['stats', '📊', 'Estatísticas'], ['dyn', '🌳', 'Dinastia'], ['contas', '📒', 'Contas'], ['log', '📜', 'Diário']]]];
+    const tile = (ic, label, val, hue) => `<div class="dy-st" style="--hue:${hue}"><span class="dy-ic">${ic}</span><b>${val || 0}</b><small>${label}</small></div>`;
+    let page = '';
     if (tab === 'ach') {
-      const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
-      body = `<div class="sec">Desbloqueadas <span>${got} de ${ACHIEVEMENTS.length}</span></div>${this.bar(got, ACHIEVEMENTS.length)}
-        <div class="ach-grid">${ACHIEVEMENTS.map(a => `<div class="ach ${G.ach[a.id] ? 'got' : ''}"><span>${a.icon}</span><div><b>${a.name}</b><small>${a.desc}</small>${G.ach[a.id] ? `<em>${Calendar.short(G.ach[a.id])}</em>` : ''}</div></div>`).join('')}</div>`;
+      const pct = Math.round(got.length / ACHIEVEMENTS.length * 100);
+      const last = got.slice().sort((a, b) => G.ach[b.id] - G.ach[a.id]).slice(0, 3);
+      const next = ACHIEVEMENTS.filter(a => !G.ach[a.id]).slice(0, 3);
+      const mini = (a, on) => `<div class="dy-mini ${on ? 'got' : ''}"><span>${a.icon}</span><div><b>${a.name}</b><small>${on ? Calendar.short(G.ach[a.id]) : a.desc}</small></div></div>`;
+      page = this.pageHead('🏆', 'Conquistas', `${got.length} de ${ACHIEVEMENTS.length} desbloqueadas`)
+        + `<div class="card dy-ach-top kalone"><div class="dy-ring" style="--p:${pct}"><div><b>${got.length}</b><small>de ${ACHIEVEMENTS.length}</small></div></div>
+          <div class="dy-ach-side"><div class="sec">${last.length ? 'Últimas conquistas' : 'Comece por aqui'}</div>${(last.length ? last.map(a => mini(a, true)) : next.map(a => mini(a, false))).join('')}</div></div>
+        <div class="card dy-ach"><div class="sec">Todas as conquistas <span>${pct}%</span></div><div class="dy-grid">${ACHIEVEMENTS.slice().sort((a, b) => !!G.ach[b.id] - !!G.ach[a.id]).map(a =>
+          `<div class="dy-a ${G.ach[a.id] ? 'got' : ''}"><span class="dy-medal">${a.icon}</span><div><b>${a.name}</b><small>${a.desc}</small></div></div>`).join('')}</div></div>`;
     } else if (tab === 'stats') {
       const kills = Object.keys(st).filter(k => k.startsWith('kill_')).reduce((a, k) => a + st[k], 0);
-      const rows = [['🪓', 'Árvores cortadas', st.trees], ['⛏️', 'Rochas quebradas', st.ores], ['🌿', 'Plantas colhidas', st.plants], ['🎣', 'Peixes pescados', st.fish],
-        ['🌱', 'Sementes plantadas', st.planted], ['🌾', 'Alimentos colhidos', st.harvested], ['🔨', 'Itens criados', st.crafted], ['🏗️', 'Construções', st.built],
-        ['⚔️', 'Inimigos e animais abatidos', kills], ['🗡️', 'Bandidos derrotados', st.kill_bandit], ['☠️', 'Chefes derrotados', st.bosses], ['🏕️', 'Acampamentos destruídos', st.camps],
-        ['🛡️', 'Golpes bloqueados', st.blocks], ['🏆', 'Batalhas vencidas', st.battlesWon], ['🐫', 'Caravanas salvas', st.caravansSaved], ['🏴', 'Caravanas saqueadas', st.caravansRobbed],
-        ['💰', 'Baús abertos', st.chests], ['🍺', 'Bebidas tomadas', st.drinks], ['🍻', 'Lucro da taverna', st.tavernGold], ['💍', 'Casamentos', st.marriages], ['👶', 'Filhos', st.children]];
-      body = `<div class="kv stats-kv">${rows.map(([i, n, v]) => `<div>${i} ${n}<b>${v || 0}</b></div>`).join('')}</div>`;
+      const card = (title, items) => `<div class="card dy-stats kalone"><div class="sec">${title}</div><div class="dy-sgrid">${items.map(x => tile(...x)).join('')}</div></div>`;
+      page = this.pageHead('📊', 'Estatísticas', 'Tudo o que você já fez nesta vida')
+        + card('⚒️ Trabalho', [['🪓', 'árvores cortadas', st.trees, 30], ['⛏️', 'rochas quebradas', st.ores, 220], ['🌿', 'plantas colhidas', st.plants, 110], ['🎣', 'peixes pescados', st.fish, 200],
+          ['🌱', 'sementes plantadas', st.planted, 95], ['🌾', 'alimentos colhidos', st.harvested, 45], ['🔨', 'itens criados', st.crafted, 25], ['🏗️', 'construções', st.built, 15]])
+        + card('⚔️ Combate', [['⚔️', 'abatidos', kills, 0], ['🗡️', 'bandidos derrotados', st.kill_bandit, 350], ['☠️', 'chefes derrotados', st.bosses, 280], ['🏕️', 'acampamentos destruídos', st.camps, 20],
+          ['🛡️', 'golpes bloqueados', st.blocks, 210], ['🏆', 'batalhas vencidas', st.battlesWon, 45], ['🐫', 'caravanas salvas', st.caravansSaved, 120], ['🏴', 'caravanas saqueadas', st.caravansRobbed, 0]])
+        + card('🍻 Vida', [['💰', 'baús abertos', st.chests, 45], ['🍺', 'bebidas tomadas', st.drinks, 35], ['🍻', 'lucro da taverna', st.tavernGold, 40], ['💍', 'casamentos', st.marriages, 330],
+          ['👶', 'filhos', st.children, 300], ['🌟', 'nível', P.level, 50], ['📅', 'meses vividos', G.day, 260], ['🪙', 'ouro agora', P.gold, 45]]);
     } else if (tab === 'dyn') {
       const kids = G.people.filter(p => p.kin === 'child');
-      const heroes = [...(G.dynasty || []), { name: G.name, sex: P.sex, age: P.age, day: G.day, level: P.level, cur: true, kingdoms: G.civs.filter(c => c.ruler === 'player').map(c => CIV_DEFS[c.id].short) }];
-      body = `<div class="sec">Gerações <span>${heroes.length}</span></div><div class="dyn">${heroes.map((h, i) => `<div class="dyn-row ${h.cur ? 'cur' : ''}"><span class="dyn-n">${i + 1}ª</span>
-          <div><b>${this.esc(h.name)}</b><small>${h.cur ? 'Herói atual' : `Morreu ${this.esc(h.cause)} aos ${h.age} anos, em ${Calendar.full(h.day)}`} · nível ${h.level}${h.kingdoms && h.kingdoms.length ? ' · 👑 ' + h.kingdoms.join(', ') : ''}</small></div></div>`).join('')}</div>
-        <div class="sec" style="margin-top:12px">Filhos <span>${kids.filter(k => k.alive).length} vivos</span></div>
-        <div class="list">${kids.length ? kids.map(k => `<div class="item"><span class="ic">${k.sex === 'm' ? '👦' : '👧'}</span><div class="info"><b>${this.esc(k.name)}</b> · ${k.age} anos${k.alive ? '' : ' · ✝'}
-          <small>${k.prof ? PROFESSIONS[k.prof].icon + ' ' + (k.sex === 'f' ? PROFESSIONS[k.prof].f : PROFESSIONS[k.prof].name) : k.age >= 12 ? 'Sem profissão — converse para escolher' : 'Ainda é criança'}</small></div></div>`).join('') : '<p class="muted">Nenhum filho ainda.</p>'}</div>
-        <div class="kv" style="margin-top:12px"><div>Meses de história<b>${G.day}</b></div><div>Data<b>${Calendar.full(G.day)}</b></div><div>Reinos governados<b>${G.civs.filter(c => c.ruler === 'player').length}</b></div><div>Ouro<b>${P.gold}</b></div><div>Dificuldade<b>${DIFFICULTY[G.diff || 'normal'].name}</b></div></div>`;
+      const heroes = [...(G.dynasty || []), { name: G.name, sex: P.sex, age: P.age, level: P.level, cur: true, kingdoms: G.civs.filter(c => c.ruler === 'player').map(c => CIV_DEFS[c.id].short) }];
+      page = this.pageHead('🌳', 'Dinastia', `Casa ${this.esc(G.surname)} · ${heroes.length}ª geração`)
+        + `<div class="card dy-gens kalone"><div class="sec">Gerações <span>${heroes.length}</span></div><div class="dy-line">${heroes.map((h, i) => `<div class="dy-gen ${h.cur ? 'cur' : ''}">
+            <span class="dy-face">${h.cur ? '🛡️' : '✝'}</span><b>${this.esc(h.name)}</b><small>${i + 1}ª geração · nível ${h.level}</small><small>${h.cur ? `herói atual · ${h.age} anos` : `morreu ${this.esc(h.cause || '')} aos ${h.age}`}</small>${h.kingdoms && h.kingdoms.length ? `<em>👑 ${h.kingdoms.join(', ')}</em>` : ''}</div>`).join('<span class="dy-arrow">›</span>')}</div>
+          <div class="dy-facts"><span>📅 <b>${G.day}</b> ${G.day === 1 ? "mês" : "meses"}</span><span>🗓️ ${Calendar.full(G.day)}</span><span>👑 <b>${G.civs.filter(c => c.ruler === 'player').length}</b> reinos</span><span>🪙 <b>${P.gold}</b></span><span>⚖️ ${DIFFICULTY[G.diff || 'normal'].name}</span></div></div>
+        <div class="card dy-kids kalone"><div class="sec">Filhos <span>${kids.filter(k => k.alive).length} vivos · eles herdam tudo se você morrer</span></div>${kids.length ? `<div class="dy-kgrid">${kids.map(k => `<div class="dy-kid ${k.sex} ${k.alive ? '' : 'dead'}">
+            <span class="dy-face">${!k.alive ? '✝' : k.prof ? PROFESSIONS[k.prof].icon : k.age < 14 ? (k.sex === 'm' ? '👦' : '👧') : (k.sex === 'm' ? '👨' : '👩')}</span><div><b>${this.esc(k.name)}</b><small>${k.age} anos · ${k.prof ? (k.sex === 'f' ? PROFESSIONS[k.prof].f : PROFESSIONS[k.prof].name) : k.age >= 12 ? 'sem profissão' : 'criança'}</small></div>
+            ${k.alive ? `<button data-act="tk" data-op="open" data-id="${k.id}">💬</button>` : ''}</div>`).join('')}</div>` : '<div class="dy-empty"><span>👶</span><b>Nenhum filho ainda</b><small>Case-se e tenha filhos para a casa continuar depois de você.</small></div>'}</div>`;
     } else if (tab === 'contas') {
-      const L = G.ledger || [];
-      body = `<p class="muted">Todo mês a economia anda: impostos, soldos, salários, colheitas e vendas. Aqui fica o resumo de cada mês.</p>` + (L.length ? `<div class="ledger">${L.map(e => `<div class="card"><div class="sec">${Calendar.short(e.day)} <span class="${e.gold < 0 ? 'bad' : e.gold > 0 ? 'ok' : ''}">${e.gold > 0 ? '+' : ''}${e.gold} 🪙</span></div>${e.got.length ? `<div class="chips dense">${e.got.map(g => `<span class="chip">${this.esc(g)}</span>`).join('')}</div>` : ''}${e.notes.map(n => `<div class="crow2">${this.esc(n)}</div>`).join('')}</div>`).join('')}</div>` : '<p class="muted">Ainda não houve nenhum período completo.</p>');
+      const L = G.ledger || [], last = L.slice(0, 12).reverse(), max = Math.max(1, ...last.map(e => Math.abs(e.gold)));
+      const inG = L.reduce((a, e) => a + Math.max(0, e.gold), 0), outG = L.reduce((a, e) => a + Math.min(0, e.gold), 0);
+      page = this.pageHead('📒', 'Contas', 'Impostos, soldos, salários, colheitas e vendas de cada mês')
+        + `<div class="card dy-chart kalone"><div class="sec">Últimos meses <span>${L.length} registrados</span></div>
+          ${L.length ? `<div class="dy-bars">${last.map(e => `<div class="dy-bar ${e.gold < 0 ? 'neg' : 'pos'}" title="${Calendar.short(e.day)}"><i style="height:${Math.max(3, Math.abs(e.gold) / max * 100)}%"></i><small>${Calendar.short(e.day).split(' ')[0]}</small></div>`).join('')}</div>` : '<div class="dy-empty"><span>📒</span><b>Nenhum mês fechado ainda</b><small>Todo mês o resumo da sua economia aparece aqui.</small></div>'}
+          <div class="dy-facts"><span class="ok">▲ <b>+${inG}</b> 🪙 ganhos</span><span class="bad">▼ <b>${outG}</b> 🪙 gastos</span><span>= <b class="${inG + outG < 0 ? 'bad' : 'ok'}">${inG + outG > 0 ? '+' : ''}${inG + outG}</b> 🪙 saldo</span></div></div>
+        ${L.length ? `<div class="card dy-ledger"><div class="sec">Mês a mês</div><div class="dy-months">${L.map(e => `<div class="dy-month"><span class="dy-date">${Calendar.short(e.day)}</span>
+            <b class="${e.gold < 0 ? 'bad' : e.gold > 0 ? 'ok' : ''}">${e.gold > 0 ? '+' : ''}${e.gold} 🪙</b><small>${[...e.got.slice(0, 3), ...e.notes.slice(0, 2)].map(x => this.esc(x)).join(' · ') || '—'}</small></div>`).join('')}</div></div>` : ''}`;
     } else {
-      body = (G.diary || []).length ? `<div class="diary">${G.diary.map(e => `<div><em>${Calendar.short(e.day)}</em><span>${this.esc(e.text)}</span></div>`).join('')}</div>` : '<p class="muted">Nada escrito ainda.</p>';
+      const D = G.diary || [];
+      page = this.pageHead('📜', 'Diário', `${D.length} anotações da sua jornada`)
+        + (D.length ? `<div class="card dy-log"><div class="sec">Sua história</div><div class="dy-entries">${D.map(e => `<div class="dy-entry"><span class="dy-date">${Calendar.short(e.day)}</span><span>${this.esc(e.text)}</span></div>`).join('')}</div></div>`
+          : '<div class="card dy-log kalone"><div class="dy-empty"><span>📜</span><b>Nada escrito ainda</b><small>Casamentos, filhos, títulos e grandes feitos ficam anotados aqui.</small></div></div>');
     }
-    this.open('Diário do Herói', `<div class="tabs">${tabs}</div><div class="scroll" data-scroll="diary">${body}</div>`, 'showDiary', [], `${this.esc(G.name)} · ${Object.keys(G.ach || {}).length} conquistas · ${(G.dynasty || []).length + 1}ª geração`);
+    this.open('Diário do Herói', `<div class="iconnav dy">${this.navHtml(groups, tab, 'dnav', `<div class="kpg">${page}</div>`)}</div>`, 'showDiary', [],
+      `${this.esc(G.name)} · ${Object.keys(G.ach || {}).length} conquistas · ${(G.dynasty || []).length + 1}ª geração`);
+    this.fitReino('d:' + tab, 'diary/' + tab);
   },
 
   trendIcon(ci, k) { const t = Market.trend(ci, k); return t === 'up' ? ' <span class="bad" title="Preço alto: escassez">▲</span>' : t === 'down' ? ' <span class="ok" title="Preço baixo: fartura">▼</span>' : ''; },
@@ -2053,6 +2090,7 @@ const UI = {
       case 'peace': Game.makePeace(+d.c); break;
       case 'ktab': this.sel.knav = 'k:' + d.c; this.showKingdom(); return;
       case 'knav': this.sel.knav = d.k; this.showKingdom(); return;
+      case 'dnav': this.sel.dtab = d.k; this.showDiary(); return;
       case 'stab': this.showSettings(d.k); return;
       case 'bcat': this.sel.bcat = d.k; this.sel.build = null; this.showBuild(); return;
       case 'vping': { const v = World.villages[+d.v]; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
