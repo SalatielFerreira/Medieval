@@ -78,7 +78,7 @@ const Diplo = {
     for (const k of this.D().allies) { const [x, y] = k.split('-').map(Number); if (x === c || y === c) s += G.civs[x === c ? y : x].garrison * 0.25; }
     return s;
   },
-  villagesOf(c) { return World.villages.filter(v => v.civ === c); },
+  villagesOf(c) { return World.villages.filter(v => v.civ === c && !v.free); },
 
   // ------------------------------------------------------------ um dia no mundo
   tickDay() {

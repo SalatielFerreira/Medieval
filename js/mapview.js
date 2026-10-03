@@ -169,7 +169,7 @@ const MapView = {
       const cp = World.capitals[c];
       out.push({ kind: 'castle', x: cp.x + 0.5, y: cp.y + 0.5, name: 'Castelo de ' + CIV_DEFS[c].short, sub: CIV_DEFS[c].name, color: Game.civColor(c), civ: c });
     }
-    for (const v of World.villages) out.push({ kind: 'village', x: v.x + 0.5, y: v.y - 0.5, name: v.name, sub: 'Vila de ' + CIV_DEFS[v.civ].short, color: '#f2efe6', civ: v.civ });
+    for (const v of World.villages) out.push({ kind: 'village', x: v.x + 0.5, y: v.y - 0.5, name: v.name, sub: v.free ? 'Vila livre' : 'Vila de ' + CIV_DEFS[v.civ].short, color: '#f2efe6', civ: v.civ });
     for (let c = 0; c < CIV_DEFS.length; c++) { const a = World.capitals[c].arena; if (a) out.push({ kind: 'arena', x: a.x + a.w / 2, y: a.y + a.h / 2, name: 'Arena de ' + CIV_DEFS[c].short, sub: Arena.tourney() && Arena.tourney().ci === c ? 'Grande Torneio!' : 'Duelos e justas', color: '#ffd54a', civ: c }); }
     for (const s of World.shrines || []) out.push({ kind: 'shrine', x: s.x + 1, y: s.y + 1, name: s.sname, sub: G.shrines && G.shrines[s.shrine] ? 'Visitado' : 'Peregrinação', color: '#e8e0ff' });
     for (const s of World.camps) if (!s.cleared) out.push({ kind: 'camp', x: s.x + 1.5, y: s.y + 1.5, name: 'Acampamento de Bandidos', sub: 'Perigo', color: '#e04848' });

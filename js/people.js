@@ -171,7 +171,7 @@ const People = {
     return RANKS[p.rank][p.sex];
   },
   homeName(p) {
-    if (p.home.type === 'village') { const v = World.villages[p.home.idx]; return `${v.name} (${CIV_DEFS[v.civ].short})`; }
+    if (p.home.type === 'village') { const v = World.villages[p.home.idx]; return `${v.name} (${v.free ? 'livre' : CIV_DEFS[v.civ].short})`; }
     if (p.home.type === 'castle') return 'Castelo de ' + CIV_DEFS[p.home.civ].short;
     if (p.home.type === 'player') return 'Sua casa';
     return 'Sem morada';

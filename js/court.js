@@ -6,7 +6,16 @@ const NOBLE_TITLES = [
   { k: 'knight', m: 'Cavaleiro', f: 'Dama',     icon: '🛡️', rel: 25, serv: 8,  fee: 0,    lvl: 3,  caps: 2, stipend: 0,  tax: 2, perks: '+2 capangas · 5% de desconto nas lojas do reino' },
   { k: 'baron',  m: 'Barão',     f: 'Baronesa', icon: '🏰', rel: 45, serv: 25, fee: 400,  lvl: 5,  caps: 4, stipend: 15, tax: 2, perks: '+4 capangas · direito de fundar vilas · 15 🪙 por dia do rei' },
   { k: 'count',  m: 'Conde',     f: 'Condessa', icon: '⚜️', rel: 60, serv: 50, fee: 900,  lvl: 8,  caps: 6, stipend: 30, tax: 3, perks: '+6 capangas · vilas pagam 3 🪙 por morador · 30 🪙 por dia' },
+  { k: 'marquis', m: 'Marquês',  f: 'Marquesa', icon: '🎖️', rel: 68, serv: 70, fee: 1300, lvl: 10, caps: 7, stipend: 42, tax: 3, perks: '+7 capangas · vilas pagam 3 🪙 por morador · 42 🪙 por dia' },
   { k: 'duke',   m: 'Duque',     f: 'Duquesa',  icon: '👑', rel: 75, serv: 90, fee: 1800, lvl: 12, caps: 8, stipend: 55, tax: 4, perks: '+8 capangas · vilas pagam 4 🪙 · 55 🪙 por dia · pode reivindicar o trono com relação 60 e 800 🪙' },
+];
+// títulos civis: o herói ganha sozinho quando cumpre o feito (não dependem de rei)
+const CIVIL_TITLES = [
+  { id: 'assassino',    icon: '🗡️', m: 'Assassino',    f: 'Assassina',     req: 'Derrote 30 bandidos',                          t: s => (s.kill_bandit || 0) >= 30 },
+  { id: 'conquistador', icon: '🚩', m: 'Conquistador', f: 'Conquistadora', req: 'Conquiste uma vila ou um castelo',             t: s => (s.villagesTaken || 0) + (s.castlesTaken || 0) >= 1 },
+  { id: 'campeao',      icon: '🏆', m: 'Campeão',      f: 'Campeã',        req: 'Vença 5 lutas na arena ou o Grande Torneio',  t: s => (s.duelsWon || 0) >= 5 || (s.tourneys || 0) >= 1 },
+  { id: 'guerreiro',    icon: '⚔️', m: 'Guerreiro',    f: 'Guerreira',     req: 'Derrote 100 inimigos em combate',              t: s => Court.kills(s) >= 100 },
+  { id: 'heroi',        icon: '🦸', m: 'Herói',        f: 'Heroína',       req: 'Resgate 3 pessoas e tenha 150 de fama',        t: s => (s.rescues || 0) >= 3 && Court.fame() >= 150 },
 ];
 const COUNCIL = {
   treasurer: { m: 'Tesoureiro', f: 'Tesoureira', icon: '💰', desc: 'Cada ponto de competência rende +3% de impostos. Um tesoureiro corrupto rouba o tesouro.' },
@@ -28,6 +37,24 @@ const Court = {
   addService(ci, n) { if (ci < 0 || ci === undefined) return; G.service = G.service || {}; G.service[ci] = (G.service[ci] || 0) + n; },
   fame() { return Math.round(G.fame || 0); },
   addFame(n) { G.fame = (G.fame || 0) + n; },
+  // inimigos derrotados (sem contar animais de caça)
+  kills(s) { return Object.keys(s).filter(k => k.startsWith('kill_') && !['kill_deer', 'kill_boar', 'kill_rabbit', 'kill_chicken'].includes(k)).reduce((a, k) => a + s[k], 0); },
+  civil() { return G.civilTitles || (G.civilTitles = {}); },
+  hasCivil(id) { return !!this.civil()[id]; },
+  civilName(t) { return P.sex === 'f' ? t.f : t.m; },
+  // confere os feitos e entrega os títulos civis conquistados
+  checkCivil(s) {
+    for (const t of CIVIL_TITLES) {
+      if (this.hasCivil(t.id)) continue;
+      let ok = false; try { ok = t.t(s); } catch (e) { ok = false; }
+      if (!ok) continue;
+      this.civil()[t.id] = G.day;
+      UI.banner(`${t.icon} ${this.civilName(t)}!`);
+      UI.msg(`${t.icon} Novo título civil: ${this.civilName(t)}.`, 'gold', true);
+      Sound.play('levelup');
+      Progress.diary(`${t.icon} Ganhou o título civil ${this.civilName(t)}.`);
+    }
+  },
   // o que falta para o próximo título neste reino
   nextReq(ci) {
     const t = this.T(), lvl = t.civ === ci ? t.lvl + 1 : 0, nt = NOBLE_TITLES[lvl];
@@ -73,7 +100,7 @@ const Court = {
   },
   capBonus() { const t = this.title(); return t ? t.caps : 0; },
   villageTax() { const t = this.title(); return t ? t.tax : 2; },
-  canFound() { return this.T().lvl >= 1 || G.civs.some(c => c.ruler === 'player'); },
+  canFound() { return this.hasCivil('conquistador'); },
   discount(ci) { const t = this.T(); return t.lvl >= 0 && t.civ === ci ? 0.05 + t.lvl * 0.02 : 0; },
   stipendTick() {
     const t = this.title();
@@ -222,7 +249,7 @@ const Court = {
     const out = [];
     const mine = G.civs.find(c => c.ruler === 'player');
     // herdeiros de outros reinos (para reis e duques)
-    if (mine || this.T().lvl >= 3) for (const p of G.people) if (free(p) && p.rank === 'heir' && (!mine || p.civ !== mine.id)) out.push({ p, kind: 'royal' });
+    if (mine || this.T().lvl >= 4) for (const p of G.people) if (free(p) && p.rank === 'heir' && (!mine || p.civ !== mine.id)) out.push({ p, kind: 'royal' });
     // filhos das famílias mais poderosas
     const top = Families.ranking().filter(x => !x.f.player).slice(0, 14).map(x => x.f.id);
     for (const p of G.people) if (free(p) && p.rank !== 'heir' && top.includes(p.fam) && p.rank !== 'ruler' && p.rank !== 'consort') out.push({ p, kind: 'family' });

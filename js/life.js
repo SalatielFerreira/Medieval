@@ -45,14 +45,16 @@ const Towns = {
   dayTick() {
     World.villages.forEach((v, vi) => {
       const c = G.civs[v.civ], raided = v.raid && v.raid.until >= G.day - ECON_DAYS;
-      v.prosper = U.clamp(v.prosper + (c.happy - 45) / 35 + (c.treasury > 600 ? 0.5 : 0) + U.rnd(-0.4, 0.8) - (raided ? 5 : 0), 0, 30);
+      // vila livre: cresce por conta própria, sem depender da felicidade e do tesouro de um reino
+      const happy = v.free ? 60 : c.happy, rich = v.free ? false : c.treasury > 600;
+      v.prosper = U.clamp(v.prosper + (happy - 45) / 35 + (rich ? 0.5 : 0) + U.rnd(-0.4, 0.8) - (raided ? 5 : 0), 0, 30);
       if (raided && Math.random() < 0.6) v.ruin = Math.min(3, v.ruin + 1);
       else if (!raided && v.ruin > 0 && Math.random() < 0.3) v.ruin--;
       const lvl = v.prosper >= 20 ? 3 : v.prosper >= 9 ? 2 : 1;
       const known = U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 60 || c.ruler === 'player';
       if (lvl > v.level) {
         if (known) Game.note(`🏘️ ${v.name} prosperou: ${lvl === 3 ? 'ergueu muralhas!' : 'ganhou novas casas e um poço.'}`, 'gold');
-        Diplo.chronicle(`🏘️ ${v.name.startsWith("Vila ") ? "A " + v.name : "A vila de " + v.name} (${Diplo.name(v.civ)}) cresceu e chegou ao nível ${lvl}.`);
+        Diplo.chronicle(`🏘️ ${v.name.startsWith("Vila ") ? "A " + v.name : "A vila de " + v.name} (${v.free ? 'vila livre' : Diplo.name(v.civ)}) cresceu e chegou ao nível ${lvl}.`);
         if (lvl === 2) { const fam = People.create({ rank: 'peasant', civ: v.civ, home: { type: 'village', idx: vi }, age: U.rint(20, 40) }); fam.met = false; }
       } else if (lvl < v.level && known) UI.msg(`🏚️ ${v.name} está em decadência.`, 'bad');
       v.level = lvl;

@@ -164,7 +164,7 @@ const Game = {
     Arena.init(); Faith.init();
     Families.init(); Families.ensurePlayer(); Faith.ensurePriests();
     G.homes = {}; G.npcHouses = []; G.npcHouseSeq = 0; Homes.touch(); Homes.dayTick(false);
-    G.title = { lvl: -1, civ: -1 }; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
+    G.title = { lvl: -1, civ: -1 }; G.civilTitles = {}; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
     G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
     const d = World.start.door;
     this.resetPlayer((d.x + 0.5) * TILE, (d.y + 1) * TILE);
@@ -190,7 +190,7 @@ const Game = {
       urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
-      title: G.title, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
+      title: G.title, titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
       shrines: G.shrines, pilgrim: G.pilgrim, prayDay: G.prayDay, pcaravans: (G.caravans || []).filter(c => c.owner === 'player' && !c.done), civs: G.civs, storage: G.storage, dungeons: G.dungeons, diplo: G.diplo,
       vciv: World.villages.map(v => v.civ),
       built: World.structs.filter(s => s.built && !s.removed).map(s => ({ type: s.type, x: s.x, y: s.y, animals: s.animals, goods: s.goods, stock: s.stock, till: s.till, workers: s.workers, autosell: s.autosell, oldId: s.id })),
@@ -258,7 +258,7 @@ const Game = {
     G.surname = s.surname || Families.newSurname();
     if (!s.fams) Families.init(); else { for (const p of G.people) Families.attach(p); }
     Families.ensurePlayer(); Families.refresh(); Faith.ensurePriests();
-    G.title = s.title || { lvl: -1, civ: -1 }; G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
+    G.title = s.title || { lvl: -1, civ: -1 }; G.civilTitles = s.civilTitles || {}; if (!s.titleV && G.title.lvl >= 3) G.title.lvl++; // Marquês entrou antes do Duque G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
@@ -1220,7 +1220,7 @@ const Game = {
         e.house = h; e.vi = vi;
         Routine.placed(e);
       }
-      if (G.civs[v.civ].garrison > 0) this.ensureGroup('vg' + vi, 1, () => {
+      if (!v.free && G.civs[v.civ].garrison > 0) this.ensureGroup('vg' + vi, 1, () => {
         const s = freeSpotNear((v.x + 0.5) * TILE, (v.y - 0.5) * TILE, 2 * TILE);
         return this.spawn('guard', s.x, s.y, { civ: v.civ, leash: 6, tag: 'vg' + vi });
       });
@@ -1310,9 +1310,10 @@ const Game = {
     c.treasury -= spoils; P.gold += spoils;
     c.happy = Math.max(20, c.happy - 20); c.garrison = 4;
     for (const o of G.civs) if (o.id !== ci) this.addRelation(o.id, -15);
+    Progress.add('castlesTaken');
     this.becomeRuler(ci, `O castelo caiu e você saqueou ${spoils} 🪙.`);
   },
-  claimNeeds(ci) { const duke = Court.T().civ === ci && Court.T().lvl >= 3; return { rel: duke ? 60 : 75, gold: duke ? 800 : 1500 }; },
+  claimNeeds(ci) { const duke = Court.T().civ === ci && Court.T().lvl >= 4; return { rel: duke ? 60 : 75, gold: duke ? 800 : 1500 }; },
   claimThrone(ci) {
     const c = G.civs[ci], need = this.claimNeeds(ci);
     if (c.relation < need.rel || P.gold < need.gold) return;

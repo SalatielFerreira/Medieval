@@ -57,6 +57,7 @@ const Progress = {
   check() {
     G.ach = G.ach || {};
     const s = this.S();
+    Court.checkCivil(s);
     for (const a of ACHIEVEMENTS) {
       if (G.ach[a.id]) continue;
       let ok = false;

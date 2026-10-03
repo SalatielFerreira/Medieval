@@ -13,7 +13,7 @@ const FAMILY_BIZ = {
 const RANK_INCOME = { knight: 7, merchant: 12, smith: 10, lumber: 8, mason: 8, innkeeper: 10, hunter: 6, mercenary: 5, peasant: 3, wanderer: 1 };
 const NOBLE_RANKS = ['ruler', 'consort', 'heir'];
 const SHOP_RANKS = ['merchant', 'smith', 'lumber', 'mason', 'innkeeper'];
-const FOUND_COST = { gold: 1000, wood: 80, stone: 50 };
+const FOUND_COST = { gold: 10000 };
 const MAX_FOUNDED = 12;
 // limite suave da população: acima disso nascem cada vez menos crianças
 const POP_SOFT = 600, POP_HARD = 850;
@@ -233,7 +233,8 @@ const Families = {
   // constrói a vila (também usado para recriá-la ao carregar o jogo)
   makeVillage(spec) {
     const { x: vx, y: vy, civ } = spec, vi = World.villages.length;
-    const v = { civ, x: vx, y: vy, name: spec.name, founded: true, lord: spec.lord, lordFam: spec.lordFam, foundedDay: spec.day,
+    // free: vila livre (fundada pelo herói), fora de qualquer reino; civ fica só como referência interna
+    const v = { civ, free: !!spec.free, x: vx, y: vy, name: spec.name, founded: true, lord: spec.lord, lordFam: spec.lordFam, foundedDay: spec.day,
       extra: { houses: [], walls: [], well: null }, prosper: 6, level: 1, ruin: 0 };
     for (let y = vy - 5; y < vy + 7; y++) for (let x = vx - 7; x < vx + 8; x++) if (World.inb(x, y)) World.obj[World.idx(x, y)] = 0;
     const add = (t, x, y, w, h) => World.addStruct(t, x, y, w, h, civ, { village: vi, fvillage: true });
@@ -298,7 +299,7 @@ const Families = {
     const vx = Math.floor(P.x / TILE), vy = Math.floor(P.y / TILE) - 2;
     if (G.dungeon) return { ok: 'Não dá para fundar vilas dentro de cavernas.' };
     if (P.sailing) return { ok: 'Desembarque primeiro.' };
-    if (!Court.canFound()) return { ok: 'Só nobres (Barão ou mais) e reis têm o direito de fundar vilas. Peça um título a um rei.' };
+    if (!Court.canFound()) return { ok: 'É preciso o título civil Conquistador para fundar uma vila.' };
     const r = this.siteOk(vx, vy);
     let civ = World.terr[World.idx(vx, vy)];
     if (civ < 0) civ = World.capitals.map((c, i) => ({ i, d: U.dist(c.x, c.y, vx, vy) })).sort((a, b) => a.d - b.d)[0].i;
@@ -309,7 +310,7 @@ const Families = {
     if (s.ok !== true) { UI.msg('Não dá para fundar aqui: ' + s.ok, 'bad'); return false; }
     if (!Inv.has(FOUND_COST)) { UI.msg('Faltam recursos para fundar a vila.', 'bad'); return false; }
     Inv.pay(FOUND_COST);
-    const spec = { name: 'Vila ' + G.surname, x: s.x, y: s.y, civ: s.civ, lord: 'player', day: G.day };
+    const spec = { name: 'Vila ' + G.surname, x: s.x, y: s.y, civ: s.civ, lord: 'player', day: G.day, free: true };
     const v = this.makeVillage(spec);
     G.founded.push(spec);
     const vi = World.villages.indexOf(v);
@@ -322,7 +323,7 @@ const Families = {
     this.settle(v, vi, 3);
     Towns.init(); Towns.show(v); this.refresh();
     P.y += 2 * TILE;
-    Diplo.chronicle(`🏘️ ${G.name} ${G.surname} fundou a ${v.name}, em ${Diplo.name(v.civ)}.`, true);
+    Diplo.chronicle(`🏘️ ${G.name} ${G.surname} fundou a ${v.name}, uma vila livre que não pertence a reino nenhum.`, true);
     UI.banner(`🏘️ ${v.name} foi fundada!`);
     UI.msg(`Você é o senhor da ${v.name}. Os moradores pagam 2 🪙 por pessoa todo mês, e a vila cresce com o tempo.`, 'gold', true);
     Progress.diary(`🏘️ Fundou a ${v.name}.`);
@@ -546,7 +547,7 @@ const Biz = {
       .sort((a, b) => (this.skilled(b.p, s) - this.skilled(a.p, s)) || a.d - b.d).slice(0, 6);
   },
   dayTick() {
-    let wages = 0, gold = 0, made = {}, quit = [];
+    let wages = 0, gold = 0, paid = 0, made = {}, quit = [];
     for (const s of this.list()) {
       s.workers = (s.workers || []).filter(id => G.people[id] && G.people[id].alive && G.people[id].job === s.id);
       const ws = this.workers(s);
@@ -559,14 +560,21 @@ const Biz = {
       for (const it in fc.out) if (fc.out[it] > 0) { s.goods[it] = (s.goods[it] || 0) + fc.out[it]; made[it] = (made[it] || 0) + fc.out[it]; }
       if (fc.gold) { s.till = (s.till || 0) + fc.gold; gold += fc.gold; }
       if (s.autosell) {
-        let g = 0;
-        for (const it in s.goods) { g += Math.round(ITEMS[it].price * 0.6 * s.goods[it]); }
-        s.goods = {}; s.till = (s.till || 0) + g; gold += g;
+        for (const it in s.goods) gold += Math.round(ITEMS[it].price * 0.6 * s.goods[it]);
+        paid += this.cashOut(s);
       }
     }
     for (const p of quit) { this.fire(p); UI.msg(`😠 ${p.name} se demitiu por falta de pagamento.`, 'bad'); }
     const parts = Object.entries(made).map(([k, n]) => `${n} ${ITEMS[k].name}`);
-    if (wages || parts.length || gold) Game.note(`💼 Empreendimentos: ${parts.length ? parts.join(', ') : 'sem produção'}${gold ? ` · +${gold} 🪙 no caixa` : ''} · salários −${wages} 🪙.`, 'gold');
+    if (paid) Sound.play('coin');
+    if (wages || parts.length || gold) Game.note(`💼 Empreendimentos: ${parts.length ? parts.join(', ') : 'sem produção'}${paid ? ` · +${paid} 🪙 vendidos e recebidos` : ''}${gold - paid > 0 ? ` · +${gold - paid} 🪙 no caixa` : ''} · salários −${wages} 🪙.`, 'gold');
+  },
+  // vende o que está guardado (60% do preço) e passa o caixa inteiro para o seu ouro; devolve quanto você recebeu
+  cashOut(s) {
+    let g = s.till || 0;
+    for (const it in s.goods || {}) g += Math.round(ITEMS[it].price * 0.6 * s.goods[it]);
+    s.goods = {}; s.till = 0; P.gold += g;
+    return g;
   },
   collect(s) {
     const got = [];
