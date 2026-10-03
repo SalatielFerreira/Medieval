@@ -404,7 +404,7 @@ const Urban = {
     if (k === 'u:demolish') return { name: 'Demolir', icon: '💥', sub: 'reforma', can: true, btn: '💥 Escolher a construção',
       desc: 'Derruba uma construção e devolve metade do material. As suas podem ser demolidas em qualquer lugar; imóveis das vilas só pelo chefe ou pelo rei.' };
     const d = CIVIC[k.slice(2)];
-    return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · imóvel da vila`, can: Inv.has(d.cost), btn: '📍 Posicionar na vila',
+    return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · imóvel da vila`, can: Inv.has(d.cost), btn: '📍 Construir na vila',
       desc: d.desc + ' Fica dentro de uma vila sua (chefe) ou de qualquer vila do seu reino (rei).' };
   },
 };

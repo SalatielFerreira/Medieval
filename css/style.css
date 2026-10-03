@@ -1844,3 +1844,46 @@ body:not(.small) .craft-dt .act-row { padding-top: clamp(8px, 1.9vh, 14px); }
   body.small .craft-dt .src-row { padding: 4px 7px; background: rgba(0, 0, 0, .28); border-radius: 6px; }
 }
 body.small .ph { border-radius: 0 !important; } /* barra do título também sem cantos arredondados em telas pequenas */
+
+/* ================================================================ construção */
+.bld { display: flex; flex: 1; min-height: 0; }
+.bld > .navlay { flex: 1; }
+.bcost { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+.bcost i { font-style: normal; font-weight: 700; font-size: 11.5px; }
+.bcost i.ok { color: #9be37a; } .bcost i.bad { color: #ff8a7a; }
+.bld-dt { display: flex; flex-direction: column; overflow: hidden !important; }
+.bld-dt .cdt-in > * + * { margin-top: 12px; }
+.bld-dt .dt-desc { margin: 0; line-height: 1.45; }
+.bld-dt .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.bld-dt .req { display: flex; flex-direction: column; gap: 5px; }
+.bld-dt .act-row { margin-top: auto; padding-top: 12px; }
+.bld-dt .act-row button { flex: 1; }
+
+/* telas pequenas: categorias numa barra vertical só de ícones, todas à vista */
+@media (orientation: landscape) {
+  body.small .bld .navlay { grid-template-columns: 44px minmax(0, 1fr) !important; grid-template-rows: minmax(0, 1fr); gap: 8px; }
+  body.small .bld .snav { flex-direction: column; overflow-y: auto; overflow-x: hidden; border-bottom: 0; border-right: 1px solid rgba(214, 174, 96, 0.18); padding: 0 6px 0 0; gap: 4px; }
+  body.small .bld .snav-i { width: 38px; height: 38px; padding: 0; justify-content: center; position: relative; flex: none; }
+  body.small .bld .snav-i .sl { display: none; }
+  body.small .bld .snav-i .si { width: auto; font-size: 18px; }
+  body.small .bld .snav-i em { position: absolute; top: -3px; right: -3px; min-width: 15px; padding: 0 4px; font-size: 9px; line-height: 15px; }
+  body.small .bld .snav-body { overflow: hidden; }
+  body.small .bld-dt { padding: 7px 9px; }
+  body.small .bld-dt .cdt-in > * + * { margin-top: 7px; }
+  body.small .bld-dt .dt-ic { width: 34px; height: 34px; font-size: 20px; }
+  body.small .bld-dt .dt-name { font-size: 14px; }
+  body.small .bld-dt .dt-desc { font-size: 11.5px; line-height: 1.35; }
+  body.small .bld-dt .chip { font-size: 10.5px; padding: 2px 7px; }
+  body.small .bld-dt .req { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  body.small .bld-dt .req-row { padding: 3px 7px; font-size: 11px; }
+  body.small .bld-dt small { font-size: 10px; line-height: 1.25; }
+  body.small .bld-dt .act-row { padding-top: 6px; }
+  body.small .bld-dt .act-row button { padding: 7px 10px; font-size: 12.5px; }
+  body.small .bld .rrow small { font-size: 10.5px; }
+}
+@media (orientation: landscape) {
+  body.small .bld .snav { justify-content: space-between; padding: 4px 6px 0 0; overflow: visible; }
+  body.small .bld .snav-i { width: 36px; height: auto; flex: 1 1 0; min-height: 26px; max-height: 40px; }
+  body.small .bld .snav-i .si { font-size: 17px; }
+  body.small .bld .snav-i em { top: -4px; right: -4px; }
+}

@@ -476,36 +476,39 @@ const UI = {
       }).join('')}</div>
         ${!so ? `<small class="bad">Fique perto da estação (${STATIONS[r.station].name.split(' /')[0]}) para criar.</small>` : ''}</div>`;
   },
-  // telas pequenas: amplia os detalhes da receita o máximo possível sem passar do quadro (nunca rola)
-  fitCraftDetail() {
-    const box = document.querySelector('#panel .craft-dt .cdt-in');
+  // quadro de detalhes que nunca rola: escolhe UM tamanho para todos os itens da lista (o maior em que o mais longo
+  // ainda cabe). Telas pequenas ampliam até 145%; telas grandes só diminuem se faltar espaço (janela do navegador baixa).
+  fitDetail(sel, list, inner, extraKey) {
+    const box = document.querySelector('#panel ' + sel + ' .cdt-in');
     if (!box) return;
     box.style.zoom = '';
     const small = document.body.classList.contains('small');
     const dt = box.parentNode, act = dt.querySelector('.act-row');
     const right = () => dt.getBoundingClientRect().right - 6;
     // fundo do quadro menos a altura dos botões
-    const limit = () => dt.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(dt).paddingBottom) || 0) - act.getBoundingClientRect().height - 10;
+    const limit = () => dt.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(dt).paddingBottom) || 0) - (act ? act.getBoundingClientRect().height : 0) - 10;
     const fits = () => {
       const last = box.lastElementChild;
       if (last && last.getBoundingClientRect().bottom > limit()) return false;
-      for (const el of box.querySelectorAll('.req-row, .src-row, .dt-head, small')) if (el.getBoundingClientRect().right > right()) return false;
+      for (const el of box.querySelectorAll('.req-row, .src-row, .dt-head, .dt-desc, .chip, small')) if (el.getBoundingClientRect().right > right()) return false;
       return true;
     };
-    // mesma janela e mesma tela: reaproveita o tamanho já calculado
-    const key = this.craftList.join(',') + '|' + this.craftNear + '|' + innerWidth + 'x' + innerHeight;
-    if (this.craftZoomKey !== key) {
+    // mesma lista e mesma tela: reaproveita o tamanho já calculado
+    this.fitCache = this.fitCache || {};
+    const key = list.join(',') + '|' + (extraKey || '') + '|' + innerWidth + 'x' + innerHeight;
+    if (this.fitCache[sel] === undefined || this.fitCache[sel].key !== key) {
       const html = box.innerHTML;
       let z = small ? 1.45 : 1;
-      for (const i of this.craftList) {
-        box.innerHTML = this.craftInner(i);
+      for (const i of list) {
+        box.innerHTML = inner(i);
         box.style.zoom = z.toFixed(2);
         while (z > 0.7 && !fits()) { z -= 0.05; box.style.zoom = z.toFixed(2); }
       }
       box.innerHTML = html;
-      this.craftZoomKey = key; this.craftZoom = z;
+      this.fitCache[sel] = { key, z };
     }
-    box.style.zoom = this.craftZoom < 0.999 || small ? this.craftZoom.toFixed(2) : '';
+    const z = this.fitCache[sel].z;
+    box.style.zoom = z < 0.999 || small ? z.toFixed(2) : '';
   },
   // de onde vem um material, em poucas palavras (coleta, caça, pesca, criação ou loja)
   whereToGet(k) {
@@ -566,7 +569,7 @@ const UI = {
         <div class="scroll" data-scroll="craft">${rows}</div></div>
       <div class="card detail craft-dt">${detail}</div></div>`;
     this.open(st ? STATIONS[st].name.split(' /')[0] : 'Criação', body, 'showCrafting', [st], st ? 'Receitas desta estação' : 'Itens que você faz com as próprias mãos');
-    this.fitCraftDetail();
+    this.fitDetail('.craft-dt', this.craftList, this.craftInner, this.craftNear);
   },
 
   // Construir: lista agrupada e detalhes com custo (inclui estradas, reformas e as obras de chefe e rei)
@@ -574,7 +577,7 @@ const UI = {
     if (!BUILDINGS[k]) return Urban.info(k);
     const b = BUILDINGS[k], n = World.structs.filter(s => s.owner === 'player' && s.type === k && !s.removed).length;
     return { name: b.name, icon: Game.buildIcon(k), cost: b.cost, desc: b.desc, sub: `${b.w}×${b.h} · ${n ? `você tem ${n}` : 'nenhuma ainda'}`, can: Inv.has(b.cost),
-      cat: `${b.w}×${b.h} espaços · ${b.blocks ? 'sólida' : 'pode-se andar por cima'}`, btn: '📍 Posicionar no mapa', owned: n, size: `${b.w}×${b.h}` };
+      cat: `${b.w}×${b.h} espaços · ${b.blocks ? 'sólida' : 'pode-se andar por cima'}`, btn: '📍 Construir no mapa', owned: n, size: `${b.w}×${b.h}` };
   },
   showBuild() {
     const S = this.sel;
@@ -586,35 +589,48 @@ const UI = {
       .map(([k, ic, name, ks]) => [k, ic, name, ks.filter(x => BUILDINGS[x] || x.includes(':') || x === 'road')]);
     const auth = Urban.hasAny();
     if (auth) cats.push(['obras', '🏗️', 'Obras nas vilas', Object.keys(CIVIC).map(k => 'c:' + k)]);
+    this.buildCats = cats;
     const catOf = k => (cats.find(c => c[3].includes(k)) || cats[0])[0];
     if (S.build && S.build.startsWith('c:') && !auth) S.build = null;
     if (!S.bcat || !cats.some(c => c[0] === S.bcat)) S.bcat = S.build ? catOf(S.build) : 'moradia';
     const cat = cats.find(c => c[0] === S.bcat);
     if (!S.build || !cat[3].includes(S.build)) S.build = cat[3][0];
+    // cada linha: nome, quantas você tem e o custo (verde se tem o material, vermelho se falta)
+    const costMini = cost => Object.entries(cost).map(([k, n]) => `<i class="${Inv.count(k) >= n ? 'ok' : 'bad'}">${ITEMS[k].icon}${n}</i>`).join('');
     const rows = cat[3].map(k => {
       const b = this.binfo(k), tool = !b.cost;
+      const sub = tool ? b.sub : `${b.owned !== undefined ? (b.owned ? `você tem ${b.owned} · ` : '') : ''}<span class="bcost">${costMini(b.cost)}</span>`;
       return `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${b.icon}</span>
-        <span><b>${b.name}</b><small>${b.sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
+        <span><b>${b.name}</b><small>${sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
     }).join('');
-    const b = this.binfo(S.build);
-    const req = b.cost ? Object.entries(b.cost).map(([k, n]) => {
-      const have = Inv.count(k);
-      return `<div class="req-row"><span>${ITEMS[k].icon}</span><span>${ITEMS[k].name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;
-    }).join('') : '';
     const mine = Urban.myVillages(), kings = G.civs.filter(c => c.ruler === 'player');
-    const power = kings.length || mine.length ? `<small class="ok">Você manda em: ${[...kings.map(c => '👑 ' + CIV_DEFS[c.id].short + ' (reino todo)'), ...mine.map(x => '🏘️ ' + this.esc(x.v.name))].join(' · ')}</small>`
+    this.buildPower = kings.length || mine.length ? `<small class="ok">Você manda em: ${[...kings.map(c => '👑 ' + CIV_DEFS[c.id].short + ' (reino todo)'), ...mine.map(x => '🏘️ ' + this.esc(x.v.name))].join(' · ')}</small>`
       : '<small class="muted">Para mexer nos imóveis e estradas das vilas, torne-se chefe de uma vila (fundando, conquistando ou pedindo ao rei) ou rei.</small>';
-    const detail = `<div class="dt-head"><div class="dt-ic">${b.icon}</div><div><div class="dt-name">${b.name}</div><div class="dt-cat">${b.cat || b.sub}</div></div></div>
-      <p class="dt-desc">${b.desc}</p>
-      ${b.owned !== undefined ? `<div class="kv"><div>Você possui<b>${b.owned}</b></div><div>Tamanho<b>${b.size}</b></div></div>` : ''}
-      ${req ? `<div><div class="sec">Custo</div><div class="req">${req}</div></div>` : ''}
-      <div class="act-row"><button class="primary" data-act="${BUILDINGS[S.build] ? 'build' : 'urban'}" data-k="${S.build}" ${b.can ? '' : 'disabled'}>${b.btn}</button></div>
-      ${BUILDINGS[S.build] ? '<small class="muted">Depois de clicar, escolha o local perto de você. Botão direito ou Esc cancela. Não dá para construir sobre estradas ou água, nem dentro das cidades dos outros.</small>' : ''}
-      ${['estradas', 'reformas', 'obras'].includes(S.bcat) ? power : ''}`;
+    this.buildCatKey = S.bcat;
+    const b = this.binfo(S.build);
+    const detail = `<div class="cdt-in">${this.buildDetailHtml(S.build)}</div>
+      <div class="act-row"><button class="primary" data-act="${BUILDINGS[S.build] ? 'build' : 'urban'}" data-k="${S.build}" ${b.can ? '' : 'disabled'}>${b.btn}</button></div>`;
     const ready = c => c[3].filter(k => { const x = this.binfo(k); return x.cost && x.can; }).length;
     const groups = [['Sua base', cats.slice(0, 6).map(c => [c[0], c[1], c[2], ready(c)])], ['Estradas e vilas', cats.slice(6).map(c => [c[0], c[1], c[2]])]];
-    this.open('Construção', this.navHtml(groups, S.bcat, 'bcat', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail">${detail}</div></div>`),
+    this.open('Construção', `<div class="bld">${this.navHtml(groups, S.bcat, 'bcat', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail bld-dt">${detail}</div></div>`)}</div>`,
       'showBuild', [], 'Erga sua base, abra estradas e reforme as vilas');
+    this.fitDetail('.bld-dt', cat[3], k => this.buildDetailHtml(k), S.bcat);
+  },
+  // detalhes de uma construção: o que é, informações em etiquetas e o custo
+  buildDetailHtml(k) {
+    const b = this.binfo(k), B = BUILDINGS[k];
+    const tags = B ? [`📐 ${b.size}`, B.blocks ? '🧱 sólida' : '👣 dá para andar por cima', `🏠 você tem ${b.owned}`] : [];
+    const req = b.cost ? Object.entries(b.cost).map(([c, n]) => {
+      const have = Inv.count(c);
+      return `<div class="req-row"><span>${ITEMS[c].icon}</span><span>${ITEMS[c].name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;
+    }).join('') : '';
+    const cat = (this.buildCats || []).find(c => c[3].includes(k));
+    return `<div class="dt-head"><div class="dt-ic">${b.icon}</div><div><div class="dt-name">${b.name}</div><div class="dt-cat">${cat ? cat[2] : b.sub}</div></div></div>
+      <p class="dt-desc">${b.desc}</p>
+      ${tags.length ? `<div class="chips">${tags.map(t => `<span class="chip">${t}</span>`).join('')}</div>` : ''}
+      ${req ? `<div><div class="sec">Custo</div><div class="req">${req}</div></div>` : ''}
+      ${B ? '<small class="muted">Depois de clicar, escolha o local perto de você. Não dá para construir sobre estradas ou água, nem dentro das cidades dos outros.</small>' : ''}
+      ${['estradas', 'reformas', 'obras'].includes(cat && cat[0]) ? this.buildPower : ''}`;
   },
 
   // ============================================================ menu lateral (Reino, Ajustes e Construção)
