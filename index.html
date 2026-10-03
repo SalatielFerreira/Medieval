@@ -6,6 +6,13 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>MEDIEVAL — Os Sete Reinos</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23241a11'/%3E%3Ctext x='32' y='49' font-size='44' text-anchor='middle' fill='%23f2c45a'%3E%E2%9A%9C%3C/text%3E%3C/svg%3E">
+  <!-- app instalável (PWA): ícone, nome e cores quando instalado no computador ou no celular -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#120c06">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Medieval">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
   <style>.hidden { display: none !important; } html, body { margin: 0; height: 100%; overflow: hidden; background: #120c06; }</style>
@@ -50,6 +57,11 @@
       css.onload = scripts; css.onerror = scripts; setTimeout(scripts, 4000);
       document.head.appendChild(css);
     }
+    // app instalável: o service worker guarda os arquivos para abrir também sem internet
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register(base + 'sw.js').catch(function () {});
+    // o pedido de instalação chega antes do menu: guarda para o botão "Instalar o jogo"
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.installPrompt = e; if (typeof Menu !== 'undefined' && Menu.refreshInstall) Menu.refreshInstall(); });
+    window.addEventListener('appinstalled', function () { window.installPrompt = null; if (typeof Menu !== 'undefined' && Menu.refreshInstall) Menu.refreshInstall(); });
     if (location.protocol === 'file:') { load('local'); return; }
     fetch(base + 'version.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })

@@ -6,6 +6,10 @@ RPG medieval 2D (visão de cima, estilo pixel art) feito em HTML5 Canvas e JavaS
 
 Dê dois cliques em `index.html`. O jogo abre no Chrome ou no Edge e funciona offline. O jogo salvo fica guardado no próprio navegador (localStorage), e o jogo pede ao navegador para tratar esses dados como permanentes, para não serem apagados sozinhos.
 
+### Instalar como app (PWA)
+
+Abra o jogo pelo endereço publicado (GitHub Pages) e use o botão **Instalar o jogo** no rodapé do menu inicial. No computador (Chrome ou Edge) o MEDIEVAL vira um app com ícone próprio, em janela sem barra do navegador; no Android aparece na tela inicial e abre em tela cheia, deitado. No iPhone/iPad, toque em Compartilhar → "Adicionar à Tela de Início" (o botão mostra essas instruções). Depois de aberto uma vez, o app funciona sem internet. As atualizações chegam sozinhas quando houver internet (o menu continua mostrando o botão "Atualizar").
+
 ## Controles
 
 | Tecla | Ação |

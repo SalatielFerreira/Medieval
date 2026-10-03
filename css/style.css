@@ -3253,3 +3253,10 @@ body.small .cpick .cp-cur i { width: 15px; height: 15px; }
 body.small .cpick .cp-cur small { font-size: 12px; }
 .cpick .cp-cur small { font-family: var(--ui-font); }
 body.small .cr3 .cpick .cp-cur small { font-size: 12px; }
+
+/* ================================================================ menu: botão discreto para instalar o jogo como app */
+.mc-foot:has(.mc-install:not(.hidden)) { justify-content: space-between; gap: 10px; }
+.mc-install { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; font-size: 12px; font-weight: 700; border-radius: 14px;
+  color: #ffe9a8; background: linear-gradient(180deg, rgba(201, 162, 74, .28), rgba(90, 66, 24, .35)); border: 1px solid rgba(232, 192, 106, .6); }
+.mc-install .ico { width: 14px; height: 14px; }
+.mc-install:hover { border-color: #ffd54a; color: #fff6dc; }

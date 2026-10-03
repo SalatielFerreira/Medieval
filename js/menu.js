@@ -143,7 +143,20 @@ const Menu = {
         ${opt('create', '⚔️', 'Novo jogo', 'Crie seu herói', info ? '' : 'main')}
         ${opt('slots', '📜', 'Jogos salvos', 'Carregar dados')}
       </div>
-      <div class="mc-foot"><span>${this.versionText()}</span></div>`, 'main');
+      <div class="mc-foot"><span>${this.versionText()}</span><button class="mc-install hidden" id="mcInstall" data-m="install">${icon('plus')}<span>Instalar o jogo</span></button></div>`, 'main');
+    this.refreshInstall();
+  },
+  // app instalável: o botão aparece quando o navegador permite instalar (ou no iPhone/iPad, com as instruções)
+  installed() { return matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || navigator.standalone === true; },
+  ios() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); },
+  refreshInstall() {
+    const b = document.getElementById('mcInstall');
+    if (b) b.classList.toggle('hidden', this.installed() || !(window.installPrompt || this.ios()));
+  },
+  install() {
+    const p = window.installPrompt;
+    if (p) { p.prompt(); p.userChoice.then(() => { window.installPrompt = null; this.refreshInstall(); }).catch(() => {}); return; }
+    Dialog.alert({ icon: '📲', title: 'Instalar o jogo', text: 'No Safari, toque em Compartilhar (o quadrado com a seta para cima) e depois em "Adicionar à Tela de Início". O MEDIEVAL vira um app na sua tela.' });
   },
   slotsCard() {
     const fmt = t => t ? new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
@@ -236,6 +249,7 @@ const Menu = {
     if (a === 'create') this.createCard();
     else if (a === 'back') this.mainCard();
     else if (a === 'slots') this.slotsCard();
+    else if (a === 'install') this.install();
     else if (a === 'updnow') this.updateNow(d.v);
     else if (a === 'upddismiss') { if (d.v) this.dismissed = d.v; document.getElementById('updModal').classList.add('hidden'); }
     else if (a === 'export') Saves.exportSlot(+d.n);
