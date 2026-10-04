@@ -26,8 +26,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // Versão 4: sem montanhas (viram colinas e neve, com os minérios) e só 2 vilas por reino no começo.
 // Versão 5: sem as ilhas dos cantos; 7 ilhas grandes no mar em volta, deixando livre o caminho do barco.
 // Versão 6: ilhas em lugares sorteados (sem padrão), de tamanhos e formatos diferentes, fora de qualquer reino.
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626 };
-const TERRAIN_V = 6, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 7: mar mais largo e ilhas maiores, todas fora do alcance dos reinos.
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626 };
+const TERRAIN_V = 7, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
@@ -107,14 +108,17 @@ const World = {
     if ((this.terrainV || 0) >= 6) {
       // 7 ilhas sorteadas pelo mar: tamanhos diferentes, formatos alongados, longe da borda (o barco passa por fora)
       // e da costa (passa por dentro), e longe umas das outras
-      const ir = U.mulberry32(seed ^ 0x51a7), sizes = [6, 7, 8, 10, 11, 13, 15].sort(() => ir() - 0.5);
+      // versão 7: bem longe do continente (fora do alcance de qualquer reino, que vai até ~60 blocos do castelo)
+      const farFromRealms = (x, y, r) => openSea(x, y, r + 28);
+      const ir = U.mulberry32(seed ^ 0x51a7), sizes = ((this.terrainV || 0) >= 7 ? [12, 14, 16, 18, 20, 22, 25] : [6, 7, 8, 10, 11, 13, 15]).sort(() => ir() - 0.5);
       for (const r of sizes) {
         // sorteia vários lugares possíveis e fica com o mais afastado das outras ilhas (espalhadas, mas sem padrão)
         let best = null, bd = -1;
         for (let tries = 0, ok = 0; tries < 1500 && ok < 12; tries++) {
-          const x = Math.round(r + 14 + ir() * (WORLD_W - 2 * r - 28)), y = Math.round(r + 14 + ir() * (WORLD_H - 2 * r - 28));
+          const x = Math.round(r + 12 + ir() * (WORLD_W - 2 * r - 24)), y = Math.round(r + 12 + ir() * (WORLD_H - 2 * r - 24));
           if (!openSea(x, y, r + 7)) continue;
           if (this.islands.some(o => U.dist(x, y, o.x, o.y) < o.r + r + 16)) continue;
+          if ((this.terrainV || 0) >= 7 && farFromRealms && !farFromRealms(x, y, r)) continue;
           ok++;
           const md = this.islands.reduce((m, o) => Math.min(m, U.dist(x, y, o.x, o.y)), 400) * (0.75 + ir() * 0.5);
           if (md > bd) { bd = md; best = { x, y, r, ratio: 0.55 + ir() * 0.45, ang: ir() * Math.PI }; }

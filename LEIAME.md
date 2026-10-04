@@ -91,7 +91,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
-- **7 ilhas sorteadas (jogos novos):** as ilhas aparecem em lugares diferentes a cada mundo, espalhadas pelo mar, com tamanhos e formatos variados. Nenhuma pertence a reino, e o barco sempre consegue dar a volta no mapa.
+- **7 ilhas grandes e sorteadas (jogos novos):** o mar ficou mais largo; as ilhas aparecem em lugares diferentes a cada mundo, com tamanhos e formatos variados, longe do continente e fora de qualquer reino. O barco sempre consegue dar a volta no mapa.
 - **Mundo sem montanhas e com 2 vilas por reino (jogos novos):** as montanhas viraram colinas e neve (os minérios continuam lá, e as cavernas também), e cada reino começa com 2 vilas. Os reis fundam vilas novas quando elas lotam. Jogos salvos antigos continuam como estavam.
 - **Mais mar e portos (jogos novos):** o mapa ficou maior, com uma faixa larga de mar aberto em volta do continente para navegar. Cada reino com mar por perto tem um **Porto** na costa, onde o mestre do porto compra peixes, **polvos**, **tubarões** e **baleias** e vende barco, vara e corda. Tubarões e baleias vivem no alto-mar: pesque de barco, longe da costa. Jogos salvos antigos continuam com o mapa de antes.
 - **Fundar o próprio reino:** quando a sua vila livre chega ao nível 3, erga o **Castelo** (Construir → Moradia, depois do Casarão; 3000 🪙 e materiais). Nasce o "Reino <sobrenome>" com castelo, guarnição, território e diplomacia. Um reino fundado por vez: se ele cair, dá para fundar outro.
