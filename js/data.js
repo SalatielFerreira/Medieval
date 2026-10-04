@@ -86,6 +86,9 @@ const ITEMS = {
   trout:       { name: 'Truta',              icon: '🐟', cat: 'Comida', price: 5,  food: 9,  heal: 0, fish: true },
   carp:        { name: 'Carpa',              icon: '🐟', cat: 'Comida', price: 4,  food: 9,  heal: 0, fish: true },
   sardine:     { name: 'Sardinha',           icon: '🐟', cat: 'Comida', price: 4,  food: 7,  heal: 0, fish: true },
+  octopus:     { name: 'Polvo',              icon: '🐙', cat: 'Comida', price: 22, food: 14, heal: 0, fish: true },
+  shark:       { name: 'Tubarão',            icon: '🦈', cat: 'Diversos', price: 90, fish: true },
+  whale:       { name: 'Baleia (carne e óleo)', icon: '🐋', cat: 'Diversos', price: 260, fish: true },
   cod:         { name: 'Bacalhau',           icon: '🐟', cat: 'Comida', price: 9,  food: 12, heal: 0, fish: true },
   goldfish:    { name: 'Peixe-Dourado',      icon: '🐠', cat: 'Diversos', price: 45 },
   old_boot:    { name: 'Bota Velha',         icon: '🥾', cat: 'Diversos', price: 1 },
@@ -312,6 +315,7 @@ const BUILDINGS = {
 
 // Construções das civilizações
 const CIV_STRUCTS = {
+  port: { name: 'Porto', blocks: true },
   castle: { name: 'Castelo',  blocks: true },
   chapel: { name: 'Capela',   blocks: true },
   cathedral: { name: 'Catedral', blocks: true },

@@ -89,8 +89,8 @@ const Homes = {
   startBuild(vi, famId) {
     const v = World.villages[vi];
     if (!v) return null;
-    for (let r = 5; r <= 22; r++) for (let k = 0; k < 28; k++) {
-      const a = k / 28 * Math.PI * 2 + vi * 0.7 + r * 0.37;
+    for (let r = 5; r <= 30; r++) for (let k = 0; k < 28 + r; k++) { // vila cheia: procura mais longe
+      const a = k / (28 + r) * Math.PI * 2 + vi * 0.7 + r * 0.37;
       const x = Math.round(v.x + Math.cos(a) * r) - 1, y = Math.round(v.y + Math.sin(a) * r * 0.8) - 1;
       if (!World.areaOk(x - 1, y - 1, 4, 4) || !World.areaFree(x - 1, y - 1, 4, 4) || Towns.onRoad(x, y, 2, 2)) continue;
       if (U.dist(x + 1, y + 1, P.x / TILE, P.y / TILE) < 3) continue;

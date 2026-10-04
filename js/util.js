@@ -2,7 +2,9 @@
 // Utilitários gerais: aleatoriedade com semente, ruído, matemática e fila de prioridade.
 
 const TILE = 32;
-const WORLD_W = 320, WORLD_H = 320;
+// tamanho do mundo em blocos: a versão 3 do terreno tem mar aberto em volta do continente (margem WORLD_PAD)
+let WORLD_W = 320, WORLD_H = 320, WORLD_PAD = 0;
+function setWorldSize(terrain) { const big = (terrain || 0) >= 3; WORLD_PAD = big ? 48 : 0; WORLD_W = WORLD_H = 320 + WORLD_PAD * 2; }
 const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 // Calendário sem dias: cada ciclo é um mês. Primeiro 1 minuto de noite (o mês acabou de virar) e depois

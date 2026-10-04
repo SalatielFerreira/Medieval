@@ -22,8 +22,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // min: nível de ferramenta exigido (0 = mãos, 1 = pedra, 2 = bronze, 3 = ferro, 4 = aço)
 // altitude a partir da qual o terreno vira montanha. Versão 2 do terreno = metade das montanhas da versão 1 (0.735).
 // Jogos salvos antigos continuam usando o corte antigo, para o mundo deles não mudar.
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626 };
-const TERRAIN_V = 2, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 3: mesmo continente, com uma faixa larga de mar aberto em volta (mapa maior, para navegar) e portos.
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626 };
+const TERRAIN_V = 3, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
@@ -74,15 +75,17 @@ const World = {
     const nE = U.makeNoise(seed), nM = U.makeNoise(seed ^ 0x5bd1), nD = U.makeNoise(seed ^ 0x2c3a);
 
     // elevação bruta: continente que ocupa quase todo o mapa, caindo para o mar só nas bordas
+    const PAD = WORLD_PAD, IN = WORLD_W - PAD * 2;
     for (let y = 0; y < WORLD_H; y++) for (let x = 0; x < WORLD_W; x++) {
-      const nx = x / WORLD_W - 0.5, ny = y / WORLD_H - 0.5;
+      const nx = (x - PAD) / IN - 0.5, ny = (y - PAD) / IN - 0.5;
       const d = Math.sqrt(nx * nx + ny * ny) * 2 * 0.55 + Math.max(Math.abs(nx), Math.abs(ny)) * 2 * 0.45;
-      this.elev[y * WORLD_W + x] = (U.fbm(nE, x / 24, y / 24, 5) - 0.5) * 1.25 + 0.56 - Math.pow(d, 6) * 0.8;
+      this.elev[y * WORLD_W + x] = (U.fbm(nE, (x - PAD) / 24, (y - PAD) / 24, 5) - 0.5) * 1.25 + 0.56 - Math.pow(d, 6) * 0.8;
     }
-    // nível do mar por percentil: garante ~74% de terra; os demais limites seguem a mesma régua
-    const sorted = Float32Array.from(this.elev).sort();
-    const pc = p => sorted[Math.floor(N * p)];
-    const knots = [[sorted[0] - 1e-6, 0], [pc(0.2), 0.27], [pc(0.26), 0.33], [pc(0.29), 0.36], [pc(0.8), 0.635], [pc(0.91), 0.735], [sorted[N - 1] + 1e-6, 0.9]];
+    // nível do mar por percentil (medido só no quadrado do continente): garante ~74% de terra ali
+    const inner = []; for (let y = PAD; y < WORLD_H - PAD; y++) for (let x = PAD; x < WORLD_W - PAD; x++) inner.push(this.elev[y * WORLD_W + x]);
+    const sorted = Float32Array.from(inner).sort(), NI = sorted.length;
+    const pc = p => sorted[Math.floor(NI * p)];
+    const knots = [[sorted[0] - 1e-6, 0], [pc(0.2), 0.27], [pc(0.26), 0.33], [pc(0.29), 0.36], [pc(0.8), 0.635], [pc(0.91), 0.735], [sorted[NI - 1] + 1e-6, 0.9]];
     const remap = v => {
       for (let k = 1; k < knots.length; k++) if (v <= knots[k][0]) {
         const [a, ea] = knots[k - 1], [b, eb] = knots[k];
@@ -90,7 +93,7 @@ const World = {
       }
       return 0.9;
     };
-    for (let i = 0; i < N; i++) this.elev[i] = remap(this.elev[i]);
+    for (let i = 0; i < N; i++) this.elev[i] = Math.max(0, remap(this.elev[i]));
     // ilhas no mar aberto, longe de qualquer costa: só alcançáveis de barco
     const openSea = (cx, cy, r) => {
       for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++)
@@ -881,6 +884,17 @@ const World = {
     };
 
     switch (s.type) {
+      case 'port': {
+        // cais de madeira que entra na água, armazém, guindaste e bandeira do reino
+        for (let k = 0; k < 3; k++) { R(18 + k * 30, h - 8, 22, 70, '#7a5230'); for (let j = h - 6; j < h + 60; j += 7) R(18 + k * 30, j, 22, 2, '#5a3a1e'); R(18 + k * 30, h + 58, 3, 10, '#4a2e16'); R(37 + k * 30, h + 58, 3, 10, '#4a2e16'); }
+        shadow();
+        R(8, 26, 70, 46, '#a07a4a'); R(8, 26, 70, 6, '#7a5a30'); for (let k = 34; k < 72; k += 9) R(8, k, 70, 1, '#7a5a30');
+        roof(4, 4, 78, 24, roofCol); R(36, 50, 14, 22, '#4a2e16'); R(16, 40, 10, 8, '#2a1a0e'); R(60, 40, 10, 8, '#2a1a0e');
+        R(96, 10, 5, h - 14, '#5a3a1e'); R(96, 10, 26, 4, '#5a3a1e'); R(118, 14, 1, 26, '#c9b48a'); R(113, 40, 10, 8, '#8a6a3a');
+        ctx.font = '18px serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#f2e6c8'; ctx.fillText('⚓', X + 43, Y + 46); ctx.textAlign = 'left';
+        banner(84, 8);
+        break;
+      }
       case 'pcastle': case 'castle': {
         shadow();
         const stone = '#8b8d93', dark = '#5f6167';

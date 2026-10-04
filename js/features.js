@@ -296,7 +296,7 @@ const WorldGen = {
   workerSource() {
     const fnObj = (name, obj, keys) => `const ${name}={` + keys.map(k => typeof obj[k] === 'function' ? obj[k].toString() : `${k}:${JSON.stringify(obj[k])}`).join(',') + '};';
     return [
-      `const TILE=${TILE},WORLD_W=${WORLD_W},WORLD_H=${WORLD_H},DIRS4=${JSON.stringify(DIRS4)};`,
+      `const TILE=${TILE},WORLD_W=${WORLD_W},WORLD_H=${WORLD_H},WORLD_PAD=${WORLD_PAD},DIRS4=${JSON.stringify(DIRS4)};`,
       `const T=${JSON.stringify(T)},TINFO=${JSON.stringify(TINFO)},OBJ=${JSON.stringify(OBJ)};`,
       `const CIV_DEFS=${JSON.stringify(CIV_DEFS)},VILLAGE_NAMES=${JSON.stringify(VILLAGE_NAMES)},BUILDINGS=${JSON.stringify(BUILDINGS)},CIV_STRUCTS=${JSON.stringify(CIV_STRUCTS)},CAVE_NAMES=${JSON.stringify(CAVE_NAMES)};`,
       fnObj('U', U, Object.keys(U)),
@@ -314,9 +314,10 @@ const WorldGen = {
   },
   // terrain: versão do terreno (jogos salvos antigos guardam a versão 1)
   run(seed, onProgress, terrain) {
+    setWorldSize(terrain || TERRAIN_V); World.busy = true; // o mundo antigo não é desenhado enquanto o novo (de outro tamanho) é gerado
     const cut = TERRAIN_CUTS[terrain || TERRAIN_V];
     World.mountCut = cut;
-    return new Promise(resolve => {
+    return new Promise(res => { const resolve = ok => { World.busy = false; res(ok); };
       let finished = false;
       const sync = () => {
         if (finished) return;

@@ -63,6 +63,7 @@ const Towns = {
     NpcRoads.tick(); // moradores abrem caminhos até as casas e lojas
     Faith.monthTick();
     People.purseTick(); // as lojas rendem para os próprios donos
+    Ports.monthTick();
   },
 };
 
@@ -345,4 +346,48 @@ const NpcRoads = {
   restore() {
     for (const i of G.npcRoads || []) if (World.sgrid[i] < 0 && !this.isRoad(i)) World.carveRoad([i]);
   },
+};
+
+// ================================================================ portos
+// Um porto na costa perto de cada castelo que tem mar por perto (lugar sempre igual para o mesmo mundo).
+// O mestre do porto compra peixes, polvos, tubarões e baleias com a bolsa do porto e vende barcos e varas.
+const PORT_BUYS = ['trout', 'carp', 'sardine', 'cod', 'octopus', 'shark', 'whale', 'goldfish', 'cooked_fish'];
+const PORT_SELLS = [['boat', 120], ['fishing_rod', 25], ['rope', 6]];
+const Ports = {
+  list() { return World.structs.filter(s => s && s.type === 'port' && !s.removed); },
+  state(s) { G.ports = G.ports || {}; const k = s.x + ',' + s.y; return G.ports[k] || (G.ports[k] = { purse: 2500 }); },
+  // procura uma faixa de costa (terra com água ao sul ou ao lado) até 34 blocos do castelo
+  place() {
+    if ((G.terrain || 0) < 3 || this.list().length) return;
+    for (let ci = 0; ci < Math.min(World.capitals.length, 7); ci++) {
+      const cp = World.capitals[ci]; let best = null, bd = 1e9;
+      for (let y = cp.y - 34; y <= cp.y + 34; y++) for (let x = cp.x - 34; x <= cp.x + 34; x++) {
+        if (!World.areaOk(x, y, 4, 3) || !World.areaFree(x, y, 4, 3)) continue;
+        let land = true; for (let j = y; j < y + 3 && land; j++) for (let i = x; i < x + 4; i++) { const t = World.tiles[World.idx(i, j)]; if (!TINFO[t].walk || World.isWater(t) || t === T.ROAD) { land = false; break; } }
+        if (!land) continue;
+        let water = 0; for (let i = x - 1; i <= x + 4; i++) { if (World.inb(i, y + 3) && World.isWater(World.tiles[World.idx(i, y + 3)])) water++; }
+        if (water < 4) continue;
+        const d = U.dist(x, y, cp.x, cp.y); if (d < bd && d > 9) { bd = d; best = { x, y }; }
+      }
+      if (!best) continue;
+      for (let j = best.y; j < best.y + 3; j++) for (let i = best.x; i < best.x + 4; i++) World.obj[World.idx(i, j)] = 0;
+      const st = World.addStruct('port', best.x, best.y, 4, 3, ci);
+      const path = World.findPath(best.x + 1, best.y - 1, cp.door.x, cp.door.y); if (path) World.carveRoad(path);
+    }
+    World.chunks = new Map(); if (World.mini) World.buildMinimap();
+  },
+  price(k) { const it = ITEMS[k]; return Math.max(1, Math.round(it.price * (k === 'whale' || k === 'shark' || k === 'octopus' ? 1 : 0.9))); },
+  sell(sid, k, n) {
+    const s = World.structs[sid], st = this.state(s), pr = this.price(k);
+    n = Math.min(n, Inv.count(k), Math.floor(st.purse / pr));
+    if (n <= 0) { UI.msg(Inv.count(k) ? 'O mestre do porto não tem dinheiro para isso agora.' : 'Você não tem isso.', 'bad'); return; }
+    Inv.add(k, -n); P.gold += n * pr; st.purse -= n * pr; Sound.play('coin');
+    UI.msg(`⚓ Vendeu ${n}× ${ITEMS[k].name} por ${n * pr} Salin.`, 'gold');
+  },
+  buy(sid, k, price) {
+    const st = this.state(World.structs[sid]);
+    if (P.gold < price) { UI.msg('Salin insuficiente.', 'bad'); return; }
+    P.gold -= price; st.purse += price; Inv.add(k, 1); UI.msg(`⚓ Comprou ${ITEMS[k].name}.`, 'gold');
+  },
+  monthTick() { for (const k in G.ports || {}) G.ports[k].purse = Math.min(6000, G.ports[k].purse + 400); },
 };

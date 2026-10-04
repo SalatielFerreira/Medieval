@@ -148,7 +148,7 @@ const Game = {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       G.realTime += dt;
       Pad.update();
-      if (G.state === 'play' && !G.paused) this.update(dt);
+      if (G.state === 'play' && !G.paused && !World.busy) this.update(dt);
       if (G.state === 'play' && (this.hudT = (this.hudT || 0) - dt) <= 0) { this.hudT = 0.12; UI.updateHUD(); }
       this.render();
       requestAnimationFrame(loop);
@@ -206,7 +206,7 @@ const Game = {
     Progress.diary(`🛖 ${name} ${G.surname} chegou à sua cabana, com ${opts.age} anos, para começar uma nova vida.`);
     G.time = NIGHT_LEN; G.day = 1; G.ents = []; G.texts = []; G.parts = []; G.siege = null; G.placing = null; G.groups = {}; G.zone = -2;
     Ranged.projs = []; World.season = -1; Season.apply(false);
-    NpcRoads.init(); // as vilas já nascem com as casas e lojas ligadas à estrada
+    Ports.place(); NpcRoads.init(); // portos na costa; as vilas já nascem ligadas à estrada
     G.state = 'play'; G.paused = false; G.ping = null; UI.showGameUI(true);
   },
 
@@ -221,7 +221,7 @@ const Game = {
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
-      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], vacancies: G.vacancies || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
+      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], vacancies: G.vacancies || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
@@ -301,7 +301,7 @@ const Game = {
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
-    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.vacancies = s.vacancies || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
+    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.vacancies = s.vacancies || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
     G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
@@ -314,7 +314,7 @@ const Game = {
     Towns.init(); Towns.applyAll();
     G.homes = s.homes || {}; G.npcHouses = s.npcHouses || []; G.npcHouseSeq = s.npcHouseSeq || 0;
     Homes.restore();
-    Urban.restore(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
+    Ports.place(); Urban.restore(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
     if (!data) UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
@@ -752,6 +752,7 @@ const Game = {
       case 'forge': return 'Forja — forjar';
       case 'farm': return 'Fazenda';
       case 'barracks': return 'Quartel — treinar soldados';
+      case 'port': return '⚓ Porto';
       case 'store': case 'smith': case 'lumber': case 'quarry': return `${SHOPS[s.type].icon} ${SHOPS[s.type].name} de ${World.villages[s.village].name}`;
       case 'tavern': return 'Taverna de ' + World.villages[s.village].name;
       case 'castle': return 'Castelo — ' + CIV_DEFS[s.owner].name;
@@ -810,6 +811,7 @@ const Game = {
       case 'chest': UI.showChest(s.id); break;
       case 'coop': case 'pen': case 'beehive': UI.showAnimals(s.id); break;
       case 'ptavern': UI.showPTavern(s.id); break;
+      case 'port': UI.showPort(s.id); break;
       case 'fmill': case 'fshop': case 'fforge': case 'ffarm': case 'fvine': UI.showFamily(s.fam); break;
       case 'chapel': case 'cathedral': UI.showChapel(s.id); break;
       case 'shrine': Faith.visitShrine(s); break;
@@ -904,7 +906,9 @@ const Game = {
     P.fishing = null; P.atkCd = 0.5; P.swing = 0.25;
     if (f.state !== 'bite') { UI.msg('Você puxou a linha cedo demais.'); return; }
     const tables = {
-      deep:  [['cod', 50], ['sardine', 32], ['goldfish', 6], ['old_boot', 12]],
+      deep:  P.sailing && World.elev[World.idx(Math.floor(f.x), Math.floor(f.y))] < 0.12
+        ? [['cod', 30], ['octopus', 25], ['shark', 15], ['whale', 6], ['sardine', 14], ['goldfish', 4], ['old_boot', 6]] // mar alto, de barco
+        : [['cod', 44], ['sardine', 28], ['octopus', 10], ['goldfish', 6], ['old_boot', 12]],
       sea:   [['sardine', 38], ['carp', 36], ['trout', 10], ['goldfish', 4], ['old_boot', 12]],
       river: [['trout', 55], ['carp', 30], ['goldfish', 5], ['old_boot', 10]],
     };
@@ -913,6 +917,8 @@ const Game = {
     Inv.add(got, 1);
     this.addText(P.x, P.y - 50, `+1 ${ITEMS[got].name}`, got === 'goldfish' ? '#ffd54a' : '#ffe9a8');
     if (got === 'goldfish') { UI.msg('✨ Um raro Peixe-Dourado! Vale muito nos mercados.', 'gold'); Progress.add('goldfish'); }
+    if (got === 'shark') UI.msg('🦈 Você pescou um tubarão! Os portos pagam bem por ele.', 'gold');
+    if (got === 'whale') { UI.banner('🐋 Uma baleia!'); UI.msg('🐋 Que pescaria! Leve a baleia a um porto para vender.', 'gold', true); }
     if (got !== 'old_boot') Progress.add('fish');
     this.gainXp(got === 'old_boot' ? 1 : 4);
   },
@@ -1618,6 +1624,7 @@ const Game = {
     ctx.imageSmoothingEnabled = false;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#1d4e89'; ctx.fillRect(0, 0, sw, sh);
+    if (World.busy || !World.tiles || World.tiles.length !== WORLD_W * WORLD_H) return;
     if (G.state !== 'play') return;
     // o mundo é desenhado em escala (zoom); cw/ch são o tamanho da vista em pixels do mundo
     const z = this.zoom || 1, cw = sw / z, ch = sh / z;

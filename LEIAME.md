@@ -91,6 +91,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Mais mar e portos (jogos novos):** o mapa ficou maior, com uma faixa larga de mar aberto em volta do continente para navegar. Cada reino com mar por perto tem um **Porto** na costa, onde o mestre do porto compra peixes, **polvos**, **tubarões** e **baleias** e vende barco, vara e corda. Tubarões e baleias vivem no alto-mar: pesque de barco, longe da costa. Jogos salvos antigos continuam com o mapa de antes.
 - **Fundar o próprio reino:** quando a sua vila livre chega ao nível 3, erga o **Castelo** (Construir → Moradia, depois do Casarão; 3000 🪙 e materiais). Nasce o "Reino <sobrenome>" com castelo, guarnição, território e diplomacia. Um reino fundado por vez: se ele cair, dá para fundar outro.
 - **Reino conquistado leva a sua marca:** quem já é rei e toma outro reino passa a usar nele a bandeira, o brasão e a cor do reino principal (os dois continuam reinos diferentes, com relações próprias). Dá para voltar ao brasão próprio na aba Bandeira e brasão.
 - **Capangas de guarda em qualquer lugar:** "Ficar de guarda ou esperar" deixa o capanga parado onde você está, numa vila ou castelo seu, ou esperando numa vila ou cidade qualquer. Converse com ele lá para ele voltar a seguir você.

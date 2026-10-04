@@ -6,14 +6,14 @@ const TRADE_GOODS = ['wood', 'stone', 'clay', 'coal', 'copper_ore', 'tin_ore', '
 
 const PANEL_ICONS = {
   showInventory: 'backpack', showCrafting: 'hammer', showBuild: 'build', showKingdom: 'crown', showSettings: 'gear', showHelp: 'star',
-  showTalk: 'chat', showGift: 'star', showEquipC: 'shield', showShop: 'coin', showTavern: 'users', showCastle: 'castle',
+  showPort: 'map', showArena: 'sword', showTalk: 'chat', showGift: 'star', showEquipC: 'shield', showShop: 'coin', showTavern: 'users', showCastle: 'castle',
   showRest: 'build', showFarm: 'food', showBarracks: 'shield', showChest: 'backpack', showStable: 'users',
   showBiz: 'coin', showFamily: 'users', showHire: 'coin', showGuard: 'shield', showChapel: 'star', showArena: 'sword', showJoust: 'sword', showTree: 'users', showMatch: 'users',
   showAnimals: 'food', showPTavern: 'coin', showCaravan: 'coin', showBattle: 'sword', showDiary: 'book', showProf: 'star',
 };
 // janelas principais, na ordem da barra de botões (as setas do cabeçalho pulam de uma para a outra)
 const MAIN_WINDOWS = [['showInventory', 'Mochila'], ['showCrafting', 'Criar'], ['showBuild', 'Construir'], ['showKingdom', 'Portfólio'], ['showMap', 'Mapa'], ['showDiary', 'Diário'], ['showSettings', 'Ajustes']];
-const WIDE_PANELS = ['showArena', 'showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree', 'showKingdom', 'showSettings', 'showTalk', 'showChapel'];
+const WIDE_PANELS = ['showPort', 'showArena', 'showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree', 'showKingdom', 'showSettings', 'showTalk', 'showChapel'];
 
 const UI = {
   cur: null,
@@ -1206,6 +1206,24 @@ const UI = {
     this.open('🛡️ Guarda de ' + this.esc(p.name), `<p>Onde ${this.esc(p.name)} vai montar guarda? ${p.sex === 'f' ? 'Ela' : 'Ele'} patrulha o lugar, enfrenta bandidos, rebeldes e soldados inimigos e ajuda a defender quando um exército ataca. Guardas não contam no limite de seguidores, mas continuam recebendo soldo (4 🪙 por dia).</p>
       <div class="list">${rows}</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`, 'showGuard', [id]);
   },
+  showPort(sid) {
+    const s = World.structs[sid], st = Ports.state(s), ci = s.owner;
+    const mine = PORT_BUYS.filter(k => Inv.count(k) > 0);
+    const big = ['whale', 'shark', 'octopus'];
+    const sell = mine.map(k => { const pr = Ports.price(k), n = Inv.count(k);
+      return `<div class="pt-row ${big.includes(k) ? 'big' : ''}"><span class="pt-ic">${UI.ii(k)}</span><span class="pt-t"><b>${ITEMS[k].name}</b><small>você tem ${n} · ${pr} Salin cada</small></span>
+        <span class="act-row"><button data-act="portsell" data-s="${sid}" data-k="${k}" data-n="1" ${st.purse >= pr ? '' : 'disabled'}>Vender 1</button><button class="primary" data-act="portsell" data-s="${sid}" data-k="${k}" data-n="${n}" ${st.purse >= pr ? '' : 'disabled'}>Todos · ${(n * pr).toLocaleString('pt-BR')}</button></span></div>`; }).join('');
+    const guide = big.map(k => `<div class="pt-g"><span class="pt-ic">${ITEMS[k].icon}</span><b>${ITEMS[k].name.split(' (')[0]}</b><small>${Ports.price(k)} Salin</small></div>`).join('');
+    const h = `<div class="port">
+      <div class="card pt-hero"><span class="pt-anchor">⚓</span><div><b>Porto de ${CIV_DEFS[ci] ? CIV_DEFS[ci].short : 'mar aberto'}</b><small>O mestre do porto compra o que vem do mar. Bolsa do porto: ${st.purse.toLocaleString('pt-BR')} Salin · você: ${P.gold.toLocaleString('pt-BR')} Salin</small></div></div>
+      <div class="pt-cols">
+        <div class="card pt-sell"><div class="sec">🐟 Vender pescados</div>${sell || '<p class="muted">Você não tem nada do mar para vender. Pesque em rios, no mar e, de barco, em alto-mar (tubarões, polvos e baleias).</p>'}</div>
+        <div class="pt-side">
+          <div class="card pt-guide"><div class="sec">🌊 Alto-mar</div><div class="pt-gs">${guide}</div><small class="muted">Navegue de barco para longe da costa e pesque: lá vivem os tubarões, os polvos e, raramente, as baleias.</small></div>
+          <div class="card pt-buy"><div class="sec">🛶 Equipamento</div>${PORT_SELLS.map(([k, p]) => `<div class="pt-row"><span class="pt-ic">${UI.ii(k)}</span><span class="pt-t"><b>${ITEMS[k].name}</b><small>${p} Salin</small></span><button data-act="portbuy" data-s="${sid}" data-k="${k}" data-p="${p}" ${P.gold >= p ? '' : 'disabled'}>Comprar</button></div>`).join('')}</div>
+        </div></div></div>`;
+    this.open('Porto', h, 'showPort', [sid], 'Peixes, tubarões, polvos e baleias');
+  },
   // lojas cujo dono morreu sem filho, nas vilas e reinos do jogador: escolha quem assume
   vacancyHtml() {
     const V = (G.vacancies || []).filter(x => World.villages[x.vi]);
@@ -2301,6 +2319,8 @@ const UI = {
       case 'baptize': Faith.baptize(+d.id); break;
       case 'pilgrim': Faith.startPilgrimage(+d.i); break;
       case 'anav': this.sel.atab = d.k; this.refresh(); return;
+      case 'portsell': Ports.sell(+d.s, d.k, +d.n); break;
+      case 'portbuy': Ports.buy(+d.s, d.k, +d.p); break;
       case 'abetset': this.sel.abet = Math.min(+d.n, P.gold, ARENA_MAX_BET); this.refresh(); return;
       case 'duel': Arena.startDuel(+d.c, +d.t, Math.min(this.sel.abet || 0, P.gold, ARENA_MAX_BET)); return;
       case 'tourney': Arena.enterTourney(+d.c); return;
