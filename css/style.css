@@ -3318,3 +3318,5 @@ body:not(.small) .ldi-doll .pd-slot .tn { font-size: 11px; right: 5px; top: 3px;
 .tce-row b { min-width: 42px; text-align: right; font-size: 13px; color: #fff6dc; font-variant-numeric: tabular-nums; }
 .tce-row button { height: 32px; padding: 0 10px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
 .tce-tip { text-align: center; font-size: 10.5px; color: #a8987a; }
+/* mochila: só as casas acendem ao arrastar um item; a grade inteira (o espaço entre as casas) não */
+.ldi-grid.drop-over { outline: none; background: transparent !important; }
