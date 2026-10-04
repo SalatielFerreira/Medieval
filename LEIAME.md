@@ -102,7 +102,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Economia no ritmo de antes:** impostos, soldos, salários, renda dos reinos, guerras, revoltas e colheitas andam uma vez por mês.
 - **Resumo das contas:** em vez de uma mensagem a cada minuto, aparece um resumo a cada mês (ouro e itens). Os detalhes ficam no Diário → Contas. Avisos importantes continuam aparecendo na hora.
 - **Vida em ritmo próprio:** as pessoas envelhecem, casam e têm filhos uma vez por ano do calendário, em janeiro (a cada 72 minutos reais), então as famílias e a dinastia continuam vivas.
-- **Eventos no mundo:** mercador perdido para escoltar até uma vila, tesouro enterrado para cavar (picareta ou enxada), alcateia com Lobo Alfa atacando uma vila e, raramente, um Dragão Ancestral fora das cavernas. Cada evento aparece marcado no mapa.
+- **Eventos no mundo:** tesouro enterrado para cavar (picareta ou enxada) e, raramente, um Dragão Ancestral fora das cavernas. Cada evento aparece marcado no mapa.
 - **Capangas mais fortes:** sobem de nível com a experiência (mais dano, defesa e vida) e têm postura: Agressivo, Equilibrado ou Defensivo (converse com eles ou use Equipar e treinar).
 - **Rotina dos moradores:** trabalham de dia, ao entardecer muitos vão à taverna (o padre vai à capela) e à noite entram em casa para dormir. As janelas acendem quando há gente em casa.
 - **Segurar para repetir:** segure o clique, o Espaço ou o botão Atacar para bater e coletar sem parar. O golpe forte agora é segurando V (no controle, RT; no celular, o botão 💥).

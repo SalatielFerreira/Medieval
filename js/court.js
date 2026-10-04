@@ -15,7 +15,7 @@ const CIVIL_TITLES = [
   { id: 'conquistador', icon: '🚩', m: 'Conquistador', f: 'Conquistadora', req: 'Conquiste uma vila ou um castelo',             t: s => (s.villagesTaken || 0) + (s.castlesTaken || 0) >= 1 },
   { id: 'campeao',      icon: '🏆', m: 'Campeão',      f: 'Campeã',        req: 'Vença 5 lutas na arena ou o Grande Torneio',  t: s => (s.duelsWon || 0) >= 5 || (s.tourneys || 0) >= 1 },
   { id: 'guerreiro',    icon: '⚔️', m: 'Guerreiro',    f: 'Guerreira',     req: 'Derrote 100 inimigos em combate',              t: s => Court.kills(s) >= 100 },
-  { id: 'heroi',        icon: '🦸', m: 'Herói',        f: 'Heroína',       req: 'Resgate 3 pessoas e tenha 150 de fama',        t: s => (s.rescues || 0) >= 3 && Court.fame() >= 150 },
+  { id: 'heroi',        icon: '🦸', m: 'Herói',        f: 'Heroína',       req: 'Salve 3 caravanas de bandidos e tenha 150 de fama', t: s => (s.caravansSaved || 0) >= 3 && Court.fame() >= 150 },
 ];
 const COUNCIL = {
   treasurer: { m: 'Tesoureiro', f: 'Tesoureira', icon: '💰', desc: 'Cada ponto de competência rende +3% de impostos. Um tesoureiro corrupto rouba o tesouro.' },

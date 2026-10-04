@@ -1,6 +1,5 @@
 'use strict';
-// Eventos no mundo, perto do jogador: mercador perdido, tesouro enterrado, alcateia atacando uma vila
-// e, raramente, um dragão fora das cavernas. Um evento de cada vez; eles não ficam no jogo salvo.
+// Eventos no mundo, perto do jogador: tesouro enterrado e, raramente, um dragão fora das cavernas. Um evento de cada vez; eles não ficam no jogo salvo.
 
 const TREASURE_LOOT = [['gem', 1, 2], ['silver_bar', 1, 3], ['gold_bar', 1, 2], ['ancient_coin', 2, 5], ['silver_ring', 1, 1], ['spices', 2, 4], ['silk_cloth', 1, 3]];
 const MERCHANT_GOODS = ['spices', 'silk_cloth', 'wine', 'honey', 'cloth'];
@@ -21,7 +20,7 @@ const WorldEvents = {
     this.t = U.rnd(240, 420);
     if (Math.random() < 0.25) return; // às vezes nada acontece
     const r = Math.random();
-    const kind = r < 0.3 ? 'lost' : r < 0.6 ? 'treasure' : r < 0.93 || G.day < 4 ? 'wolves' : 'dragon';
+    const kind = r < 0.85 || G.day < 4 ? 'treasure' : 'dragon';
     this.start(kind);
   },
   // lugar livre e aberto a uma certa distância do jogador (em blocos)
@@ -40,17 +39,7 @@ const WorldEvents = {
   ping(x, y, name) { G.ping = { x: x + 0.5, y: y + 0.5, name, wev: true }; },
   start(kind) {
     const until = G.realTime + 600;
-    if (kind === 'lost') {
-      const s = this.spotAround(14, 26);
-      if (!s) return false;
-      const p = People.create({ rank: 'merchant', civ: -1, age: U.rint(28, 62), home: { type: 'wild' }, trait: U.pick(['gentil', 'alegre', 'timido', 'leal']) });
-      p.lost = true; p.met = true;
-      G.wevent = { kind, pid: p.id, x: s.x, y: s.y, until, escort: false };
-      this.spawnLost(G.wevent);
-      this.ping(s.x, s.y, 'Mercador perdido');
-      UI.banner('🧭 Alguém pede socorro');
-      UI.msg(`🧭 ${p.name}, ${p.sex === 'f' ? 'uma mercadora perdida' : 'um mercador perdido'}, grita por ajuda aqui perto (marcado no mapa). Converse e leve-${p.sex === 'f' ? 'a' : 'o'} até uma vila ou castelo.`, 'gold', true);
-    } else if (kind === 'treasure') {
+    if (kind === 'treasure') {
       const s = this.spotAround(18, 34);
       if (!s) return false;
       const st = World.addStruct('dig', s.x, s.y, 1, 1, -1, { wev: true });
@@ -58,15 +47,6 @@ const WorldEvents = {
       this.ping(s.x, s.y, 'Tesouro enterrado');
       UI.banner('🗺️ Um tesouro enterrado!');
       UI.msg('🗺️ Um andarilho contou onde há um tesouro enterrado aqui perto (marcado no mapa). Leve uma picareta ou uma enxada para cavar.', 'gold', true);
-    } else if (kind === 'wolves') {
-      let vi = -1, bd = 45;
-      World.villages.forEach((v, i) => { const d = U.dist(P.x / TILE, P.y / TILE, v.x, v.y); if (d < bd) { bd = d; vi = i; } });
-      if (vi < 0) return false;
-      const v = World.villages[vi], n = U.rint(5, 7);
-      G.wevent = { kind, vi, n, left: n, spawned: 0, x: v.x, y: v.y, until };
-      this.ping(v.x, v.y - 1, `Lobos em ${v.name}`);
-      UI.banner(`🐺 Lobos atacam ${v.name}!`);
-      UI.msg(`🐺 Uma alcateia está atacando ${v.name} (marcado no mapa). Vá defender os moradores e a vila vai recompensar você.`, 'bad');
     } else if (kind === 'dragon') {
       const s = this.spotAround(24, 34);
       if (!s) return false;
@@ -75,59 +55,15 @@ const WorldEvents = {
       UI.banner('🐉 Um dragão desceu das montanhas!');
       UI.msg('🐉 Um Dragão Ancestral foi visto aqui perto (marcado no mapa). Quem o derrotar fica rico e famoso... se sobreviver.', 'bad');
       Diplo.chronicle('🐉 Um Dragão Ancestral foi avistado fora das cavernas.');
-    }
+    } else return false; // só existem o tesouro e o dragão
     return true;
-  },
-  spawnLost(ev) {
-    const p = G.people[ev.pid];
-    const e = Game.spawn('villager', (ev.x + 0.5) * TILE, (ev.y + 0.8) * TILE, { civ: -1, npc: p, leash: 1.5, tag: 'wev' });
-    e.escort = ev.escort;
-    G.spawned.set(p.id, e);
-    return e;
-  },
-  // o jogador aceita acompanhar o mercador
-  escort() {
-    const ev = G.wevent;
-    if (!ev || ev.kind !== 'lost') return;
-    ev.escort = true; ev.until = G.realTime + 900;
-    const e = G.spawned.get(ev.pid); if (e) e.escort = true;
-    if (G.ping && G.ping.wev) G.ping = null;
   },
   near(x, y, r) { return U.dist(P.x / TILE, P.y / TILE, x, y) < r; },
   tick(ev, dt) {
     if (G.realTime > ev.until) { this.end(ev, false); return; }
-    if (ev.kind === 'lost') {
-      const p = G.people[ev.pid];
-      if (!p || !p.alive) { this.end(ev, false, 'dead'); return; }
-      let e = G.spawned.get(ev.pid);
-      if (!e || e.dead) {
-        if (ev.escort || this.near(ev.x, ev.y, 30)) { if (ev.escort) { const s = freeSpotNear(P.x, P.y, 60); ev.x = s.x / TILE; ev.y = s.y / TILE; } e = this.spawnLost(ev); }
-        else return;
-      }
-      if (!ev.escort) return;
-      ev.x = e.x / TILE; ev.y = e.y / TILE;
-      const tx = e.x / TILE, ty = e.y / TILE;
-      const vi = World.villages.findIndex(v => U.dist(v.x, v.y, tx, ty) < 7);
-      const ci = World.capitals.findIndex(c => U.dist(c.x, c.y, tx, ty) < 10);
-      if (vi >= 0 || ci >= 0) this.end(ev, true, vi >= 0 ? { vi } : { ci });
-    } else if (ev.kind === 'treasure') {
+    if (ev.kind === 'treasure') {
       const s = World.structs[ev.sid];
       if (!s || s.removed) G.wevent = null;
-    } else if (ev.kind === 'wolves') {
-      const v = World.villages[ev.vi];
-      if (!v) { G.wevent = null; return; }
-      const alive = G.ents.filter(e => e.tag === 'wev' && !e.dead).length;
-      if (this.near(v.x, v.y, 32) && alive < ev.left && ev.left > 0) {
-        for (let k = alive; k < ev.left; k++) {
-          const a = Math.random() * Math.PI * 2, r = U.rnd(5, 9);
-          const sp = freeSpotNear((v.x + Math.cos(a) * r) * TILE, (v.y + Math.sin(a) * r * 0.8) * TILE, 3 * TILE);
-          const alpha = k === 0 && !ev.alphaDead;
-          const e = Game.spawn('wolf', sp.x, sp.y, { leash: 14, tag: 'wev', mult: alpha ? 2.2 : 1.2, name: alpha ? 'Lobo Alfa' : undefined });
-          e.raid = true; e.alpha = alpha; e.aggroOv = 12; e.home = { x: v.x * TILE, y: v.y * TILE };
-        }
-        ev.spawned = 1;
-      }
-      if (ev.spawned && ev.left <= 0) this.end(ev, true);
     } else if (ev.kind === 'dragon') {
       let e = G.ents.find(x => x.tag === 'wev' && x.kind === 'dragon' && !x.dead);
       if (!e && this.near(ev.x, ev.y, 36)) {
@@ -156,57 +92,15 @@ const WorldEvents = {
   onKill(e) {
     const ev = G.wevent;
     if (!ev) return;
-    if (ev.kind === 'wolves' && e.kind === 'wolf') { ev.left = Math.max(0, ev.left - 1); if (e.alpha) ev.alphaDead = true; }
     if (ev.kind === 'dragon' && e.kind === 'dragon') this.end(ev, true);
   },
   end(ev, ok, info) {
     if (!ev) return;
     G.wevent = null;
     if (G.ping && G.ping.wev) G.ping = null;
-    if (ev.kind === 'lost') {
-      const p = G.people[ev.pid], e = G.spawned.get(ev.pid);
-      if (e) { e.escort = false; e.tag = null; }
-      if (!p) return;
-      p.lost = false;
-      if (ok) {
-        const vi = info.vi !== undefined ? info.vi : World.villages.reduce((b, v, i) => b < 0 || U.dist(v.x, v.y, World.capitals[info.ci].x, World.capitals[info.ci].y) < U.dist(World.villages[b].x, World.villages[b].y, World.capitals[info.ci].x, World.capitals[info.ci].y) ? i : b, -1);
-        const v = World.villages[vi];
-        p.home = { type: 'village', idx: vi }; p.civ = v.civ;
-        if (e) e.dead = true;
-        G.spawned.delete(p.id);
-        People.addAff(p, 40);
-        const gold = U.rint(60, 140), k = U.pick(MERCHANT_GOODS), n = U.rint(2, 4);
-        P.gold += gold; Inv.add(k, n); Game.gainXp(30); Game.addRelation(v.civ, 4);
-        UI.banner('🧭 Mercador a salvo!');
-        UI.msg(`${p.name} chegou a ${v.name} são e salvo e paga ${gold} 🪙 e ${n} ${ITEMS[k].name}. Agora mora lá e é seu amigo.`, 'gold');
-        Progress.add('rescues'); Sound.play('coin');
-      } else {
-        if (info === 'dead') { UI.msg('O mercador perdido não sobreviveu à viagem.', 'bad'); return; }
-        if (e) e.dead = true;
-        G.spawned.delete(p.id);
-        UI.msg(`${p.name} cansou de esperar e seguiu sozinho pela estrada.`);
-      }
-      return;
-    }
     if (ev.kind === 'treasure') {
       const s = World.structs[ev.sid];
       if (!ok && s && !s.removed) { World.removeStruct(s); UI.msg('Alguém chegou antes: o tesouro enterrado já foi levado.'); }
-      return;
-    }
-    if (ev.kind === 'wolves') {
-      const v = World.villages[ev.vi];
-      if (ok) {
-        const gold = U.rint(50, 120);
-        P.gold += gold; Game.addRelation(v.civ, 8); Court.addService(v.civ, 4); Game.gainXp(40);
-        for (const p of People.residents(ev.vi)) p.aff = Math.min(100, p.aff + 5);
-        UI.banner(`🐺 ${v.name} está a salvo!`);
-        UI.msg(`Você espantou a alcateia. ${v.name} agradece com ${gold} 🪙 (+8 de relação com ${CIV_DEFS[v.civ].short}, os moradores gostam mais de você).`, 'gold');
-        Progress.add('wolfRaids'); Sound.play('coin');
-      } else {
-        for (const e of G.ents) if (e.tag === 'wev') e.dead = true;
-        v.prosper = Math.max(0, (v.prosper || 0) - 3);
-        UI.msg(`🐺 Os lobos atacaram ${v.name} e fugiram para a floresta. A vila ficou mais pobre.`, 'bad');
-      }
       return;
     }
     if (ev.kind === 'dragon') {

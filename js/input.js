@@ -91,10 +91,10 @@ const Touch = {
 
   // ------------------------------------------------------------ posição e tamanho que você escolheu (Ajustes → Controles)
   // Fica em G.settings.touchLayout: { stick: { x, y, s }, atk: {...} } — x e y são o centro em fração da tela, s o tamanho.
-  KEYS: { stick: 'Joystick', atk: 'Atacar', use: 'Interagir', run: 'Correr', q0: 'Algibeira 1', q1: 'Algibeira 2' },
+  KEYS: { stick: 'Joystick', atk: 'Atacar', use: 'Interagir', run: 'Correr', q0: 'Bolso 1', q1: 'Bolso 2' },
   items() { return [...document.querySelectorAll('#touch [data-tcl]')]; },
   applyLayout(L) {
-    L = L || this.layout || G.settings.touchLayout || null;
+    L = L === false ? null : L || this.layout || G.settings.touchLayout || null;
     const el = document.getElementById('touch');
     if (!el) return;
     el.classList.toggle('tcl', !!L);
@@ -113,50 +113,62 @@ const Touch = {
     }
     return L;
   },
+  // editor: escolha um controle (na lista ou tocando nele), arraste para mover e use a barra para o tamanho.
+  // Cada controle guarda a própria posição e o próprio tamanho. Salvar grava; Cancelar (ou Esc) sai sem mudar nada.
   editInit() {
-    const el = document.getElementById('touch'), pts = new Map();
-    let drag = null, pinch = null;
     const bar = document.createElement('div'); bar.id = 'tcEdit'; bar.className = 'hidden';
-    bar.innerHTML = `<div class="tce-info"><b id="tceName">Toque num controle</b><small>Arraste para mover · dois dedos ou − / + para o tamanho</small></div>
-      <div class="tce-size"><button data-tce="minus">−</button><span id="tceSize">100%</span><button data-tce="plus">+</button></div>
-      <button data-tce="reset">↺ Padrão</button><button class="primary" data-tce="done">✔ Concluir</button>`;
+    bar.innerHTML = `<div class="tce-pick" id="tcePick">${Object.entries(this.KEYS).map(([k, n]) => `<button data-tcp="${k}">${n}</button>`).join('')}</div>
+      <div class="tce-row"><span class="tce-lab">Tamanho</span><input type="range" id="tceRange" min="50" max="180" step="5" value="100"><b id="tceSize">100%</b>
+        <button data-tce="reset" title="Volta todos os controles ao lugar original">↺ Padrão</button><button data-tce="cancel">✕ Cancelar</button><button class="primary" data-tce="save">✔ Salvar</button></div>
+      <small class="tce-tip">Toque num controle e arraste para mover · a barra muda só o tamanho do controle escolhido</small>`;
     document.body.appendChild(bar);
-    bar.addEventListener('click', e => { const b = e.target.closest('[data-tce]'); if (b) this.editAct(b.dataset.tce); });
-    // no modo de edição o toque move e redimensiona (e não ataca nem anda)
-    el.addEventListener('pointerdown', e => {
+    bar.addEventListener('click', e => {
+      const p = e.target.closest('[data-tcp]'); if (p) { this.select(p.dataset.tcp); return; }
+      const b = e.target.closest('[data-tce]'); if (b) this.editAct(b.dataset.tce);
+    });
+    document.getElementById('tceRange').addEventListener('input', e => this.setSize(+e.target.value / 100));
+    // arrastar: começa tocando num controle; o movimento é acompanhado na tela inteira (o dedo pode sair de cima dele)
+    let drag = null;
+    document.getElementById('touch').addEventListener('pointerdown', e => {
       if (!this.editing) return;
       e.stopPropagation(); e.preventDefault();
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       const it = e.target.closest('[data-tcl]');
-      if (it) { this.select(it.dataset.tcl); const c = this.layout[it.dataset.tcl]; drag = { id: e.pointerId, k: it.dataset.tcl, dx: c.x * innerWidth - e.clientX, dy: c.y * innerHeight - e.clientY }; }
-      if (pts.size === 2 && this.sel) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, s: this.layout[this.sel].s }; drag = null; }
-      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (!it || drag) return;
+      const k = it.dataset.tcl, c = this.layout[k];
+      this.select(k);
+      drag = { id: e.pointerId, k, dx: c.x * innerWidth - e.clientX, dy: c.y * innerHeight - e.clientY };
     }, true);
-    el.addEventListener('pointermove', e => {
-      if (!this.editing || !pts.has(e.pointerId)) return;
-      e.stopPropagation();
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pinch && pts.size >= 2) { const [a, b] = [...pts.values()]; this.resize(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, true); return; }
-      if (drag && drag.id === e.pointerId) {
-        const c = this.layout[drag.k];
-        c.x = U.clamp((e.clientX + drag.dx) / innerWidth, 0.03, 0.97); c.y = U.clamp((e.clientY + drag.dy) / innerHeight, 0.05, 0.97);
-        this.applyLayout(this.layout);
-      }
-    }, true);
-    const up = e => { if (!this.editing) return; e.stopPropagation(); pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (drag && drag.id === e.pointerId) drag = null; };
-    el.addEventListener('pointerup', up, true); el.addEventListener('pointercancel', up, true);
+    window.addEventListener('pointermove', e => {
+      if (!this.editing || !drag || e.pointerId !== drag.id) return;
+      e.preventDefault();
+      const c = this.layout[drag.k];
+      c.x = U.clamp((e.clientX + drag.dx) / innerWidth, 0.04, 0.96);
+      c.y = U.clamp((e.clientY + drag.dy) / innerHeight, 0.06, 0.96);
+      this.applyLayout(this.layout);
+    }, { passive: false });
+    const up = e => { if (drag && e.pointerId === drag.id) drag = null; };
+    window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+    window.addEventListener('keydown', e => { if (this.editing && e.code === 'Escape') { e.stopPropagation(); this.editAct('cancel'); } }, true);
   },
   select(k) {
     this.sel = k;
     for (const it of this.items()) it.classList.toggle('tce-on', it.dataset.tcl === k);
-    document.getElementById('tceName').textContent = k ? this.KEYS[k] : 'Toque num controle';
-    document.getElementById('tceSize').textContent = k ? Math.round(this.layout[k].s * 100) + '%' : '—';
+    for (const b of document.querySelectorAll('#tcePick [data-tcp]')) b.classList.toggle('on', b.dataset.tcp === k);
+    const s = this.layout[k].s;
+    document.getElementById('tceRange').value = Math.round(s * 100);
+    document.getElementById('tceSize').textContent = Math.round(s * 100) + '%';
   },
-  resize(s, abs) {
+  setSize(s) {
     if (!this.sel) return;
-    const c = this.layout[this.sel];
-    c.s = Math.round(U.clamp(abs ? s : c.s + s, 0.5, 1.8) * 100) / 100;
-    this.applyLayout(this.layout); this.select(this.sel);
+    this.layout[this.sel].s = Math.round(U.clamp(s, 0.5, 1.8) * 100) / 100;
+    this.applyLayout(this.layout);
+    document.getElementById('tceSize').textContent = Math.round(this.layout[this.sel].s * 100) + '%';
+  },
+  // posições e tamanhos originais (sem nada escolhido)
+  defaults() {
+    this.applyLayout(false);
+    const L = this.measure();
+    return L;
   },
   edit() {
     if (!document.getElementById('touch').firstChild) this.init();
@@ -166,31 +178,32 @@ const Touch = {
     this.editing = true; G.paused = true; G.touchMove = null; G.keys.Space = false;
     document.body.classList.add('tc-edit');
     for (const it of this.items()) it.classList.remove('off');
-    this.layout = G.settings.touchLayout ? JSON.parse(JSON.stringify(G.settings.touchLayout)) : this.measure();
-    // controles que não estavam medidos (ex.: algibeira vazia) entram onde estão agora
-    const now = this.measure(); for (const k in now) if (!this.layout[k]) this.layout[k] = now[k];
+    this.update(); // algibeira vazia aparece para poder ser posicionada
+    const base = this.defaults(), saved = G.settings.touchLayout || {};
+    this.layout = {};
+    for (const k in base) this.layout[k] = saved[k] ? Object.assign({}, saved[k]) : base[k];
     this.applyLayout(this.layout);
     document.getElementById('tcEdit').classList.remove('hidden');
     this.select('stick');
   },
   editAct(a) {
-    if (a === 'minus') this.resize(-0.1);
-    else if (a === 'plus') this.resize(0.1);
-    else if (a === 'reset') { this.layout = null; this.applyLayout(null); document.getElementById('touch').classList.remove('tcl'); requestAnimationFrame(() => { this.layout = this.measure(); this.applyLayout(this.layout); this.select(this.sel || 'stick'); this.resetPending = true; }); }
-    else if (a === 'done') this.editEnd(true);
+    if (a === 'reset') { this.layout = this.defaults(); this.applyLayout(this.layout); this.select(this.sel || 'stick'); UI.msg('Controles de volta ao lugar original. Toque em Salvar para manter.'); }
+    else if (a === 'save') this.editEnd(true);
+    else if (a === 'cancel') this.editEnd(false);
   },
   editEnd(save) {
+    if (!this.editing) return;
+    if (save) Game.setSetting('touchLayout', JSON.parse(JSON.stringify(this.layout)));
     this.editing = false;
     document.body.classList.remove('tc-edit');
     document.getElementById('tcEdit').classList.add('hidden');
     for (const it of this.items()) it.classList.remove('tce-on');
-    if (save) Game.setSetting('touchLayout', this.resetPending ? null : this.layout);
-    this.resetPending = false; this.layout = null; this.sel = null;
+    this.layout = null; this.sel = null;
     this.applyLayout();
     this.update();
     this.show(this.wasOn);
     UI.showSettings('controles');
-    UI.msg(save ? '🕹️ Controles salvos: ficam assim sempre que você entrar.' : '');
+    UI.msg(save ? '🕹️ Controles salvos: ficam assim sempre que você entrar.' : 'Nada foi mudado nos controles.');
   },
   // mostra só o que dá para usar agora: algibeira com item, ferramenta com alvo, interação com algo por perto
   update() {

@@ -230,7 +230,6 @@ const People = {
 
   // ------------------------------------------------------------ conversa
   say(p) {
-    if (p.lost) return 'Por favor, me ajude! Perdi a estrada e não sei voltar para a vila... e dizem que há lobos por aqui.';
     const n = G.name, a = p.aff;
     const pool = [];
     if (p.age < 14) pool.push('Você é um cavaleiro de verdade?', 'Minha mãe disse para não falar com estranhos!', 'Quer brincar de espada?', 'Eu vou ser o maior herói de todos!');

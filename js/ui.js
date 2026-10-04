@@ -25,6 +25,16 @@ const UI = {
     this.log = document.getElementById('log');
     this.promptEl = document.getElementById('prompt');
     this.bannerEl = document.getElementById('banner');
+    // a janela que abre com o dedo ainda na tela (ex.: botão Interagir) não aceita esse mesmo toque:
+    // só depois de soltar o dedo e tocar de novo é que dá para escolher alguma coisa
+    this.down = new Set();
+    window.addEventListener('pointerdown', e => this.down.add(e.pointerId), true);
+    const lift = e => {
+      this.down.delete(e.pointerId);
+      if (!this.down.size && this.tapLock) { clearTimeout(this.tapLockT); this.tapLockT = setTimeout(() => { this.tapLock = false; }, 350); }
+    };
+    window.addEventListener('pointerup', lift, true); window.addEventListener('pointercancel', lift, true);
+    for (const ev of ['pointerup', 'click', 'mouseup', 'touchend']) this.panel.addEventListener(ev, e => { if (this.tapLock) { e.stopPropagation(); e.preventDefault(); } }, true);
     this.panel.addEventListener('click', e => {
       const b = e.target.closest('[data-act]');
       if (!b || b.disabled) return;
@@ -170,6 +180,7 @@ const UI = {
     this.panel.innerHTML = `<div class="ph"><div class="ph-ic">${icon(ic)}</div><div class="ph-t"><h2>${clean}</h2>${sub ? `<small>${sub}</small>` : ''}</div>
       ${this.winNavHtml(fn)}<button class="x" data-act="close" title="Fechar (Esc)">${icon('x')}</button></div><div class="pb">${body}</div>`;
     this.panel.classList.remove('hidden');
+    if (this.down && this.down.size) { this.tapLock = true; clearTimeout(this.tapLockT); }
     document.body.classList.add('win-open'); // os controles de toque somem enquanto a janela está aberta
     for (const el of this.panel.querySelectorAll('[data-scroll], .pb')) { const k = el.dataset.scroll || 'pb'; if (scrolls[k]) el.scrollTop = scrolls[k]; }
     G.paused = true;
@@ -1436,7 +1447,6 @@ const UI = {
       if (Court.isEnemy(fm)) acts.push(['fpeace', `🕊️ Pedir paz à Casa ${UI.esc(fm.surname)}`]);
       else { acts.push(Court.isAlly(fm) ? ['funally', '💔 Desfazer a aliança'] : ['fally', `🤝 Propor aliança — ${Court.ALLY_COST} 🪙`]); acts.push(['fenemy', `⚔️ Declarar a Casa ${UI.esc(fm.surname)} inimiga`]); } } }
     if (p.rank === 'priest') acts.push(['church', '⛪ Assuntos da igreja']);
-    { const ev = WorldEvents.cur(); if (p.lost && ev && ev.kind === 'lost' && ev.pid === p.id && !ev.escort) acts.unshift(['escort', '🧭 Venha comigo, eu levo você']); }
     { const vi = Chiefdom.vilOf(p); if (vi >= 0 && G.civs[World.villages[vi].civ].ruler !== 'player') acts.push(['vchallenge', '⚔️ Desafiar pela chefia da vila']); }
     if (p.kin === 'child' && p.age >= 12) acts.push(['profmenu', p.prof ? `${PROFESSIONS[p.prof].icon} Mudar profissão` : '🎓 Escolher profissão']);
     const st = p.capanga ? People.capangaStats(p) : null;
@@ -1541,7 +1551,6 @@ const UI = {
       }
       case 'cun': if (p.equip[d.k]) { Inv.add(p.equip[d.k], 1); p.equip[d.k] = null; Game.refreshCapanga(p); } this.showEquipC(p.id); return;
       case 'insult': r = People.insult(p); break;
-      case 'escort': WorldEvents.escort(); this.close(); UI.msg(`🧭 ${p.name} segue você. Leve-${p.sex === 'f' ? 'a' : 'o'} até qualquer vila ou castelo.`, 'gold'); return;
       case 'vchallenge': {
         const vi = Chiefdom.vilOf(p), v = World.villages[vi];
         if (!v) return;
@@ -2281,7 +2290,7 @@ const HELP_HTML = `
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
 <li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas.</li>
 <li>A economia (impostos, soldos, salários, colheitas) anda uma vez por mês; veja o resumo em Diário → Contas. As pessoas envelhecem um ano em janeiro.</li>
-<li>Fique atento aos <b>eventos</b>: mercadores perdidos, tesouros enterrados, lobos atacando vilas e até dragões. Eles aparecem marcados no mapa.</li>
+<li>Fique atento aos <b>eventos</b>: tesouros enterrados e até dragões. Eles aparecem marcados no mapa.</li>
 <li>Capangas sobem de nível lutando. Escolha a <b>postura</b> de cada um (agressivo, equilibrado ou defensivo) conversando com eles.</li>
 <li>Segure o clique (ou o Espaço) para atacar e coletar sem parar. Para o <b>golpe forte</b>, segure V e solte.</li>
 <li><b>Caravanas</b> viajam entre os reinos: escolte-as contra bandidos ou assalte-as.</li>
