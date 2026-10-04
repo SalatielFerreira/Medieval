@@ -28,8 +28,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // Versão 6: ilhas em lugares sorteados (sem padrão), de tamanhos e formatos diferentes, fora de qualquer reino.
 // Versão 7: mar mais largo e ilhas maiores, todas fora do alcance dos reinos.
 // Versão 8: ilhas ainda maiores, em volta do continente com equilíbrio (uma por setor, com variação).
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626 };
-const TERRAIN_V = 8, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 9: mais campo verde — a maior parte das colinas (o terreno marrom) vira campo; ficam só as colinas mais altas.
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626 };
+const TERRAIN_V = 9, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
@@ -621,7 +622,17 @@ const World = {
       }
     }
     this.mountStats.after = el.length - change.length;
+    if ((this.terrainV || 0) >= 9) this.greenHills();
     this.chunks = new Map();
+  },
+  // versão 9: 80% das colinas (as mais baixas) viram campo verde; os minérios e as cavernas continuam onde estão
+  greenHills() {
+    const N = WORLD_W * WORLD_H, hills = [];
+    for (let i = 0; i < N; i++) if (this.tiles[i] === T.HILL) hills.push(this.elev[i]);
+    if (!hills.length) return;
+    hills.sort((a, b) => a - b);
+    const keep = hills[Math.floor(hills.length * 0.8)];
+    for (let i = 0; i < N; i++) if (this.tiles[i] === T.HILL && this.elev[i] < keep) this.tiles[i] = T.GRASS;
   },
   // troca o terreno de um bloco (estradas) e redesenha o pedaço do mapa
   setTile(i, t) {

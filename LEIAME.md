@@ -91,6 +91,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Mais campo verde (jogos novos):** a maior parte das colinas marrons virou campo; ficam só as colinas mais altas. Minérios e cavernas continuam nos mesmos lugares.
 - **7 ilhas grandes (jogos novos):** o mar em volta do continente é dividido em 7 setores, com uma ilha em cada; dentro do setor o lugar, o tamanho e o formato variam. Ficam longe do continente e fora de qualquer reino, e o barco sempre consegue dar a volta no mapa.
 - **Mundo sem montanhas e com 2 vilas por reino (jogos novos):** as montanhas viraram colinas e neve (os minérios continuam lá, e as cavernas também), e cada reino começa com 2 vilas. Os reis fundam vilas novas quando elas lotam. Jogos salvos antigos continuam como estavam.
 - **Mais mar e portos (jogos novos):** o mapa ficou maior, com uma faixa larga de mar aberto em volta do continente para navegar. Cada reino com mar por perto tem um **Porto** na costa, onde o mestre do porto compra peixes, **polvos**, **tubarões** e **baleias** e vende barco, vara e corda. Tubarões e baleias vivem no alto-mar: pesque de barco, longe da costa. Jogos salvos antigos continuam com o mapa de antes.
