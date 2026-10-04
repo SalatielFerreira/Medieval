@@ -1948,6 +1948,8 @@ const Game = {
     root.setProperty('--mini-h', miniH + 'px');
     root.setProperty('--mini-w', Math.max(186, miniW) + 'px');
     for (const id of ['hud', 'rightcol', 'toolbar', 'log']) document.getElementById(id).style.zoom = z;
+    // telas de toque: a barra do rodapé não encolhe (os botões ficam do tamanho confortável para o dedo)
+    if (small || matchMedia('(pointer: coarse)').matches) document.getElementById('toolbar').style.zoom = 1;
     const rc = document.getElementById('rightcol');
     rc.style.top = ((14 + miniH) / z) + 'px';
     rc.style.right = (14 / z) + 'px';
