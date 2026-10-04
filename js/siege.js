@@ -191,7 +191,7 @@ const Sieges = {
     } else {
       c.garrison = 2;
       const gov = People.create({ rank: 'ruler', civ, home: { type: 'castle', civ }, age: U.rint(30, 50), aff: -60, surname: (Families.of(People.get(att.rulerId)) || {}).surname });
-      c.ruler = 'npc'; c.rulerId = gov.id; c.rulerName = People.title(gov) + ' ' + gov.name; c.relation = -60; c.happy = 40;
+      Heraldry.apply(); c.ruler = 'npc'; c.rulerId = gov.id; c.rulerName = People.title(gov) + ' ' + gov.name; c.relation = -60; c.happy = 40;
       Diplo.makePeace(a.att, civ, `${CIV_DEFS[civ].short} foi conquistado`);
       UI.banner(`🏴 ${CIV_DEFS[civ].short} caiu!`);
       UI.msg(`O castelo de ${CIV_DEFS[civ].short} foi tomado por ${Diplo.name(a.att)}. Você perdeu o reino!`, 'bad');

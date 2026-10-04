@@ -25,6 +25,8 @@ function fac(e) {
   return e.faction;
 }
 
+// animais que fogem de você (não atacam)
+const PREY_FLEE = ['deer', 'fox', 'rabbit', 'goat'];
 // a quer atacar b?
 function hostile(a, b) {
   if (a.faction === 'pet' || b.faction === 'pet' || a.kind === 'caravan') return false;
@@ -46,7 +48,7 @@ function hostile(a, b) {
   const fa = fac(a), fb = fac(b);
   if (fa === fb || a.dmg <= 0 || b.kind === 'villager') return false;
   if (a.kind === 'boar') return a.provoked && fb === 'player';
-  if (b.kind === 'deer' || b.kind === 'boar') return false;
+  if (b.kind === 'deer' || b.kind === 'boar' || PREY_FLEE.includes(b.kind)) return false;
   if (fa === 'wild') return fb === 'player' || (!!a.raid && b.kind === 'guard');
   if (fa === 'bandit') return fb === 'player' || fb.startsWith('civ');
   if (fa.startsWith('civ')) {
@@ -184,7 +186,7 @@ class Creature {
     this.moving = false;
     const sp = d.speed * World.speedAt(this.x, this.y);
 
-    if (this.kind === 'deer') {
+    if (PREY_FLEE.includes(this.kind)) {
       let th = null, td = 5 * TILE;
       const dp = U.dist(this.x, this.y, P.x, P.y); if (dp < td) { td = dp; th = P; }
       if (th) {
@@ -246,7 +248,7 @@ class Creature {
     const x = this.x - cx, y = this.y - cy;
     const hurt = this.hurt > 0;
     switch (this.kind) {
-      case 'deer': case 'wolf': case 'boar': drawAnimal(ctx, x, y, this.kind, this.dir, this.moving, this.anim, hurt); break;
+      case 'deer': case 'wolf': case 'boar': case 'fox': case 'rabbit': case 'goat': case 'bear': drawAnimal(ctx, x, y, this.kind, this.dir, this.moving, this.anim, hurt); break;
       case 'spider': drawSpider(ctx, x, y, 1, this.anim, hurt, '#2a2028'); break;
       case 'chicken': case 'cow': case 'sheep': drawFarmAnimal(ctx, x, y, this.kind, this.dir, this.moving, this.anim); break;
       case 'caravan': drawCaravan(ctx, x, y, this.dir, this.anim, this.moving, this.car && this.car.owner === 'player' ? PLAYER_COLOR : Game.civColor(this.civ), hurt); break;
@@ -442,7 +444,13 @@ function drawAnimal(ctx, x, y, kind, dir, moving, anim, hurt) {
     deer: { body: '#a0703c', dark: '#6e4a26', legs: 10, h: 6 },
     wolf: { body: '#7d7f86', dark: '#55575c', legs: 8, h: 6 },
     boar: { body: '#5a3b2a', dark: '#3a2618', legs: 6, h: 8 },
+    fox: { body: '#d0682a', dark: '#7a3a14', legs: 6, h: 5 },
+    rabbit: { body: '#cbbda0', dark: '#8a7a60', legs: 3, h: 4 },
+    goat: { body: '#c9c0ae', dark: '#7e7464', legs: 9, h: 6 },
+    bear: { body: '#5a3a22', dark: '#36220f', legs: 9, h: 11 },
   }[kind];
+  if (kind === 'bear') ctx.scale(1.35, 1.35);
+  if (kind === 'rabbit') ctx.scale(0.6, 0.6);
   const body = hurt ? '#ff8080' : pal.body;
   ctx.fillStyle = pal.dark;
   ctx.fillRect(-9, -pal.legs, 3, pal.legs - step); ctx.fillRect(-4, -pal.legs, 3, pal.legs + step);
@@ -450,7 +458,26 @@ function drawAnimal(ctx, x, y, kind, dir, moving, anim, hurt) {
   ctx.fillStyle = body;
   ctx.beginPath(); ctx.ellipse(0, -pal.legs - pal.h / 2 - 1, 12, pal.h, 0, 0, Math.PI * 2); ctx.fill();
   const hy = -pal.legs - pal.h - 2;
-  if (kind === 'deer') {
+  if (kind === 'fox') {
+    ctx.fillRect(9, hy - 1, 8, 6); ctx.fillRect(15, hy + 2, 5, 3);
+    ctx.fillStyle = pal.dark; ctx.fillRect(10, hy - 4, 2, 3); ctx.fillRect(14, hy - 4, 2, 3);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(13, hy + 1, 2, 2);
+    ctx.fillStyle = body; ctx.save(); ctx.translate(-11, hy + 5); ctx.rotate(-0.3 + Math.sin(anim * 6) * 0.2); ctx.fillRect(-11, -3, 12, 6); ctx.fillStyle = '#f6efe2'; ctx.fillRect(-13, -2, 4, 4); ctx.restore();
+  } else if (kind === 'rabbit') {
+    ctx.fillRect(8, hy - 1, 7, 6);
+    ctx.fillStyle = pal.dark; ctx.fillRect(9, hy - 9, 2, 8); ctx.fillRect(12, hy - 9, 2, 8);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(12, hy + 1, 2, 2);
+    ctx.fillStyle = '#f6efe2'; ctx.fillRect(-14, hy + 2, 4, 4);
+  } else if (kind === 'goat') {
+    ctx.fillRect(9, hy - 6, 4, 8); ctx.fillRect(10, hy - 10, 8, 6);
+    ctx.fillStyle = '#e9e2d2'; ctx.fillRect(14, hy - 4, 3, 4);
+    ctx.fillStyle = '#5a4a32'; ctx.fillRect(9, hy - 15, 2, 6); ctx.fillRect(7, hy - 16, 3, 2); ctx.fillRect(13, hy - 15, 2, 6); ctx.fillRect(14, hy - 16, 3, 2);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(15, hy - 9, 2, 2);
+  } else if (kind === 'bear') {
+    ctx.fillRect(8, hy + 1, 11, 10); ctx.fillRect(17, hy + 5, 4, 5);
+    ctx.fillStyle = pal.dark; ctx.fillRect(9, hy - 2, 3, 4); ctx.fillRect(15, hy - 2, 3, 4);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(15, hy + 4, 2, 2); ctx.fillRect(20, hy + 6, 2, 2);
+  } else if (kind === 'deer') {
     ctx.fillRect(9, hy - 8, 4, 10); ctx.fillRect(10, hy - 12, 8, 6);
     ctx.fillStyle = '#2a1a10'; ctx.fillRect(15, hy - 11, 2, 2);
     ctx.fillStyle = '#d9c39a'; ctx.fillRect(10, hy - 18, 2, 6); ctx.fillRect(8, hy - 20, 2, 3); ctx.fillRect(12, hy - 20, 2, 3); ctx.fillRect(14, hy - 17, 2, 5);
@@ -477,7 +504,7 @@ function playerLook() {
   const head = it('head'), torso = it('torso'), legs = it('legs'), feet = it('feet');
   const wep = it('weapon'), tool = it('tool');
   const kingOf = G.civs.some(c => c.ruler === 'player');
-  const metalHead = head && !['linen_hood', 'leather_cap'].includes(P.equip.head);
+  const metalHead = head && !['linen_hood', 'leather_cap', 'silk_hood', 'fox_hood'].includes(P.equip.head);
   const gathering = !!P.toolAnim && P.swing > 0;
   const female = P.sex === 'f';
   return {

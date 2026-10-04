@@ -24,13 +24,20 @@ const HERALD_FONT = '"Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols"
 
 const Heraldry = {
   H() { return G.heraldry || (G.heraldry = {}); },
+  // reino conquistado por um rei que já tinha reino: usa a bandeira, o brasão e a cor do reino principal
+  // (continua com o próprio nome e as próprias relações). Vale enquanto os dois forem do jogador.
+  lead(ci) {
+    const f = (this.H()[ci] || {}).follow;
+    if (f === undefined || f === null || f === ci || !G.civs || !G.civs[f] || !G.civs[ci]) return ci;
+    return G.civs[f].ruler === 'player' && G.civs[ci].ruler === 'player' ? f : ci;
+  },
   // o que vale para o reino agora (o = mudanças só para a prévia)
   get(ci, o) {
-    const b = CIV_BASE[ci], h = this.H()[ci] || {};
+    const L = this.lead(ci), b = CIV_BASE[L], h = this.H()[L] || {};
     return Object.assign({ name: CIV_DEFS[ci].name, short: CIV_DEFS[ci].short, color: Game.civColor(ci),
       metal: h.metal || b.metal, flag: h.flag || b.flag, division: h.division || b.division, charge: h.charge || b.charge }, o || {});
   },
-  customColor(ci) { const h = this.H()[ci]; return !!(h && h.color); },
+  customColor(ci) { const h = this.H()[this.lead(ci)]; return !!(h && h.color); },
   // volta os nomes e cores originais e aplica as mudanças guardadas no jogo salvo
   apply() {
     CIV_BASE.forEach((b, i) => {
@@ -38,6 +45,8 @@ const Heraldry = {
       d.name = h.name || b.name; d.short = h.short || b.short; d.color = h.color || b.color;
       d.roof = h.color ? U.shade(h.color, -0.28) : b.roof;
     });
+    // os telhados dos reinos que seguem o brasão de outro também ficam na cor dele
+    CIV_BASE.forEach((b, i) => { const L = this.lead(i); if (L !== i) CIV_DEFS[i].roof = CIV_DEFS[L].roof; });
     this.cache = new Map();
     if (World.tiles) { World.chunks = new Map(); if (World.mini) World.buildMinimap(); }
   },

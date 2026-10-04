@@ -154,6 +154,21 @@ const ITEMS = {
   bronze_boots:   { name: 'Botas de Bronze',    icon: '👢', cat: 'Armaduras', price: 60,  slot: 'feet',  def: 2, color: '#a86c30' },
   iron_boots:     { name: 'Botas de Ferro',     icon: '👢', cat: 'Armaduras', price: 85,  slot: 'feet',  def: 2, color: '#6d747c' },
   steel_sabatons: { name: 'Escarpes de Aço',    icon: '👢', cat: 'Armaduras', price: 170, slot: 'feet',  def: 3, color: '#b9bec3' },
+  // animais novos (raposa, coelho, cabra montesa e urso) e o que se faz com eles
+  fox_pelt:     { name: 'Pele de Raposa',     icon: '🦊', cat: 'Recursos', price: 18 },
+  rabbit_hide:  { name: 'Pele de Coelho',     icon: '🐇', cat: 'Recursos', price: 6 },
+  goat_horn:    { name: 'Chifre de Cabra',    icon: '📯', cat: 'Recursos', price: 12 },
+  bear_pelt:    { name: 'Pele de Urso',       icon: '🐻', cat: 'Recursos', price: 45 },
+  bear_claw:    { name: 'Garra de Urso',      icon: '🐾', cat: 'Recursos', price: 20 },
+  hard_leather: { name: 'Couro Curtido',      icon: '🟫', cat: 'Materiais', price: 16 },
+  iron_spear:   { name: 'Lança de Ferro',     icon: '🔱', cat: 'Armas', price: 70,  slot: 'weapon', dmg: 16, color: '#8d949c', len: 28 },
+  iron_mace:    { name: 'Maça de Ferro',      icon: '🔨', cat: 'Armas', price: 90,  slot: 'weapon', dmg: 19, color: '#7d848c', len: 16 },
+  horn_bow:     { name: 'Arco Composto de Chifre', icon: '🏹', cat: 'Armas', price: 160, slot: 'weapon', dmg: 22, ranged: true, color: '#d8c8a0', len: 15 },
+  bear_claws:   { name: 'Garras de Urso',     icon: '🐾', cat: 'Armas', price: 85,  slot: 'weapon', dmg: 15, color: '#e6dcc4', len: 10 },
+  fox_hood:     { name: 'Capuz de Raposa',    icon: '🦊', cat: 'Armaduras', price: 55, slot: 'head',  def: 2, color: '#d0682a' },
+  rabbit_boots: { name: 'Botas Forradas de Coelho', icon: '🥾', cat: 'Armaduras', price: 30, slot: 'feet', def: 2, color: '#e0d4bc' },
+  hard_jerkin:  { name: 'Gibão de Couro Curtido', icon: '🦺', cat: 'Armaduras', price: 95, slot: 'torso', def: 5, color: '#5e3416' },
+  bear_coat:    { name: 'Casaco de Pele de Urso', icon: '🐻', cat: 'Armaduras', price: 150, slot: 'torso', def: 6, color: '#5a3a22' },
 };
 
 // Grupos usados em receitas ("qualquer peixe")
@@ -198,6 +213,13 @@ const RECIPES = [
   { out: 'leather_jerkin',n: 1, cost: { leather: 6, cloth: 1 },                 station: 'bancada' },
   { out: 'leather_breeches', n: 1, cost: { leather: 4 },                        station: 'bancada' },
   { out: 'leather_boots', n: 1, cost: { leather: 3 },                           station: 'bancada' },
+  { out: 'hard_leather',  n: 1, cost: { leather: 2, resin: 1 },                 station: 'bancada' },
+  { out: 'fox_hood',      n: 1, cost: { fox_pelt: 2, cloth: 1 },                station: 'bancada' },
+  { out: 'rabbit_boots',  n: 1, cost: { rabbit_hide: 3, leather: 1 },           station: 'bancada' },
+  { out: 'hard_jerkin',   n: 1, cost: { hard_leather: 4, rope: 1 },             station: 'bancada' },
+  { out: 'bear_coat',     n: 1, cost: { bear_pelt: 2, leather: 2, rope: 1 },    station: 'bancada' },
+  { out: 'horn_bow',      n: 1, cost: { yew_wood: 2, goat_horn: 2, rope: 2, resin: 1 }, station: 'bancada' },
+  { out: 'bear_claws',    n: 1, cost: { bear_claw: 3, hard_leather: 1 },        station: 'bancada' },
   { out: 'boat',          n: 1, cost: { wood: 40, rope: 4, resin: 3 },          station: 'bancada' },
   { out: 'ram',           n: 1, cost: { wood: 30, iron_bar: 4, rope: 4 },       station: 'bancada' },
   { out: 'catapult',      n: 1, cost: { wood: 40, stone: 20, iron_bar: 6, rope: 6 }, station: 'bancada' },
@@ -222,6 +244,8 @@ const RECIPES = [
   // forja: armas
   { out: 'bronze_sword',  n: 1, cost: { wood: 1, bronze_bar: 5 },               station: 'forja' },
   { out: 'iron_sword',    n: 1, cost: { wood: 2, iron_bar: 6 },                 station: 'forja' },
+  { out: 'iron_spear',    n: 1, cost: { hardwood: 2, iron_bar: 3 },             station: 'forja' },
+  { out: 'iron_mace',     n: 1, cost: { hardwood: 1, iron_bar: 5 },             station: 'forja' },
   { out: 'war_axe',       n: 1, cost: { hardwood: 2, iron_bar: 7 },             station: 'forja' },
   { out: 'steel_sword',   n: 1, cost: { hardwood: 1, steel_bar: 6 },            station: 'forja' },
   { out: 'silver_sword',  n: 1, cost: { steel_bar: 3, silver_bar: 4 },          station: 'forja' },
@@ -263,6 +287,7 @@ const BUILDINGS = {
   workbench:  { name: 'Bancada',         w: 2, h: 1, blocks: true,  cost: { wood: 15, stone: 2 },  desc: 'Tecidos, roupas de linho e couro, machadinhas e barcos.' },
   forge:      { name: 'Forja',           w: 2, h: 2, blocks: true,  cost: { stone: 25, wood: 10, clay: 6 }, desc: 'Funda metais e forje ferramentas, armas e armaduras.' },
   house:      { name: 'Casa',            w: 2, h: 2, blocks: true,  cost: { wood: 30, stone: 15 }, desc: '+2 seguidores. Também serve para salvar e descansar.' },
+  pcastle:    { name: 'Castelo',         w: 7, h: 7, blocks: true,  cost: { stone: 250, wood: 150, brick: 60, iron_bar: 25 }, desc: 'Transforma a sua vila livre num reino seu: castelo, guarnição, território e o título de rei. A vila precisa ter crescido até o nível 3, e o castelo fica perto dela. Custa também 3000 🪙. Só um reino fundado por vez (se ele cair, dá para fundar outro).' },
   manor:      { name: 'Casarão',         w: 3, h: 3, blocks: true,  cost: { brick: 30, wood: 20, hardwood: 5 }, desc: '+4 seguidores. Casa de tijolos para salvar e descansar.' },
   farm:       { name: 'Fazenda',         w: 3, h: 3, blocks: false, cost: { wood: 15 },            desc: 'Produz 6 de trigo todo amanhecer.' },
   barracks:   { name: 'Quartel',         w: 3, h: 3, blocks: true,  cost: { wood: 40, stone: 30, iron_bar: 4 }, desc: '+4 seguidores. Treine soldados mais baratos.' },
@@ -316,6 +341,10 @@ const CIV_STRUCTS = {
 };
 
 const CREATURES = {
+  fox:      { name: 'Raposa',   hp: 14,  dmg: 0,  speed: 95,  r: 9,  faction: 'prey',   drops: { fox_pelt: [1, 1], meat: [0, 1] }, xp: 5 },
+  rabbit:   { name: 'Coelho',   hp: 6,   dmg: 0,  speed: 90,  r: 7,  faction: 'prey',   drops: { rabbit_hide: [1, 1], meat: [0, 1] }, xp: 2 },
+  goat:     { name: 'Cabra Montesa', hp: 24, dmg: 0, speed: 85, r: 10, faction: 'prey', drops: { goat_horn: [0, 1], meat: [1, 2], leather: [0, 1] }, xp: 6 },
+  bear:     { name: 'Urso',     hp: 110, dmg: 15, speed: 70,  r: 14, faction: 'wild',   drops: { bear_pelt: [1, 1], bear_claw: [1, 2], meat: [2, 4], bone: [1, 2] }, xp: 35, aggro: 5 },
   deer:     { name: 'Cervo',    hp: 20,  dmg: 0,  speed: 85,  r: 10, faction: 'prey',   drops: { meat: [1, 2], leather: [1, 1], bone: [0, 1], deer_antler: [0, 1] }, xp: 4 },
   boar:     { name: 'Javali',   hp: 38,  dmg: 6,  speed: 75,  r: 11, faction: 'prey',   drops: { meat: [2, 3], leather: [1, 1], bone: [1, 1], boar_tusk: [0, 1] }, xp: 9, aggro: 6 },
   wolf:     { name: 'Lobo',     hp: 32,  dmg: 7,  speed: 100, r: 10, faction: 'wild',   drops: { wolf_pelt: [1, 1], bone: [0, 1], meat: [1, 1] }, xp: 12, aggro: 7 },

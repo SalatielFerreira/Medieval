@@ -216,7 +216,7 @@ const Touch = {
       b.classList.toggle('hidden', !this.editing && (!it || n <= 0));
       if (!it || n <= 0) { if (this.editing && !b.dataset.k) b.innerHTML = '<span class="tc-it">👝</span>'; continue; }
       const key = k + ':' + n;
-      if (b.dataset.k !== key) { b.dataset.k = key; b.innerHTML = `<span class="tc-it">${it.icon}</span><span class="tc-n">${n}</span>`; b.title = it.name; }
+      if (b.dataset.k !== key) { b.dataset.k = key; b.innerHTML = `<span class="tc-it">${UI.ii(k)}</span><span class="tc-n">${n}</span>`; b.title = it.name; }
       b.classList.toggle('off', !!it.tool && !Game.toolUsable(k));
       b.classList.toggle('eq', !!it.tool && P.equip.tool === k);
     }
@@ -226,4 +226,54 @@ const Touch = {
     document.getElementById('touch').classList.toggle('hidden', !on);
     document.body.classList.toggle('touchui', on);
   },
+};
+
+// ================================================================ teclas escolhidas pelo jogador (Ajustes → Controles)
+// O jogo continua lendo as teclas "padrão" (KeyW, Space...): a tecla que você apertou é traduzida para a tecla padrão
+// da ação que você escolheu. Setas e Esc ficam fixos. G.settings.keymap = { ação: código da tecla }.
+const KEY_ACTIONS = [
+  ['up', 'Andar para cima', 'KeyW'], ['down', 'Andar para baixo', 'KeyS'], ['left', 'Andar para a esquerda', 'KeyA'], ['right', 'Andar para a direita', 'KeyD'],
+  ['run', 'Correr', 'ShiftLeft'], ['attack', 'Atacar e coletar', 'Space'], ['heavy', 'Golpe forte (segure e solte)', 'KeyV'], ['block', 'Bloquear com o escudo', 'KeyX'],
+  ['dodge', 'Esquivar', 'KeyZ'], ['interact', 'Conversar e interagir', 'KeyE'], ['eat', 'Comer a melhor comida', 'KeyF'], ['tool', 'Trocar a ferramenta', 'KeyQ'],
+  ['ride', 'Montar no cavalo', 'KeyR'], ['orders', 'Ordens aos capangas', 'KeyT'], ['siege', 'Aríete ou catapulta (cerco)', 'KeyG'],
+  ['quick1', 'Usar o bolso 1', 'Digit1'], ['quick2', 'Usar o bolso 2', 'Digit2'],
+  ['inventory', 'Mochila', 'KeyI'], ['craft', 'Criar', 'KeyC'], ['build', 'Construir', 'KeyB'], ['kingdom', 'Portfólio', 'KeyK'], ['map', 'Mapa', 'KeyM'], ['diary', 'Diário', 'KeyJ'],
+];
+const Keys = {
+  waiting: null,
+  def(a) { return KEY_ACTIONS.find(x => x[0] === a)[2]; },
+  get(a) { const m = G.settings.keymap || {}; return m[a] || this.def(a); },
+  // código apertado → código padrão da ação (null = tecla padrão que agora não faz nada)
+  table() {
+    if (this._t && this._tk === JSON.stringify(G.settings.keymap || {})) return this._t;
+    const t = {};
+    for (const [a, , d] of KEY_ACTIONS) t[this.get(a)] = d;
+    if (t.ShiftLeft) t.ShiftRight = t.ShiftLeft;
+    for (const [a, , d] of KEY_ACTIONS) if (!(d in t)) t[d] = null;
+    if (this.get('run') === 'ShiftLeft' && !('ShiftRight' in t)) t.ShiftRight = 'ShiftRight';
+    this._t = t; this._tk = JSON.stringify(G.settings.keymap || {});
+    return t;
+  },
+  map(code) { const t = this.table(); return code in t ? t[code] : code; },
+  name(code) {
+    if (!code) return '—';
+    const special = { Space: 'Espaço', ShiftLeft: 'Shift', ShiftRight: 'Shift dir.', ControlLeft: 'Ctrl', ControlRight: 'Ctrl dir.', AltLeft: 'Alt', AltRight: 'Alt Gr', Tab: 'Tab', Enter: 'Enter',
+      Backspace: 'Apagar', CapsLock: 'Caps', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Comma: ',', Period: '.', Slash: ';', Semicolon: 'Ç', Quote: '~', BracketLeft: '´', BracketRight: '[', Backslash: ']', Minus: '-', Equal: '=', Backquote: "'" };
+    if (special[code]) return special[code];
+    if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+    if (/^Digit\d$/.test(code)) return code.slice(5);
+    if (/^Numpad/.test(code)) return 'Num ' + code.slice(6);
+    return code.replace(/^F(\d+)$/, 'F$1');
+  },
+  // escolher: a tecla já usada por outra ação troca de lugar com ela
+  bind(a, code) {
+    const m = Object.assign({}, G.settings.keymap || {}), old = this.get(a);
+    const other = KEY_ACTIONS.find(x => x[0] !== a && this.get(x[0]) === code);
+    m[a] = code;
+    if (other) m[other[0]] = old;
+    for (const [k, , d] of KEY_ACTIONS) if (m[k] === d) delete m[k];
+    Game.setSetting('keymap', m);
+    return other ? other[1] : null;
+  },
+  reset() { Game.setSetting('keymap', {}); },
 };

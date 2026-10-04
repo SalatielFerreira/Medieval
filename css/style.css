@@ -3320,3 +3320,117 @@ body:not(.small) .ldi-doll .pd-slot .tn { font-size: 11px; right: 5px; top: 3px;
 .tce-tip { text-align: center; font-size: 10.5px; color: #a8987a; }
 /* mochila: só as casas acendem ao arrastar um item; a grade inteira (o espaço entre as casas) não */
 .ldi-grid.drop-over { outline: none; background: transparent !important; }
+
+/* lojas sem dono (Portfólio → Vilas e guardas) */
+.vacancy .vac-row { display: flex; flex-direction: column; gap: 5px; padding: 7px 9px; margin-top: 6px; border-radius: 9px; background: rgba(0, 0, 0, .25); }
+.vacancy .vac-row b { font-size: 13px; color: #ffe9a8; }
+.vacancy .act-row { margin: 0; flex-wrap: wrap; gap: 5px; }
+
+/* Ajustes → Controles (computador): teclas que o jogador escolhe */
+.kb-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; align-content: start; min-height: 0; overflow-y: auto; }
+.kb-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 6px 12px; border-radius: 9px; text-align: left; font-size: 13px; min-width: 0; }
+.kb-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e8dcc0; }
+.kb-row kbd { flex: none; min-width: 64px; text-align: center; padding: 4px 8px; font-size: 12.5px; }
+.kb-row.wait { border-color: #ffd54a; box-shadow: 0 0 0 2px rgba(255, 213, 74, .35); }
+.kb-row.wait kbd { background: linear-gradient(180deg, #ffe08a, #c99a3a); color: #2a1a06; animation: kbBlink 1s ease-in-out infinite; }
+@keyframes kbBlink { 50% { opacity: .55; } }
+.kb-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.kb-mouse { font-size: 12px; color: #a8987a; }
+.kb-foot button { flex: none; }
+
+/* ================================================================ conversa com uma pessoa (tela cheia): retrato à esquerda, fala e ações à direita */
+#panel.wide .pb:has(> .tk2) { padding: 14px 16px; }
+.tk2 { height: 100%; display: grid; grid-template-columns: minmax(250px, 330px) 1fr; gap: 16px; min-height: 0; }
+.tk2-l { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden; padding: 14px; border-radius: 14px;
+  background: radial-gradient(ellipse at 50% 20%, rgba(120, 90, 45, .35), rgba(0, 0, 0, .3) 70%); border: 1px solid rgba(214, 174, 96, .3); }
+.tk2-por { position: relative; display: flex; justify-content: center; padding-bottom: 10px; }
+.tk2-por canvas { width: 150px; height: auto; image-rendering: pixelated; border-radius: 12px; background: radial-gradient(circle at 50% 60%, rgba(255, 213, 74, .18), transparent 70%); }
+.tk2-rel { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 12px; background: #1a130b; border: 1px solid; white-space: nowrap; }
+.tk2-who { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
+.tk2-who b { font-family: 'Cinzel', Georgia, serif; font-size: 18px; color: var(--gold-hi); }
+.tk2-who small { font-size: 12px; color: #c9b48a; }
+.tk2-chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; overflow: hidden; }
+.tk2-chips > span { font-size: 11.5px; padding: 3px 9px; border-radius: 11px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(214, 174, 96, .25); color: #e8dcc0; }
+.tk2-chips .famchip { cursor: pointer; }
+.tk2-r { display: flex; flex-direction: column; gap: 12px; min-height: 0; min-width: 0; }
+.tk2-chat { display: flex; flex-direction: column; gap: 6px; }
+.tk2-say { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; border-radius: 4px 14px 14px 14px; background: linear-gradient(135deg, rgba(232, 208, 160, .16), rgba(0, 0, 0, .25));
+  border: 1px solid rgba(214, 174, 96, .35); font-family: Georgia, serif; font-size: 15px; color: #f6ead0; opacity: .6; }
+.tk2-say:last-child { opacity: 1; border-color: rgba(255, 213, 74, .55); }
+.tk2-sn { font-family: var(--ui-font); font-size: 11px; font-weight: 700; color: #ffd54a; letter-spacing: .5px; }
+.tk2-say em { font-family: var(--ui-font); font-style: normal; font-size: 12px; color: #9be37a; }
+.tk2-acts { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; align-content: start; }
+.tk2-g { --gc: 214, 174, 96; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(var(--gc), .35); border-top: 3px solid rgba(var(--gc), .8); }
+.tk2-g.g-heart { --gc: 240, 110, 160; } .tk2-g.g-work { --gc: 110, 170, 255; } .tk2-g.g-house { --gc: 155, 227, 122; } .tk2-g.g-other { --gc: 200, 150, 255; }
+.tk2-gl { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgb(var(--gc)); }
+.tk2-gb { display: flex; flex-direction: column; gap: 5px; }
+.tk2-a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 9px; text-align: left; font-size: 13.5px; }
+.tk2-ai { flex: none; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; background: rgba(var(--gc), .18); border: 1px solid rgba(var(--gc), .45); }
+.tk2-at { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* telas pequenas: retrato menor e ações em botões de ícone, sem rolar a janela */
+@media (orientation: landscape) {
+  body.small #panel.wide .pb:has(> .tk2) { display: flex !important; flex-direction: column; overflow: hidden !important; padding: 8px 10px; }
+  body.small .tk2 { flex: 1; grid-template-columns: 34% 1fr; gap: 8px; }
+  body.small .tk2-l { padding: 8px; gap: 5px; }
+  body.small .tk2-por canvas { width: 76px; }
+  body.small .tk2-por { padding-bottom: 8px; }
+  body.small .tk2-rel { font-size: 10px; padding: 1px 8px; }
+  body.small .tk2-who b { font-size: 13.5px; }
+  body.small .tk2-who small { font-size: 10px; }
+  body.small .tk2-l .rbar { font-size: 10px; }
+  body.small .tk2-chips > span { font-size: 9.5px; padding: 1px 6px; }
+  body.small .tk2-r { gap: 6px; }
+  body.small .tk2-chat .tk2-say:not(:last-child) { display: none; }
+  body.small .tk2-say { padding: 6px 10px; font-size: 12px; }
+  body.small .tk2-say em { font-size: 10.5px; }
+  body.small .tk2-acts { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; }
+  body.small .tk2-g { display: contents; }
+  body.small .tk2-gl { display: none; }
+  body.small .tk2-gb { display: contents; }
+  body.small .tk2-a { flex: 1 1 calc(33% - 5px); min-width: 0; gap: 6px; padding: 4px 7px; font-size: 11.5px; border-color: rgba(var(--gc), .45); background: linear-gradient(180deg, rgba(var(--gc), .12), rgba(0, 0, 0, .3)); }
+  body.small .tk2-ai { width: 24px; height: 24px; font-size: 13px; }
+}
+@media (orientation: landscape) { body.small .tk2-at { white-space: normal; line-height: 1.1; font-size: 11px; } }
+
+/* ================================================================ igreja: oração, sacramentos, caridade e peregrinações */
+.ch-card { display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+.ch-card.warn { border-color: rgba(224, 122, 106, .55); }
+.ch-card.on { border-color: rgba(155, 227, 122, .55); }
+.ch-h { display: flex; align-items: center; gap: 12px; }
+.ch-ic { flex: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px;
+  background: radial-gradient(circle at 40% 35%, #6a5638, #2a1e10); border: 2px solid rgba(214, 174, 96, .55); box-shadow: 0 0 10px rgba(255, 213, 74, .15); }
+.ch-t { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ch-t b { font-family: 'Cinzel', Georgia, serif; font-size: 15px; color: var(--gold-hi); }
+.ch-t small { font-size: 12px; color: #c9b48a; line-height: 1.35; }
+.ch-btns { margin: 0; flex-wrap: wrap; gap: 6px; }
+.ch-shr { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; align-content: start; }
+.ch-sh { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(0, 0, 0, .25); border: 1px solid rgba(214, 174, 96, .25); }
+.ch-sh.done { opacity: .65; }
+.ch-sh button { margin-left: auto; flex: none; }
+/* computador: os quadros em duas colunas, enchendo a página */
+body:not(.small) .kpg.kdesk[data-nav^="c:"] { grid-template-columns: 1fr 1fr; }
+body:not(.small) .kpg.kdesk[data-nav^="c:"] > .ch-card { justify-content: center; gap: 14px; padding: 18px; }
+body:not(.small) .kpg.kdesk[data-nav="c:pereg"] { grid-template-columns: 1fr; }
+body:not(.small) .kpg.kdesk[data-nav^="c:"] .ch-ic { width: 56px; height: 56px; font-size: 28px; }
+body:not(.small) .kpg.kdesk[data-nav^="c:"] .ch-t b { font-size: 17px; }
+body:not(.small) .kpg.kdesk[data-nav^="c:"] .ch-t small { font-size: 13px; }
+/* celular: páginas que enchem a altura, 12px acima das bolinhas */
+@media (orientation: landscape) {
+  body.small .kpages > .kpage[data-nav^="c:"] { height: 100%; padding-bottom: 12px; }
+  body.small .kpg.kpage[data-nav^="c:"] { padding-bottom: 12px; }
+  body.small .kpages > .kpage[data-nav^="c:"] > .card { flex: 1; min-height: 0; }
+  body.small .ch-ic { width: 36px; height: 36px; font-size: 18px; }
+  body.small .ch-t b { font-size: 13.5px; }
+  body.small .ch-t small { font-size: 11px; }
+  body.small .ch-card { padding: 8px 10px; gap: 6px; }
+  body.small .ch-shr { grid-template-columns: 1fr 1fr; gap: 5px; }
+  body.small .ch-sh { padding: 5px 8px; }
+}
+
+/* ícones desenhados dos itens (cor do material) */
+.ii { display: inline-block; width: 1.2em; height: 1.2em; vertical-align: -0.25em; line-height: 0; font-style: normal; }
+.ii svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .55)); }
+.tile .ii, .pd-ic .ii, .dt-ic .ii, .drag-ghost .ii { width: 1.35em; height: 1.35em; }
+.tile .ii, .qtile .ii, .pd-ic .ii { width: 1.7em; height: 1.7em; }
+/* janela Reino: a fileira de escudos cabe quantos reinos houver (inclusive os fundados pelo jogador) */
+body.small .at-pick, body:not(.small) .kpg.kdesk .at-pick { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }

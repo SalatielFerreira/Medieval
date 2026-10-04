@@ -789,6 +789,62 @@ const World = {
   },
 
   // ---------------------------------------------------------------- construções
+  // é muro (de qualquer tipo) nesta casa?
+  wallAt(x, y) {
+    if (!this.inb(x, y)) return false;
+    const id = this.sgrid[this.idx(x, y)], o = id >= 0 && this.structs[id];
+    return !!o && !o.removed && (o.type === 'wall_wood' || o.type === 'wall_stone');
+  },
+  // muro que se liga aos vizinhos: cada lado com muro ganha um "braço" até a borda; onde um muro horizontal
+  // encontra um vertical (canto de 90°, T ou cruz) nasce uma torrezinha
+  drawWall(ctx, s, X, Y, stone) {
+    const has = s.x !== undefined, n = has && this.wallAt(s.x, s.y - 1), so = has && this.wallAt(s.x, s.y + 1), w = has && this.wallAt(s.x - 1, s.y), e = has && this.wallAt(s.x + 1, s.y);
+    const vert = n || so, hor = w || e || !vert;
+    const R = (x, y, ww, hh, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(X + x), Math.round(Y + y), ww, hh); };
+    const L = hor ? (w || !e ? 0 : 10) : 10, Rt = hor ? (e || !w ? 32 : 22) : 22; // trecho horizontal (de L a Rt)
+    const T = n ? 0 : 6, B = so ? 32 : 26; // trecho vertical (de T a B)
+    if (!stone) {
+      // paliçada: estacas lado a lado (horizontal) ou empilhadas (vertical)
+      if (vert) {
+        ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.fillRect(X + 25, Y + T, 3, B - T);
+        for (let y = T; y < B; y += 6) R(7, y, 18, 5, (y / 6) % 2 ? '#7a5230' : '#8b5f38');
+        R(7, T, 2, B - T, '#5a3a1e'); R(23, T, 2, B - T, '#5a3a1e');
+        if (!n) { ctx.fillStyle = '#6b4420'; ctx.beginPath(); ctx.moveTo(X + 7, Y + T); ctx.lineTo(X + 16, Y + T - 6); ctx.lineTo(X + 25, Y + T); ctx.fill(); }
+      }
+      if (hor) {
+        ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.fillRect(X + L, Y + 28, Rt - L, 4);
+        for (let x = L; x < Rt; x += 7) {
+          const ww = Math.min(6, Rt - x);
+          R(x, 4, ww, 26, (x / 7 | 0) % 2 ? '#7a5230' : '#8b5f38');
+          ctx.fillStyle = '#6b4420'; ctx.beginPath(); ctx.moveTo(X + x, Y + 4); ctx.lineTo(X + x + ww / 2, Y - 2); ctx.lineTo(X + x + ww, Y + 4); ctx.fill();
+        }
+        R(L, 14, Rt - L, 3, '#5a3a1e');
+      }
+    } else {
+      // muro de pedra: face com fiadas de pedra e ameias no alto
+      const face = (x, y, ww, hh) => { R(x, y, ww, hh, '#8b8d93'); for (let k = y + 8; k < y + hh; k += 8) R(x, k, ww, 1, '#6e7076'); R(x, y + hh - 3, ww, 3, '#5f6167'); };
+      if (vert) { face(8, T, 16, B - T); R(8, T, 2, B - T, '#a5a7ad'); R(22, T, 2, B - T, '#6e7076'); if (!n) { R(8, T - 4, 6, 4, '#a5a7ad'); R(18, T - 4, 6, 4, '#a5a7ad'); } }
+      if (hor) { face(L, 6, Rt - L, 24); R(L, 6, Rt - L, 3, '#a5a7ad'); for (let x = L; x < Rt; x += 8) R(x, 1, Math.min(5, Rt - x), 5, '#a5a7ad'); }
+    }
+    if (vert && (w || e)) this.drawWallTower(ctx, X, Y, stone);
+  },
+  // torrezinha na emenda dos muros
+  drawWallTower(ctx, X, Y, stone) {
+    const R = (x, y, ww, hh, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(X + x), Math.round(Y + y), ww, hh); };
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(X + 5, Y + 28, 24, 5);
+    if (stone) {
+      R(5, -8, 22, 38, '#8b8d93'); R(5, -8, 3, 38, '#a5a7ad'); R(24, -8, 3, 38, '#6e7076');
+      for (let k = 0; k < 30; k += 8) R(5, k, 22, 1, '#6e7076');
+      for (let x = 4; x < 28; x += 6) R(x, -14, 4, 6, '#a5a7ad');
+      R(14, 6, 4, 8, '#2a2622');
+    } else {
+      R(6, -6, 20, 36, '#7a5230'); for (let k = -6; k < 30; k += 6) R(6, k, 20, 1, '#5a3a1e');
+      R(6, -6, 2, 36, '#8b5f38'); R(24, -6, 2, 36, '#5a3a1e');
+      ctx.fillStyle = '#8a3a22'; ctx.beginPath(); ctx.moveTo(X + 3, Y - 6); ctx.lineTo(X + 16, Y - 22); ctx.lineTo(X + 29, Y - 6); ctx.fill();
+      ctx.fillStyle = '#6a2a18'; ctx.fillRect(X + 3, Y - 7, 26, 2);
+      R(14, 6, 4, 7, '#2a1a0e');
+    }
+  },
   drawStruct(ctx, s, X, Y, time) {
     const w = s.w * TILE, h = s.h * TILE;
     const civ = typeof s.owner === 'number' ? s.owner : -1;
@@ -825,7 +881,7 @@ const World = {
     };
 
     switch (s.type) {
-      case 'castle': {
+      case 'pcastle': case 'castle': {
         shadow();
         const stone = '#8b8d93', dark = '#5f6167';
         R(10, 34, w - 20, h - 44, '#9c8f74');                        // pátio
@@ -1055,14 +1111,7 @@ const World = {
         flag(w / 2 - 1, 8, PLAYER_COLOR);
         break;
       }
-      case 'wall_wood': {
-        for (let k = 0; k < 4; k++) {
-          R(2 + k * 7, 4, 6, 26, k % 2 ? '#7a5230' : '#8b5f38');
-          ctx.fillStyle = '#6b4420'; ctx.beginPath(); ctx.moveTo(X + 2 + k * 7, Y + 4); ctx.lineTo(X + 5 + k * 7, Y - 2); ctx.lineTo(X + 8 + k * 7, Y + 4); ctx.fill();
-        }
-        R(0, 14, 32, 3, '#5a3a1e');
-        break;
-      }
+      case 'wall_wood': case 'wall_stone': this.drawWall(ctx, s, X, Y, s.type === 'wall_stone'); break;
       case 'chest': {
         ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(X + 3, Y + 26, 26, 5);
         R(4, 12, 24, 16, '#8b5a2b'); R(4, 10, 24, 6, '#a06a35'); R(4, 16, 24, 2, '#5a3a1e');
@@ -1174,12 +1223,6 @@ const World = {
         for (let k = 0; k < 5; k++) R(10 + k * ((w - 30) / 4), -2, 10, 6, ['#8e1f2a', '#f2efe6', '#2a4a8a', '#f2efe6', '#8e1f2a'][k]);
         R(w / 2 - 2, 10, 4, h - 18, 'rgba(255,255,255,0.35)');
         banner(10, 4); banner(w - 14, 4);
-        break;
-      }
-      case 'wall_stone': {
-        R(0, 0, 32, 32, '#8b8d93'); R(0, 0, 32, 6, '#a5a7ad'); R(0, 28, 32, 4, '#5f6167');
-        for (let k = 10; k < 28; k += 8) R(0, k, 32, 1, '#6e7076');
-        R(10, 6, 1, 4, '#6e7076'); R(22, 14, 1, 8, '#6e7076'); R(8, 22, 1, 6, '#6e7076');
         break;
       }
     }

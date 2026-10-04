@@ -85,13 +85,19 @@ const Game = {
 
     window.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT') return;
+      // escolhendo uma tecla nos Ajustes: a próxima tecla apertada vira a da ação (Esc cancela)
+      if (Keys.waiting) { e.preventDefault(); e.stopPropagation(); if (!e.repeat) UI.keyChosen(e.code); return; }
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
-      if (!e.repeat) this.onKey(e.code);
-      G.keys[e.code] = true;
+      const code = Keys.map(e.code);
+      if (!code) return;
+      if (!e.repeat) this.onKey(code);
+      G.keys[code] = true;
     });
     window.addEventListener('keyup', e => {
-      G.keys[e.code] = false;
-      if (e.code === 'KeyV' && P.charging && G.state === 'play' && !G.paused) Moves.release();
+      const code = Keys.map(e.code);
+      if (!code) return;
+      G.keys[code] = false;
+      if (code === 'KeyV' && P.charging && G.state === 'play' && !G.paused) Moves.release();
     });
     window.addEventListener('blur', () => { G.keys = {}; G.mouse.down = false; });
     this.canvas.addEventListener('mousemove', e => { G.mouse.x = e.clientX; G.mouse.y = e.clientY; });
@@ -171,6 +177,7 @@ const Game = {
 
   // o mundo é gerado num Web Worker (a tela de carregamento continua animada)
   async newGame(opts, onProgress) {
+    Realm.reset(); G.realms = [];
     const name = opts.name;
     G.name = name;
     G.slot = opts.slot || Saves.firstFree() || 1;
@@ -191,7 +198,7 @@ const Game = {
     Families.init(); Families.ensurePlayer(); Faith.ensurePriests();
     G.homes = {}; G.npcHouses = []; G.npcHouseSeq = 0; Homes.touch(); Homes.dayTick(false);
     G.title = { lvl: -1, civ: -1 }; G.civilTitles = {}; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
-    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
+    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.vacancies = []; G.npcRoads = []; G.church = null; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
     const d = World.start.door;
     this.resetPlayer((d.x + 0.5) * TILE, (d.y + 1) * TILE);
     G.spawn = { x: P.x, y: P.y };
@@ -199,6 +206,7 @@ const Game = {
     Progress.diary(`🛖 ${name} ${G.surname} chegou à sua cabana, com ${opts.age} anos, para começar uma nova vida.`);
     G.time = NIGHT_LEN; G.day = 1; G.ents = []; G.texts = []; G.parts = []; G.siege = null; G.placing = null; G.groups = {}; G.zone = -2;
     Ranged.projs = []; World.season = -1; Season.apply(false);
+    NpcRoads.init(); // as vilas já nascem com as casas e lojas ligadas à estrada
     G.state = 'play'; G.paused = false; G.ping = null; UI.showGameUI(true);
   },
 
@@ -213,7 +221,7 @@ const Game = {
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
-      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
+      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], vacancies: G.vacancies || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
@@ -253,12 +261,14 @@ const Game = {
   async load(slot, onProgress, data) {
     const s = data || Saves.read(slot);
     if (!s) return false;
+    Realm.reset();
     // jogos salvos antes da mudança das montanhas não têm "terrain": usam o terreno antigo (versão 1)
     G.terrain = s.terrain || 1;
     const ok = await WorldGen.run(s.seed, onProgress, G.terrain);
     if (!ok) return false;
     G.slot = slot;
     G.name = s.name; G.ping = s.ping || null; G.time = s.time; G.day = s.day; G.spawn = s.spawn; G.civs = s.civs;
+    G.realms = s.realms || []; Realm.restore();
     this.resetPlayer(s.player.x, s.player.y);
     Object.assign(P, s.player);
     P.mounted = false; P.hx = P.x - 30; P.hy = P.y;
@@ -291,7 +301,7 @@ const Game = {
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
-    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
+    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.vacancies = s.vacancies || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
     G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
@@ -304,7 +314,7 @@ const Game = {
     Towns.init(); Towns.applyAll();
     G.homes = s.homes || {}; G.npcHouses = s.npcHouses || []; G.npcHouseSeq = s.npcHouseSeq || 0;
     Homes.restore();
-    Urban.restore(); Families.refresh(); Homes.dayTick(false);
+    Urban.restore(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
     if (!data) UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
@@ -390,7 +400,7 @@ const Game = {
     return 10 + Court.capBonus();
   },
   // cor do reino: a escolhida pelo rei; reinos do jogador sem cor própria usam o dourado do jogador
-  civColor(ci) { return G.civs[ci] && G.civs[ci].ruler === 'player' && !Heraldry.customColor(ci) ? PLAYER_COLOR : CIV_DEFS[ci].color; },
+  civColor(ci) { const L = Heraldry.lead(ci); return G.civs[L] && G.civs[L].ruler === 'player' && !Heraldry.customColor(L) ? PLAYER_COLOR : CIV_DEFS[L].color; },
   // G.time: 0..NIGHT_LEN é a noite (21h às 6h), depois vem o dia (6h às 21h)
   hour() { const t = G.time; return t < NIGHT_LEN ? (21 + t / NIGHT_LEN * 9) % 24 : 6 + (t - NIGHT_LEN) / DAYLIGHT_LEN * 15; },
   isNight() { return G.time < NIGHT_LEN; },
@@ -417,7 +427,7 @@ const Game = {
     if (c.ruler === 'player') return;
     c.relation = U.clamp(c.relation + n, -100, 100);
   },
-  buildIcon(k) { return { biz_farm: '🌾', biz_mill: '🌬️', biz_lumber: '🪚', biz_quarry: '🪨', biz_mine: '⛏️', biz_smithy: '⚒️', biz_shop: '🏪', cabin: '🛖', campfire: '🔥', workbench: '🪚', forge: '⚒️', house: '🏠', manor: '🏛️', farm: '🌾', barracks: '🛡️', wall_wood: '🪵', wall_stone: '🧱', chest: '📦', stable: '🐴',
+  buildIcon(k) { return { pcastle: '🏰', biz_farm: '🌾', biz_mill: '🌬️', biz_lumber: '🪚', biz_quarry: '🪨', biz_mine: '⛏️', biz_smithy: '⚒️', biz_shop: '🏪', cabin: '🛖', campfire: '🔥', workbench: '🪚', forge: '⚒️', house: '🏠', manor: '🏛️', farm: '🌾', barracks: '🛡️', wall_wood: '🪵', wall_stone: '🧱', chest: '📦', stable: '🐴',
     oven: '🥖', brewery: '🍺', coop: '🐔', pen: '🐄', beehive: '🐝', ptavern: '🍻' }[k] || '🏗️'; },
 
   // ================================================================ entrada
@@ -961,6 +971,7 @@ const Game = {
   startPlacing(k) { G.placing = k; },
   canBuild(k, tx, ty) {
     const b = BUILDINGS[k];
+    if (k === 'pcastle') { const e = Realm.siteErr(tx, ty); if (e) return e; if (P.gold < REALM_GOLD) return `O castelo custa também ${REALM_GOLD} 🪙`; }
     for (let y = ty; y < ty + b.h; y++) for (let x = tx; x < tx + b.w; x++) {
       if (!World.inb(x, y)) return 'Fora do mapa';
       const i = World.idx(x, y), t = World.tiles[i];
@@ -985,6 +996,7 @@ const Game = {
     if (err) { UI.msg(err, 'bad'); return; }
     if (!Inv.has(b.cost)) { UI.msg('Recursos insuficientes para ' + b.name + '.', 'bad'); G.placing = null; return; }
     Inv.pay(b.cost);
+    if (k === 'pcastle') { P.gold -= REALM_GOLD; G.placing = null; Realm.found(tx, ty); return; }
     World.addStruct(k, tx, ty, b.w, b.h, 'player', { built: true });
     this.burst((tx + b.w / 2) * TILE, (ty + b.h / 2) * TILE, '#c9a978', 20);
     UI.msg(`${b.name} construída!`, 'gold');
@@ -1181,7 +1193,7 @@ const Game = {
         if (e.tag) G.groups[e.tag] = Math.max(0, (G.groups[e.tag] || 1) - 1);
       }
     }
-    const wild = G.ents.filter(e => !e.dead && (e.kind === 'deer' || e.kind === 'boar' || e.kind === 'wolf')).length;
+    const wild = G.ents.filter(e => !e.dead && ['deer', 'boar', 'wolf', 'fox', 'rabbit', 'goat', 'bear'].includes(e.kind)).length;
     if (wild >= 14) return;
     const a = Math.random() * Math.PI * 2, d = U.rnd(16, 26) * TILE;
     const x = P.x + Math.cos(a) * d, y = P.y + Math.sin(a) * d;
@@ -1190,12 +1202,12 @@ const Game = {
     const t = World.tile(tx, ty);
     const night = G.darkness > 0.3, r = Math.random();
     let kind = null;
-    if (t === T.FOREST) kind = r < 0.3 + (night ? 0.25 : 0) ? 'wolf' : r < 0.75 ? 'deer' : 'boar';
-    else if (t === T.GRASS) kind = r < (night ? 0.3 : 0.06) ? 'wolf' : r < 0.75 ? 'deer' : 'boar';
-    else if (t === T.SNOW || t === T.HILL) kind = r < 0.45 ? 'wolf' : 'deer';
+    if (t === T.FOREST) kind = r < 0.25 + (night ? 0.2 : 0) ? 'wolf' : r < 0.55 ? 'deer' : r < 0.7 ? 'fox' : r < 0.76 ? 'bear' : 'boar';
+    else if (t === T.GRASS) kind = r < (night ? 0.3 : 0.06) ? 'wolf' : r < 0.45 ? 'deer' : r < 0.7 ? 'rabbit' : r < 0.8 ? 'fox' : 'boar';
+    else if (t === T.SNOW || t === T.HILL) kind = r < 0.35 ? 'wolf' : r < 0.7 ? 'goat' : r < 0.8 ? 'bear' : 'deer';
     if (!kind) return;
     const nearTown = World.capitals.some(c => U.dist(tx, ty, c.x, c.y) < 14) || World.villages.some(v => U.dist(tx, ty, v.x, v.y) < 10);
-    if (kind === 'wolf' && (nearTown || (G.day === 1 && !night))) return;
+    if ((kind === 'wolf' || kind === 'bear') && (nearTown || (G.day === 1 && !night))) return;
     if (Season.winter() && kind === 'deer' && Math.random() < 0.4) kind = 'wolf';
     this.spawn(kind, x, y, { leash: 14, mult: kind === 'wolf' && Season.winter() ? 1.35 : 1 });
   },
@@ -1338,6 +1350,10 @@ const Game = {
   becomeRuler(ci, how) {
     const c = G.civs[ci];
     c.ruler = 'player'; c.atWar = false; c.rulerName = G.name; c.rulerId = null; c.relation = 100; c.rebel = 0;
+    // o primeiro reino é o principal; os próximos passam a usar a bandeira e o brasão dele
+    if (G.mainRealm === undefined || G.mainRealm === null || !G.civs[G.mainRealm] || G.civs[G.mainRealm].ruler !== 'player') G.mainRealm = ci;
+    else if (G.mainRealm !== ci) Heraldry.set(ci, { follow: G.mainRealm });
+    Heraldry.apply();
     if (G.siege && G.siege.civ === ci) { for (const e of G.ents) if (e.siegeOf === ci) e.dead = true; G.siege = null; }
     UI.banner(`👑 ${G.name}, soberano de ${CIV_DEFS[ci].short}!`);
     UI.msg(`${how} Você agora governa ${CIV_DEFS[ci].name}! Aperte K para administrar o reino.`, 'gold', true);
@@ -1388,14 +1404,17 @@ const Game = {
       n = Math.min(n, Math.floor(P.gold / pr.buy));
       if (raw) n = Math.min(n, c.stock[k]);
       if (n <= 0) return;
-      P.gold -= n * pr.buy; c.treasury += n * pr.buy;
+      P.gold -= n * pr.buy;
+      if (owner) owner.purse = People.purse(owner) + n * pr.buy; else c.treasury += n * pr.buy; // o dinheiro da loja é do comerciante
       if (raw) c.stock[k] -= n;
       Inv.add(k, n);
       Market.traded(ci, k, n, 'buy');
     } else {
-      n = Math.min(n, Inv.count(k), Math.floor(c.treasury / pr.sell));
-      if (n <= 0) return;
-      P.gold += n * pr.sell; c.treasury -= n * pr.sell;
+      const cash = owner ? People.purse(owner) : c.treasury;
+      n = Math.min(n, Inv.count(k), Math.floor(cash / pr.sell));
+      if (n <= 0) { if (owner) UI.msg(`${owner.name} não tem dinheiro para comprar isso agora (bolsa: ${cash} 🪙).`, 'bad'); return; }
+      P.gold += n * pr.sell;
+      if (owner) owner.purse -= n * pr.sell; else c.treasury -= n * pr.sell;
       if (raw) c.stock[k] += n;
       Inv.add(k, -n);
       Market.traded(ci, k, n, 'sell');
@@ -1452,7 +1471,7 @@ const Game = {
   },
   rebellion(c) {
     const rebel = People.create({ rank: 'ruler', civ: c.id, home: { type: 'castle', civ: c.id }, age: U.rint(30, 50), aff: -80, trait: U.pick(['orgulhoso', 'corajoso']) });
-    c.ruler = 'npc'; c.rulerId = rebel.id; c.rulerName = People.title(rebel) + ' ' + rebel.name; c.atWar = true; c.garrison = 8; c.happy = 55; c.rebel = 0; c.relation = -80; c.tax = 0.12;
+    Heraldry.apply(); c.ruler = 'npc'; c.rulerId = rebel.id; c.rulerName = People.title(rebel) + ' ' + rebel.name; c.atWar = true; c.garrison = 8; c.happy = 55; c.rebel = 0; c.relation = -80; c.tax = 0.12;
     UI.banner(`🔥 Revolta em ${CIV_DEFS[c.id].short}!`);
     UI.msg(`O povo de ${CIV_DEFS[c.id].name} se revoltou e coroou ${c.rulerName}. Você perdeu o reino!`, 'bad');
   },
@@ -1930,6 +1949,7 @@ const Game = {
     document.body.classList.toggle('nonum', !s.numbers);
     document.body.classList.toggle('keysbar', !!s.keysbar && G.state === 'play');
     document.getElementById('keys').classList.toggle('hidden', !s.keysbar || G.state !== 'play');
+    if (s.keysbar) { const k = a => Keys.name(Keys.get(a)); document.getElementById('keys').textContent = `${k('up')}${k('left')}${k('down')}${k('right')} andar · ${k('run')} correr · ${k('attack')} (segure) atacar e coletar · ${k('heavy')} golpe forte · ${k('interact')} interagir · ${k('block')} bloquear · ${k('dodge')} esquivar · ${k('orders')} ordens · ${k('diary')} diário · ${k('inventory')} mochila · ${k('craft')} criar · ${k('build')} construir · ${k('kingdom')} portfólio · ${k('map')} mapa · ${k('eat')} comer · Esc ajustes`; }
   },
   setSetting(k, v) {
     G.settings[k] = ((k === 'uiScale' && v !== 'auto') || k === 'miniSize' || k === 'music' || k === 'sfx') ? +v : v;

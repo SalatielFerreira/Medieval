@@ -3,7 +3,9 @@
 // mudar de lugar e demolir estradas e imóveis, e as três formas de virar chefe de uma vila:
 // fundar, conquistar pela força ou pedir ao rei.
 
-const VILLAGE_R = 16; // raio (em blocos) da área de uma vila
+const VILLAGE_R = 16; // meio lado (em blocos) da área quadrada de uma vila
+// distância "em quadrado": a área da vila é um quadrado de lado 2 × VILLAGE_R + 1, centrado na praça
+const sqDist = (x1, y1, x2, y2) => Math.max(Math.abs(x1 - x2), Math.abs(y1 - y2));
 const ROAD_GROUND = [T.GRASS, T.FOREST, T.HILL, T.SAND, T.SNOW];
 // imóveis públicos que chefes e reis podem erguer dentro das vilas
 const CIVIC = {
@@ -35,7 +37,7 @@ const Urban = {
   myVillages() { return World.villages.map((v, i) => ({ v, i })).filter(x => x.v.lord === 'player'); },
   villageNear(tx, ty, r) {
     let best = -1, bd = r || VILLAGE_R;
-    World.villages.forEach((v, i) => { const d = U.dist(tx, ty, v.x, v.y); if (d <= bd) { bd = d; best = i; } });
+    World.villages.forEach((v, i) => { const d = sqDist(tx, ty, v.x, v.y); if (d <= bd) { bd = d; best = i; } });
     return best;
   },
   // quem manda neste lugar: o rei (todo o território do reino) ou o chefe (a área da vila)
@@ -43,7 +45,7 @@ const Urban = {
     if (G.dungeon || !World.inb(tx, ty)) return null;
     const t = World.terr[World.idx(tx, ty)];
     if (t >= 0 && G.civs[t] && G.civs[t].ruler === 'player') return { kind: 'king', civ: t };
-    for (const { v, i } of this.myVillages()) if (U.dist(tx, ty, v.x, v.y) <= VILLAGE_R) return { kind: 'chief', vi: i, civ: v.civ };
+    for (const { v, i } of this.myVillages()) if (sqDist(tx, ty, v.x, v.y) <= VILLAGE_R) return { kind: 'chief', vi: i, civ: v.civ };
     return null;
   },
   hasAny() { return G.civs.some(c => c.ruler === 'player') || this.myVillages().length > 0; },
@@ -179,7 +181,7 @@ const Urban = {
       const vi = s && s.village !== undefined ? s.village : this.villageNear(cx, cy, VILLAGE_R + 2);
       if (vi < 0 || !World.villages[vi]) return 'Imóveis de vila precisam ficar dentro de uma vila';
       const v = World.villages[vi];
-      if (U.dist(cx, cy, v.x, v.y) > VILLAGE_R + 2) return `Precisa ficar dentro de ${v.name}`;
+      if (sqDist(cx, cy, v.x, v.y) > VILLAGE_R + 2) return `Precisa ficar dentro de ${v.name}`;
       if (a.kind === 'chief' && World.villages[a.vi] !== v) return 'Fora da sua vila';
       return null;
     }
@@ -364,7 +366,7 @@ const Urban = {
     // área onde você manda (vilas suas), contornada de dourado
     for (const { v } of this.myVillages()) {
       ctx.strokeStyle = 'rgba(255,213,74,0.55)'; ctx.lineWidth = 2; ctx.setLineDash([10, 8]);
-      ctx.beginPath(); ctx.arc((v.x + 0.5) * TILE - cx, (v.y + 0.5) * TILE - cy, VILLAGE_R * TILE, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeRect((v.x - VILLAGE_R) * TILE - cx, (v.y - VILLAGE_R) * TILE - cy, (VILLAGE_R * 2 + 1) * TILE, (VILLAGE_R * 2 + 1) * TILE); ctx.setLineDash([]);
     }
     if (m === 'road' || m === 'u:unroad') {
       const err = m === 'road' ? this.roadErr(t.x, t.y) : this.unroadErr(t.x, t.y);
@@ -510,25 +512,47 @@ const Chiefdom = {
 // ====================================================================== capangas de guarda
 // O chefe pode deixar capangas guardando a sua vila e o rei, o castelo. Eles patrulham o lugar,
 // lutam contra quem ameaçar e reforçam a defesa quando um exército ataca. Não contam como seguidores.
-const GUARD_CAP = { village: 6, castle: 12 };
+const GUARD_CAP = { village: 6, castle: 12, spot: 99, away: 4 };
 const Guards = {
   places() {
     return [...Urban.myVillages().map(({ i }) => ({ kind: 'village', vi: i })),
       ...G.civs.filter(c => c.ruler === 'player').map(c => ({ kind: 'castle', civ: c.id }))];
   },
-  key(post) { return post.kind === 'village' ? 'v' + post.vi : 'c' + post.civ; },
-  decode(k) { return k[0] === 'v' ? { kind: 'village', vi: +k.slice(1) } : { kind: 'castle', civ: +k.slice(1) }; },
-  same(a, b) { return !!(a && b) && this.key(a) === this.key(b); },
-  name(post) { return post.kind === 'village' ? (World.villages[post.vi] || {}).name || '?' : 'Castelo de ' + CIV_DEFS[post.civ].short; },
-  valid(post) {
-    if (post.kind === 'village') { const v = World.villages[post.vi]; return !!v && v.lord === 'player'; }
-    return !!G.civs[post.civ] && G.civs[post.civ].ruler === 'player';
+  key(post) { return post.kind === 'spot' ? 's' + post.x + ',' + post.y : post.kind === 'village' ? 'v' + post.vi : 'c' + post.civ; },
+  decode(k) {
+    if (k[0] === 's') { const [x, y] = k.slice(1).split(',').map(Number); return { kind: 'spot', x, y }; }
+    return k[0] === 'v' ? { kind: 'village', vi: +k.slice(1) } : { kind: 'castle', civ: +k.slice(1) };
   },
-  cap(post) { return GUARD_CAP[post.kind]; },
+  // é seu (vila que você chefia ou castelo do seu reino)? os outros lugares são só "esperar lá"
+  mine(post) {
+    if (post.kind === 'village') { const v = World.villages[post.vi]; return !!v && v.lord === 'player'; }
+    if (post.kind === 'castle') return !!G.civs[post.civ] && G.civs[post.civ].ruler === 'player';
+    return false;
+  },
+  // o lugar onde o jogador está agora
+  here() { return { kind: 'spot', x: Math.floor(P.x / TILE), y: Math.floor(P.y / TILE) }; },
+  // outros lugares para mandar o capanga esperar: as vilas e cidades mais perto de você
+  nearPlaces(n) {
+    const L = [...World.villages.map((v, i) => ({ post: { kind: 'village', vi: i }, x: v.x, y: v.y })), ...G.civs.map(c => ({ post: { kind: 'castle', civ: c.id }, x: World.capitals[c.id].x, y: World.capitals[c.id].y }))];
+    return L.filter(x => !this.mine(x.post)).sort((a, b) => U.dist(a.x, a.y, P.x / TILE, P.y / TILE) - U.dist(b.x, b.y, P.x / TILE, P.y / TILE)).slice(0, n).map(x => x.post);
+  },
+  same(a, b) { return !!(a && b) && this.key(a) === this.key(b); },
+  name(post) {
+    if (post.kind === 'spot') { const pl = MapView.placeAt(post.x, post.y, 14); return pl ? 'perto de ' + pl.name : 'um posto no caminho'; }
+    return post.kind === 'village' ? (World.villages[post.vi] || {}).name || '?' : (post.kind === 'castle' && this.mine(post) ? 'Castelo de ' : 'Cidade de ') + CIV_DEFS[post.civ].short;
+  },
+  valid(post) {
+    if (post.kind === 'spot') return World.inb(post.x, post.y);
+    if (post.mine && !this.mine(post)) return false; // era seu e você perdeu: o guarda volta
+    if (post.kind === 'village') return !!World.villages[post.vi];
+    return !!G.civs[post.civ];
+  },
+  cap(post) { return post.kind === 'spot' ? GUARD_CAP.spot : this.mine(post) ? GUARD_CAP[post.kind] : GUARD_CAP.away; },
   at(post) { return G.people.filter(p => p.alive && p.capanga && this.same(p.post, post)); },
   all() { return G.people.filter(p => p.alive && p.capanga && p.post); },
   // ponto de guarda (em blocos): a praça da vila ou a frente do portão do castelo
   spot(post) {
+    if (post.kind === 'spot') return { x: post.x + 0.5, y: post.y + 0.5 };
     if (post.kind === 'village') { const v = World.villages[post.vi]; return { x: v.x + 0.5, y: v.y + 0.5 }; }
     const d = World.capitals[post.civ].door; return { x: d.x + 0.5, y: d.y + 2.5 };
   },
@@ -539,10 +563,11 @@ const Guards = {
     if (this.same(p.post, post)) return false;
     if (this.at(post).length >= this.cap(post)) { UI.msg(`${this.name(post)} já tem ${this.cap(post)} guardas, o máximo.`, 'bad'); return false; }
     this.despawn(p);
-    p.post = { kind: post.kind, vi: post.vi, civ: post.civ };
+    p.post = post.kind === 'spot' ? { kind: 'spot', x: post.x, y: post.y } : { kind: post.kind, vi: post.vi, civ: post.civ, mine: this.mine(post) };
     const s = this.spot(post);
     if (U.dist(P.x / TILE, P.y / TILE, s.x, s.y) < 30) this.spawn(p);
-    UI.msg(`🛡️ ${People.full(p)} vai montar guarda em ${this.name(post)}.`, 'gold');
+    UI.msg(post.kind === 'spot' ? `🛡️ ${p.name} fica aqui de guarda. Volte e converse para ${p.sex === 'f' ? 'ela' : 'ele'} seguir você de novo.`
+      : `🛡️ ${People.full(p)} vai ${this.mine(post) ? 'montar guarda' : 'esperar você'} em ${this.name(post)}.`, 'gold');
     return true;
   },
   recall(p) {
@@ -574,7 +599,7 @@ const Guards = {
   // força dos guardas no lugar atacado (para batalhas resolvidas longe do jogador)
   power(target) {
     const post = target.kind === 'gate' ? { kind: 'castle', civ: target.civ } : target.kind === 'village' ? { kind: 'village', vi: target.vi } : null;
-    if (!post) return 0;
+    if (!post || !this.mine(post)) return 0;
     return this.at(post).reduce((s, p) => s + 2 + People.capangaStats(p).dmg / 12, 0);
   },
   // quem perdeu a vila ou o castelo volta a seguir o jogador

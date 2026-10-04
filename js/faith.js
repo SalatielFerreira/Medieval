@@ -54,10 +54,60 @@ const Faith = {
     Progress.add('donated', n);
   },
   bless() {
+    if (this.sins()) { UI.msg('O padre balança a cabeça: "Primeiro a confissão, depois a bênção."', 'bad'); return; }
     const cost = this.piety() >= 50 ? 0 : 40;
     if (P.gold < cost) { UI.msg(`A bênção pede uma oferta de ${cost} 🪙.`, 'bad'); return; }
     P.gold -= cost; Farm.addBuff('holy'); this.addPiety(1);
     UI.msg(`✨ O padre abençoa você${cost ? '' : ' (de graça, pela sua devoção)'}.`, 'gold');
+  },
+  // estado da igreja no jogo salvo: missa do mês, missa dos antepassados, pecados, dízimo e esmolas
+  C() { return G.church || (G.church = { sins: 0, tithe: false }); },
+  sins() { return this.C().sins || 0; },
+  addSin(n, why) { const c = this.C(); c.sins = (c.sins || 0) + n; if (why && c.sins === n) UI.msg(`⛪ ${why} pesa na sua consciência. Uma confissão na igreja alivia.`); },
+  // missa: uma por mês, com os moradores da vila
+  mass(vi) {
+    const c = this.C();
+    if (c.massDay === G.day) { UI.msg('A missa deste mês já foi. Volte no próximo.'); return; }
+    c.massDay = G.day; this.addPiety(3); Farm.addBuff('blessed');
+    if (vi !== undefined && vi !== null) for (const q of People.residents(vi)) q.aff = Math.min(100, q.aff + 2);
+    UI.msg(`🔔 Você assistiu à missa${vi !== undefined && vi !== null ? ' com o povo de ' + World.villages[vi].name : ''}. Os moradores gostaram de ver você ali.`, 'gold');
+  },
+  // confissão: a penitência é uma esmola por pecado; depois o padre volta a abençoar
+  penance() { return this.sins() * 15; },
+  confess() {
+    const n = this.sins();
+    if (!n) { UI.msg('O padre sorri: "Sua alma está em paz, meu filho."'); return; }
+    const cost = this.penance();
+    if (P.gold < cost) { UI.msg(`A penitência pede ${cost} 🪙 em esmolas.`, 'bad'); return; }
+    P.gold -= cost; this.C().sins = 0; this.addPiety(5); Farm.addBuff('blessed');
+    UI.msg(`🕊️ Você se confessou e cumpriu a penitência (${cost} 🪙 em esmolas). Seus pecados foram perdoados.`, 'gold');
+  },
+  // esmola aos pobres da vila: os mendigos agradecem e um deles consegue recomeçar a vida
+  alms(vi) {
+    const c = this.C();
+    if (P.gold < 30) { UI.msg('A esmola é de 30 🪙.', 'bad'); return; }
+    if (c.almsDay === G.day) { UI.msg('Você já deu esmolas este mês.'); return; }
+    P.gold -= 30; c.almsDay = G.day; this.addPiety(3);
+    const poor = vi !== undefined && vi !== null ? People.residents(vi).filter(q => q.rank === 'beggar') : [];
+    for (const q of poor) q.aff = Math.min(100, q.aff + 15);
+    const v = World.villages[vi]; if (v) v.prosper = Math.min(30, (v.prosper || 0) + 0.5);
+    if (poor.length && Math.random() < 0.5) { const q = poor[0]; q.rank = 'peasant'; UI.msg(`💛 Com a sua ajuda, ${q.name} deixou de mendigar e voltou a trabalhar no campo.`, 'gold'); }
+    else UI.msg(`💛 Você deu esmolas aos pobres${v ? ' de ' + v.name : ''}. ${poor.length ? poor.length + (poor.length === 1 ? ' mendigo agradece.' : ' mendigos agradecem.') : 'As famílias mais pobres agradecem.'}`, 'gold');
+  },
+  // dízimo: 5% do seu ouro todo mês (até 100), para a igreja do reino onde você estiver
+  tithe(on) { this.C().tithe = !!on; UI.msg(on ? '⛪ Você passou a pagar o dízimo: 5% do seu ouro todo mês (no máximo 100).' : 'Você parou de pagar o dízimo.', on ? 'gold' : ''); },
+  // missa pelos antepassados: uma por ano
+  requiem() {
+    const c = this.C(), year = Math.floor(G.day / 12);
+    if (!(G.dynasty || []).length) return;
+    if (c.requiemYear === year) { UI.msg('Os antepassados já foram lembrados este ano.'); return; }
+    if (P.gold < 50) { UI.msg('A missa pelos antepassados pede 50 🪙.', 'bad'); return; }
+    P.gold -= 50; c.requiemYear = year; this.addPiety(5); Court.addFame(2); Farm.addBuff('holy');
+    UI.msg(`🕯️ Velas acesas por ${G.dynasty.map(h => h.name).join(', ')}. A memória da Casa ${G.surname} é honrada.`, 'gold');
+  },
+  monthTick() {
+    const c = this.C();
+    if (c.tithe && P.gold > 0) { const n = Math.min(100, Math.max(1, Math.round(P.gold * 0.05))); P.gold -= n; this.addPiety(2); Game.note(`⛪ Dízimo: −${n} 🪙 · +2 de devoção.`); }
   },
   // casamento na igreja: dispensa o anel (para quem já namora e tem romance 70+)
   canWed(p) { return p && p.alive && p.dating && p.rom >= 70; },

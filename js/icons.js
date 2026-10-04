@@ -38,3 +38,81 @@ const ICON_PATHS = {
 function icon(name, cls) {
   return `<svg class="ico ${cls || ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ''}</svg>`;
 }
+
+// ================================================================ ícones desenhados dos itens (armas, ferramentas, roupas e materiais)
+// Cada item ganha um desenho com a cor do seu material: um machado de bronze é diferente de um de aço.
+// Os desenhos aparecem nas janelas (mochila, criar, lojas...); as mensagens continuam com o emoji.
+const MAT = {
+  stone: ['#9a9a98', '#6e6e6c', '#c9c9c4'], bronze: ['#cd8a4a', '#8f5a28', '#f2bd80'], iron: ['#8d949c', '#5d646c', '#c4cad0'],
+  steel: ['#c9d4de', '#7f8c99', '#f5f9fc'], silver: ['#dde2e8', '#9aa3ad', '#ffffff'], gold: ['#f2c14a', '#b8862a', '#fff0a8'],
+  bone: ['#e6dcc4', '#a89c80', '#fff8e6'], wood: ['#9a6a3a', '#6b4420', '#c99a64'], yew: ['#7a4a2a', '#4e2c14', '#b07a4a'],
+  crystal: ['#9fe3f0', '#4aa9c4', '#effcff'], dragon: ['#c0402e', '#7a1e14', '#ff9a7a'], ancient: ['#78b4a2', '#3e6a5e', '#cdf2e5'],
+  troll: ['#6f7a4a', '#454d2a', '#a8b878'], leather: ['#8a5a2e', '#5a3618', '#bb8850'], hard: ['#5e3416', '#3a1e0a', '#8f5a2e'],
+  linen: ['#d8cfb4', '#a89f84', '#f4ecd6'], wool: ['#b9a27a', '#7f6a48', '#e2d0aa'], silk: ['#e2c6f0', '#a07ab8', '#fbf2ff'],
+  wolf: ['#8d8f96', '#55575c', '#c8cad0'], fox: ['#d0682a', '#8a3e14', '#f8c89e'], bear: ['#5a3a22', '#36220f', '#8e6442'],
+  rabbit: ['#e0d4bc', '#a89a80', '#fffaee'], copper: ['#d9773a', '#9a4a1a', '#f6b07a'], tin: ['#cfd3d6', '#8f969c', '#ffffff'], horn: ['#d8c8a0', '#8a7650', '#f8ecc8'],
+};
+const ART_ITEMS = {
+  // ferramentas
+  stone_axe: ['axe', 'stone'], bronze_axe: ['axe', 'bronze'], iron_axe: ['axe', 'iron'], steel_axe: ['axe', 'steel'],
+  stone_pick: ['pick', 'stone'], bronze_pick: ['pick', 'bronze'], iron_pick: ['pick', 'iron'], steel_pick: ['pick', 'steel'], hoe: ['hoe', 'iron'],
+  // armas
+  battle_axe: ['axe2', 'iron'], war_axe: ['axe2', 'steel'], bronze_sword: ['sword', 'bronze'], iron_sword: ['sword', 'iron'], steel_sword: ['sword', 'steel'],
+  silver_sword: ['sword', 'silver'], royal_sword: ['sword', 'gold'], ancient_blade: ['sword', 'ancient'], bone_knife: ['knife', 'bone'],
+  stone_spear: ['spear', 'stone'], iron_spear: ['spear', 'iron'], club: ['club', 'wood'], troll_club: ['club', 'troll'], iron_mace: ['mace', 'iron'],
+  short_bow: ['bow', 'wood'], yew_bow: ['bow', 'yew'], horn_bow: ['bow', 'horn'], bear_claws: ['claw', 'bone'],
+  // escudos e cabeça
+  wood_shield: ['shield', 'wood'], iron_shield: ['shield', 'iron'], steel_shield: ['shield', 'steel'],
+  linen_hood: ['hood', 'linen'], leather_cap: ['hood', 'leather'], silk_hood: ['hood', 'silk'], fox_hood: ['hood', 'fox'],
+  bronze_helm: ['helm', 'bronze'], iron_helm: ['helm', 'iron'], steel_helm: ['helm', 'steel'], antler_helm: ['antler', 'bone'], royal_helm: ['crown', 'gold'], crystal_crown: ['crown', 'crystal'],
+  // corpo, pernas e pés
+  linen_tunic: ['tunic', 'linen'], leather_jerkin: ['tunic', 'leather'], hard_jerkin: ['tunic', 'hard'], wool_cloak: ['cloak', 'wool'], wolf_cloak: ['cloak', 'wolf'], bear_coat: ['cloak', 'bear'],
+  bronze_cuirass: ['cuirass', 'bronze'], chainmail: ['mail', 'iron'], plate_armor: ['cuirass', 'steel'], dragon_mail: ['mail', 'dragon'],
+  linen_pants: ['pants', 'linen'], leather_breeches: ['pants', 'leather'], bronze_greaves: ['greaves', 'bronze'], iron_greaves: ['greaves', 'iron'], steel_greaves: ['greaves', 'steel'],
+  leather_boots: ['boots', 'leather'], rabbit_boots: ['boots', 'rabbit'], bronze_boots: ['iboots', 'bronze'], iron_boots: ['iboots', 'iron'], steel_sabatons: ['iboots', 'steel'],
+  // materiais
+  bronze_bar: ['bar', 'bronze'], iron_bar: ['bar', 'iron'], steel_bar: ['bar', 'steel'], silver_bar: ['bar', 'silver'], gold_bar: ['bar', 'gold'],
+  copper_ore: ['ore', 'copper'], tin_ore: ['ore', 'tin'], iron_ore: ['ore', 'iron'], silver_ore: ['ore', 'silver'], gold_ore: ['nugget', 'gold'],
+  leather: ['hide', 'leather'], hard_leather: ['hide', 'hard'], wolf_pelt: ['pelt', 'wolf'], fox_pelt: ['pelt', 'fox'], bear_pelt: ['pelt', 'bear'], rabbit_hide: ['pelt', 'rabbit'],
+  goat_horn: ['horn', 'horn'], bear_claw: ['clawi', 'bone'],
+};
+const ART_SHAPES = {
+  // cabo de madeira na diagonal + cabeça do material
+  axe: (m, d, l) => `<path d="M9 28 L22 9" stroke="#6b4420" stroke-width="3.2" stroke-linecap="round"/><path d="M17 6 Q27 4 28 14 Q22 13 19 16 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M20 8 Q25 7 26 11" stroke="${l}" stroke-width="1.2" fill="none"/>`,
+  axe2: (m, d, l) => `<path d="M8 29 L22 7" stroke="#5a3618" stroke-width="3.4" stroke-linecap="round"/><path d="M18 4 Q30 4 29 17 Q23 14 20 16 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M19 9 Q10 6 9 15 Q14 12 17 13 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M21 7 Q27 7 27 12" stroke="${l}" stroke-width="1.2" fill="none"/>`,
+  pick: (m, d, l) => `<path d="M10 28 L20 10" stroke="#6b4420" stroke-width="3.2" stroke-linecap="round"/><path d="M5 9 Q16 1 29 12 L27 14 Q17 6 7 11 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M9 8 Q16 4 23 8" stroke="${l}" stroke-width="1.1" fill="none"/>`,
+  hoe: (m, d, l) => `<path d="M8 29 L22 8" stroke="#6b4420" stroke-width="3" stroke-linecap="round"/><path d="M19 7 L28 7 L27 13 L21 11 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/>`,
+  sword: (m, d, l) => `<path d="M24 4 L27 5 L14 20 L11 18 Z" fill="${m}" stroke="${d}" stroke-width="1.2"/><path d="M24 5 L15 16" stroke="${l}" stroke-width="1"/><path d="M8 15 L16 23" stroke="#b8862a" stroke-width="3" stroke-linecap="round"/><path d="M11 21 L6 26" stroke="#5a3618" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="27" r="2.2" fill="${d}"/>`,
+  knife: (m, d, l) => `<path d="M22 6 Q27 8 20 16 L16 13 Z" fill="${m}" stroke="${d}" stroke-width="1.2"/><path d="M16 14 L8 24" stroke="#6b4420" stroke-width="4" stroke-linecap="round"/>`,
+  spear: (m, d, l) => `<path d="M6 29 L23 9" stroke="#7a5230" stroke-width="2.6" stroke-linecap="round"/><path d="M22 3 L29 3 L28 10 L22 12 L20 10 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/>`,
+  club: (m, d, l) => `<path d="M8 28 L16 17" stroke="#6b4420" stroke-width="3.4" stroke-linecap="round"/><path d="M14 18 Q12 8 21 5 Q29 5 27 13 Q23 20 14 18 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><circle cx="21" cy="10" r="1.4" fill="${d}"/><circle cx="24" cy="14" r="1.2" fill="${d}"/>`,
+  mace: (m, d, l) => `<path d="M7 28 L17 15" stroke="#5a3618" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="11" r="7" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M20 2 L20 5 M27 11 L29 11 M20 17 L20 20 M13 11 L11 11 M25 6 L27 4 M25 16 L27 18" stroke="${d}" stroke-width="2"/><circle cx="18" cy="9" r="2" fill="${l}"/>`,
+  bow: (m, d, l) => `<path d="M9 4 Q28 16 9 28" fill="none" stroke="${m}" stroke-width="3.2" stroke-linecap="round"/><path d="M9 4 Q28 16 9 28" fill="none" stroke="${d}" stroke-width="1" stroke-dasharray="2 4"/><path d="M9 4 L9 28" stroke="#efe6cf" stroke-width="1"/><path d="M5 16 L22 16" stroke="#8a6a40" stroke-width="1.6"/><path d="M22 16 L18 13 M22 16 L18 19" stroke="#c9c9c4" stroke-width="1.6"/>`,
+  claw: (m, d, l) => `<path d="M8 24 Q10 14 17 12 L22 14 Q18 22 12 26 Z" fill="#5a3618"/><path d="M15 12 Q17 4 23 3 Q20 8 19 12 Z M19 13 Q24 7 29 8 Q24 11 22 15 Z M21 16 Q27 13 30 16 Q25 17 22 19 Z" fill="${m}" stroke="${d}" stroke-width="1"/>`,
+  shield: (m, d, l) => `<path d="M16 3 L27 7 Q27 20 16 29 Q5 20 5 7 Z" fill="${m}" stroke="${d}" stroke-width="1.8"/><path d="M16 6 L16 26 M8 12 L24 12" stroke="${d}" stroke-width="1.4" opacity=".6"/><circle cx="16" cy="13" r="3" fill="${l}" stroke="${d}"/>`,
+  hood: (m, d, l) => `<path d="M6 26 Q5 8 16 5 Q27 8 26 26 L21 26 Q22 15 16 14 Q10 15 11 26 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M11 25 Q10 16 16 15 Q22 16 21 25 Z" fill="#2a1e14" opacity=".55"/><path d="M10 9 Q16 5 22 9" stroke="${l}" stroke-width="1.3" fill="none"/>`,
+  helm: (m, d, l) => `<path d="M6 22 Q6 6 16 5 Q26 6 26 22 Z" fill="${m}" stroke="${d}" stroke-width="1.5"/><rect x="5" y="20" width="22" height="5" rx="1.5" fill="${d}"/><path d="M15 9 L15 22 L17 22 L17 9 Z" fill="${d}"/><path d="M9 12 Q12 7 16 7" stroke="${l}" stroke-width="1.4" fill="none"/>`,
+  antler: (m, d, l) => `<path d="M8 24 Q8 12 16 12 Q24 12 24 24 Z" fill="#8a5a2e" stroke="#5a3618" stroke-width="1.4"/><path d="M11 13 L7 5 M8 8 L4 7 M21 13 L25 5 M24 8 L28 7" stroke="${m}" stroke-width="2.4" stroke-linecap="round"/>`,
+  crown: (m, d, l) => `<path d="M5 24 L5 11 L11 17 L16 7 L21 17 L27 11 L27 24 Z" fill="${m}" stroke="${d}" stroke-width="1.5"/><rect x="5" y="22" width="22" height="4" fill="${d}"/><circle cx="16" cy="18" r="2" fill="#c0302a"/><circle cx="10" cy="20" r="1.4" fill="#2a6ec0"/><circle cx="22" cy="20" r="1.4" fill="#2a9a4a"/>`,
+  tunic: (m, d, l) => `<path d="M10 5 L13 7 Q16 9 19 7 L22 5 L29 10 L25 15 L23 13 L23 28 L9 28 L9 13 L7 15 L3 10 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M13 7 Q16 12 19 7" stroke="${d}" stroke-width="1.2" fill="none"/><path d="M9 20 L23 20" stroke="${d}" stroke-width="2"/>`,
+  cloak: (m, d, l) => `<path d="M11 4 L21 4 L27 28 L5 28 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M11 4 Q16 9 21 4" fill="${l}"/><circle cx="16" cy="7" r="2" fill="#d9b45a" stroke="#8a6a20"/><path d="M12 12 L9 27 M20 12 L23 27 M16 12 L16 27" stroke="${d}" stroke-width="1" opacity=".6"/>`,
+  cuirass: (m, d, l) => `<path d="M8 6 L13 5 Q16 8 19 5 L24 6 L25 18 Q16 30 7 18 Z" fill="${m}" stroke="${d}" stroke-width="1.5"/><path d="M16 9 L16 25" stroke="${d}" stroke-width="1.2"/><path d="M10 10 Q13 9 14 12" stroke="${l}" stroke-width="1.4" fill="none"/><path d="M9 18 Q16 22 23 18" stroke="${d}" stroke-width="1.2" fill="none"/>`,
+  mail: (m, d, l) => `<path d="M10 5 L13 7 Q16 9 19 7 L22 5 L28 10 L24 14 L23 28 L9 28 L8 14 L4 10 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/>` + [10, 14, 18, 22, 26].map(y => [11, 15, 19].map(x => `<circle cx="${x + (y % 8 ? 2 : 0)}" cy="${y}" r="1.6" fill="none" stroke="${d}" stroke-width=".9"/>`).join('')).join(''),
+  pants: (m, d, l) => `<path d="M8 4 L24 4 L25 28 L18 28 L16 13 L14 28 L7 28 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><rect x="8" y="4" width="16" height="3" fill="${d}"/>`,
+  greaves: (m, d, l) => `<path d="M9 4 L14 4 L14 27 L8 27 Z M18 4 L23 4 L24 27 L18 27 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M9 14 L14 14 M18 14 L23 14" stroke="${d}" stroke-width="2"/><path d="M10 6 L10 12 M19 6 L19 12" stroke="${l}" stroke-width="1.2"/>`,
+  boots: (m, d, l) => `<path d="M7 5 L15 5 L15 21 L26 22 Q28 27 25 28 L7 28 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M7 26 L26 26" stroke="${d}" stroke-width="2"/><path d="M7 8 L15 8" stroke="${l}" stroke-width="2"/>`,
+  iboots: (m, d, l) => `<path d="M7 5 L15 5 L15 20 L25 21 Q29 27 25 28 L7 28 Z" fill="${m}" stroke="${d}" stroke-width="1.5"/><path d="M7 10 L15 10 M7 15 L15 15 M15 20 L15 28" stroke="${d}" stroke-width="1.3"/><path d="M9 6 L9 26" stroke="${l}" stroke-width="1.2"/>`,
+  bar: (m, d, l) => `<path d="M4 20 L10 12 L28 12 L22 20 Z" fill="${l}" stroke="${d}" stroke-width="1.2"/><path d="M4 20 L22 20 L22 26 L4 26 Z" fill="${m}" stroke="${d}" stroke-width="1.2"/><path d="M22 20 L28 12 L28 18 L22 26 Z" fill="${d}"/>`,
+  ore: (m, d, l) => `<path d="M5 24 L8 12 L16 7 L25 10 L28 21 L20 27 L10 27 Z" fill="#7a7a78" stroke="#4e4e4c" stroke-width="1.3"/><circle cx="13" cy="15" r="2.6" fill="${m}"/><circle cx="20" cy="19" r="2.2" fill="${m}"/><circle cx="17" cy="11" r="1.6" fill="${l}"/><circle cx="11" cy="22" r="1.6" fill="${m}"/>`,
+  nugget: (m, d, l) => `<path d="M7 20 Q6 11 14 9 Q22 6 26 13 Q29 21 21 25 Q11 28 7 20 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M12 13 Q16 10 20 12" stroke="${l}" stroke-width="1.6" fill="none"/>`,
+  hide: (m, d, l) => `<path d="M6 7 Q11 9 16 6 Q21 9 26 7 Q24 13 27 17 Q23 20 25 26 Q20 24 16 27 Q12 24 7 26 Q9 20 5 17 Q8 13 6 7 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M11 12 Q16 14 21 12 M11 20 Q16 18 21 20" stroke="${l}" stroke-width="1" fill="none"/>`,
+  pelt: (m, d, l) => `<path d="M5 9 Q10 5 16 8 Q22 5 27 9 Q25 15 28 20 Q22 21 24 27 Q18 24 16 28 Q14 24 8 27 Q10 21 4 20 Q7 15 5 9 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M9 12 L11 14 M14 11 L15 13 M19 11 L18 13 M23 12 L21 14 M12 20 L13 22 M19 20 L18 22" stroke="${d}" stroke-width="1.2"/><path d="M13 16 Q16 14 19 16" stroke="${l}" stroke-width="1.6" fill="none"/>`,
+  horn: (m, d, l) => `<path d="M7 26 Q5 12 14 6 Q22 2 27 8 Q20 7 17 12 Q13 18 13 26 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M9 20 L13 20 M9 15 L14 15 M12 10 L16 11" stroke="${d}" stroke-width="1.2"/>`,
+  clawi: (m, d, l) => `<path d="M8 27 Q6 14 15 6 Q24 2 27 6 Q19 9 16 16 Q13 22 14 27 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M12 22 Q12 14 18 9" stroke="${l}" stroke-width="1.2" fill="none"/>`,
+};
+const ART_CACHE = {};
+function itemArt(k) {
+  if (k in ART_CACHE) return ART_CACHE[k];
+  const a = ART_ITEMS[k], shape = a && ART_SHAPES[a[0]], pal = a && MAT[a[1]];
+  return (ART_CACHE[k] = shape && pal ? `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">${shape(pal[0], pal[1], pal[2])}</svg>` : null);
+}

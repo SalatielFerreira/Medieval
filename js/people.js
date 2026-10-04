@@ -396,6 +396,7 @@ const People = {
     if (p.spouse === 'player') G.family.spouse = null;
     const known = p.met || p.kin || p.aff >= 10;
     if (known) UI.msg(`✝ ${this.full(p)} (${this.title(p)}) morreu${cause ? ' — ' + cause : ''}.`, 'bad');
+    if (cause === 'morto por você' && !p.hostile && !Court.isEnemy(Families.of(p))) Faith.addSin(1, 'Tirar uma vida inocente');
     // família lamenta (e culpa quem matou)
     if (cause === 'morto por você') for (const id of [...p.children, ...(p.spouse !== null && p.spouse !== 'player' ? [p.spouse] : []), ...p.parents]) {
       const r = G.people[id];
@@ -408,9 +409,46 @@ const People = {
       if (heir) {
         heir.rank = p.rank; heir.home = p.home;
         if (known || p.rank === 'ruler') UI.msg(`${this.full(heir)} herdou o ofício de ${this.title(heir)}.`, 'gold');
-      } else if (p.rank !== 'ruler' && known) UI.msg(`Sem herdeiros, o ofício de ${RANKS[p.rank][p.sex]} de ${this.homeName(p)} ficou vago.`, 'bad');
+      } else if (p.rank !== 'ruler') this.vacant(p, known);
       if (p.rank === 'ruler' && p.civ >= 0) this.succeed(p.civ, heir, p);
     }
+  },
+  // bolsa do comerciante: o dinheiro da loja é dele (não do reino). Começa conforme o ofício e rende todo mês.
+  PURSE: { merchant: [350, 900], smith: [250, 700], lumber: [180, 500], mason: [180, 500], innkeeper: [220, 600], hunter: [120, 350] },
+  purse(p) {
+    if (!p) return 0;
+    if (p.purse === undefined) { const r = this.PURSE[p.rank] || [100, 300]; p.purse = U.rint(r[0], Math.round((r[0] + r[1]) / 2)); }
+    return p.purse;
+  },
+  purseTick() {
+    for (const p of G.people) {
+      if (!p.alive || !this.PURSE[p.rank]) continue;
+      const r = this.PURSE[p.rank], cur = this.purse(p);
+      if (cur < r[1]) p.purse = Math.min(r[1], cur + Math.round(r[0] * U.rnd(0.08, 0.16)));
+    }
+  },
+  // ofício sem herdeiro: o rei escolhe um morador sem emprego da mesma vila para cuidar da loja
+  // (rei NPC escolhe na hora; no reino do jogador, o ofício fica vago até você nomear alguém — Portfólio → seu reino)
+  shopCandidates(vi, rank) {
+    return this.residents(vi).filter(q => q.age >= 18 && (q.rank === 'peasant' || q.rank === 'wanderer' || q.rank === 'beggar') && !q.kin && q.spouse !== 'player' && !q.capanga && !Families.isChief(q))
+      .sort((a, b) => (b.age < 50) - (a.age < 50) || b.aff - a.aff);
+  },
+  appoint(q, rank, by) {
+    q.rank = rank;
+    if (q.met || q.aff >= 10) UI.msg(`🏪 ${by} nomeou ${this.full(q)} como ${RANKS[rank][q.sex]} de ${this.homeName(q)}.`, 'gold');
+  },
+  vacant(p, known) {
+    if (p.home.type !== 'village' || !World.villages[p.home.idx]) { if (known) UI.msg(`Sem herdeiros, o ofício de ${RANKS[p.rank][p.sex]} de ${this.homeName(p)} ficou vago.`, 'bad'); return; }
+    const vi = p.home.idx, c = G.civs[World.villages[vi].civ], v = World.villages[vi];
+    if (v.free || (c && c.ruler === 'player') || v.lord === 'player') {
+      G.vacancies = (G.vacancies || []).filter(x => !(x.vi === vi && x.rank === p.rank));
+      G.vacancies.push({ vi, rank: p.rank, day: G.day });
+      UI.msg(`🏪 O ofício de ${RANKS[p.rank][p.sex]} de ${v.name} ficou sem dono. Escolha quem vai cuidar da loja (Portfólio → Vilas e guardas).`, 'gold', true);
+      return;
+    }
+    const q = this.shopCandidates(vi, p.rank)[0];
+    if (q) this.appoint(q, p.rank, c ? c.rulerName : 'A coroa');
+    else if (known) UI.msg(`Sem herdeiros, o ofício de ${RANKS[p.rank][p.sex]} de ${v.name} ficou vago.`, 'bad');
   },
   succeed(ci, heir, old) {
     const c = G.civs[ci];

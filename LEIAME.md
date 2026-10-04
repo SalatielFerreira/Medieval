@@ -91,6 +91,19 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Fundar o próprio reino:** quando a sua vila livre chega ao nível 3, erga o **Castelo** (Construir → Moradia, depois do Casarão; 3000 🪙 e materiais). Nasce o "Reino <sobrenome>" com castelo, guarnição, território e diplomacia. Um reino fundado por vez: se ele cair, dá para fundar outro.
+- **Reino conquistado leva a sua marca:** quem já é rei e toma outro reino passa a usar nele a bandeira, o brasão e a cor do reino principal (os dois continuam reinos diferentes, com relações próprias). Dá para voltar ao brasão próprio na aba Bandeira e brasão.
+- **Capangas de guarda em qualquer lugar:** "Ficar de guarda ou esperar" deixa o capanga parado onde você está, numa vila ou castelo seu, ou esperando numa vila ou cidade qualquer. Converse com ele lá para ele voltar a seguir você.
+- **Estradas dos moradores:** as casas, lojas, capelas e empreendimentos das vilas são ligados à estrada; todo mês os moradores abrem caminhos até o que ainda não tem acesso.
+- **Vila em quadrado:** a área onde o chefe constrói é um quadrado (mais fácil de cercar). Muros se emendam com os vizinhos e ganham uma **torrezinha** nos cantos.
+- **Reis NPC fundam vilas** quando uma vila do reino lota, e **escolhem um morador sem emprego** para a loja cujo dono morreu sem filho (nas suas vilas e reinos, quem escolhe é você: Portfólio → Vilas e guardas).
+- **Dinheiro do comerciante:** cada loja tem a bolsa do próprio dono (o que você gasta vai para ele, e ele só compra o que puder pagar). O tesouro do reino fica para o reino.
+- **Igreja nova:** missa do mês, oração, bênção, missa pelos antepassados, confissão (vidas inocentes e caravanas saqueadas viram pecados), casamento, batismo, esmolas aos pobres, doações, dízimo mensal e peregrinações.
+- **Conversa nova:** retrato grande, o que a pessoa disse por último e as ações em grupos (Conversa, Coração, Trabalho, Casas).
+- **Teclas à sua escolha:** Ajustes → Controles (computador): clique numa ação e aperte a tecla nova.
+- **Mais animais e materiais:** raposa, coelho, cabra montesa e urso, com peles, chifres e garras para novas armas (lança e maça de ferro, arco composto de chifre, garras de urso) e roupas (capuz de raposa, botas de coelho, gibão de couro curtido, casaco de urso). Armas, ferramentas, roupas e materiais ganharam ícones desenhados com a cor do material.
+
+
 - **Corte do rei:** cada reino mede o seu reconhecimento (serviços prestados, fama e relação). Com reconhecimento 40+ e relação 40+, o rei convida você para a corte. Na corte você recebe salário todo mês, escolhe um cargo conforme o reconhecimento (Conselheiro, Tesoureiro Real, General do Rei ou Embaixador), pede audiências ao rei, pede escolta (General) e propõe alianças, paz ou guerra (Embaixador). É preciso aparecer no castelo pelo menos a cada 3 meses; guerra com o reino ou relação muito baixa tiram você da corte.
 - **Bandeira e brasão:** cada reino tem a sua bandeira (tremulando nas torres do castelo e na arena) e o seu brasão (sobre o portão do castelo e nas janelas). Quando você é o rei, a aba **Reino → Bandeira e brasão** deixa mudar o nome do reino, a cor (fronteiras, mapa, telhados e guardas), o metal (segunda cor), o desenho da bandeira, a divisão do escudo e o símbolo. Tudo fica no jogo salvo e dá para voltar ao original.
 - **Tudo renasce em 1 ano:** arbustos de frutas, linho, ervas e argila agora também levam 1 ano do jogo para voltar, como árvores, pedras e minérios.

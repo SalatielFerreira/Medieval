@@ -60,6 +60,9 @@ const Towns = {
       v.level = lvl;
       this.show(v);
     });
+    NpcRoads.tick(); // moradores abrem caminhos até as casas e lojas
+    Faith.monthTick();
+    People.purseTick(); // as lojas rendem para os próprios donos
   },
 };
 
@@ -140,7 +143,7 @@ const Caravans = {
     for (const it of c.goods) Inv.add(it.k, it.n);
     UI.msg(`Você saqueou a caravana: ${g} 🪙 e ${c.goods.map(x => x.n + ' ' + ITEMS[x.k].name).join(', ')}.`, 'gold');
     c.done = true; c.entGone = true;
-    Progress.add('caravansRobbed');
+    Progress.add('caravansRobbed'); Faith.addSin(1, 'Saquear uma caravana');
   },
   // movimento da entidade da caravana pela estrada
   move(e, dt) {
@@ -272,4 +275,74 @@ const NPCWork = {
     if (G.stats) G.stats.npcGathered = (G.stats.npcGathered || 0) + c.n;
   },
   toolOf(e) { const w = e.work; return w && w.mode === 'work' && World.obj[w.i] ? OBJ[World.obj[w.i]].tool : null; },
+};
+
+// ================================================================ estradas dos moradores
+// Os moradores ligam as casas, lojas, capelas e empreendimentos da vila à estrada mais próxima (a que liga
+// as vilas e castelos). Cada vila abre até 2 caminhos por mês; no começo do jogo as vilas já nascem ligadas.
+// As estradas ficam em G.npcRoads (índices dos blocos) e são refeitas ao carregar o jogo.
+const ROAD_TYPES = ['vhouse', 'store', 'tavern', 'smith', 'lumber', 'quarry', 'chapel'];
+const NpcRoads = {
+  isRoad(i) { const t = World.tiles[i]; return t === T.ROAD || t === T.BRIDGE; },
+  // porta: o bloco logo abaixo do meio da construção
+  door(s) { return { x: s.x + Math.floor(s.w / 2), y: s.y + s.h }; },
+  wants(s) { return s && !s.removed && !s.hidden && s.village !== undefined && (ROAD_TYPES.includes(s.type) || s.fam !== undefined) && World.villages[s.village]; },
+  connected(s) {
+    const d = this.door(s);
+    if (!World.inb(d.x, d.y)) return true;
+    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1]]) { const x = d.x + dx, y = d.y + dy; if (World.inb(x, y) && this.isRoad(World.idx(x, y))) return true; }
+    return false;
+  },
+  // caminho mais curto (busca em largura numa janela ao redor da porta) até qualquer bloco de estrada
+  path(s, R = 22) {
+    const d = this.door(s);
+    if (!World.inb(d.x, d.y) || World.sgrid[World.idx(d.x, d.y)] >= 0 || World.isWater(World.tiles[World.idx(d.x, d.y)])) return null;
+    const W = 2 * R + 1, from = new Int32Array(W * W).fill(-2), q = [];
+    const loc = (x, y) => (y - d.y + R) * W + (x - d.x + R);
+    from[loc(d.x, d.y)] = -1; q.push(d.x, d.y);
+    for (let h = 0; h < q.length; h += 2) {
+      const x = q[h], y = q[h + 1], i = World.idx(x, y);
+      if (this.isRoad(i)) {
+        const out = []; let k = loc(x, y);
+        for (let cx = x, cy = y; ; ) { const p = from[k]; if (p === -1) break; const px = p % W + d.x - R, py = ((p / W) | 0) + d.y - R; out.push(World.idx(px, py)); k = p; cx = px; cy = py; }
+        return out.length <= 34 ? out : null;
+      }
+      for (const [dx, dy] of DIRS4) {
+        const nx = x + dx, ny = y + dy;
+        if (Math.abs(nx - d.x) > R || Math.abs(ny - d.y) > R || !World.inb(nx, ny)) continue;
+        const l = loc(nx, ny); if (from[l] !== -2) continue;
+        const ni = World.idx(nx, ny);
+        if (World.sgrid[ni] >= 0 || (World.isWater(World.tiles[ni]) && World.tiles[ni] !== T.BRIDGE)) continue;
+        from[l] = loc(x, y); q.push(nx, ny);
+      }
+    }
+    return null;
+  },
+  build(s) {
+    const p = this.path(s);
+    if (!p || !p.length) { s.noRoad = G.day; return false; }
+    World.carveRoad(p);
+    G.npcRoads = G.npcRoads || [];
+    for (const i of p) G.npcRoads.push(i);
+    return true;
+  },
+  // por mês: cada vila liga até n construções (as que não acharam caminho tentam de novo daqui a um ano)
+  tick(n = 2) {
+    if (G.dungeon) return;
+    let any = false;
+    const per = {};
+    for (const s of World.structs) {
+      if (!this.wants(s) || this.connected(s) || (s.noRoad !== undefined && G.day - s.noRoad < 12)) continue;
+      if ((per[s.village] = (per[s.village] || 0) + 1) > n) continue;
+      if (this.build(s)) any = true;
+    }
+    if (any) { World.chunks.clear(); if (World.mini) World.buildMinimap(); }
+    return any;
+  },
+  // começo do jogo: todas as vilas já ligadas
+  init() { this.tick(99); },
+  // ao carregar: refaz as estradas abertas pelos moradores
+  restore() {
+    for (const i of G.npcRoads || []) if (World.sgrid[i] < 0 && !this.isRoad(i)) World.carveRoad([i]);
+  },
 };
