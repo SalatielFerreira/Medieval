@@ -4,7 +4,7 @@
 const TILE = 32;
 // tamanho do mundo em blocos: a versão 3 do terreno tem mar aberto em volta do continente (margem WORLD_PAD)
 let WORLD_W = 320, WORLD_H = 320, WORLD_PAD = 0;
-function setWorldSize(terrain) { const t = terrain || 0; WORLD_PAD = t >= 7 ? 92 : t >= 3 ? 48 : 0; WORLD_W = WORLD_H = 320 + WORLD_PAD * 2; }
+function setWorldSize(terrain) { const t = terrain || 0; WORLD_PAD = t >= 8 ? 112 : t >= 7 ? 92 : t >= 3 ? 48 : 0; WORLD_W = WORLD_H = 320 + WORLD_PAD * 2; }
 const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 // Calendário sem dias: cada ciclo é um mês. Primeiro 1 minuto de noite (o mês acabou de virar) e depois
