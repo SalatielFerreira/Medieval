@@ -23,8 +23,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // altitude a partir da qual o terreno vira montanha. Versão 2 do terreno = metade das montanhas da versão 1 (0.735).
 // Jogos salvos antigos continuam usando o corte antigo, para o mundo deles não mudar.
 // Versão 3: mesmo continente, com uma faixa larga de mar aberto em volta (mapa maior, para navegar) e portos.
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626 };
-const TERRAIN_V = 3, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 4: sem montanhas (viram colinas e neve, com os minérios) e só 2 vilas por reino no começo.
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626 };
+const TERRAIN_V = 4, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
@@ -293,12 +294,13 @@ const World = {
       cp.struct = s;
     }
 
-    // vilas: 3 por reino, bem espaçadas
+    // vilas: 3 por reino (2 a partir da versão 4 do terreno), bem espaçadas
+    const VPER = (this.terrainV || 0) >= 4 ? 2 : 3;
     let vn = Math.floor(rng() * VILLAGE_NAMES.length);
     for (let c = 0; c < NC; c++) {
       const cp = this.capitals[c];
       let made = 0;
-      for (let tries = 0; tries < 4000 && made < 3; tries++) {
+      for (let tries = 0; tries < 4000 && made < VPER; tries++) {
         const a = rng() * Math.PI * 2, r = 16 + rng() * (tries < 2000 ? 22 : 34);
         const vx = Math.round(cp.x + Math.cos(a) * r), vy = Math.round(cp.y + Math.sin(a) * r);
         if (!this.inb(vx, vy) || this.terr[this.idx(vx, vy)] !== c) continue;
@@ -531,7 +533,8 @@ const World = {
     this.mountStats = { before: el.length, after: el.length };
     if (el.length < 2) return;
     el.sort((a, b) => a - b);
-    const cut = el[Math.floor(el.length / 2)];
+    // versão 4: nenhuma montanha fica (todas viram colina ou neve); antes, só a metade mais baixa
+    const cut = (this.terrainV || 0) >= 4 ? Infinity : el[Math.floor(el.length / 2)];
     const hillOres = e => [[0.09, 3], [0.12, 12], [0.145, 13], [0.168, 14], [0.198, 4], [0.208, e > 0.67 ? 5 : 0], [0.218, e > 0.68 ? 15 : 0], [0.223, e > 0.69 ? 16 : 0], [0.24, 2]];
     const snowOres = e => [[0.15, 2], [0.19, 3], [0.21, 4], [0.225, 12], [0.233, e > 0.6 ? 15 : 0], [0.238, e > 0.62 ? 16 : 0]];
     const change = [];

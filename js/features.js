@@ -304,7 +304,7 @@ const WorldGen = {
       fnObj('Dungeon', Dungeon, ['placeCaves']),
       'const World={' + ['idx', 'inb', 'tile', 'generate', 'areaOk', 'areaFree', 'addStruct', 'findPath', 'carveRoad'].map(k => World[k].toString()).join(',') + ',buildMinimap(){}};',
       `const MOUNT_CUT=${MOUNT_CUT};`,
-      `onmessage=e=>{postMessage({hello:true});World.onProgress=(p,l)=>postMessage({progress:p,label:l});World.mountCut=e.data.cut;
+      `onmessage=e=>{postMessage({hello:true});World.onProgress=(p,l)=>postMessage({progress:p,label:l});World.mountCut=e.data.cut;World.terrainV=e.data.terrain;
         const ok=World.generate(e.data.seed);
         if(!ok){postMessage({done:true,ok:false});return;}
         const W=World;
@@ -314,7 +314,7 @@ const WorldGen = {
   },
   // terrain: versão do terreno (jogos salvos antigos guardam a versão 1)
   run(seed, onProgress, terrain) {
-    setWorldSize(terrain || TERRAIN_V); World.busy = true; // o mundo antigo não é desenhado enquanto o novo (de outro tamanho) é gerado
+    setWorldSize(terrain || TERRAIN_V); World.busy = true; World.terrainV = terrain || TERRAIN_V; // o mundo antigo não é desenhado enquanto o novo (de outro tamanho) é gerado
     const cut = TERRAIN_CUTS[terrain || TERRAIN_V];
     World.mountCut = cut;
     return new Promise(res => { const resolve = ok => { World.busy = false; res(ok); };
@@ -348,7 +348,7 @@ const WorldGen = {
         World.thinMountains(); World.buildMinimap();
         resolve(true);
       };
-      w.postMessage({ seed, cut });
+      w.postMessage({ seed, cut, terrain: terrain || TERRAIN_V });
     });
   },
 };
