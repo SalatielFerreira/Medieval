@@ -24,8 +24,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // Jogos salvos antigos continuam usando o corte antigo, para o mundo deles não mudar.
 // Versão 3: mesmo continente, com uma faixa larga de mar aberto em volta (mapa maior, para navegar) e portos.
 // Versão 4: sem montanhas (viram colinas e neve, com os minérios) e só 2 vilas por reino no começo.
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626 };
-const TERRAIN_V = 4, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 5: sem as ilhas dos cantos; 7 ilhas grandes no mar em volta, deixando livre o caminho do barco.
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626 };
+const TERRAIN_V = 5, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
@@ -102,7 +103,25 @@ const World = {
       return true;
     };
     this.islands = [];
-    for (const r of [7, 6, 6, 5, 5, 5, 4, 4]) {
+    if ((this.terrainV || 0) >= 5) {
+      // 7 ilhas grandes espalhadas em volta do continente (uma a cada 1/7 de volta), no meio do mar:
+      // longe da borda do mapa e da costa, para o barco sempre conseguir dar a volta por fora e por dentro
+      const cx = WORLD_W / 2, cy = WORLD_H / 2, a0 = U.mulberry32(seed ^ 0x17a5)() * Math.PI * 2;
+      for (let k = 0; k < 7; k++) {
+        const r = 9 + (k % 3);
+        let best = null, bd = 1e9;
+        for (let da = -0.32; da <= 0.32; da += 0.04) for (let dist = 120; dist < WORLD_W; dist += 3) {
+          const a = a0 + k / 7 * Math.PI * 2 + da, x = Math.round(cx + Math.cos(a) * dist), y = Math.round(cy + Math.sin(a) * dist);
+          if (x < r + 16 || y < r + 16 || x > WORLD_W - r - 17 || y > WORLD_H - r - 17) break;
+          if (!openSea(x, y, r + 9)) continue;
+          if (this.islands.some(o => U.dist(x, y, o.x, o.y) < o.r + r + 18)) continue;
+          const sc = Math.abs(da) * 60 + dist * 0.05;
+          if (sc < bd) { bd = sc; best = { x, y, r }; }
+          break;
+        }
+        if (best) this.islands.push(best);
+      }
+    } else for (const r of [7, 6, 6, 5, 5, 5, 4, 4]) {
       let best = null, bd = -1;
       for (let y = 4; y < WORLD_H - 4; y += 2) for (let x = 4; x < WORLD_W - 4; x += 2) {
         if (!openSea(x, y, r + 2)) continue;
