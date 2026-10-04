@@ -1090,14 +1090,6 @@ const World = {
         R(6, h - 3, w - 12, 3, 'rgba(0,0,0,0.5)'); R(6, h - 3, Math.round((w - 12) * pr), 3, '#ffd54a');
         break;
       }
-      case 'dig': {
-        // monte de terra com um X marcado
-        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 26, 13, 4, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#7a5230'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 22, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X + 10, Y + 17); ctx.lineTo(X + 22, Y + 27); ctx.moveTo(X + 22, Y + 17); ctx.lineTo(X + 10, Y + 27); ctx.stroke();
-        const gl = 0.4 + Math.sin(time * 4) * 0.3; ctx.fillStyle = `rgba(255,220,100,${gl})`; ctx.fillRect(X + 15, Y + 8, 2, 2);
-        break;
-      }
       case 'cave': {
         ctx.fillStyle = '#3a3530'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 22, 18, 14, 0, Math.PI, 0); ctx.fill();
         ctx.fillStyle = '#0a0806'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 26, 11, 13, 0, Math.PI, 0); ctx.fill(); ctx.fillRect(X + 5, Y + 26, 22, 6);

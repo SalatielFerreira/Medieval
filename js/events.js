@@ -1,7 +1,6 @@
 'use strict';
-// Eventos no mundo, perto do jogador: tesouro enterrado e, raramente, um dragão fora das cavernas. Um evento de cada vez; eles não ficam no jogo salvo.
+// Eventos no mundo, perto do jogador: raramente, um dragão fora das cavernas. Um evento de cada vez; eles não ficam no jogo salvo.
 
-const TREASURE_LOOT = [['gem', 1, 2], ['silver_bar', 1, 3], ['gold_bar', 1, 2], ['ancient_coin', 2, 5], ['silver_ring', 1, 1], ['spices', 2, 4], ['silk_cloth', 1, 3]];
 const MERCHANT_GOODS = ['spices', 'silk_cloth', 'wine', 'honey', 'cloth'];
 
 const WorldEvents = {
@@ -18,10 +17,8 @@ const WorldEvents = {
     this.t -= dt;
     if (this.t > 0) return;
     this.t = U.rnd(240, 420);
-    if (Math.random() < 0.25) return; // às vezes nada acontece
-    const r = Math.random();
-    const kind = r < 0.85 || G.day < 4 ? 'treasure' : 'dragon';
-    this.start(kind);
+    if (Math.random() < 0.89 || G.day < 4) return; // o dragão é raro: quase sempre nada acontece
+    this.start('dragon');
   },
   // lugar livre e aberto a uma certa distância do jogador (em blocos)
   spotAround(r0, r1) {
@@ -39,15 +36,7 @@ const WorldEvents = {
   ping(x, y, name) { G.ping = { x: x + 0.5, y: y + 0.5, name, wev: true }; },
   start(kind) {
     const until = G.realTime + 600;
-    if (kind === 'treasure') {
-      const s = this.spotAround(18, 34);
-      if (!s) return false;
-      const st = World.addStruct('dig', s.x, s.y, 1, 1, -1, { wev: true });
-      G.wevent = { kind, sid: st.id, x: s.x, y: s.y, until: G.realTime + 900 };
-      this.ping(s.x, s.y, 'Tesouro enterrado');
-      UI.banner('🗺️ Um tesouro enterrado!');
-      UI.msg('🗺️ Um andarilho contou onde há um tesouro enterrado aqui perto (marcado no mapa). Leve uma picareta ou uma enxada para cavar.', 'gold', true);
-    } else if (kind === 'dragon') {
+    if (kind === 'dragon') {
       const s = this.spotAround(24, 34);
       if (!s) return false;
       G.wevent = { kind, x: s.x, y: s.y, until, hp: null };
@@ -55,16 +44,13 @@ const WorldEvents = {
       UI.banner('🐉 Um dragão desceu das montanhas!');
       UI.msg('🐉 Um Dragão Ancestral foi visto aqui perto (marcado no mapa). Quem o derrotar fica rico e famoso... se sobreviver.', 'bad');
       Diplo.chronicle('🐉 Um Dragão Ancestral foi avistado fora das cavernas.');
-    } else return false; // só existem o tesouro e o dragão
+    } else return false; // só existe o dragão
     return true;
   },
   near(x, y, r) { return U.dist(P.x / TILE, P.y / TILE, x, y) < r; },
   tick(ev, dt) {
     if (G.realTime > ev.until) { this.end(ev, false); return; }
-    if (ev.kind === 'treasure') {
-      const s = World.structs[ev.sid];
-      if (!s || s.removed) G.wevent = null;
-    } else if (ev.kind === 'dragon') {
+    if (ev.kind === 'dragon') {
       let e = G.ents.find(x => x.tag === 'wev' && x.kind === 'dragon' && !x.dead);
       if (!e && this.near(ev.x, ev.y, 36)) {
         e = Game.spawn('dragon', (ev.x + 0.5) * TILE, (ev.y + 0.8) * TILE, { leash: 18, tag: 'wev', mult: 0.7 });
@@ -72,22 +58,6 @@ const WorldEvents = {
       }
       if (e) { ev.hp = e.hp; ev.x = e.x / TILE; ev.y = e.y / TILE; }
     }
-  },
-  // cavar o tesouro (precisa de picareta ou enxada na mochila)
-  dig(s) {
-    const tool = Object.keys(P.inv).find(k => ITEMS[k].tool === 'pick' || ITEMS[k].tool === 'hoe');
-    if (!tool) { UI.msg('Você precisa de uma picareta ou de uma enxada para cavar.', 'bad'); return; }
-    const gold = U.rint(80, 220), got = [`${gold} 🪙`];
-    P.gold += gold;
-    for (let k = U.rint(2, 3); k > 0; k--) { const [it, a, b] = U.pick(TREASURE_LOOT), n = U.rint(a, b); Inv.add(it, n); got.push(`${n} ${ITEMS[it].name}`); }
-    if (Math.random() < 0.12) { const it = U.pick(['ancient_blade', 'troll_club', 'silk_hood', 'royal_helm']); Inv.add(it, 1); got.push('✨ ' + ITEMS[it].name); }
-    Game.burst((s.x + 0.5) * TILE, (s.y + 0.5) * TILE, '#8b5a2b', 18);
-    Sound.play('chest'); Sound.play('coin');
-    World.removeStruct(s);
-    UI.banner('💰 Tesouro desenterrado!');
-    UI.msg(`Você cavou com ${ITEMS[tool].name} e achou: ${got.join(', ')}.`, 'gold');
-    Progress.add('treasures'); Game.gainXp(30);
-    this.end(G.wevent, true);
   },
   onKill(e) {
     const ev = G.wevent;
@@ -98,11 +68,6 @@ const WorldEvents = {
     if (!ev) return;
     G.wevent = null;
     if (G.ping && G.ping.wev) G.ping = null;
-    if (ev.kind === 'treasure') {
-      const s = World.structs[ev.sid];
-      if (!ok && s && !s.removed) { World.removeStruct(s); UI.msg('Alguém chegou antes: o tesouro enterrado já foi levado.'); }
-      return;
-    }
     if (ev.kind === 'dragon') {
       if (ok) {
         const gold = 400;

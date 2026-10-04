@@ -19,7 +19,7 @@ const CIVIC = {
   field:  { name: 'Plantação', icon: '🌾', w: 3, h: 2, cost: { wood: 8 },                          desc: 'Campo de trigo da vila.' },
 };
 // construções que nunca saem do lugar
-const FIXED_STRUCTS = ['camp', 'cave', 'cave_exit', 'tchest', 'shrine', 'dig'];
+const FIXED_STRUCTS = ['camp', 'cave', 'cave_exit', 'tchest', 'shrine'];
 
 const Urban = {
   mode: null, pick: null, drag: false, last: null, warnT: 0,

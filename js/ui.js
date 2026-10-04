@@ -2290,7 +2290,7 @@ const HELP_HTML = `
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
 <li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas.</li>
 <li>A economia (impostos, soldos, salários, colheitas) anda uma vez por mês; veja o resumo em Diário → Contas. As pessoas envelhecem um ano em janeiro.</li>
-<li>Fique atento aos <b>eventos</b>: tesouros enterrados e até dragões. Eles aparecem marcados no mapa.</li>
+<li>Fique atento: às vezes um <b>dragão</b> desce das montanhas. Ele aparece marcado no mapa.</li>
 <li>Capangas sobem de nível lutando. Escolha a <b>postura</b> de cada um (agressivo, equilibrado ou defensivo) conversando com eles.</li>
 <li>Segure o clique (ou o Espaço) para atacar e coletar sem parar. Para o <b>golpe forte</b>, segure V e solte.</li>
 <li><b>Caravanas</b> viajam entre os reinos: escolte-as contra bandidos ou assalte-as.</li>

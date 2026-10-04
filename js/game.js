@@ -749,7 +749,6 @@ const Game = {
       case 'chapel': return '⛪ Capela de ' + (World.villages[s.village] ? World.villages[s.village].name : '');
       case 'cathedral': return '⛪ Catedral de ' + CIV_DEFS[s.owner].short;
       case 'shrine': return `🕯️ ${s.sname}${G.shrines && G.shrines[s.shrine] ? ' (visitado)' : ''}`;
-      case 'dig': return '⛏️ Cavar o tesouro enterrado (picareta ou enxada)';
       case 'arena': return '🏟️ Arena de ' + CIV_DEFS[s.owner].short + (Arena.tourney() && Arena.tourney().ci === s.owner ? ' — GRANDE TORNEIO!' : '');
     }
     if (BIZ_TYPES[s.type] && s.owner === 'player') return `💼 ${BUILDINGS[s.type].name} — ${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários`;
@@ -761,7 +760,6 @@ const Game = {
       case 'cave': return s.cname;
       case 'cave_exit': return 'Saída da caverna';
       case 'tchest': return 'Baú de tesouro';
-      case 'dig': return 'Tesouro enterrado';
       case 'castle': return 'Castelo de ' + CIV_DEFS[s.owner].short;
       case 'shrine': return s.sname;
     }
@@ -821,7 +819,6 @@ const Game = {
       case 'store': case 'smith': case 'lumber': case 'quarry': UI.showShop(s.type, s.village); break;
       case 'tavern': UI.showTavern(s.id); break;
       case 'castle': if (G.civs[s.owner].ruler === 'player') UI.showKingdom(s.owner); else UI.showCastle(s.owner); break;
-      case 'dig': WorldEvents.dig(s); break;
     }
   },
   nearStation(st) {
