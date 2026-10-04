@@ -13,7 +13,7 @@ const PANEL_ICONS = {
 };
 // janelas principais, na ordem da barra de botões (as setas do cabeçalho pulam de uma para a outra)
 const MAIN_WINDOWS = [['showInventory', 'Mochila'], ['showCrafting', 'Criar'], ['showBuild', 'Construir'], ['showKingdom', 'Portfólio'], ['showMap', 'Mapa'], ['showDiary', 'Diário'], ['showSettings', 'Ajustes']];
-const WIDE_PANELS = ['showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree', 'showKingdom', 'showSettings', 'showTalk', 'showChapel'];
+const WIDE_PANELS = ['showArena', 'showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree', 'showKingdom', 'showSettings', 'showTalk', 'showChapel'];
 
 const UI = {
   cur: null,
@@ -42,6 +42,7 @@ const UI = {
     });
     this.panel.addEventListener('input', e => {
       const el = e.target;
+      if (el.id === 'betAmt') { this.sel.abet = +el.value; const v = this.panel.querySelector('.ar-betv'); if (v) v.innerHTML = (+el.value).toLocaleString('pt-BR') + ' <i class="ar-coin">🪙</i>'; }
       if (el.type === 'range' && el.dataset.set) { const l = el.parentNode.querySelector('.rv'); if (l) l.textContent = Math.round(el.value * 100) + '%'; }
     });
     this.panel.addEventListener('change', e => {
@@ -698,10 +699,10 @@ const UI = {
     const head = [], units = [];
     for (const el of flat) (units.length === 0 && isHead(el) ? head : units).push(el);
     const bottom = () => body.getBoundingClientRect().bottom - 2;
-    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
+    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .ar-bet, .ar-tier, .ar-vs, .ar-tour') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
     const deepList = (el, tiles) => lists(el, tiles).sort((x, y) => y.children.length - x.children.length)[0] || null;
     if (!small) {
-      const on = nav.startsWith('d:') || nav.startsWith('s:') || nav.startsWith('c:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
+      const on = nav.startsWith('d:') || nav.startsWith('s:') || nav.startsWith('c:') || nav.startsWith('a:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
       body.classList.toggle('kfit', on); box.classList.toggle('kdesk', on);
       if (on) box.dataset.nav = nav;
       return;
@@ -2029,20 +2030,44 @@ const UI = {
   },
 
   // ------------------------------------------------------------ arena e torneios
+  // arena: menu de ícones (Lutar, Apostar, Torneio); a aposta vai até 5000 Salin e vale para tudo
   showArena(ci) {
-    const tr = Arena.tourney(), card = Arena.fightCard(ci), horse = !!P.horse;
-    const bet = `<label class="betbox">Aposta: <select id="betAmt">${[0, 25, 50, 100, 250, 500].filter(n => n <= P.gold).map(n => `<option value="${n}">${n} 🪙</option>`).join('')}</select></label>`;
-    const tiers = ARENA_TIERS.map((t, i) => `<div class="crow"><span class="ri">${['🥉', '🥈', '🥇'][i]}</span><span><b>${t.name}</b><small>prêmio ${t.prize} 🪙 · aposta paga ${t.odds}× · +${t.fame} fama · recomendado nível ${t.lvl}+</small></span>
-      <span class="act-row"><button class="primary" data-act="duel" data-c="${ci}" data-t="${i}">⚔️ Duelo</button><button data-act="joust" data-c="${ci}" data-t="${i}" ${horse ? '' : 'disabled title="Precisa de cavalo"'}>🐎 Justa</button></span></div>`).join('');
-    const h = `<div class="card hero-card"><div class="hc-ic">🏟️</div><div><b>Arena de ${CIV_DEFS[ci].name}</b><br><span class="muted">Sua fama: 🌟 ${Court.fame()} · ouro ${P.gold} 🪙. Na arena ninguém morre: quem cai primeiro perde.</span></div></div>
-      ${tr ? `<div class="alert gold">🏟️ Grande Torneio em ${CIV_DEFS[tr.ci].short} até ${Calendar.text(tr.until)}! ${tr.ci === ci ? (tr.won ? 'Você é o campeão deste ano!' : tr.out ? 'Você já foi eliminado.' : `<button class="primary" data-act="tourney" data-c="${ci}" ${P.gold >= 50 ? '' : 'disabled'}>Inscrever-se — 50 🪙 (3 lutas, prêmio 500 🪙)</button>`) : 'Vá até lá para competir.'}</div>` : ''}
-      <div class="kgrid two"><div class="card"><div class="sec">⚔️ Lutar</div>${bet}${tiers}
-        <small class="muted">Justa: três passadas a cavalo. Clique em "Golpear" quando a marca passar pelo centro dourado.</small></div>
-        <div class="card"><div class="sec">💰 Apostar na luta de hoje</div>
-          ${card.done ? '<p class="muted">A luta de hoje já aconteceu. Volte amanhã.</p>' : `<p><b>${this.esc(card.a.name)}</b> (paga ${card.a.odds}×) contra <b>${this.esc(card.b.name)}</b> (paga ${card.b.odds}×)</p>
-          <div class="act-row"><button data-act="betfight" data-c="${ci}" data-s="a">Apostar em ${this.esc(card.a.name.split(' ')[0])}</button><button data-act="betfight" data-c="${ci}" data-s="b">Apostar em ${this.esc(card.b.name.split(' ')[0])}</button></div>
-          <small class="muted">Use o valor escolhido em "Aposta".</small>`}</div></div>`;
-    this.open('Arena', h, 'showArena', [ci], 'Duelos, justas, torneios e apostas');
+    const S = this.sel, tr = Arena.tourney(), card = Arena.fightCard(ci), horse = !!P.horse;
+    const tab = ['lutar', 'apostar', 'torneio'].includes(S.atab) ? S.atab : 'lutar';
+    const max = Math.min(ARENA_MAX_BET, P.gold), bet = S.abet = U.clamp(Math.round(S.abet || 0), 0, max);
+    const sal = n => `${n.toLocaleString('pt-BR')} <i class="ar-coin">🪙</i>`;
+    const betBox = `<div class="card ar-bet"><div class="sec">💰 Sua aposta <span>até ${ARENA_MAX_BET.toLocaleString('pt-BR')} Salin · você tem ${P.gold.toLocaleString('pt-BR')}</span></div>
+      <div class="ar-betrow"><b class="ar-betv">${sal(bet)}</b><input type="range" id="betAmt" min="0" max="${max}" step="${max > 500 ? 25 : 5}" value="${bet}" data-act-input="abet"></div>
+      <div class="ar-chips">${[0, 50, 250, 1000, 2500, 5000].map(n => `<button class="ar-chip ${bet === Math.min(n, max) && (n <= max || n === 5000) ? 'on' : ''}" data-act="abetset" data-c="${ci}" data-n="${n}" ${n > P.gold && n !== 0 ? 'disabled' : ''}>${n ? n.toLocaleString('pt-BR') : 'Sem aposta'}</button>`).join('')}</div></div>`;
+    let page = '';
+    if (tab === 'lutar') {
+      page = this.pageHead('⚔️', 'Lutar na arena', 'Ninguém morre: quem cai primeiro perde')
+        + betBox + ARENA_TIERS.map((t, i) => { const ok = P.level >= t.lvl;
+          return `<div class="card ar-tier t${i}"><div class="ar-medal">${['🥉', '🥈', '🥇'][i]}</div><div class="ar-tt"><b>${t.name}</b>
+            <small>${ok ? 'nível ' + t.lvl + '+' : '<span class="bad">recomendado nível ' + t.lvl + '+</span>'} · ❤️ ${t.hp} · ⚔️ ${t.dmg}</small>
+            <div class="ar-rew"><span>🏆 ${sal(t.prize)}</span><span>🌟 +${t.fame}</span><span>🎲 ${t.odds}×${bet ? ` → <b>${sal(Math.round(bet * t.odds))}</b>` : ''}</span></div></div>
+            <div class="ar-go"><button class="primary" data-act="duel" data-c="${ci}" data-t="${i}">⚔️ Duelo</button><button data-act="joust" data-c="${ci}" data-t="${i}" ${horse ? '' : 'disabled title="Precisa de cavalo"'}>🐎 Justa</button></div></div>`; }).join('')
+        + `<small class="muted ar-note">Justa: três passadas a cavalo; toque em "Golpear" quando a marca passar pelo centro dourado.${horse ? '' : ' (Você precisa de um cavalo.)'}</small>`;
+    } else if (tab === 'apostar') {
+      const f = (x, side) => { const pct = Math.round(x.pow / (card.a.pow + card.b.pow) * 100);
+        return `<div class="ar-f"><div class="ar-fav">${side === 'a' ? '🛡️' : '⚔️'}</div><b>${this.esc(x.name)}</b><small>força ${x.pow} · chance ${pct}%</small><i class="ar-pow"><i style="width:${pct}%"></i></i>
+          <div class="ar-odds">paga <b>${x.odds}×</b>${bet ? ` · ganha ${sal(Math.round(bet * x.odds))}` : ''}</div>
+          <button class="primary" data-act="betfight" data-c="${ci}" data-s="${side}" ${card.done || !bet ? 'disabled' : ''}>Apostar ${bet ? sal(bet) : ''}</button></div>`; };
+      page = this.pageHead('🎲', 'Apostar na luta de hoje', 'Uma luta por dia em cada arena')
+        + betBox + (card.done ? '<div class="card ar-vs"><div class="ar-done">🏁 A luta de hoje já aconteceu. Volte no próximo dia.</div></div>'
+          : `<div class="card ar-vs">${f(card.a, 'a')}<div class="ar-x">VS</div>${f(card.b, 'b')}</div>`);
+    } else {
+      const here = tr && tr.ci === ci;
+      page = this.pageHead('🏆', 'Grande Torneio', 'Três lutas seguidas; o campeão leva o ouro e a glória')
+        + `<div class="card ar-tour">${tr ? `<div class="ar-trophy">🏆</div><b>Grande Torneio em ${CIV_DEFS[tr.ci].short}</b><small>até ${Calendar.text(tr.until)}</small>
+          <p>${here ? (tr.won ? 'Você é o campeão deste ano!' : tr.out ? 'Você já foi eliminado. Tente no próximo torneio.' : 'Inscrição: 50 Salin. Vença as três lutas para ser campeão.') : 'O torneio deste ano é em outra arena. Viaje até lá para se inscrever.'}</p>
+          ${here && !tr.won && !tr.out ? `<button class="primary" data-act="tourney" data-c="${ci}" ${P.gold >= 50 ? '' : 'disabled'}>🏆 Inscrever-se — 50 Salin</button>` : ''}`
+          : '<div class="ar-trophy dim">🏆</div><b>Nenhum torneio agora</b><small>Os reinos anunciam o Grande Torneio uma vez por ano.</small>'}</div>`;
+    }
+    const groups = [[null, [['lutar', '⚔️', 'Lutar'], ['apostar', '🎲', 'Apostar', card.done ? '' : '!'], ['torneio', '🏆', 'Torneio', tr && tr.ci === ci && !tr.won && !tr.out ? '!' : '']]]];
+    this.open('Arena', `<div class="iconnav ar">${this.navHtml(groups, tab, 'anav', `<div class="kpg">${page}</div>`)}</div>`, 'showArena', [ci],
+      `Arena de ${CIV_DEFS[ci].name} · sua fama 🌟 ${Court.fame()} · ${P.gold.toLocaleString('pt-BR')} Salin`);
+    this.fitReino('a:' + tab, 'ar/' + tab);
   },
   showJoust() {
     const j = G.joust;
@@ -2275,11 +2300,13 @@ const UI = {
       case 'cwed': Faith.wed(People.get(+d.id), +d.v); break;
       case 'baptize': Faith.baptize(+d.id); break;
       case 'pilgrim': Faith.startPilgrimage(+d.i); break;
-      case 'duel': Arena.startDuel(+d.c, +d.t, +(document.getElementById('betAmt') || {}).value || 0); return;
+      case 'anav': this.sel.atab = d.k; this.refresh(); return;
+      case 'abetset': this.sel.abet = Math.min(+d.n, P.gold, ARENA_MAX_BET); this.refresh(); return;
+      case 'duel': Arena.startDuel(+d.c, +d.t, Math.min(this.sel.abet || 0, P.gold, ARENA_MAX_BET)); return;
       case 'tourney': Arena.enterTourney(+d.c); return;
-      case 'joust': Arena.joustStart(+d.c, +d.t, +(document.getElementById('betAmt') || {}).value || 0); return;
+      case 'joust': Arena.joustStart(+d.c, +d.t, Math.min(this.sel.abet || 0, P.gold, ARENA_MAX_BET)); return;
       case 'jstrike': Arena.joustStrike(); this.showJoust(); return;
-      case 'betfight': Arena.bet(+d.c, d.s, +(document.getElementById('betAmt') || {}).value || 0); break;
+      case 'betfight': Arena.bet(+d.c, d.s, Math.min(this.sel.abet || 0, P.gold, ARENA_MAX_BET)); break;
       case 'cvdest': this.sel.cv.to = +d.c; break;
       case 'cvadd': { const cv = this.sel.cv, n = d.n === 'all' ? Inv.count(d.k) : Math.min(Inv.count(d.k), (cv.cargo[d.k] || 0) + +d.n); cv.cargo[d.k] = Math.max(0, n); break; }
       case 'cvguard': this.sel.cv.guards = U.clamp(this.sel.cv.guards + +d.n, 0, 4); break;
