@@ -25,8 +25,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // Versão 3: mesmo continente, com uma faixa larga de mar aberto em volta (mapa maior, para navegar) e portos.
 // Versão 4: sem montanhas (viram colinas e neve, com os minérios) e só 2 vilas por reino no começo.
 // Versão 5: sem as ilhas dos cantos; 7 ilhas grandes no mar em volta, deixando livre o caminho do barco.
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626 };
-const TERRAIN_V = 5, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 6: ilhas em lugares sorteados (sem padrão), de tamanhos e formatos diferentes, fora de qualquer reino.
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626 };
+const TERRAIN_V = 6, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
@@ -103,7 +104,25 @@ const World = {
       return true;
     };
     this.islands = [];
-    if ((this.terrainV || 0) >= 5) {
+    if ((this.terrainV || 0) >= 6) {
+      // 7 ilhas sorteadas pelo mar: tamanhos diferentes, formatos alongados, longe da borda (o barco passa por fora)
+      // e da costa (passa por dentro), e longe umas das outras
+      const ir = U.mulberry32(seed ^ 0x51a7), sizes = [6, 7, 8, 10, 11, 13, 15].sort(() => ir() - 0.5);
+      for (const r of sizes) {
+        // sorteia vários lugares possíveis e fica com o mais afastado das outras ilhas (espalhadas, mas sem padrão)
+        let best = null, bd = -1;
+        for (let tries = 0, ok = 0; tries < 1500 && ok < 12; tries++) {
+          const x = Math.round(r + 14 + ir() * (WORLD_W - 2 * r - 28)), y = Math.round(r + 14 + ir() * (WORLD_H - 2 * r - 28));
+          if (!openSea(x, y, r + 7)) continue;
+          if (this.islands.some(o => U.dist(x, y, o.x, o.y) < o.r + r + 16)) continue;
+          ok++;
+          const md = this.islands.reduce((m, o) => Math.min(m, U.dist(x, y, o.x, o.y)), 400) * (0.75 + ir() * 0.5);
+          if (md > bd) { bd = md; best = { x, y, r, ratio: 0.55 + ir() * 0.45, ang: ir() * Math.PI }; }
+        }
+        if (best) this.islands.push(best);
+      }
+      this.islands.sort((a, b) => b.r - a.r); // as maiores primeiro (masmorras do dragão)
+    } else if ((this.terrainV || 0) >= 5) {
       // 7 ilhas grandes espalhadas em volta do continente (uma a cada 1/7 de volta), no meio do mar:
       // longe da borda do mapa e da costa, para o barco sempre conseguir dar a volta por fora e por dentro
       const cx = WORLD_W / 2, cy = WORLD_H / 2, a0 = U.mulberry32(seed ^ 0x17a5)() * Math.PI * 2;
@@ -133,7 +152,8 @@ const World = {
     const islandBump = (x, y) => {
       let best = 0;
       for (const is of this.islands) {
-        const dd = U.dist(x, y, is.x, is.y);
+        let dd = U.dist(x, y, is.x, is.y);
+        if (is.ratio) { const c = Math.cos(is.ang), s = Math.sin(is.ang), dx = x - is.x, dy = y - is.y; dd = Math.hypot(dx * c + dy * s, (-dx * s + dy * c) / is.ratio); } // ilha alongada
         if (dd > is.r + 3) continue;
         best = Math.max(best, 1 - dd / is.r + (U.hash2(x >> 1, y >> 1, seed + 99) - 0.5) * 0.5);
       }
@@ -297,6 +317,7 @@ const World = {
       const i = this.idx(x, y);
       if (this.tiles[i] === T.DEEP) continue;
       if (U.dist(x, y, start.x, start.y) < 24) continue;
+      if (this.islands.some(is => is.ratio && U.dist(x, y, is.x, is.y) < is.r + 6)) continue; // ilhas não são de reino nenhum
       let bc = -1, bd = 62;
       for (let c = 0; c < NC; c++) {
         const d = U.dist(x, y, this.capitals[c].x, this.capitals[c].y);
