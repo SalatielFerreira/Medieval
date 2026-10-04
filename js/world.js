@@ -29,8 +29,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // Versão 7: mar mais largo e ilhas maiores, todas fora do alcance dos reinos.
 // Versão 8: ilhas ainda maiores, em volta do continente com equilíbrio (uma por setor, com variação).
 // Versão 9: mais campo verde — a maior parte das colinas (o terreno marrom) vira campo; ficam só as colinas mais altas.
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626 };
-const TERRAIN_V = 9, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 10: as 7 ilhas rodeiam a terra firme em espaços quase iguais (tamanhos continuam diferentes).
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626, 10: 0.7626 };
+const TERRAIN_V = 10, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
@@ -107,7 +108,20 @@ const World = {
       return true;
     };
     this.islands = [];
-    if ((this.terrainV || 0) >= 8) {
+    if ((this.terrainV || 0) >= 10) {
+      // anel: 7 ilhas em ângulos iguais em volta da terra firme, todas com a mesma folga até a costa;
+      // as ilhas maiores vão para os setores com mais mar (assim ninguém precisa sair do lugar)
+      const ir = U.mulberry32(seed ^ 0x7c15), cx = WORLD_W / 2, cy = WORLD_H / 2, a0 = ir() * Math.PI * 2, slot = Math.PI * 2 / 7;
+      const spot = (a, r) => { for (let dist = 150; dist < WORLD_W; dist += 2) { const x = Math.round(cx + Math.cos(a) * dist), y = Math.round(cy + Math.sin(a) * dist);
+        if (x < r + 10 || y < r + 10 || x > WORLD_W - r - 11 || y > WORLD_H - r - 11) return null; if (openSea(x, y, r + 24)) return { x, y }; } return null; };
+      const angs = Array.from({ length: 7 }, (_, k) => a0 + k * slot + (ir() - 0.5) * slot * 0.06);
+      const room = angs.map(a => { let r = 36; while (r > 10 && !spot(a, r)) r -= 2; return r; });
+      const sizes = [18, 20, 22, 24, 27, 30, 33];
+      const order = angs.map((a, k) => k).sort((p, q) => room[q] - room[p]);
+      const given = []; order.forEach((k, j) => { given[k] = Math.min(sizes[sizes.length - 1 - j], room[k]); });
+      angs.forEach((a, k) => { const r = given[k], p = spot(a, r); if (p) this.islands.push({ x: p.x, y: p.y, r, ratio: 0.62 + ir() * 0.3, ang: ir() * Math.PI }); });
+      this.islands.sort((a, b) => b.r - a.r);
+    } else if ((this.terrainV || 0) >= 8) {
       // equilíbrio: o mar em volta é dividido em 7 setores, uma ilha em cada; dentro do setor o ângulo, a distância
       // da costa, o tamanho e o formato variam (fica espalhado, mas sem buracos nem amontoados)
       const ir = U.mulberry32(seed ^ 0x9e37), cx = WORLD_W / 2, cy = WORLD_H / 2, a0 = ir() * Math.PI * 2;
