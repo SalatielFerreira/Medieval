@@ -10,13 +10,13 @@ const ARMS_DIVISIONS = [['plain', 'Liso'], ['pale', 'Partido'], ['fess', 'Cortad
 const CHARGES = ['⚜', '♛', '⚔', '✠', '☀', '✦', '☾', '♞', '♜', '⚓', '✿', '♣', '❄', '✚'];
 // a bandeira e o brasão de cada reino no começo do jogo (mesma ordem de CIV_DEFS)
 const HERALDRY_DEFAULT = [
-  { flag: 'cross',    metal: '#f2c45a', division: 'chief',     charge: '♛' }, // Valdória
-  { flag: 'stripe',   metal: '#f2c45a', division: 'pale',      charge: '⚔' }, // Karthum
-  { flag: 'saltire',  metal: '#e8eef4', division: 'fess',      charge: '❄' }, // Nordheim
-  { flag: 'border',   metal: '#f2c45a', division: 'plain',     charge: '♣' }, // Elvaren
-  { flag: 'chevron',  metal: '#e8eef4', division: 'bend',      charge: '☾' }, // Mordrak
-  { flag: 'quarters', metal: '#e8eef4', division: 'quarterly', charge: '⚓' }, // Brennor
-  { flag: 'vertical', metal: '#e8eef4', division: 'plain',     charge: '✿' }, // Valtaris
+  { flag: 'cross',    metal: '#f2c45a', division: 'chief',     charge: '♛' }, // Midgard
+  { flag: 'stripe',   metal: '#f2c45a', division: 'pale',      charge: '⚔' }, // Dorne
+  { flag: 'saltire',  metal: '#e8eef4', division: 'fess',      charge: '❄' }, // Winterfel
+  { flag: 'border',   metal: '#f2c45a', division: 'plain',     charge: '♣' }, // Valáquia
+  { flag: 'chevron',  metal: '#e8eef4', division: 'bend',      charge: '☾' }, // Olympus
+  { flag: 'quarters', metal: '#e8eef4', division: 'quarterly', charge: '⚓' }, // Persépolis
+  { flag: 'vertical', metal: '#e8eef4', division: 'plain',     charge: '✿' }, // Gondor
 ];
 // nomes e cores originais (o jogo muda CIV_DEFS quando o rei renomeia ou troca a cor)
 const CIV_BASE = CIV_DEFS.map((d, i) => Object.assign({ name: d.name, short: d.short, color: d.color, roof: d.roof }, HERALDRY_DEFAULT[i]));

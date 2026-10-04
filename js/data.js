@@ -377,19 +377,19 @@ const CREATURES = {
 
 // prod = produção diária com 150 habitantes
 const CIV_DEFS = [
-  { name: 'Reino de Valdória',     short: 'Valdória', ruler: 'Rei Aldric',           color: '#2f6fd6', roof: '#34558f', title: ['Rei', 'Rainha'], rname: 'Aldric', rsex: 'm',
+  { name: 'Reino de Midgard',      short: 'Midgard',  ruler: 'Rei Aldric',           color: '#2f6fd6', roof: '#34558f', title: ['Rei', 'Rainha'], rname: 'Aldric', rsex: 'm',
     prod: { wheat: 34, wood: 14, stone: 8, iron_ore: 3 }, desc: 'Planícies férteis e cavaleiros orgulhosos.' },
-  { name: 'Império de Karthum',    short: 'Karthum',  ruler: 'Imperatriz Seraphine', color: '#c8322f', roof: '#8e2f2b', title: ['Imperador', 'Imperatriz'], rname: 'Seraphine', rsex: 'f',
-    prod: { wheat: 24, wood: 8, stone: 18, iron_ore: 7 }, desc: 'Pedreiros e legiões disciplinadas.' },
-  { name: 'Clã de Nordheim',       short: 'Nordheim', ruler: 'Jarl Bjorn',           color: '#3fb7c9', roof: '#2f6e7a', title: ['Jarl', 'Jarl'], rname: 'Bjorn', rsex: 'm',
+  { name: 'Reino de Dorne',        short: 'Dorne',    ruler: 'Rainha Seraphine',     color: '#c8322f', roof: '#8e2f2b', title: ['Rei', 'Rainha'], rname: 'Seraphine', rsex: 'f',
+    prod: { wheat: 24, wood: 8, stone: 18, iron_ore: 7 }, desc: 'Areias quentes, pedreiros e legiões disciplinadas.' },
+  { name: 'Reino de Winterfel',    short: 'Winterfel', ruler: 'Rei Bjorn',           color: '#3fb7c9', roof: '#2f6e7a', title: ['Rei', 'Rainha'], rname: 'Bjorn', rsex: 'm',
     prod: { wheat: 22, wood: 18, stone: 8, iron_ore: 8 }, desc: 'Guerreiros das terras geladas do norte.' },
-  { name: 'Principado de Elvaren', short: 'Elvaren',  ruler: 'Príncipe Lorien',      color: '#3fae4a', roof: '#2d6e33', title: ['Príncipe Regente', 'Princesa Regente'], rname: 'Lorien', rsex: 'm',
+  { name: 'Reino de Valáquia',     short: 'Valáquia', ruler: 'Rei Lorien',           color: '#3fae4a', roof: '#2d6e33', title: ['Rei', 'Rainha'], rname: 'Lorien', rsex: 'm',
     prod: { wheat: 30, wood: 22, stone: 4, iron_ore: 2 }, desc: 'Guardiões das florestas antigas.' },
-  { name: 'Domínio de Mordrak',    short: 'Mordrak',  ruler: 'Senhor Malgrave',      color: '#8e44c4', roof: '#5b2d80', title: ['Senhor', 'Senhora'], rname: 'Malgrave', rsex: 'm',
-    prod: { wheat: 20, wood: 8, stone: 14, iron_ore: 12 }, desc: 'Mineiros sombrios das colinas.' },
-  { name: 'Ducado de Brennor',     short: 'Brennor',  ruler: 'Duque Edmund',         color: '#e08a2a', roof: '#9a5a22', title: ['Duque', 'Duquesa'], rname: 'Edmund', rsex: 'm',
+  { name: 'Reino de Olympus',      short: 'Olympus',  ruler: 'Rei Malgrave',         color: '#8e44c4', roof: '#5b2d80', title: ['Rei', 'Rainha'], rname: 'Malgrave', rsex: 'm',
+    prod: { wheat: 20, wood: 8, stone: 14, iron_ore: 12 }, desc: 'Mineiros das altas colinas, perto dos deuses.' },
+  { name: 'Reino de Persépolis',   short: 'Persépolis', ruler: 'Rei Edmund',         color: '#e08a2a', roof: '#9a5a22', title: ['Rei', 'Rainha'], rname: 'Edmund', rsex: 'm',
     prod: { wheat: 28, wood: 12, stone: 10, iron_ore: 5 }, desc: 'Mercadores ricos e portos movimentados.' },
-  { name: 'Marca de Valtaris',     short: 'Valtaris', ruler: 'Marquesa Isolde',      color: '#d14f9a', roof: '#8a2f62', title: ['Marquês', 'Marquesa'], rname: 'Isolde', rsex: 'f',
+  { name: 'Reino de Gondor',       short: 'Gondor',   ruler: 'Rainha Isolde',        color: '#d14f9a', roof: '#8a2f62', title: ['Rei', 'Rainha'], rname: 'Isolde', rsex: 'f',
     prod: { wheat: 26, wood: 16, stone: 9, iron_ore: 6 }, desc: 'Arqueiros das colinas e vinhedos sem fim.' },
 ];
 

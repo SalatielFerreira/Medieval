@@ -284,13 +284,13 @@ const World = {
     };
     const left = caps.slice();
     const take = fn => { let bi = 0; for (let i = 1; i < left.length; i++) if (fn(left[i]) > fn(left[bi])) bi = i; return left.splice(bi, 1)[0]; };
-    this.capitals[2] = take(c => -c.y);                           // Nordheim: mais ao norte
-    this.capitals[3] = take(c => around(c, [T.FOREST]));          // Elvaren: florestas
-    this.capitals[4] = take(c => around(c, [T.HILL, T.MOUNT]));   // Mordrak: colinas
-    this.capitals[1] = take(c => around(c, [T.HILL, T.SAND]));    // Karthum
-    this.capitals[6] = take(c => around(c, [T.HILL]));            // Valtaris: colinas suaves
-    this.capitals[5] = take(c => around(c, [T.SAND, T.WATER]));   // Brennor: costa
-    this.capitals[0] = left[0];                                   // Valdória
+    this.capitals[2] = take(c => -c.y);                           // Winterfel: mais ao norte
+    this.capitals[3] = take(c => around(c, [T.FOREST]));          // Valáquia: florestas
+    this.capitals[4] = take(c => around(c, [T.HILL, T.MOUNT]));   // Olympus: colinas
+    this.capitals[1] = take(c => around(c, [T.HILL, T.SAND]));    // Dorne
+    this.capitals[6] = take(c => around(c, [T.HILL]));            // Gondor: colinas suaves
+    this.capitals[5] = take(c => around(c, [T.SAND, T.WATER]));   // Persépolis: costa
+    this.capitals[0] = left[0];                                   // Midgard
 
     // territórios
     for (let y = 0; y < WORLD_H; y++) for (let x = 0; x < WORLD_W; x++) {
