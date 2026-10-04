@@ -416,7 +416,7 @@ const UI = {
         drag.on = true;
         const g = document.createElement('div');
         g.className = 'drag-ghost';
-        g.textContent = ITEMS[drag.k] ? UI.ii(drag.k) : '?';
+        g.innerHTML = ITEMS[drag.k] ? UI.ii(drag.k) : '?';
         document.body.appendChild(g); drag.ghost = g;
         document.body.classList.add('dragging');
         drag.el.classList.add('drag-src');
