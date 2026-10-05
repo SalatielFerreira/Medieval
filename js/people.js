@@ -433,6 +433,21 @@ const People = {
     return this.residents(vi).filter(q => q.age >= 18 && (q.rank === 'peasant' || q.rank === 'wanderer' || q.rank === 'beggar') && !q.kin && q.spouse !== 'player' && !q.capanga && !Families.isChief(q))
       .sort((a, b) => (b.age < 50) - (a.age < 50) || b.aff - a.aff);
   },
+  // quem nomeia o novo dono de uma loja vaga: o senhor da vila (inclusive a vila que você fundou) ou o rei dela
+  canAppoint(vi) {
+    const v = World.villages[vi]; if (!v) return false;
+    const c = G.civs[v.civ];
+    return v.lord === 'player' || (!v.free && !!c && c.ruler === 'player');
+  },
+  // lojas sem dono nas vilas que você comanda (procura na hora: vale também para as que fecharam antes de serem suas)
+  openVacancies() {
+    const out = [], slots = [['store', 'merchant'], ['smith', 'smith'], ['lumber', 'lumber'], ['quarry', 'mason'], ['tavern', 'innkeeper']];
+    World.villages.forEach((v, vi) => {
+      if (!this.canAppoint(vi)) return;
+      for (const [slot, rank] of slots) if (v[slot] && !v[slot].removed && !this.shopkeeper(vi, rank)) out.push({ vi, rank });
+    });
+    return out;
+  },
   appoint(q, rank, by) {
     q.rank = rank;
     if (q.met || q.aff >= 10) UI.msg(`🏪 ${by} nomeou ${this.full(q)} como ${RANKS[rank][q.sex]} de ${this.homeName(q)}.`, 'gold');

@@ -1226,12 +1226,19 @@ const UI = {
   },
   // lojas cujo dono morreu sem filho, nas vilas e reinos do jogador: escolha quem assume
   vacancyHtml() {
-    const V = (G.vacancies || []).filter(x => World.villages[x.vi]);
+    const V = People.openVacancies();
     if (!V.length) return '';
-    return `<div class="card vacancy kalone"><div class="sec">🏪 Lojas sem dono <span>escolha quem vai cuidar</span></div>${V.slice(0, 3).map((x, i) => {
+    return `<div class="card vacancy kalone"><div class="sec">🏪 Lojas sem dono <span>escolha quem vai cuidar</span></div>${V.slice(0, 4).map(x => {
       const v = World.villages[x.vi], cands = People.shopCandidates(x.vi, x.rank).slice(0, 3);
-      return `<div class="vac-row"><b>${RANKS[x.rank].m} · ${this.esc(v.name)}</b><div class="act-row">${cands.map(q => `<button data-act="vappoint" data-i="${i}" data-id="${q.id}">${this.esc(q.name)}, ${q.age} anos</button>`).join('') || '<small class="muted">Ninguém sem emprego na vila por enquanto.</small>'}</div></div>`;
-    }).join('')}</div>`;
+      return `<div class="vac-row"><b>${RANKS[x.rank].m} · ${this.esc(v.name)}</b><div class="act-row">${cands.map(q => `<button data-act="sappoint" data-v="${x.vi}" data-r="${x.rank}" data-id="${q.id}">${this.esc(q.name)}, ${q.age} anos</button>`).join('') || '<small class="muted">Ninguém sem emprego na vila por enquanto.</small>'}</div></div>`;
+    }).join('')}${V.length > 4 ? `<small class="muted">E mais ${V.length - 4}. Nomeie estes primeiro, ou vá até a loja fechada.</small>` : ''}</div>`;
+  },
+  // na loja fechada: o rei ou o senhor da vila escolhe um morador sem emprego para assumir
+  appointHtml(vi, rank) {
+    if (!People.canAppoint(vi)) return '<p class="muted">Só o rei ou o senhor desta vila pode nomear quem assume a loja.</p>';
+    const cands = People.shopCandidates(vi, rank).slice(0, 6);
+    return `<div class="card"><div class="sec">👑 Nomear quem assume</div><p class="muted">Escolha um morador da vila, sem emprego, para virar ${RANKS[rank].m.toLowerCase()} e reabrir a loja.</p>
+      <div class="act-row">${cands.map(q => `<button class="primary" data-act="sappoint" data-v="${vi}" data-r="${rank}" data-id="${q.id}">${this.esc(q.name)}, ${q.age} anos</button>`).join('') || '<small class="muted">Ninguém sem emprego na vila agora. Quando alguém crescer ou chegar, volte aqui.</small>'}</div></div>`;
   },
   guardsHtml() {
     const list = Guards.all(), places = Guards.places();
@@ -1428,7 +1435,7 @@ const UI = {
     const owner = npcId != null ? People.get(npcId) : People.shopkeeper(vi, sh.rank);
     const v = vi >= 0 ? World.villages[vi] : null;
     const title = `${sh.icon} ${sh.name}${v ? ' de ' + v.name : ''}`;
-    if (!owner || !owner.alive) { this.open(title, `<p class="bad">Fechado. ${type === 'hunter' ? 'O caçador' : 'O dono'} morreu sem deixar herdeiros para o ofício.</p>`, 'showShop', [type, vi, npcId]); return; }
+    if (!owner || !owner.alive) { this.open(title, `<p class="bad">Fechado. ${type === 'hunter' ? 'O caçador' : 'O dono'} morreu sem deixar herdeiros para o ofício.</p>${type !== 'hunter' && vi >= 0 ? this.appointHtml(vi, sh.rank) : ''}`, 'showShop', [type, vi, npcId]); return; }
     const civ = owner.civ >= 0 ? owner.civ : (v ? v.civ : 0);
     const c = G.civs[civ];
     this.shopCtx = { civ, owner: owner.id };
@@ -1709,7 +1716,7 @@ const UI = {
     const cap = Game.followerCap(), n = Game.allies().length;
     const r = rumor || U.pick(RUMORS);
     const keeper = People.shopkeeper(s.village, 'innkeeper');
-    if (!keeper) { this.open('🍺 Taverna de ' + v.name, '<p class="bad">A taverna está fechada. O taverneiro morreu sem herdeiros.</p>', 'showTavern', [sid]); return; }
+    if (!keeper) { this.open('🍺 Taverna de ' + v.name, '<p class="bad">A taverna está fechada. O taverneiro morreu sem herdeiros.</p>' + this.appointHtml(s.village, 'innkeeper'), 'showTavern', [sid]); return; }
     const h = `<div class="shopowner"><canvas class="mini-portrait" data-pid="${keeper.id}" width="44" height="44"></canvas><div><b>${UI.esc(People.full(keeper))}</b> · ${People.title(keeper)}<br><small>“${UI.esc(TRAITS[keeper.trait].line)}”</small></div>
       <button data-act="tk" data-op="open" data-id="${keeper.id}">💬 Conversar</button></div>
       <p>O cheiro de cerveja e ensopado enche o salão. Mercenários jogam dados num canto.</p>
@@ -2214,7 +2221,7 @@ const UI = {
     switch (a) {
       case 'close': this.close(); return;
       case 'hset': Heraldry.set(+d.c, { [d.k]: d.v }); break;
-      case 'vappoint': { const V = (G.vacancies || []).filter(x => World.villages[x.vi]), x = V[+d.i], q = G.people[+d.id]; if (x && q && q.alive) { People.appoint(q, x.rank, G.name); q.met = true; G.vacancies = G.vacancies.filter(y => y !== x); } break; }
+      case 'sappoint': { const q = G.people[+d.id], vi = +d.v; if (q && q.alive && People.canAppoint(vi)) { q.met = true; People.appoint(q, d.r, G.name); G.vacancies = (G.vacancies || []).filter(y => !(y.vi === vi && y.rank === d.r)); } break; }
       case 'hfollow': Heraldry.set(+d.c, { follow: d.v === '1' ? G.mainRealm : null }); break;
       case 'hname': Heraldry.rename(+d.c, (document.getElementById('hName') || {}).value, (document.getElementById('hShort') || {}).value); break;
       case 'hreset': Dialog.confirm({ icon: '↺', title: 'Voltar ao original', text: `Voltar o reino ao nome, à cor, à bandeira e ao brasão originais (${CIV_BASE[+d.c].name})?`, ok: 'Voltar ao original' }, () => { Heraldry.reset(+d.c); this.refresh(); }); return;

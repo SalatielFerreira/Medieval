@@ -91,6 +91,8 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Loja fechada sem herdeiro:** se você é o rei ou o senhor da vila, a própria janela da loja fechada (armazém, ferreiro, madeireira, pedreira ou taverna) mostra os moradores sem emprego para você nomear quem assume, e a loja reabre na hora. A lista "Lojas sem dono" em Portfólio → Vilas e guardas agora acha também as lojas que fecharam antes de a vila ser sua.
+
 - **Cavalo no estábulo e venda:** no seu Estábulo, "Deixar no estábulo" faz o cavalo ficar esperando na frente dele (sem os alforjes, a carga da mochila volta ao normal); "Levar comigo" busca de volta. Se o estábulo for demolido, o cavalo volta para você. Dá para **vender o cavalo** (120 Salin, mais 90 se tiver carroça, que vai junto) no estábulo ou na taverna de qualquer vila.
 - **Vila que vira reino acompanha as cores:** ao erguer o castelo, todas as construções da sua vila passam a ser do reino novo; trocando a cor do reino, telhados, toldos e bandeiras da vila mudam junto.
 
