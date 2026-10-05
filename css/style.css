@@ -1601,6 +1601,7 @@ body.small .hud-res .ico { width: 13px; height: 13px; }
 .tc-b[data-tc="run"] { right: 10px; bottom: 94px; }
 .tc-b[data-tc="q0"] { right: 80px; bottom: 82px; }
 .tc-b[data-tc="q1"] { right: 160px; bottom: 26px; }
+.tc-b[data-tc="dig"] { right: 160px; bottom: 104px; }
 .tc-b:active { transform: scale(.92); background: rgba(255, 255, 255, .18); border-color: #fff; }
 /* indisponível agora: quase transparente e sem resposta ao toque */
 .tc-b.off { opacity: .32; pointer-events: none; }

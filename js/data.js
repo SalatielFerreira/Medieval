@@ -16,7 +16,7 @@ const EQUIP_SLOTS = [
   { key: 'shield', name: 'Escudo',     sub: 'Braço' },
 ];
 const ARMOR_SLOTS = ['head', 'torso', 'legs', 'feet', 'shield'];
-const TOOL_NAMES = { axe: 'Corte', pick: 'Mineração', rod: 'Pesca', hoe: 'Lavoura', water: 'Rega' };
+const TOOL_NAMES = { axe: 'Corte', pick: 'Mineração', rod: 'Pesca', hoe: 'Lavoura', water: 'Rega', shovel: 'Escavação' };
 const TIER_NAMES = ['Mãos', 'Pedra', 'Bronze', 'Ferro', 'Aço'];
 
 const ITEMS = {
@@ -28,6 +28,7 @@ const ITEMS = {
   resin:       { name: 'Resina de Pinho',    icon: '🍯', cat: 'Recursos', price: 4 },
   stone:       { name: 'Pedra',              icon: '🪨', cat: 'Recursos', price: 2 },
   clay:        { name: 'Argila',             icon: '🏺', cat: 'Recursos', price: 2 },
+  dirt:        { name: 'Terra',              icon: '🟫', cat: 'Recursos', price: 1 },
   coal:        { name: 'Carvão',             icon: '⚫', cat: 'Recursos', price: 4 },
   copper_ore:  { name: 'Minério de Cobre',   icon: '🟠', cat: 'Recursos', price: 5 },
   tin_ore:     { name: 'Minério de Estanho', icon: '⚪', cat: 'Recursos', price: 5 },
@@ -109,6 +110,8 @@ const ITEMS = {
   iron_pick:   { name: 'Picareta de Ferro',  icon: '⛏️', cat: 'Ferramentas', price: 70,  slot: 'tool', tool: 'pick', tier: 3, power: 4 },
   steel_pick:  { name: 'Picareta de Aço',    icon: '⛏️', cat: 'Ferramentas', price: 150, slot: 'tool', tool: 'pick', tier: 4, power: 5 },
   hoe:         { name: 'Enxada',             icon: '⛏️', cat: 'Ferramentas', price: 10, slot: 'tool', tool: 'hoe', tier: 1, power: 1 },
+  stone_shovel:{ name: 'Pá de Pedra',        icon: '🪏', cat: 'Ferramentas', price: 12,  slot: 'tool', tool: 'shovel', tier: 1, power: 1 },
+  iron_shovel: { name: 'Pá de Ferro',        icon: '🪏', cat: 'Ferramentas', price: 60,  slot: 'tool', tool: 'shovel', tier: 3, power: 2 },
   watering_can:{ name: 'Regador',            icon: '🪣', cat: 'Ferramentas', price: 22, slot: 'tool', tool: 'water', tier: 1, power: 1 },
   wood_shield: { name: 'Escudo de Madeira',  icon: '🛡️', cat: 'Armaduras', price: 20,  slot: 'shield', def: 1, block: 0.45, color: '#8b5a2b' },
   iron_shield: { name: 'Escudo de Ferro',    icon: '🛡️', cat: 'Armaduras', price: 90,  slot: 'shield', def: 2, block: 0.62, color: '#9aa0a8' },
@@ -188,6 +191,7 @@ const RECIPES = [
   { out: 'fishing_rod',   n: 1, cost: { wood: 3, rope: 1 },                     station: null },
   { out: 'stone_spear',   n: 1, cost: { wood: 4, stone: 3, rope: 1 },           station: null },
   { out: 'hoe',           n: 1, cost: { wood: 3, stone: 2 },                    station: null },
+  { out: 'stone_shovel',  n: 1, cost: { wood: 3, stone: 3 },                    station: null },
   { out: 'bone_knife',    n: 1, cost: { bone: 3, wood: 1, rope: 1 },            station: null },
   { out: 'arrow',         n: 6, cost: { wood: 1, stone: 1 },                    station: null },
   { out: 'short_bow',     n: 1, cost: { wood: 4, rope: 2 },                     station: 'bancada' },
@@ -242,6 +246,7 @@ const RECIPES = [
   { out: 'bronze_pick',   n: 1, cost: { wood: 2, bronze_bar: 4 },               station: 'forja' },
   { out: 'iron_axe',      n: 1, cost: { wood: 3, iron_bar: 3 },                 station: 'forja' },
   { out: 'iron_pick',     n: 1, cost: { wood: 3, iron_bar: 4 },                 station: 'forja' },
+  { out: 'iron_shovel',   n: 1, cost: { wood: 3, iron_bar: 3 },                 station: 'forja' },
   { out: 'steel_axe',     n: 1, cost: { hardwood: 2, steel_bar: 3 },            station: 'forja' },
   { out: 'steel_pick',    n: 1, cost: { hardwood: 2, steel_bar: 4 },            station: 'forja' },
   // forja: armas
@@ -397,7 +402,7 @@ const KINGDOM_RES = ['wheat', 'wood', 'stone', 'iron_ore'];
 
 // peso dos itens (a mochila tem limite; cavalo e carroça aumentam a carga)
 const CAT_WEIGHT = { Recursos: 1, Materiais: 1.5, Comida: 0.3, Ferramentas: 3, Armas: 4, Armaduras: 5, Diversos: 0.5 };
-const WEIGHT_OVERRIDE = { stone: 1.5, iron_ore: 1.5, copper_ore: 1.5, tin_ore: 1.5, silver_ore: 1, gold_ore: 0.5, gem: 0.3, arrow: 0.05, iron_arrow: 0.08,
+const WEIGHT_OVERRIDE = { dirt: 1, stone: 1.5, iron_ore: 1.5, copper_ore: 1.5, tin_ore: 1.5, silver_ore: 1, gold_ore: 0.5, gem: 0.3, arrow: 0.05, iron_arrow: 0.08,
   boat: 0, fiber: 0.2, herb: 0.2, ancient_coin: 0.1, silver_ring: 0.1, berries: 0.2 };
 function itemWeight(k) { return WEIGHT_OVERRIDE[k] !== undefined ? WEIGHT_OVERRIDE[k] : (CAT_WEIGHT[ITEMS[k].cat] || 1); }
 const BASE_CARRY = 220, HORSE_CARRY = 120, CART_CARRY = 450;

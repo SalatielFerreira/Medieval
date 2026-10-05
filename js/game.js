@@ -218,7 +218,7 @@ const Game = {
     return {
       v: 5, slot: G.slot, savedAt: Date.now(), seed: World.seed, terrain: G.terrain || TERRAIN_V, ping: G.ping, name: G.name, surname: G.surname, time: G.time, day: G.day, spawn: G.spawn,
       player: { x: P.x, y: P.y, hp: P.hp, maxHp: P.maxHp, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
-        quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], style: P.style || null, seed: P.seed || null, water: P.water || 0 },
+        quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], style: P.style || null, seed: P.seed || null, water: P.water || 0, digMode: P.digMode || 'dig' },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
       urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], vacancies: G.vacancies || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
@@ -375,6 +375,7 @@ const Game = {
     const fx = Math.floor((P.x + (P.dir > 0 ? 26 : -26)) / TILE), fy = Math.floor((P.y - 8) / TILE);
     if (!World.inb(fx, fy)) return false;
     const i = World.idx(fx, fy);
+    if (type === 'shovel') return !Dig.plan(fx, fy).err;
     if (type === 'hoe') return !!Farm.plots()[i] || (Farm.tillable(World.tiles[i]) && !World.obj[i] && World.sgrid[i] < 0);
     if (type === 'rod' || type === 'water') return !!this.findNearTile((x, y) => World.isWater(World.tile(x, y))) || (type === 'water' && !!Farm.plots()[i]);
     return false;
@@ -462,6 +463,7 @@ const Game = {
     else if (code === 'Space') this.playerAction(false, true);
     else if (code === 'KeyF') this.eatBest();
     else if (code === 'KeyQ') this.cycleTool();
+    else if (code === 'KeyY') Dig.toggle();
     else if (code === 'KeyR') Ride.toggle();
     else if (code === 'KeyZ') Moves.dodge();
     else if (code === 'KeyV') Moves.startHeavy();
@@ -661,6 +663,7 @@ const Game = {
     {
       let fx = Math.floor((P.x + Math.cos(useMouse ? aimM : (P.dir > 0 ? 0 : Math.PI)) * 26) / TILE), fy = Math.floor((P.y - 8) / TILE);
       if (useMouse) { const mx = Math.floor(G.mouse.wx / TILE), my = Math.floor(G.mouse.wy / TILE); if (U.dist(mx + 0.5, my + 0.5, P.x / TILE, (P.y - 8) / TILE) < 2.3) { fx = mx; fy = my; } }
+      if (ptool === 'shovel' && Dig.use(fx, fy)) { P.swing = 0.25; P.atkCd = 0.4; P.toolAnim = 'shovel'; return; }
       if ((ptool === 'hoe' || ptool === 'water') && Farm.use(ptool, fx, fy)) { P.swing = 0.25; P.atkCd = 0.4; P.toolAnim = ptool === 'hoe' ? 'pick' : null; return; }
       const pl = World.inb(fx, fy) && G.plots[World.idx(fx, fy)];
       if (pl && pl.crop && pl.stage >= CROPS[pl.crop].days && !World.obj[World.idx(fx, fy)]) { Farm.harvest(World.idx(fx, fy)); P.atkCd = 0.4; return; }
@@ -1714,6 +1717,7 @@ const Game = {
     Ranged.draw(ctx, cx, cy);
 
     Urban.draw(ctx, cx, cy, t);
+    Dig.draw(ctx, cx, cy);
 
     // iluminação noturna
     if (G.darkness > 0.01) {

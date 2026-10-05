@@ -51,6 +51,7 @@ const Touch = {
         <button class="tc-b" data-tc="run" data-tcl="run" aria-label="Correr">${icon('run')}</button>
         <button class="tc-b tc-bag hidden" data-tc="q0" data-tcl="q0" aria-label="Algibeira 1"></button>
         <button class="tc-b tc-bag hidden" data-tc="q1" data-tcl="q1" aria-label="Algibeira 2"></button>
+        <button class="tc-b tc-dig hidden" data-tc="dig" data-tcl="dig" aria-label="Pá: cavar ou aterrar"></button>
       </div>`;
     const stick = document.getElementById('tcStick'), knob = document.getElementById('tcKnob');
     const moveStick = (cx, cy) => {
@@ -73,6 +74,7 @@ const Touch = {
         if (G.state !== 'play' || G.paused) return;
         if (k === 'atk') { G.keys.Space = true; Game.playerAction(false, true); } // segurar repete o golpe
         if (k === 'use') Game.interact();
+        if (k === 'dig') Dig.toggle();
         if (k === 'run') { G.touchSprint = !G.touchSprint; b.classList.toggle('on', G.touchSprint); }
         if (k === 'q0' || k === 'q1') {
           const it = P.quick[+k[1]] && ITEMS[P.quick[+k[1]]];
@@ -91,7 +93,7 @@ const Touch = {
 
   // ------------------------------------------------------------ posição e tamanho que você escolheu (Ajustes → Controles)
   // Fica em G.settings.touchLayout: { stick: { x, y, s }, atk: {...} } — x e y são o centro em fração da tela, s o tamanho.
-  KEYS: { stick: 'Joystick', atk: 'Atacar', use: 'Interagir', run: 'Correr', q0: 'Bolso 1', q1: 'Bolso 2' },
+  KEYS: { stick: 'Joystick', atk: 'Atacar', use: 'Interagir', run: 'Correr', q0: 'Bolso 1', q1: 'Bolso 2', dig: 'Pá' },
   items() { return [...document.querySelectorAll('#touch [data-tcl]')]; },
   applyLayout(L) {
     L = L === false ? null : L || this.layout || G.settings.touchLayout || null;
@@ -211,6 +213,12 @@ const Touch = {
     if (!el || !el.firstChild) return;
     el.querySelector('[data-tc="use"]').classList.toggle('off', !Game.canInteract());
     el.querySelector('[data-tc="run"]').classList.toggle('on', !!G.touchSprint);
+    {
+      const b = el.querySelector('[data-tc="dig"]'), on = !!Dig.held() || this.editing, mode = Dig.mode();
+      b.classList.toggle('hidden', !on);
+      if (on && b.dataset.k !== mode) { b.dataset.k = mode; b.innerHTML = `<span class="tc-it">${UI.ii(mode === 'fill' ? 'dirt' : 'stone_shovel')}</span><small>${mode === 'fill' ? 'Aterrar' : 'Cavar'}</small>`; }
+      b.classList.toggle('on', on && mode === 'fill');
+    }
     for (const q of [0, 1]) {
       const b = el.querySelector(`[data-tc="q${q}"]`), k = P.quick[q], it = k && ITEMS[k], n = k ? Inv.count(k) : 0;
       b.classList.toggle('hidden', !this.editing && (!it || n <= 0));
@@ -234,7 +242,7 @@ const Touch = {
 const KEY_ACTIONS = [
   ['up', 'Andar para cima', 'KeyW'], ['down', 'Andar para baixo', 'KeyS'], ['left', 'Andar para a esquerda', 'KeyA'], ['right', 'Andar para a direita', 'KeyD'],
   ['run', 'Correr', 'ShiftLeft'], ['attack', 'Atacar e coletar', 'Space'], ['heavy', 'Golpe forte (segure e solte)', 'KeyV'], ['block', 'Bloquear com o escudo', 'KeyX'],
-  ['dodge', 'Esquivar', 'KeyZ'], ['interact', 'Conversar e interagir', 'KeyE'], ['eat', 'Comer a melhor comida', 'KeyF'], ['tool', 'Trocar a ferramenta', 'KeyQ'],
+  ['dodge', 'Esquivar', 'KeyZ'], ['interact', 'Conversar e interagir', 'KeyE'], ['eat', 'Comer a melhor comida', 'KeyF'], ['tool', 'Trocar a ferramenta', 'KeyQ'], ['dig', 'Pá: cavar ou aterrar', 'KeyY'],
   ['ride', 'Montar no cavalo', 'KeyR'], ['orders', 'Ordens aos capangas', 'KeyT'], ['siege', 'Aríete ou catapulta (cerco)', 'KeyG'],
   ['quick1', 'Usar o bolso 1', 'Digit1'], ['quick2', 'Usar o bolso 2', 'Digit2'],
   ['inventory', 'Mochila', 'KeyI'], ['craft', 'Criar', 'KeyC'], ['build', 'Construir', 'KeyB'], ['kingdom', 'Portfólio', 'KeyK'], ['map', 'Mapa', 'KeyM'], ['diary', 'Diário', 'KeyJ'],

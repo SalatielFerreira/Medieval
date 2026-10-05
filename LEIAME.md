@@ -91,6 +91,8 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Pá (cavar e aterrar):** crie a Pá de Pedra (3 madeira e 3 pedra, à mão) ou a Pá de Ferro (forja, cava duas vezes mais rápido). No modo **Cavar**, a terra firme vira água rasa e a água rasa vira mar aberto; cada buraco rende **Terra** e às vezes pedra, argila (mais na beira da água), raízes, ossos, moedas antigas ou até um **tesouro enterrado**. No modo **Aterrar** (tecla Y ou o botão da pá no celular), a Terra da mochila enche o mar aberto (1 Terra → água rasa) e a água rasa (2 Terra → terra firme, areia na beira da água). O bloco-alvo aparece marcado no chão. Use para abrir canais e lagos de pesca, cavar um fosso de mar aberto em volta da sua base (ninguém atravessa a pé), ligar uma ilha à terra firme, ganhar terreno do mar ou levar a água até a vila para erguer um porto. Não dá para cavar sob estradas, construções, plantações nem em vilas e castelos dos outros. Conquistas novas: Escavador e Construtor de Terras.
+
 - **Mais campo verde (jogos novos):** a maior parte das colinas marrons virou campo; ficam só as colinas mais altas. Minérios e cavernas continuam nos mesmos lugares.
 - **7 ilhas em anel (jogos novos):** as ilhas rodeiam a terra firme com espaços quase iguais entre elas e a mesma folga até a costa; os tamanhos continuam diferentes (as maiores ficam onde há mais mar). Ficam fora de qualquer reino, e o barco sempre consegue dar a volta no mapa.
 - **Mundo sem montanhas e com 2 vilas por reino (jogos novos):** as montanhas viraram colinas e neve (os minérios continuam lá, e as cavernas também), e cada reino começa com 2 vilas. Os reis fundam vilas novas quando elas lotam. Jogos salvos antigos continuam como estavam.

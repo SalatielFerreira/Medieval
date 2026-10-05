@@ -55,7 +55,7 @@ const MAT = {
 const ART_ITEMS = {
   // ferramentas
   stone_axe: ['axe', 'stone'], bronze_axe: ['axe', 'bronze'], iron_axe: ['axe', 'iron'], steel_axe: ['axe', 'steel'],
-  stone_pick: ['pick', 'stone'], bronze_pick: ['pick', 'bronze'], iron_pick: ['pick', 'iron'], steel_pick: ['pick', 'steel'], hoe: ['hoe', 'iron'],
+  stone_pick: ['pick', 'stone'], bronze_pick: ['pick', 'bronze'], iron_pick: ['pick', 'iron'], steel_pick: ['pick', 'steel'], hoe: ['hoe', 'iron'], stone_shovel: ['shovel', 'stone'], iron_shovel: ['shovel', 'iron'], dirt: ['mound', 'wood'],
   // armas
   battle_axe: ['axe2', 'iron'], war_axe: ['axe2', 'steel'], bronze_sword: ['sword', 'bronze'], iron_sword: ['sword', 'iron'], steel_sword: ['sword', 'steel'],
   silver_sword: ['sword', 'silver'], royal_sword: ['sword', 'gold'], ancient_blade: ['sword', 'ancient'], bone_knife: ['knife', 'bone'],
@@ -81,6 +81,8 @@ const ART_SHAPES = {
   axe: (m, d, l) => `<path d="M9 28 L22 9" stroke="#6b4420" stroke-width="3.2" stroke-linecap="round"/><path d="M17 6 Q27 4 28 14 Q22 13 19 16 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M20 8 Q25 7 26 11" stroke="${l}" stroke-width="1.2" fill="none"/>`,
   axe2: (m, d, l) => `<path d="M8 29 L22 7" stroke="#5a3618" stroke-width="3.4" stroke-linecap="round"/><path d="M18 4 Q30 4 29 17 Q23 14 20 16 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M19 9 Q10 6 9 15 Q14 12 17 13 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M21 7 Q27 7 27 12" stroke="${l}" stroke-width="1.2" fill="none"/>`,
   pick: (m, d, l) => `<path d="M10 28 L20 10" stroke="#6b4420" stroke-width="3.2" stroke-linecap="round"/><path d="M5 9 Q16 1 29 12 L27 14 Q17 6 7 11 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M9 8 Q16 4 23 8" stroke="${l}" stroke-width="1.1" fill="none"/>`,
+  shovel: (m, d, l) => `<path d="M9 27 L21 11" stroke="#6b4420" stroke-width="3" stroke-linecap="round"/><path d="M6 30 L4 26 L10 26 Z" fill="#6b4420"/><path d="M19 13 Q18 6 23 4 Q29 3 29 9 Q27 14 21 14 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M22 7 Q24 5 27 6" stroke="${l}" stroke-width="1.2" fill="none"/>`,
+  mound: () => `<path d="M3 26 Q6 14 16 12 Q26 13 29 26 Z" fill="#7a5230" stroke="#4a2e16" stroke-width="1.3"/><circle cx="11" cy="21" r="1.4" fill="#5a3a1e"/><circle cx="19" cy="18" r="1.2" fill="#5a3a1e"/><circle cx="22" cy="23" r="1.5" fill="#a07a4a"/><path d="M10 16 Q14 13 18 14" stroke="#a07a4a" stroke-width="1.3" fill="none"/>`,
   hoe: (m, d, l) => `<path d="M8 29 L22 8" stroke="#6b4420" stroke-width="3" stroke-linecap="round"/><path d="M19 7 L28 7 L27 13 L21 11 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/>`,
   sword: (m, d, l) => `<path d="M24 4 L27 5 L14 20 L11 18 Z" fill="${m}" stroke="${d}" stroke-width="1.2"/><path d="M24 5 L15 16" stroke="${l}" stroke-width="1"/><path d="M8 15 L16 23" stroke="#b8862a" stroke-width="3" stroke-linecap="round"/><path d="M11 21 L6 26" stroke="#5a3618" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="27" r="2.2" fill="${d}"/>`,
   knife: (m, d, l) => `<path d="M22 6 Q27 8 20 16 L16 13 Z" fill="${m}" stroke="${d}" stroke-width="1.2"/><path d="M16 14 L8 24" stroke="#6b4420" stroke-width="4" stroke-linecap="round"/>`,

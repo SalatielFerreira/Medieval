@@ -423,6 +423,7 @@ function drawHuman(ctx, x, y, o) {
     if (o.weapon) { ctx.fillStyle = o.weapon; ctx.fillRect(5, -2, len, 4); ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(6, -2, len - 2, 1); }
     if (o.tool === 'axe') { ctx.fillStyle = o.toolCol || '#9a9a9a'; ctx.fillRect(len - 2, -6, 6, 8); }
     if (o.tool === 'pick') { ctx.fillStyle = o.toolCol || '#9a9a9a'; ctx.fillRect(len, -8, 3, 16); }
+    if (o.tool === 'shovel') { ctx.fillStyle = '#5a3a1e'; ctx.fillRect(5, -1, len, 2); ctx.fillStyle = o.toolCol || '#9a9a9a'; ctx.fillRect(len + 4, -4, 6, 8); }
     ctx.restore();
   }
   if (o.swing > 0) {

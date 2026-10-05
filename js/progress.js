@@ -6,6 +6,8 @@ const ACHIEVEMENTS = [
   { id: 'tree200',    icon: '🌲', name: 'Derrubador de Florestas', desc: 'Corte 200 árvores.',              t: s => s.trees >= 200 },
   { id: 'ore50',      icon: '⛏️', name: 'Mineiro',             desc: 'Quebre 50 rochas e veios.',          t: s => s.ores >= 50 },
   { id: 'gem',        icon: '💎', name: 'Caçador de Gemas',    desc: 'Encontre uma Gema Bruta.',           t: () => Inv.count('gem') > 0 || (G.stats.gems || 0) > 0 },
+  { id: 'digger',     icon: '🪏', name: 'Escavador',           desc: 'Cave 50 buracos com a pá.',          t: s => (s.dug || 0) >= 50 },
+  { id: 'landmaker',  icon: '🏝️', name: 'Construtor de Terras', desc: 'Aterre 30 trechos de água com a pá.', t: s => (s.filled || 0) >= 30 },
   { id: 'fish10',     icon: '🎣', name: 'Pescador',            desc: 'Pesque 10 peixes.',                  t: s => s.fish >= 10 },
   { id: 'goldfish',   icon: '🐠', name: 'Sorte Dourada',       desc: 'Pesque um Peixe-Dourado.',           t: s => s.goldfish >= 1 },
   { id: 'craft30',    icon: '🔨', name: 'Artesão',             desc: 'Crie 30 itens.',                     t: s => s.crafted >= 30 },

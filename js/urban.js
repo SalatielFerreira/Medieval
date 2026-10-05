@@ -264,6 +264,7 @@ const Urban = {
   // ------------------------------------------------------------ jogo salvo
   restore() {
     const E = this.E();
+    for (const k in E.terra || {}) World.tiles[+k] = E.terra[k]; // buracos e aterros feitos com a pá
     for (const k in E.roads) World.tiles[+k] = E.roads[k];
     for (const k in E.roads) if (E.roads[k] === T.ROAD || E.roads[k] === T.BRIDGE) World.obj[+k] = 0;
     const byKey = new Map();
@@ -619,5 +620,121 @@ const Guards = {
       Game.spawnCapanga(p);
       UI.msg(`${p.name} não pode mais guardar ${where} e voltou para o seu lado.`, 'bad');
     }
+  },
+};
+
+// ====================================================================== pá: cavar e aterrar
+// Cavar: terra firme vira água rasa e água rasa vira mar aberto (cada buraco rende Terra e às vezes um achado).
+// Aterrar: a Terra da mochila enche o mar aberto (vira água rasa) e a água rasa (vira terra firme).
+// Serve para abrir canais e lagos, fossos de defesa (ninguém atravessa o mar aberto a pé), ligar ilhas,
+// levar a água até uma vila para erguer um porto ou ganhar terreno do mar.
+const DIG_LAND = [T.GRASS, T.FOREST, T.HILL, T.SAND, T.SNOW];
+const Dig = {
+  prog: {}, // esforço já feito em cada bloco (só enquanto joga)
+  warnT: 0,
+  held() { const k = P.equip.tool, it = k && ITEMS[k]; return it && it.tool === 'shovel' ? it : null; },
+  mode() { return P.digMode === 'fill' ? 'fill' : 'dig'; },
+  toggle() {
+    P.digMode = this.mode() === 'fill' ? 'dig' : 'fill';
+    UI.msg(P.digMode === 'fill' ? `🟫 Pá no modo ATERRAR: enche a água com Terra da mochila (você tem ${Inv.count('dirt')}).` : '🪏 Pá no modo CAVAR: terra vira água rasa e água rasa vira mar aberto.', 'gold');
+    if (Touch.on) Touch.update();
+  },
+  // bloco-alvo: o da frente, ou o do mouse quando ele está perto do herói
+  target(useMouse, aim) {
+    let fx = Math.floor((P.x + Math.cos(useMouse ? aim : (P.dir > 0 ? 0 : Math.PI)) * 26) / TILE), fy = Math.floor((P.y - 8) / TILE);
+    if (useMouse) { const mx = Math.floor(G.mouse.wx / TILE), my = Math.floor(G.mouse.wy / TILE); if (U.dist(mx + 0.5, my + 0.5, P.x / TILE, (P.y - 8) / TILE) < 2.3) { fx = mx; fy = my; } }
+    return { x: fx, y: fy };
+  },
+  // o que a pá faria neste bloco: { err } ou { op, to, need (golpes), cost (Terra) }
+  plan(tx, ty) {
+    if (G.dungeon) return { err: 'Não dá para cavar nas cavernas' };
+    if (!World.inb(tx, ty) || tx < 1 || ty < 1 || tx >= WORLD_W - 1 || ty >= WORLD_H - 1) return { err: 'Fora do mapa' };
+    const i = World.idx(tx, ty), t = World.tiles[i], fill = this.mode() === 'fill';
+    if (t === T.ROAD || t === T.BRIDGE) return { err: 'Remova a estrada primeiro' };
+    if (t === T.MOUNT || t === T.CWALL || t === T.CFLOOR) return { err: 'A pá não vence esta rocha' };
+    if (World.sgrid[i] >= 0) return { err: 'Há uma construção aqui' };
+    if (World.obj[i]) return { err: 'Remova árvores/rochas primeiro' };
+    if (Farm.plots()[i]) return { err: 'Aqui há uma plantação' };
+    const town = Urban.foreignTown(tx, ty);
+    if (town) return { err: `Só o chefe da vila ou o rei pode cavar em ${town}` };
+    if (fill) {
+      if (t === T.DEEP) return { op: 'fill', to: T.WATER, need: 2, cost: 1 };
+      if (t === T.WATER) return { op: 'fill', to: this.shore(tx, ty) ? T.SAND : T.GRASS, need: 2, cost: 2 };
+      return { err: 'Já é terra firme' };
+    }
+    if (DIG_LAND.includes(t)) return { op: 'dig', to: T.WATER, need: 3 };
+    if (t === T.WATER) {
+      // o mar aberto não se atravessa a pé: ninguém pode estar em cima
+      if (Math.floor(P.x / TILE) === tx && Math.floor((P.y - 4) / TILE) === ty) return { err: 'Você está em cima' };
+      if (G.ents.some(e => !e.dead && Math.floor(e.x / TILE) === tx && Math.floor(e.y / TILE) === ty)) return { err: 'Tem alguém aí' };
+      return { op: 'dig', to: T.DEEP, need: 4 };
+    }
+    if (t === T.DEEP) return { err: 'Já é mar aberto' };
+    return { err: 'Não dá para cavar aqui' };
+  },
+  // há água por perto? (o aterro vira areia de praia; longe da água vira campo)
+  shore(tx, ty) {
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && World.isWater(World.tile(tx + dx, ty + dy))) return true;
+    return false;
+  },
+  use(tx, ty) {
+    const it = this.held(); if (!it) return false;
+    const p = this.plan(tx, ty), px = (tx + 0.5) * TILE, py = (ty + 0.5) * TILE;
+    const warn = m => { if (G.realTime - this.warnT > 1.2) { this.warnT = G.realTime; Game.addText(px, py - 12, '✖ ' + m, '#ff8a8a'); } };
+    if (p.err) { warn(p.err); return true; }
+    if (p.op === 'fill' && Inv.count('dirt') < p.cost) { warn(`Falta Terra (precisa de ${p.cost}) — cave em terra firme para juntar`); return true; }
+    const i = World.idx(tx, ty), wet = World.isWater(World.tiles[i]);
+    P.aim = Math.atan2(py - (P.y - 14), px - P.x); P.dir = px < P.x ? -1 : 1;
+    this.prog[i] = (this.prog[i] || 0) + it.power;
+    Game.burst(px, py, wet ? '#6ab0ff' : '#8a6a42', 6);
+    Sound.play(wet ? 'splash' : 'chop', { vol: 0.5 });
+    if (this.prog[i] < p.need) return true;
+    delete this.prog[i];
+    const from = World.tiles[i];
+    this.set(i, p.to);
+    if (p.op === 'dig') {
+      Inv.add('dirt', 1); Progress.add('dug');
+      Game.addText(px, py - 14, '+1 Terra', '#d8b98a');
+      if (DIG_LAND.includes(from)) this.find(px, py, from, tx, ty);
+    } else {
+      Inv.add('dirt', -p.cost); Progress.add('filled');
+      Game.addText(px, py - 14, p.to === T.WATER ? 'Mar aberto → água rasa' : 'Terra firme!', '#d8b98a');
+    }
+    return true;
+  },
+  // o que a terra esconde: pedras, argila na beira da água, raízes, ossos, moedas antigas e, raramente, um tesouro
+  find(px, py, from, tx, ty) {
+    const got = [], add = (k, n) => { Inv.add(k, n); got.push(`+${n} ${ITEMS[k].name}`); };
+    if (Math.random() < (from === T.HILL ? 0.5 : 0.25)) add('stone', 1);
+    if (Math.random() < (this.shore(tx, ty) ? 0.4 : 0.12)) add('clay', 1);
+    if (from === T.FOREST && Math.random() < 0.3) add('fiber', 1);
+    if (Math.random() < 0.05) add('bone', 1);
+    if (Math.random() < 0.03) add('ancient_coin', 1);
+    if (Math.random() < 0.012) {
+      const g = U.rint(60, 180); P.gold += g; got.push(`+${g} Salin`);
+      if (Math.random() < 0.35) add('gem', 1);
+      UI.banner('💰 Tesouro enterrado!'); Sound.play('coin'); Progress.add('treasures');
+    }
+    got.forEach((t, k) => Game.addText(px, py - 28 - k * 14, t, '#ffe9a8'));
+  },
+  // muda o terreno e guarda a mudança no jogo salvo
+  set(i, t) {
+    World.setTile(i, t);
+    World.regrow = World.regrow.filter(r => r.i !== i);
+    const E = Urban.E();
+    E.terra = E.terra || {};
+    E.terra[i] = t; delete E.roads[i]; delete E.mine[i];
+  },
+  // marca no chão o bloco que a pá vai cavar ou aterrar
+  draw(ctx, cx, cy) {
+    if (!this.held() || G.dungeon || P.sailing || P.mounted || UI.isOpen() || Urban.mode || G.placing) return;
+    const aim = Math.atan2(G.mouse.wy - (P.y - 14), G.mouse.wx - P.x), t = this.target(!Touch.on, aim), p = this.plan(t.x, t.y);
+    const ok = !p.err && !(p.op === 'fill' && Inv.count('dirt') < p.cost), fill = this.mode() === 'fill';
+    const X = t.x * TILE - cx, Y = t.y * TILE - cy, done = ok ? (this.prog[World.idx(t.x, t.y)] || 0) / p.need : 0;
+    ctx.fillStyle = ok ? (fill ? 'rgba(170,120,60,0.28)' : 'rgba(80,160,255,0.25)') : 'rgba(220,60,60,0.18)';
+    ctx.fillRect(X, Y, TILE, TILE);
+    if (done > 0) { ctx.fillStyle = 'rgba(255,233,168,0.8)'; ctx.fillRect(X + 2, Y + TILE - 5, (TILE - 4) * done, 3); }
+    ctx.strokeStyle = ok ? (fill ? '#e0b070' : '#9ad0ff') : 'rgba(255,120,120,0.8)'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+    ctx.strokeRect(X + 1, Y + 1, TILE - 2, TILE - 2); ctx.setLineDash([]);
   },
 };
