@@ -463,6 +463,29 @@ const World = {
     return true;
   },
 
+  // novo esconderijo para um acampamento de bandidos: terra selvagem (fora de qualquer reino), longe de cidades,
+  // de outros acampamentos, das ilhas e do herói
+  campSpot(camp) {
+    const px = P.x / TILE, py = P.y / TILE;
+    for (let tries = 0; tries < 6000; tries++) {
+      const x = 4 + Math.floor(Math.random() * (WORLD_W - 8)), y = 4 + Math.floor(Math.random() * (WORLD_H - 8));
+      if (U.dist(x, y, camp.x, camp.y) < 30 || U.dist(x, y, px, py) < 30) continue;
+      if (!this.areaOk(x - 1, y - 1, 5, 5)) continue;
+      let wild = true;
+      for (let j = y - 2; j < y + 5 && wild; j++) for (let i = x - 2; i < x + 5; i++) if (this.terr[this.idx(i, j)] >= 0) { wild = false; break; }
+      if (!wild) continue;
+      if (this.islands.some(is => U.dist(x, y, is.x, is.y) < is.r * 1.3)) continue;
+      if (this.capitals.some(c => U.dist(x, y, c.x, c.y) < 22) || this.villages.some(v => U.dist(x, y, v.x, v.y) < 16)) continue;
+      if (this.camps.some(c => c !== camp && U.dist(x, y, c.x, c.y) < 30)) continue;
+      let free = true;
+      for (let j = y - 1; j < y + 4 && free; j++) for (let i = x - 1; i < x + 4; i++) { const id = this.sgrid[this.idx(i, j)]; if (id >= 0 && id !== camp.id) { free = false; break; } }
+      if (!free) continue;
+      const t = this.tile(x + 1, y + 1);
+      if (t === T.ROAD || t === T.BRIDGE) continue;
+      return { x, y };
+    }
+    return null;
+  },
   // tira uma construção do mapa (o número dela continua reservado)
   removeStruct(s) {
     s.hidden = true; s.blocks = false; s.removed = true;

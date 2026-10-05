@@ -65,7 +65,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Família e linhagem:** case-se, tenha filhos (sexo aleatório, você escolhe o nome). O ano segue o calendário de 12 meses (12 meses; cada mês dura 6 minutos reais). Morrer é fim de jogo, mas você pode continuar como seu filho ou filha, que herda tudo.
 
 - **Mapa fixo** de 320×320 tiles, o mesmo em todas as partidas: cerca de 73% de terra, com campos, florestas, colinas, montanhas, neve, rios e lagos. Há **8 ilhas** no mar que só se alcançam de barco e guardam prata, ouro, gemas e carvalhos anciões.
-- **7 reinos:** Midgard, Dorne, Winterfel, Valáquia, Olympus, Persépolis e Gondor. Cada um tem castelo, 3 vilas espaçadas (Armazém, Ferreiro, Madeireira, Pedreira, Taverna, casas e plantações), território com fronteiras, estradas e economia própria. Há 14 acampamentos de bandidos.
+- **7 reinos:** Midgard, Dorne, Winterfel, Valáquia, Olympus, Persépolis e Gondor. Cada um tem castelo, 3 vilas espaçadas (Armazém, Ferreiro, Madeireira, Pedreira, Taverna, casas e plantações), território com fronteiras, estradas e economia própria. Há 14 acampamentos de bandidos; quando um é destruído, ele some e, depois de alguns dias, renasce em outro canto da terra selvagem (fora dos reinos).
 - **Árvores:** Carvalho, Pinheiro (resina), Bétula, Teixo, Macieira, Coqueiro e Carvalho Ancião (madeira nobre, exige machado de ferro).
 - **Minérios:** Rocha, Carvão, Cobre e Estanho (picareta de pedra); Ferro (bronze); Prata e Ouro (ferro); Gemas (aço). Também há Argila, Linho e Ervas.
 - **Ferramenta escolhida por você:** a ferramenta empunhada (tecla Q) define o que você coleta e com que força.

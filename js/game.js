@@ -228,7 +228,7 @@ const Game = {
       shrines: G.shrines, pilgrim: G.pilgrim, prayDay: G.prayDay, pcaravans: (G.caravans || []).filter(c => c.owner === 'player' && !c.done), civs: G.civs, storage: G.storage, dungeons: G.dungeons, diplo: G.diplo,
       vciv: World.villages.map(v => v.civ),
       built: World.structs.filter(s => s.built && !s.removed).map(s => ({ type: s.type, x: s.x, y: s.y, animals: s.animals, goods: s.goods, stock: s.stock, till: s.till, workers: s.workers, autosell: s.autosell, oldId: s.id })),
-      camps: World.camps.map(c => ({ cleared: c.cleared, left: c.left, respawnDay: c.respawnDay })),
+      camps: World.camps.map(c => ({ cleared: c.cleared, left: c.left, respawnDay: c.respawnDay, x: c.x, y: c.y })),
       obj: U.u8ToB64(World.obj),
       regrow: World.regrow,
     };
@@ -286,7 +286,12 @@ const Game = {
     G.fams = s.fams || {}; G.famSeq = s.famSeq || 0; G.founded = s.founded || []; G.revolts = s.revolts || [];
     G.births = s.births || {}; G.lastBirths = s.lastBirths || {}; G.playerFam = s.playerFam;
     Families.restore();
-    s.camps.forEach((c, i) => { if (World.camps[i]) Object.assign(World.camps[i], c); });
+    s.camps.forEach((c, i) => {
+      const k = World.camps[i]; if (!k) return;
+      if (c.x !== undefined && (c.x !== k.x || c.y !== k.y)) Urban.relocate(k, c.x, c.y, true); // acampamento que mudou de esconderijo
+      Object.assign(k, { cleared: c.cleared, left: c.left, respawnDay: c.respawnDay });
+      if (c.x !== undefined && c.cleared) { k.hidden = true; k.blocks = false; } // destruído: some até renascer no lugar novo
+    });
     World.obj = U.b64ToU8(s.obj);
     for (let i = 0; i < World.obj.length; i++) if (World.obj[i]) World.objHp[i] = OBJ[World.obj[i]].hp;
     World.regrow = s.regrow || [];
@@ -1089,6 +1094,10 @@ const Game = {
   campCleared(camp) {
     Progress.add('camps');
     camp.cleared = true; camp.respawnDay = G.day + 4 * ECON_DAYS;
+    // os bandidos fogem: o acampamento some daqui e se esconde em outro canto da terra selvagem
+    const sp = World.campSpot(camp);
+    if (sp) { Urban.relocate(camp, sp.x, sp.y, true); World.chunks.clear(); }
+    camp.hidden = true; camp.blocks = false;
     const g = U.rint(40, 90);
     P.gold += g; Inv.add('iron_bar', 2);
     for (const c of G.civs) this.addRelation(c.id, 6);
@@ -1484,7 +1493,7 @@ const Game = {
   onNewDay() {
     G.day++;
     Season.apply(true);
-    for (const camp of World.camps) if (camp.cleared && G.day >= camp.respawnDay) { camp.cleared = false; camp.left = 4; }
+    for (const camp of World.camps) if (camp.cleared && G.day >= camp.respawnDay) { camp.cleared = false; camp.left = 4; camp.hidden = false; camp.blocks = true; }
     // a vida (envelhecer, casar, ter filhos) anda um ano a cada ano do calendário (em janeiro)
     if (Calendar.of(G.day).month === 0 && G.day > 1) People.tickYear();
     Arena.dayTick(); Progress.dayTick(); Guards.dayTick(); Homes.dayTick(true);
