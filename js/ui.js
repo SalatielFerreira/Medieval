@@ -1215,7 +1215,7 @@ const UI = {
         <span class="act-row"><button data-act="portsell" data-s="${sid}" data-k="${k}" data-n="1" ${st.purse >= pr ? '' : 'disabled'}>Vender 1</button><button class="primary" data-act="portsell" data-s="${sid}" data-k="${k}" data-n="${n}" ${st.purse >= pr ? '' : 'disabled'}>Todos · ${(n * pr).toLocaleString('pt-BR')}</button></span></div>`; }).join('');
     const guide = big.map(k => `<div class="pt-g"><span class="pt-ic">${ITEMS[k].icon}</span><b>${ITEMS[k].name.split(' (')[0]}</b><small>${Ports.price(k)} Salin</small></div>`).join('');
     const h = `<div class="port">
-      <div class="card pt-hero"><span class="pt-anchor">⚓</span><div><b>Porto de ${CIV_DEFS[ci] ? CIV_DEFS[ci].short : 'mar aberto'}</b><small>O mestre do porto compra o que vem do mar. Bolsa do porto: ${st.purse.toLocaleString('pt-BR')} Salin · você: ${P.gold.toLocaleString('pt-BR')} Salin</small></div></div>
+      <div class="card pt-hero"><span class="pt-anchor">⚓</span><div><b>Porto de ${s.village !== undefined && World.villages[s.village] ? World.villages[s.village].name : CIV_DEFS[ci] ? CIV_DEFS[ci].short : 'mar aberto'}</b><small>O mestre do porto compra o que vem do mar. Bolsa do porto: ${st.purse.toLocaleString('pt-BR')} Salin · você: ${P.gold.toLocaleString('pt-BR')} Salin</small></div></div>
       <div class="pt-cols">
         <div class="card pt-sell"><div class="sec">🐟 Vender pescados</div>${sell || '<p class="muted">Você não tem nada do mar para vender. Pesque em rios, no mar e, de barco, em alto-mar (tubarões, polvos e baleias).</p>'}</div>
         <div class="pt-side">

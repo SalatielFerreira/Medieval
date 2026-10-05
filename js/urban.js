@@ -19,6 +19,13 @@ const CIVIC = {
   well:   { name: 'Poço',      icon: '🪣', w: 1, h: 1, cost: { stone: 12 },                        desc: 'Poço de água para a praça.' },
   vwall:  { name: 'Muralha',   icon: '🧱', w: 1, h: 1, cost: { stone: 1 },                         desc: 'Trecho de muralha de pedra.' },
   field:  { name: 'Plantação', icon: '🌾', w: 3, h: 2, cost: { wood: 8 },                          desc: 'Campo de trigo da vila.' },
+  port:   { name: 'Porto',     icon: '⚓', w: 4, h: 3, cost: { wood: 80, stone: 40 },              desc: 'Cais na beira da água (com a água logo abaixo dele): o mestre do porto compra peixes, polvos, tubarões e baleias.', coast: true },
+};
+// o porto precisa de água logo abaixo (o cais entra na água): pelo menos 4 blocos de água na fileira de baixo
+const coastErr = (tx, ty, w, h) => {
+  let water = 0;
+  for (let i = tx - 1; i <= tx + w; i++) if (World.inb(i, ty + h) && World.isWater(World.tile(i, ty + h))) water++;
+  return water >= 4 ? null : 'O porto precisa ficar na beira da água (com a água logo abaixo)';
 };
 // construções que nunca saem do lugar
 const FIXED_STRUCTS = ['camp', 'cave', 'cave_exit', 'tchest', 'shrine'];
@@ -174,6 +181,7 @@ const Urban = {
       if (World.obj[i]) return 'Remova árvores/rochas primeiro';
       if (World.sgrid[i] >= 0 && (!s || World.sgrid[i] !== s.id)) return 'Já há uma construção aqui';
     }
+    if (def.coast || def.type === 'port') { const e = coastErr(tx, ty, def.w, def.h); if (e) return e; }
     if (def.blocks !== false && P.x + P.r > tx * TILE && P.x - P.r < (tx + def.w) * TILE && P.y > ty * TILE && P.y - P.r < (ty + def.h) * TILE) return 'Você está no caminho';
     const cx = Math.floor(tx + def.w / 2), cy = Math.floor(ty + def.h / 2), a = this.authority(cx, cy);
     if (civic) {
