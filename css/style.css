@@ -3570,3 +3570,4 @@ body:not(.small) .kpg.kdesk .ar-tt b { font-size: 18px; }
 @media (max-width: 1150px) { body:not(.small) .kpg.kdesk[data-nav="s:tela"] .st-cols { grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); } }
 :is(body.small, body.touchui) :is(.at-row button, .gc-row, .bz-card button, .vac-row button, .fm-card button) { min-height: var(--tap) !important; }
 :is(body.small, body.touchui) :is(.at-row button, .bz-card button, .vac-row button, .fm-card button, .dy-kid button, .pt-row button) { min-width: var(--tap); }
+@media (orientation: landscape) { body.small .vg-req.two { grid-template-columns: repeat(2, 1fr); } }

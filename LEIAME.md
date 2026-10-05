@@ -164,7 +164,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Seus empreendimentos:** construa (B → Empreendimentos) Fazenda Comercial, Moinho, Serraria, Pedreira Própria, Mina, Ferraria e Empório, e contrate moradores (na conversa ou no próprio empreendimento). Cada funcionário recebe salário todo dia; especialistas do ofício rendem +50%. A produção fica guardada para recolher, ou é vendida automaticamente e o faturamento cai direto no seu ouro, sem precisar ir até lá. Funcionários na sua Taverna aumentam as vendas.
 - **Até 10 capangas** desde o início, andando com você em formação.
 - **População viva:** solteiros se casam, casais têm filhos, e a população dos reinos cresce. Vilas lotadas mandam famílias para vilas com espaço ou para vilas novas.
-- **Fundar sua vila:** em Portfólio → Vilas e guardas, com o título civil Conquistador, funde a "Vila <seu sobrenome>" no lugar onde estiver, livre de qualquer reino (10.000 🪙). Colonos chegam, a vila cresce e paga 2 🪙 por morador todo dia.
+- **Fundar sua vila:** em Portfólio → Vilas e guardas (sem precisar de título nem de conquista), funde a "Vila <seu sobrenome>" no lugar onde estiver, livre de qualquer reino (10.000 🪙). Colonos chegam, a vila cresce e paga 2 🪙 por morador todo dia.
 - **Janela Portfólio (K):** além dos seus reinos, tem **Reino** (os 7 reinos: pessoas, crianças, famílias, vilas, nascimentos, corte real, famílias influentes e o chefe de cada vila), **Grandes Casas** (ranking das casas mais poderosas do mundo e as casas inquietas, com pouca lealdade à coroa), **Família**, **Vilas e guardas** e **Empreendimentos**.
 - O criador de herói agora pede o **sobrenome da família**.
 

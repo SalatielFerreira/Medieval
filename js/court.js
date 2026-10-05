@@ -100,7 +100,7 @@ const Court = {
   },
   capBonus() { const t = this.title(); return t ? t.caps : 0; },
   villageTax() { const t = this.title(); return t ? t.tax : 2; },
-  canFound() { return this.hasCivil('conquistador'); },
+  canFound() { return true; }, // qualquer um pode fundar a própria vila (basta o ouro e um lugar aberto)
   discount(ci) { const t = this.T(); return t.lvl >= 0 && t.civ === ci ? 0.05 + t.lvl * 0.02 : 0; },
   stipendTick() {
     const t = this.title();

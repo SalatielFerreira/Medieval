@@ -919,15 +919,15 @@ const UI = {
         <div class="card"><div class="sec">Como virar chefe de uma vila</div><div class="ways">
           <div class="way"><span class="way-ic">📜</span><b>Pedir ao rei</b><small>No castelo do reino, com boa relação e ouro.</small></div>
           <div class="way"><span class="way-ic">⚔️</span><b>Conquistar</b><small>Converse com o chefe da vila e desafie-o. O rei decide se é uma afronta.</small></div>
-          <div class="way"><span class="way-ic">🏗️</span><b>Fundar</b><small>A Vila ${this.esc(G.surname)}, livre de qualquer reino (título Conquistador).</small></div></div></div>
+          <div class="way"><span class="way-ic">🏗️</span><b>Fundar</b><small>A Vila ${this.esc(G.surname)}, livre de qualquer reino (10.000 Salin).</small></div></div></div>
         <div class="card found"><div class="sec">🏗️ Fundar a Vila ${this.esc(G.surname)}</div>
           <p class="dt-desc">Fique no centro de um lugar aberto (longe de outras vilas e castelos) e funde uma vila com o nome da sua família, livre de qualquer reino. Colonos se mudam para lá e pagam impostos a você.</p>
           <div class="found-row"><span class="found-lab">Custo</span><div class="cost">${this.fmtCost(FOUND_COST, have)}</div></div>
-          ${(() => { const conq = Court.hasCivil('conquistador'), gold = Math.min(100, P.gold / FOUND_COST.gold * 100);
-            return `<div class="vg-req"><div class="vg-step ${conq ? 'ok' : ''}"><span>🚩</span><b>Título Conquistador</b><em>${conq ? '✔' : 'falta'}</em></div>
+          ${(() => { const gold = Math.min(100, P.gold / FOUND_COST.gold * 100);
+            return `<div class="vg-req two">
               <div class="vg-step ${P.gold >= FOUND_COST.gold ? 'ok' : ''}"><span>🪙</span><b>${P.gold} / ${FOUND_COST.gold}</b><i class="vg-bar"><i style="width:${gold}%"></i></i></div>
-              <div class="vg-step ${site.ok === true ? 'ok' : ''}"><span>📍</span><b>Lugar aberto</b><em>${site.ok === true ? '✔' : conq ? 'procure' : '—'}</em></div></div>`; })()}
-          <div class="found-go"><div class="found-st ${site.ok === true ? 'ok' : 'bad'}">${site.ok === true ? `Este lugar serve (território de ${CIV_DEFS[site.civ].short}).` : this.esc(site.ok)}</div>
+              <div class="vg-step ${site.ok === true ? 'ok' : ''}"><span>📍</span><b>Lugar aberto</b><em>${site.ok === true ? '✔' : 'procure'}</em></div></div>`; })()}
+          <div class="found-go"><div class="found-st ${site.ok === true ? 'ok' : 'bad'}">${site.ok === true ? 'Este lugar serve: a vila será livre, sem pertencer a reino nenhum.' : this.esc(site.ok)}</div>
             <button class="primary" data-act="found" ${site.ok === true && Inv.has(FOUND_COST) ? '' : 'disabled'}>🏘️ Fundar aqui</button></div></div>`;
     }
     if (nav === 'biz') {

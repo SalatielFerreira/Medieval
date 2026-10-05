@@ -330,7 +330,6 @@ const Families = {
     const vx = Math.floor(P.x / TILE), vy = Math.floor(P.y / TILE) - 2;
     if (G.dungeon) return { ok: 'Não dá para fundar vilas dentro de cavernas.' };
     if (P.sailing) return { ok: 'Desembarque primeiro.' };
-    if (!Court.canFound()) return { ok: 'É preciso o título civil Conquistador para fundar uma vila.' };
     const r = this.siteOk(vx, vy);
     let civ = World.terr[World.idx(vx, vy)];
     if (civ < 0) civ = World.capitals.map((c, i) => ({ i, d: U.dist(c.x, c.y, vx, vy) })).sort((a, b) => a.d - b.d)[0].i;
@@ -624,7 +623,7 @@ const Biz = {
 };
 
 // ================================================================ fundar o próprio reino
-// Da vila livre (fundada com o título Conquistador) nasce um reino: quando ela chega ao nível 3, o castelo
+// Da vila livre (fundada pelo jogador) nasce um reino: quando ela chega ao nível 3, o castelo
 // (Construção → Moradia) cria um reino novo de verdade: entra na lista dos reinos, com castelo, guarnição,
 // território em volta e diplomacia. Só um reino fundado por vez: se ele for tomado, dá para fundar outro.
 const REALM_GOLD = 3000;
@@ -642,7 +641,7 @@ const Realm = {
     const a = this.active();
     if (a) return `Você já tem um reino fundado (${CIV_DEFS[a.ci].name}). Só depois que ele cair dá para fundar outro`;
     const cx = tx + 3, cy = ty + 3, vi = this.villageFor(cx, cy);
-    if (vi === null) return 'O castelo precisa ficar perto da sua vila livre (funde uma com o título Conquistador)';
+    if (vi === null) return 'O castelo precisa ficar perto da sua vila livre (funde uma em Portfólio → Vilas e guardas)';
     const v = World.villages[vi];
     if ((v.level || 1) < 3) return `${v.name} ainda precisa crescer até o nível 3 para virar um reino`;
     if (World.capitals.some(c => U.dist(c.x, c.y, cx, cy) < 30)) return 'Muito perto do castelo de outro reino';
