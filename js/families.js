@@ -683,6 +683,7 @@ const Realm = {
     v.free = false; v.civ = ci;
     const spec = (G.founded || []).find(x => x.x === v.x && x.y === v.y); if (spec) { spec.free = false; spec.civ = ci; }
     for (const p of People.residents(vi)) p.civ = ci;
+    Towns.syncOwners(); // casas, lojas e muralhas passam a ter as cores do reino novo
     Game.becomeRuler(ci, `O castelo está de pé.`);
     Diplo.chronicle(`👑 ${G.name} ${G.surname} ergueu um castelo em ${v.name} e fundou o ${name}.`, true);
     UI.banner(`👑 ${name}!`);

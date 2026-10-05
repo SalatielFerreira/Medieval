@@ -41,7 +41,15 @@ const Towns = {
     const houses = World.structs.filter(s => s.type === 'vhouse' && !s.hidden && (s.village === World.villages.indexOf(v) || U.dist(s.x, s.y, v.x, v.y) < 9));
     houses.forEach((s, k) => { s.ruined = k < v.ruin; });
   },
-  applyAll() { World.villages.forEach((v, i) => { this.build(v, i); this.show(v); }); },
+  applyAll() { World.villages.forEach((v, i) => { this.build(v, i); this.show(v); }); this.syncOwners(); },
+  // as construções de cada vila pertencem ao reino da vila (ex.: a vila livre que virou o seu reino)
+  syncOwners() {
+    for (const s of World.structs) {
+      if (!s || s.village === undefined || typeof s.owner !== 'number' || s.type === 'castle') continue;
+      const v = World.villages[s.village];
+      if (v && s.owner !== v.civ) s.owner = v.civ;
+    }
+  },
   dayTick() {
     World.villages.forEach((v, vi) => {
       const c = G.civs[v.civ], raided = v.raid && v.raid.until >= G.day - ECON_DAYS;
@@ -60,6 +68,7 @@ const Towns = {
       v.level = lvl;
       this.show(v);
     });
+    this.syncOwners();
     NpcRoads.tick(); // moradores abrem caminhos até as casas e lojas
     Faith.monthTick();
     People.purseTick(); // as lojas rendem para os próprios donos

@@ -54,9 +54,52 @@ const Ranged = {
 
 // ====================================================================== cavalo e carroça
 const HORSE_NAMES = ['Relâmpago', 'Trovão', 'Estrela', 'Canela', 'Ventania', 'Faísca', 'Luar', 'Bravo'];
+const HORSE_SELL = 120, CART_SELL = 90; // o que pagam pelo cavalo (e pela carroça, que vai junto)
 const Ride = {
+  // o cavalo está com você (e não esperando num estábulo)?
+  here() { return !!P.horse && !this.stall(); },
+  // estábulo onde o cavalo espera (se o estábulo sumiu, ele volta para você)
+  stall() {
+    if (!P.horse || P.horse.stall === undefined || P.horse.stall === null) return null;
+    const s = World.structs[P.horse.stall];
+    if (s && s.type === 'stable' && !s.removed && s.owner === 'player') return s;
+    P.horse.stall = null; P.hx = P.x - 30; P.hy = P.y;
+    UI.msg(`🐴 O estábulo não existe mais: ${P.horse.name} voltou para você.`);
+    return null;
+  },
+  sellPrice() { return P.horse ? HORSE_SELL + (P.cart ? CART_SELL : 0) : 0; },
+  // deixar o cavalo no estábulo, esperando
+  leave(sid) {
+    const s = World.structs[sid];
+    if (!this.here() || !s || s.type !== 'stable') return;
+    P.mounted = false; P.horse.stall = sid;
+    UI.msg(`🏠 ${P.horse.name} ficou no estábulo, esperando por você.${Store.weight() > Store.capacity() ? ' Sem os alforjes, a mochila ficou pesada demais!' : ''}`, 'gold');
+    Sound.play('neigh');
+  },
+  // buscar o cavalo no estábulo
+  fetch(sid) {
+    const s = this.stall();
+    if (!s || s.id !== sid) return;
+    P.horse.stall = null; P.hx = (s.x + s.w / 2) * TILE; P.hy = (s.y + s.h) * TILE + 14;
+    UI.msg(`🐴 ${P.horse.name} saiu do estábulo e vai seguir você. R para montar.`, 'gold');
+    Sound.play('neigh');
+  },
+  // vender o cavalo (com a carroça, se tiver): com você ou no estábulo onde você está
+  sell(sid) {
+    if (!P.horse) return;
+    const s = this.stall();
+    if (s && s.id !== sid) { UI.msg(`${P.horse.name} está em outro estábulo. Vá até lá para vendê-lo.`, 'bad'); return; }
+    const name = P.horse.name, price = this.sellPrice(), cart = P.cart;
+    Dialog.confirm({ icon: '🐴', title: 'Vender o cavalo', text: `Vender ${name}${cart ? ' e a carroça' : ''} por ${price} Salin? Ele não volta mais.`, ok: 'Vender' }, () => {
+      if (!P.horse) return;
+      P.horse = null; P.cart = false; P.mounted = false; P.gold += price;
+      UI.msg(`💰 Você vendeu ${name}${cart ? ' e a carroça' : ''} por ${price} Salin.${Store.weight() > Store.capacity() ? ' Sem os alforjes, a mochila ficou pesada demais!' : ''}`, 'gold');
+      Sound.play('coin'); UI.refresh();
+    });
+  },
   toggle() {
     if (!P.horse) { UI.msg('Você não tem cavalo. Compre um na taverna de qualquer vila ou no seu Estábulo.', 'bad'); return; }
+    if (this.stall()) { UI.msg(`${P.horse.name} está esperando no estábulo (${this.stall().x}, ${this.stall().y}). Vá buscá-lo lá.`, 'bad'); return; }
     if (P.sailing) return;
     if (G.dungeon) { UI.msg('Não dá para montar dentro das cavernas.', 'bad'); return; }
     P.mounted = !P.mounted; P.fishing = null;
@@ -68,6 +111,8 @@ const Ride = {
   // o cavalo segue o jogador quando ele está a pé
   follow(dt) {
     if (!P.horse) return;
+    const st = this.stall();
+    if (st) { P.hx = (st.x + st.w / 2) * TILE; P.hy = (st.y + st.h) * TILE + 14; P.hmoving = false; P.hdir = 1; return; } // esperando na frente do estábulo
     if (P.mounted || G.dungeon || P.sailing) { if (P.mounted) { P.hx = P.x; P.hy = P.y; } return; }
     if (P.hx === undefined) { P.hx = P.x - 30; P.hy = P.y; }
     const d = U.dist(P.hx, P.hy, P.x, P.y);
@@ -117,7 +162,7 @@ function drawHorse(ctx, x, y, dir, anim, moving, col, cart) {
 // ====================================================================== peso e baús
 const Store = {
   weight() { let w = 0; for (const k in P.inv) w += itemWeight(k) * P.inv[k]; return Math.round(w); },
-  capacity() { return this.bag().cap + (P.horse ? HORSE_CARRY : 0) + (P.horse && P.cart ? CART_CARRY : 0); },
+  capacity() { const h = Ride.here(); return this.bag().cap + (h ? HORSE_CARRY : 0) + (h && P.cart ? CART_CARRY : 0); },
   bagLvl() { return U.clamp(P.bagLvl || 1, 1, BAG_LEVELS.length); },
   bag() { return BAG_LEVELS[this.bagLvl() - 1]; },
   nextBag() { return BAG_LEVELS[this.bagLvl()] || null; },

@@ -144,6 +144,7 @@ const Arena = {
   // ------------------------------------------------------------ justa a cavalo (minijogo de pontaria)
   joustStart(ci, tier, bet) {
     if (!P.horse) { UI.msg('Você precisa de um cavalo para a justa.', 'bad'); return; }
+    if (!Ride.here()) { UI.msg(`${P.horse.name} está esperando no estábulo. Vá buscá-lo para a justa.`, 'bad'); return; }
     if (bet > P.gold) bet = P.gold;
     P.gold -= bet;
     G.joust = { ci, tier, bet, pass: 0, me: 0, foe: 0, foeName: this.fighterName(), t0: performance.now(), log: [], over: false };

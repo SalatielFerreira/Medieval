@@ -314,7 +314,7 @@ const UI = {
     const wt = Store.weight(), cap = Store.capacity();
     $('qLoad').style.width = U.clamp(wt / cap * 100, 0, 100) + '%';
     $('qLoad').classList.toggle('over', wt > cap);
-    txt('qLoadT', `${P.horse ? (P.mounted ? '🐎 ' : '🐴 ') : '🎒 '}${wt}/${cap}`);
+    txt('qLoadT', `${Ride.here() ? (P.mounted ? '🐎 ' : '🐴 ') : '🎒 '}${wt}/${cap}`);
     $('qLoadBox').classList.toggle('over', wt > cap);
     html('qToolIc', tit ? UI.ii(tit) : '✋');
     txt('qToolName', tit ? tit.name : 'Mãos livres');
@@ -1392,15 +1392,20 @@ const UI = {
     this.open('Baú', h, 'showChest', [sid], `${s.type === 'chest' ? 'Baú' : 'Baú da casa'} em ${s.x}, ${s.y}`);
   },
 
-  showStable() {
+  showStable(sid) {
+    const st = Ride.stall(), mine = st && st.id === sid, here = Ride.here(), hn = P.horse ? this.esc(P.horse.name) : '';
+    const where = !P.horse ? 'Você não tem cavalo' : mine ? `${hn} está aqui, esperando por você` : st ? `${hn} espera em outro estábulo (${st.x}, ${st.y})` : `${hn} está com você`;
+    const btns = !P.horse ? `<button class="primary" data-act="buyride" data-k="horse" data-p="220" ${P.gold >= 220 ? '' : 'disabled'}>Comprar — 220 🪙</button>`
+      : `${mine ? `<button class="primary" data-act="hfetch" data-s="${sid}">🐴 Levar comigo</button>` : here ? `<button class="primary" data-act="hstall" data-s="${sid}">🏠 Deixar no estábulo</button>` : ''}
+         <button data-act="hsell" data-s="${sid}" ${mine || here ? '' : 'disabled'}>💰 Vender${P.cart ? ' (com a carroça)' : ''} — ${Ride.sellPrice()} Salin</button>`;
     const h = `<div class="kgrid two">
-      <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🐴</div><div><b>Cavalo</b><div class="dt-cat">${P.horse ? 'Você tem: ' + this.esc(P.horse.name) : 'Você não tem cavalo'}</div></div></div>
-        <p class="dt-desc">Quase o dobro da velocidade (tecla R para montar). Os alforjes carregam +${HORSE_CARRY} de peso.</p>
-        <button class="primary" data-act="buyride" data-k="horse" data-p="220" ${!P.horse && P.gold >= 220 ? '' : 'disabled'}>Comprar — 220 🪙</button></div>
+      <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🐴</div><div><b>Cavalo</b><div class="dt-cat">${where}</div></div></div>
+        <p class="dt-desc">Quase o dobro da velocidade (tecla R para montar). Os alforjes carregam +${HORSE_CARRY} de peso. Deixe-o no estábulo para ele esperar por você; os alforjes ficam com ele.</p>
+        <div class="btns">${btns}</div></div>
       <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🛒</div><div><b>Carroça</b><div class="dt-cat">${P.cart ? 'Você tem uma carroça' : 'Precisa de um cavalo para puxar'}</div></div></div>
         <p class="dt-desc">Seu cavalo puxa a carroça e você carrega +${CART_CARRY} de peso.</p>
         <button class="primary" data-act="buyride" data-k="cart" data-p="160" ${P.horse && !P.cart && P.gold >= 160 ? '' : 'disabled'}>Comprar — 160 🪙</button></div></div>`;
-    this.open('Estábulo', h, 'showStable', [], 'Cavalos e carroças para viajar mais rápido');
+    this.open('Estábulo', h, 'showStable', [sid], 'Cavalos e carroças para viajar mais rápido');
   },
 
   showFarm() {
@@ -1714,6 +1719,7 @@ const UI = {
         <button data-act="hire" data-s="${sid}" ${P.gold >= 60 && n < cap ? '' : 'disabled'}>⚔️ Contratar mercenário — 60 🪙</button>
         <button data-act="buyride" data-k="horse" data-p="250" ${!P.horse && P.gold >= 250 ? '' : 'disabled'}>🐴 ${P.horse ? 'Você já tem ' + this.esc(P.horse.name) : 'Comprar um cavalo — 250 🪙'}</button>
         <button data-act="buyride" data-k="cart" data-p="180" ${P.horse && !P.cart && P.gold >= 180 ? '' : 'disabled'}>🛒 ${P.cart ? 'Você já tem uma carroça' : 'Comprar uma carroça — 180 🪙 (precisa de cavalo)'}</button>
+        ${Ride.here() ? `<button data-act="hsell" data-s="-1">💰 Vender ${this.esc(P.horse.name)}${P.cart ? ' e a carroça' : ''} — ${Ride.sellPrice()} Salin</button>` : ''}
         <button data-act="buyfood" data-s="${sid}" data-k="bread" data-p="8" ${P.gold >= 8 ? '' : 'disabled'}>🍞 Comprar pão — 8 🪙</button>
         <button data-act="buyfood" data-s="${sid}" data-k="cooked_meat" data-p="12" ${P.gold >= 12 ? '' : 'disabled'}>🍖 Comprar carne assada — 12 🪙</button>
         <button data-act="rumor" data-s="${sid}">👂 Ouvir outro boato</button>
@@ -2267,6 +2273,9 @@ const UI = {
       case 'cmove': Store.move(World.structs[+d.s], d.k, d.q, d.to === '1'); break;
       case 'cstash': Store.stashResources(World.structs[+d.s]); break;
       case 'buyride': Ride.buy(d.k, +d.p); break;
+      case 'hstall': Ride.leave(+d.s); break;
+      case 'hfetch': Ride.fetch(+d.s); break;
+      case 'hsell': Ride.sell(+d.s); return;
       case 'setslot': G.slot = +d.n; break;
       case 'export': if (!G.dungeon) Saves.download(Game.snapshot()); return;
       case 'dipl': Diplo.playerAction(+d.c, +d.o, d.x); break;

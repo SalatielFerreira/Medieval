@@ -299,6 +299,7 @@ const Game = {
     G.people = s.people || []; G.family = s.family || { spouse: null, tryChild: false, dueDay: 0 }; G.spawned = new Map();
     // funcionários apontam para o novo número da construção
     for (const p of G.people) if (p.job !== undefined && p.job !== null) p.job = idMap[p.job] !== undefined ? idMap[p.job] : null;
+    if (P.horse && P.horse.stall !== undefined && P.horse.stall !== null) P.horse.stall = idMap[P.horse.stall] !== undefined ? idMap[P.horse.stall] : null; // cavalo esperando no estábulo
     G.surname = s.surname || Families.newSurname();
     if (!s.fams) Families.init(); else { for (const p of G.people) Families.attach(p); }
     Families.ensurePlayer(); Families.refresh(); Faith.ensurePriests();
@@ -320,6 +321,7 @@ const Game = {
     G.homes = s.homes || {}; G.npcHouses = s.npcHouses || []; G.npcHouseSeq = s.npcHouseSeq || 0;
     Homes.restore();
     Ports.place(); Urban.restore(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
+    Towns.syncOwners(); // construções de cada vila com as cores do reino dela
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
     if (!data) UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
@@ -827,7 +829,7 @@ const Game = {
       case 'biz_farm': case 'biz_mill': case 'biz_lumber': case 'biz_quarry': case 'biz_mine': case 'biz_smithy': case 'biz_shop': UI.showBiz(s.id); break;
       case 'oven': UI.showCrafting('cozinha'); break;
       case 'brewery': UI.showCrafting('cervejaria'); break;
-      case 'stable': UI.showStable(); break;
+      case 'stable': UI.showStable(s.id); break;
       case 'cave': Dungeon.enter(s); break;
       case 'cave_exit': Dungeon.exit(false); break;
       case 'tchest': Dungeon.openChest(s); break;

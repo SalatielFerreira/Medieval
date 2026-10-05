@@ -91,6 +91,9 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Cavalo no estábulo e venda:** no seu Estábulo, "Deixar no estábulo" faz o cavalo ficar esperando na frente dele (sem os alforjes, a carga da mochila volta ao normal); "Levar comigo" busca de volta. Se o estábulo for demolido, o cavalo volta para você. Dá para **vender o cavalo** (120 Salin, mais 90 se tiver carroça, que vai junto) no estábulo ou na taverna de qualquer vila.
+- **Vila que vira reino acompanha as cores:** ao erguer o castelo, todas as construções da sua vila passam a ser do reino novo; trocando a cor do reino, telhados, toldos e bandeiras da vila mudam junto.
+
 - **Pá (cavar e aterrar):** crie a Pá de Pedra (3 madeira e 3 pedra, à mão) ou a Pá de Ferro (forja, cava duas vezes mais rápido). No modo **Cavar**, a terra firme vira água rasa e a água rasa vira mar aberto; cada buraco rende **Terra** e às vezes pedra, argila (mais na beira da água), raízes, ossos, moedas antigas ou até um **tesouro enterrado**. No modo **Aterrar** (tecla Y ou o botão da pá no celular), a Terra da mochila enche o mar aberto (1 Terra → água rasa) e a água rasa (2 Terra → terra firme, areia na beira da água). O bloco-alvo aparece marcado no chão. Use para abrir canais e lagos de pesca, cavar um fosso de mar aberto em volta da sua base (ninguém atravessa a pé), ligar uma ilha à terra firme, ganhar terreno do mar ou levar a água até a vila para erguer um porto. Não dá para cavar sob estradas, construções, plantações nem em vilas e castelos dos outros. Conquistas novas: Escavador e Construtor de Terras.
 
 - **Mais campo verde (jogos novos):** a maior parte das colinas marrons virou campo; ficam só as colinas mais altas. Minérios e cavernas continuam nos mesmos lugares.
