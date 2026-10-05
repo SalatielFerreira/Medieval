@@ -163,3 +163,101 @@ const Diplo = {
     if (act === 'war' && !this.atWar(mine, other)) this.declareWar(mine, other, `ordem de ${G.name}`);
   },
 };
+
+// ====================================================================== fronteiras do reino
+// O reino ganha terra selvagem (que não é de reino nenhum) de dois jeitos: expandindo as fronteiras
+// (Obras, pago pelo tesouro: a borda avança 5 blocos) ou anexando uma vila livre sua que fique perto.
+// Cada ganho fica anotado em G.claims e é refeito na mesma ordem ao carregar o jogo.
+const BORDER_MAX = 8;
+const Borders = {
+  lvl(ci) { return (G.civs[ci] && G.civs[ci].border) || 0; },
+  STEP: 5, // blocos que a fronteira avança a cada expansão
+  cost(ci) { const l = this.lvl(ci); return { gold: 250 + 150 * l, wood: 30 + 10 * l, stone: 30 + 10 * l }; },
+  // blocos que um ganho daria (sem gravar nada)
+  count(cx, cy, r) {
+    let n = 0;
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) {
+      if (!World.inb(x, y) || U.dist(x, y, cx, cy) > r) continue;
+      const i = World.idx(x, y); if (World.terr[i] < 0 && World.tiles[i] !== T.DEEP) n++;
+    }
+    return n;
+  },
+  claim(ci, cx, cy, r, quiet) {
+    let n = 0;
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) {
+      if (!World.inb(x, y) || U.dist(x, y, cx, cy) > r) continue;
+      const i = World.idx(x, y); if (World.terr[i] < 0 && World.tiles[i] !== T.DEEP) { World.terr[i] = ci; n++; }
+    }
+    if (!quiet) (G.claims = G.claims || []).push({ ci, x: cx, y: cy, r });
+    World.chunks = new Map(); if (World.mini) World.buildMinimap();
+    return n;
+  },
+  // a borda do reino avança d blocos sobre a terra selvagem (sem atravessar o mar aberto nem outros reinos)
+  growTiles(ci, d) {
+    const W = WORLD_W, N = W * WORLD_H, dist = new Int16Array(N).fill(-1), q = new Int32Array(N);
+    let h = 0, t = 0;
+    for (let i = 0; i < N; i++) if (World.terr[i] === ci) { dist[i] = 0; q[t++] = i; }
+    const out = [];
+    while (h < t) {
+      const i = q[h++], x = i % W, y = (i / W) | 0;
+      if (dist[i] >= d) continue;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= WORLD_H) continue;
+        const j = ny * W + nx;
+        if (dist[j] >= 0 || World.terr[j] >= 0 || World.tiles[j] === T.DEEP) continue;
+        dist[j] = dist[i] + 1; q[t++] = j; out.push(j);
+      }
+    }
+    return out;
+  },
+  grow(ci, d, quiet) {
+    const tiles = this.growTiles(ci, d);
+    for (const i of tiles) World.terr[i] = ci;
+    if (!quiet) (G.claims = G.claims || []).push({ ci, grow: d });
+    World.chunks = new Map(); if (World.mini) World.buildMinimap();
+    return tiles.length;
+  },
+  restore() { for (const c of G.claims || []) if (G.civs[c.ci]) { if (c.grow) this.grow(c.ci, c.grow, true); else this.claim(c.ci, c.x, c.y, c.r, true); } },
+  // Obras → Expandir fronteiras: a borda avança 5 blocos, só sobre a terra selvagem
+  nextGain(ci) { return this.lvl(ci) < BORDER_MAX ? this.growTiles(ci, this.STEP).length : 0; },
+  expand(ci) {
+    const c = G.civs[ci], cp = World.capitals[ci], cost = this.cost(ci);
+    if (!c || c.ruler !== 'player' || !cp || this.lvl(ci) >= BORDER_MAX) return;
+    const have = r => r === 'gold' ? c.treasury : (c.stock[r] || 0);
+    if (!Object.entries(cost).every(([r, n]) => have(r) >= n)) { UI.msg('O tesouro ou os armazéns do reino não têm o suficiente.', 'bad'); return; }
+    if (!this.nextGain(ci)) { UI.msg('Não há terra selvagem na fronteira do reino para tomar.', 'bad'); return; }
+    for (const [r, n] of Object.entries(cost)) { if (r === 'gold') c.treasury -= n; else c.stock[r] -= n; }
+    c.border = this.lvl(ci) + 1;
+    const n = this.grow(ci, this.STEP);
+    UI.banner(`🗺️ Fronteiras de ${CIV_DEFS[ci].short} ampliadas!`);
+    UI.msg(`A fronteira avançou ${this.STEP} blocos: o reino tomou ${n} blocos de terra selvagem.`, 'gold');
+    Diplo.chronicle(`🗺️ O ${CIV_DEFS[ci].name} ampliou as suas fronteiras sobre as terras selvagens.`);
+  },
+  // vila livre sua perto de um reino seu: qual reino pode recebê-la (o que tem mais terra por perto)
+  annexTarget(vi) {
+    const v = World.villages[vi];
+    if (!v || !v.free || v.lord !== 'player') return -1;
+    const near = {};
+    for (let y = v.y - 26; y <= v.y + 26; y++) for (let x = v.x - 26; x <= v.x + 26; x++) {
+      if (!World.inb(x, y)) continue;
+      const t = World.terr[World.idx(x, y)];
+      if (t >= 0 && G.civs[t] && G.civs[t].ruler === 'player') near[t] = (near[t] || 0) + 1;
+    }
+    let best = -1, bn = 0;
+    for (const k in near) if (near[k] > bn) { bn = near[k]; best = +k; }
+    return best;
+  },
+  annex(vi) {
+    const ci = this.annexTarget(vi), v = World.villages[vi];
+    if (ci < 0) { UI.msg('A vila precisa ficar perto das terras de um reino seu.', 'bad'); return; }
+    v.free = false; v.civ = ci;
+    const spec = (G.founded || []).find(x => x.x === v.x && x.y === v.y); if (spec) { spec.free = false; spec.civ = ci; }
+    for (const p of People.residents(vi)) p.civ = ci;
+    Towns.syncOwners();
+    const n = this.claim(ci, v.x, v.y, 17);
+    UI.banner(`👑 ${v.name} agora é do ${CIV_DEFS[ci].name}!`);
+    UI.msg(`${v.name} entrou no reino com ${n} blocos de terra em volta. Você continua chefe da vila.`, 'gold');
+    Diplo.chronicle(`👑 ${v.name} foi anexada ao ${CIV_DEFS[ci].name}.`);
+  },
+};

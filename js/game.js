@@ -198,7 +198,7 @@ const Game = {
     Families.init(); Families.ensurePlayer(); Faith.ensurePriests();
     G.homes = {}; G.npcHouses = []; G.npcHouseSeq = 0; Homes.touch(); Homes.dayTick(false);
     G.title = { lvl: -1, civ: -1 }; G.civilTitles = {}; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
-    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.vacancies = []; G.npcRoads = []; G.church = null; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
+    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.vacancies = []; G.claims = []; G.npcRoads = []; G.church = null; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
     const d = World.start.door;
     this.resetPlayer((d.x + 0.5) * TILE, (d.y + 1) * TILE);
     G.spawn = { x: P.x, y: P.y };
@@ -221,7 +221,7 @@ const Game = {
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], style: P.style || null, seed: P.seed || null, water: P.water || 0, digMode: P.digMode || 'dig' },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
-      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], vacancies: G.vacancies || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
+      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], vacancies: G.vacancies || [], claims: G.claims || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
@@ -307,10 +307,11 @@ const Game = {
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
-    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.vacancies = s.vacancies || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
+    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
     G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
+    Borders.restore(); // fronteiras ampliadas e vilas anexadas
     World.buildMinimap();
     World.season = -1; Season.apply(false);
     G.plots = s.plots || {}; G.order = s.order || 'follow'; G.battles = (s.battles || []).filter(b => !b.done); G.caravans = s.pcaravans || [];

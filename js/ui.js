@@ -910,7 +910,7 @@ const UI = {
       const mine = Urban.myVillages(), site = Families.playerSite(), have = k => k === 'gold' ? P.gold : Inv.count(k);
       const vrow = ({ v, i }) => { const res = People.residents(i).length, post = { kind: 'village', vi: i };
         return `<div class="crow"><span class="ri">🏘️</span><span><b>${this.esc(v.name)}</b><small>${v.free ? 'Vila livre' : CIV_DEFS[v.civ].short} · nível ${v.level || 1} · ${res} moradores · impostos ${res * Court.villageTax()} 🪙/dia · guardas ${Guards.at(post).length}/${Guards.cap(post)}</small></span>
-          <span class="act-row"><button data-act="vping" data-v="${i}" title="Marcar no mapa">📍</button></span></div>`; };
+          <span class="act-row">${Borders.annexTarget(i) >= 0 ? `<button class="primary" data-act="vannex" data-v="${i}" title="A vila entra no seu reino com a terra em volta">👑 Anexar ao ${this.esc(CIV_DEFS[Borders.annexTarget(i)].short)}</button>` : ''}<button data-act="vping" data-v="${i}" title="Marcar no mapa">📍</button></span></div>`; };
       return this.pageHead('🏘️', 'Vilas e guardas', 'O chefe recebe impostos e manda nas estradas e nos imóveis da vila')
         + `<div class="card vchief"><div class="sec">Vilas que você chefia <span>${mine.length}</span></div>${mine.map(vrow).join('') || '<div class="vg-empty"><span class="vg-emb">🏘️</span><b>Nenhuma vila ainda</b><small>Peça, conquiste ou funde a sua.</small></div><p class="muted vg-none">Nenhuma ainda.</p>'}
           <small class="muted">Como chefe, use Construir → Reformas e Obras para mudar, demolir e erguer imóveis e estradas dentro da vila.</small></div>
@@ -1067,7 +1067,14 @@ const UI = {
         return `<div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">${inv.icon}</div><div><b>${inv.name}</b><div class="dt-cat">Nível ${c.invest[k]}</div></div></div>
           <p class="dt-desc">${inv.desc}</p><div class="cost">${this.fmtCost(inv.cost, have)}</div>
           <button class="primary" data-act="invest" data-c="${ci}" data-k="${k}" ${can ? '' : 'disabled'}>Investir</button></div>`;
-      }).join('')}</div>`;
+      }).join('')}${(() => {
+        const lvl = Borders.lvl(ci), max = lvl >= BORDER_MAX, cost = Borders.cost(ci), gain = max ? 0 : Borders.nextGain(ci);
+        const can = !max && gain > 0 && Object.entries(cost).every(([r, n]) => have(r) >= n);
+        return `<div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🗺️</div><div><b>Expandir fronteiras</b><div class="dt-cat">Nível ${lvl} de ${BORDER_MAX}</div></div></div>
+          <p class="dt-desc">${max ? 'As fronteiras já estão no máximo.' : gain ? `A fronteira avança ${Borders.STEP} blocos sobre a terra selvagem: +${gain} blocos para o reino.` : 'Não há terra selvagem na fronteira do reino.'}</p>
+          <div class="cost">${max ? '' : this.fmtCost(cost, have)}</div>
+          <button class="primary" data-act="kborder" data-c="${ci}" ${can ? '' : 'disabled'}>Expandir</button></div>`;
+      })()}</div>`;
     } else {
       const capOk = Game.allies().length < Game.followerCap(), post = { kind: 'castle', civ: ci };
       sec = `<div class="kgrid">
@@ -2272,6 +2279,10 @@ const UI = {
       case 'kgold': Game.kGold(+d.c, d.n); break;
       case 'kres': Game.kRes(+d.c, d.k, +d.n); break;
       case 'invest': Game.invest(+d.c, d.k); break;
+      case 'kborder': Borders.expand(+d.c); break;
+      case 'vannex': { const vi = +d.v, ci = Borders.annexTarget(vi); if (ci < 0) break;
+        Dialog.confirm({ icon: '👑', title: 'Anexar ao reino', text: `${World.villages[vi].name} deixa de ser livre e passa a fazer parte do ${CIV_DEFS[ci].name}, levando a terra selvagem em volta (raio de 17 blocos). Você continua chefe da vila.`, ok: 'Anexar' }, () => { Borders.annex(vi); this.refresh(); });
+        return; }
       case 'krecruit': Game.kRecruit(+d.c); break;
       case 'kescort': Game.kEscort(+d.c); break;
       case 'kfest': Game.kFestival(+d.c); break;

@@ -91,6 +91,8 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades desta versão
 
+- **Fronteiras do reino crescem:** em Portfólio → seu reino → Obras, **Expandir fronteiras** (pago pelo tesouro e pelos armazéns do reino, até 8 níveis) faz a borda avançar 5 blocos sobre a terra selvagem, sem atravessar o mar aberto nem tomar terra de outro reino; o cartão mostra quantos blocos o reino vai ganhar. Em Portfólio → Vilas e guardas, uma vila livre sua perto de um reino seu ganha o botão **Anexar**: ela entra no reino (com as cores dele) levando a terra selvagem em volta (raio de 17 blocos), e você continua chefe dela.
+
 - **Loja fechada sem herdeiro:** se você é o rei ou o senhor da vila, a própria janela da loja fechada (armazém, ferreiro, madeireira, pedreira ou taverna) mostra os moradores sem emprego para você nomear quem assume, e a loja reabre na hora. A lista "Lojas sem dono" em Portfólio → Vilas e guardas agora acha também as lojas que fecharam antes de a vila ser sua.
 
 - **Cavalo no estábulo e venda:** no seu Estábulo, "Deixar no estábulo" faz o cavalo ficar esperando na frente dele (sem os alforjes, a carga da mochila volta ao normal); "Levar comigo" busca de volta. Se o estábulo for demolido, o cavalo volta para você. Dá para **vender o cavalo** (120 Salin, mais 90 se tiver carroça, que vai junto) no estábulo ou na taverna de qualquer vila.
