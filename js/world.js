@@ -891,7 +891,7 @@ const World = {
   wallAt(x, y) {
     if (!this.inb(x, y)) return false;
     const id = this.sgrid[this.idx(x, y)], o = id >= 0 && this.structs[id];
-    return !!o && !o.removed && (o.type === 'wall_wood' || o.type === 'wall_stone');
+    return !!o && !o.removed && !o.hidden && (o.type === 'wall_wood' || o.type === 'wall_stone' || o.type === 'vwall');
   },
   // muro que se liga aos vizinhos: cada lado com muro ganha um "braço" até a borda; onde um muro horizontal
   // encontra um vertical (canto de 90°, T ou cruz) nasce uma torrezinha
@@ -1043,11 +1043,7 @@ const World = {
         R(5, 0, 3, 16, '#6b4423'); R(24, 0, 3, 16, '#6b4423'); R(3, -2, 26, 4, roofCol);
         break;
       }
-      case 'vwall': {
-        R(0, 6, 32, 24, '#7d7f86'); R(0, 4, 32, 4, '#9a9ca2'); R(0, 26, 32, 4, '#5f6167');
-        for (let k = 0; k < 32; k += 11) R(k, 0, 6, 5, '#8b8d93');
-        break;
-      }
+      case 'vwall': this.drawWall(ctx, s, X, Y, true); break; // muralha da vila: igual ao muro de pedra
       case 'oven': {
         shadow();
         R(4, 10, w - 8, 20, '#9a6a4a'); R(4, 10, w - 8, 3, '#b07a5a');
