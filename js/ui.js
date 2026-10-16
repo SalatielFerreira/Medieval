@@ -669,9 +669,9 @@ const UI = {
 
   // Construir: lista agrupada e detalhes com custo (inclui estradas, reformas e as obras de chefe e rei)
   binfo(k) {
-    if (!BUILDINGS[k]) return Urban.info(k);
+    if (!BUILDINGS[k]) { const inf = Urban.info(k); inf.icon = buildArt(k) || inf.icon; return inf; }
     const b = BUILDINGS[k], n = World.structs.filter(s => s.owner === 'player' && s.type === k && !s.removed).length;
-    return { name: b.name, icon: Content2.thumb(k) || Game.buildIcon(k), cost: b.cost, desc: b.desc, sub: `${b.w}×${b.h} · ${n ? `você tem ${n}` : 'nenhuma ainda'}`, can: Inv.has(b.cost),
+    return { name: b.name, icon: buildArt(k) || Game.buildIcon(k), cost: b.cost, desc: b.desc, sub: `${b.w}×${b.h} · ${n ? `você tem ${n}` : 'nenhuma ainda'}`, can: Inv.has(b.cost),
       cat: `${b.w}×${b.h} espaços · ${b.blocks ? 'sólida' : 'pode-se andar por cima'}`, btn: '📍 Construir no mapa', owned: n, size: `${b.w}×${b.h}` };
   },
   showBuild() {

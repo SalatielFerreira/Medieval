@@ -2,7 +2,6 @@
 // Mais construções: moradias (choupana, chalé, solar), oficinas (carpintaria, alquimia, curtidor), criações (chiqueiro,
 // pombal, viveiro, ervas, linho, cogumelos), praça (mastro, caramanchão, relógio de sol), cultura (palco, estande de tiro),
 // guarda (arca, adega, canil com cão de guarda), defesa (torre de arqueiros, estacas, arsenal) e cinco empreendimentos.
-// Também desenha a miniatura de cada construção para o menu.
 
 Object.assign(BIZ_TYPES, {
   biz_carpentry: { skill: 'lumber',   slots: 3, wage: 5, out: { plank: 6, beam: 1 } },
@@ -139,26 +138,6 @@ const Content2 = {
       for (const d of dogs) if (U.dist(d.x, d.y, P.x, P.y) > 14 * TILE && !G.place) { const s = freeSpotNear(P.x - 30, P.y + 10, 50); d.x = s.x; d.y = s.y; d.target = null; }
     }
     for (const d of this.dogs()) if (!d.target && !G.place && U.dist(d.x, d.y, P.x, P.y) > 70) d.moveToward(P.x - 28, P.y + 12, d.def.speed, dt);
-  },
-  // ---------------------------------------------------------------- miniatura de cada construção para o menu
-  thumbs: {},
-  thumb(k) {
-    if (k in this.thumbs) return this.thumbs[k];
-    let url = null;
-    try {
-      const b = BUILDINGS[k]; if (!b) return (this.thumbs[k] = null);
-      const W = b.w * TILE + 48, H = b.h * TILE + 80, c = document.createElement('canvas'); c.width = W; c.height = H;
-      const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
-      const dk = G.darkness; G.darkness = 0;
-      World.drawStruct(g, { type: k, w: b.w, h: b.h, x: 0, y: 0, owner: 'player', id: 0, built: true, cleared: false, goods: {} }, 24, 60, 1.2);
-      G.darkness = dk;
-      const S = 64, o = document.createElement('canvas'); o.width = S; o.height = S;
-      const og = o.getContext('2d'), sc = Math.min(S / W, S / H);
-      og.drawImage(c, (S - W * sc) / 2, (S - H * sc) / 2, W * sc, H * sc);
-      const d = o.toDataURL('image/png');
-      if (typeof d === 'string' && d.startsWith('data:image')) url = `<img class="bthumb" src="${d}" alt="">`;
-    } catch (e) { url = null; }
-    return (this.thumbs[k] = url);
   },
 };
 // junta as criações, rótulos e interações novas às do Content

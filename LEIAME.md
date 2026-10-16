@@ -91,7 +91,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades: muito mais construções, Infraestrutura e ícones desenhados
 
-- **Construção**: Moradia 7, Produção 11, Fazenda e animais 12, Empreendimentos 23, Praça e decoração 11, Cultura, fé e treino 6, Baús e estábulo 5, Defesa e exército 6 opções. O menu mostra a miniatura desenhada de cada construção.
+- **Construção**: Moradia 7, Produção 11, Fazenda e animais 12, Empreendimentos 23, Praça e decoração 11, Cultura, fé e treino 6, Baús e estábulo 5, Defesa e exército 6 opções. Cada construção tem um ícone desenhado próprio, do tamanho de um emoji.
 - **Infraestrutura** (antes Estradas e Reformas): a estrada de terra continua grátis; depois ela evolui até 5 níveis (cascalho, pedra, calçada, Estrada Real), cada um mais rápido para você, os moradores e os animais.
 - **Destaques**: torre de arqueiros que atira sozinha, estacas, arsenal para os capangas, canil com cão de guarda, adega que envelhece o vinho, palco dos menestréis, estande de tiro, viveiro de peixes, pombal (penas para flechas), cogumelal.
 - **Materiais novos**: tábua, viga, pregos, pergaminho, argamassa, pena, cogumelo, poções de vigor e de força, Elixir Real, vinho envelhecido.
@@ -253,8 +253,9 @@ js/arena.js       arenas, duelos, justas, Grande Torneio e apostas
 js/interior.js    lado de dentro das construções e um dono por loja
 js/war.js         guerras de verdade: conselho de guerra e campo de batalha
 js/content.js     empreendimentos, construções e obras novas
-js/content2.js    mais construções (oficinas, criações, defesa, canil) e miniaturas do menu
+js/content2.js    mais construções (oficinas, criações, defesa, canil)
 js/icons2.js      ícones desenhados de todos os outros itens
+js/bicons.js      ícones desenhados das construções, obras e estradas
 js/ambience.js    efeitos de ambiente (luz, fumaça, água, nuvens)
 js/faith.js       capelas, catedrais, padres, bênçãos, casamento na igreja e santuários
 js/input.js       controle (gamepad) e controles de toque
