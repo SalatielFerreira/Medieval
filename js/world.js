@@ -689,12 +689,14 @@ const World = {
     if ((this.terrainV || 0) >= 12) this.biomes();
     this.chunks = new Map();
   },
-  // versão 12: biomas. Faixas por latitude (com ruído, para não ficar reto) e umidade:
-  // neve → tundra → campo/floresta → estepe → deserto; pântanos nas baixadas úmidas perto da água doce.
-  // Perto de castelos, vilas, acampamentos e do começo o terreno fica como está.
+  // versão 12: biomas por região (grandes e contínuos, sem retalhos espalhados):
+  // norte gelado (neve e uma faixa larga de tundra), um grande deserto no sul cercado de estepe (com as margens
+  // dos rios verdes, como oásis), uma região de pântanos no meio do continente, do lado oposto ao deserto,
+  // e campos e florestas no centro. As bordas ondulam devagar e as cores se misturam no desenho.
   biomes() {
-    const N = WORLD_W * WORLD_H, seed = this.seed;
-    const nT = U.makeNoise(seed ^ 0x1f3b), nW = U.makeNoise(seed ^ 0x6a91), nD = U.makeNoise(seed ^ 0x2c3a), nS = U.makeNoise(seed ^ 0x3e77);
+    const N = WORLD_W * WORLD_H, seed = this.seed, IN = WORLD_W - 2 * WORLD_PAD;
+    const nB = U.makeNoise(seed ^ 0x1f3b), nD = U.makeNoise(seed ^ 0x2c3a), nS = U.makeNoise(seed ^ 0x3e77);
+    const wob = (x, y, s) => U.fbm(nB, x / s, y / s, 2) - 0.5;
     // distância até a água rasa (rios e lagos), até 5 blocos
     const wd = new Uint8Array(N).fill(9), q = [];
     for (let i = 0; i < N; i++) if (this.tiles[i] === T.WATER) { wd[i] = 0; q.push(i); }
@@ -703,66 +705,51 @@ const World = {
       if (wd[i] >= 5) continue;
       for (const [dx, dy] of DIRS4) { const nx = x + dx, ny = y + dy; if (!this.inb(nx, ny)) continue; const j = ny * WORLD_W + nx; if (wd[j] > wd[i] + 1) { wd[j] = wd[i] + 1; q.push(j); } }
     }
-    // zonas protegidas (cidades, acampamentos, cavernas e o começo)
-    const prot = new Uint8Array(N);
-    const guard = (cx, cy, r) => { for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if (this.inb(x, y) && U.dist(x, y, cx, cy) <= r) prot[y * WORLD_W + x] = 1; };
-    for (const v of this.villages) guard(v.x, v.y, 13);
-    for (const c of this.capitals) if (c) guard(c.x, c.y, 11);
-    for (const c of this.camps || []) guard(c.x + 1, c.y + 1, 4);
-    if (this.start) guard(this.start.x, this.start.y, 10);
-    for (let i = 0; i < N; i++) if (this.sgrid[i] >= 0) prot[i] = 1;
+    // centros das regiões (sempre os mesmos para a mesma semente)
+    const rr = U.mulberry32(seed ^ 0x2d71);
+    const dc = { x: WORLD_PAD + IN * (0.28 + rr() * 0.44), y: WORLD_PAD + IN * 0.88 }, dR = IN * 0.19, sR = IN * 0.29;
+    const mside = dc.x > WORLD_W / 2 ? 0.22 : 0.78;
+    const mc = { x: WORLD_PAD + IN * (mside + (rr() - 0.5) * 0.08), y: WORLD_PAD + IN * (0.46 + rr() * 0.12) }, mR = IN * 0.115;
+    this.regions = { desert: dc, marsh: mc };
+    // o pântano não chega nas vilas, nos castelos nem no começo
+    const nearTown = (x, y, r) => this.villages.some(v => U.dist(x, y, v.x, v.y) < r) || this.capitals.some(c => c && U.dist(x, y, c.x, c.y) < r + 2) || (this.start && U.dist(x, y, this.start.x, this.start.y) < r);
     const KEEP_OBJ = [3, 4, 5, 12, 13, 14, 15, 16]; // pedras e minérios continuam onde estão
     const objFor = (t, x, y, i) => {
       const h = U.hash2(x, y, seed + 71), wet = wd[i] <= 1;
       const pick = table => { for (const [lim, id] of table) if (h < lim) return id; return 0; };
       if (t === T.SWAMP) return pick([[0.12, 24], [0.2, 25], [0.26, 26], [0.3, 27], [0.31, 19]]);
-      if (t === T.DESERT) return wet ? pick([[0.25, 21], [0.32, 20]]) : pick([[0.035, 20], [0.05, 22], [0.058, 23], [0.06, 3], [0.066, 21]]);
+      if (t === T.DESERT) return wet ? pick([[0.25, 21], [0.32, 20]]) : pick([[0.035, 20], [0.05, 22], [0.058, 23], [0.06, 3], [0.064, 21]]);
       if (t === T.STEPPE) return pick([[0.03, 31], [0.075, 29], [0.085, 18], [0.095, 3], [0.1, wet ? 21 : 20]]);
       if (t === T.TUNDRA) return pick([[0.07, 2], [0.13, 28], [0.15, 3], [0.152, 30], [0.16, 6]]);
       return 0;
     };
+    const set = (i, t, x, y, pond) => {
+      this.tiles[i] = t;
+      if (pond) { this.obj[i] = 0; return; }
+      if (this.obj[i] && KEEP_OBJ.includes(this.obj[i])) return;
+      const o = objFor(t, x, y, i); this.obj[i] = o; this.objHp[i] = o ? OBJ[o].hp : 0;
+    };
     for (let i = 0; i < N; i++) {
       const t0 = this.tiles[i];
-      if (prot[i] || !(t0 === T.GRASS || t0 === T.FOREST || t0 === T.SAND || t0 === T.SNOW)) continue;
-      const x = i % WORLD_W, y = (i / WORLD_W) | 0, e = this.elev[i];
-      const lat = (y - WORLD_PAD + (U.fbm(nD, x / 15, y / 15, 3) - 0.5) * 30) / (WORLD_H - 2 * WORLD_PAD); // 0 = norte do continente, 1 = sul
-      const tj = (U.fbm(nT, x / 22, y / 22, 3) - 0.5) * 0.08, dry = U.fbm(nW, x / 26, y / 26, 3), soak = U.fbm(nS, x / 11, y / 11, 3);
+      if (this.sgrid[i] >= 0 || !(t0 === T.GRASS || t0 === T.FOREST || t0 === T.SAND || t0 === T.SNOW)) continue;
+      const x = i % WORLD_W, y = (i / WORLD_W) | 0;
+      const lat = (y - WORLD_PAD + (U.fbm(nD, x / 15, y / 15, 3) - 0.5) * 30) / IN + wob(x, y, 70) * 0.05;
       let t = t0;
-      if (t0 === T.SNOW) { if (lat + tj > 0.07) t = T.TUNDRA; }                                  // a borda da neve vira tundra
-      else if (lat + tj < 0.21) t = t0 === T.SAND ? T.SAND : T.TUNDRA;                          // faixa fria
-      else if (lat + tj > 0.64 && dry > 0.38) {                                                  // sul seco
-        const deep = lat + tj > 0.76 && dry > 0.44 && wd[i] > 2;
-        t = deep ? T.DESERT : (t0 === T.SAND && wd[i] <= 1 ? T.SAND : T.STEPPE);
-      } else if (wd[i] <= 6 && e < 0.52 && soak > 0.46 && t0 !== T.SAND) t = T.SWAMP;              // baixada úmida
-      if (t === t0) continue;
-      this.tiles[i] = t;
-      // poças no meio do pântano
-      if (t === T.SWAMP && soak > 0.6 && U.hash2(x, y, seed + 5) < 0.22) { this.tiles[i] = T.WATER; this.obj[i] = 0; continue; }
-      if (this.obj[i] && KEEP_OBJ.includes(this.obj[i])) continue;
-      const o = objFor(t, x, y, i);
-      this.obj[i] = o; this.objHp[i] = o ? OBJ[o].hp : 0;
+      if (t0 === T.SNOW) { if (lat > 0.075) t = T.TUNDRA; }                                     // a borda da neve vira tundra
+      else if (lat < 0.21) t = t0 === T.SAND ? T.SAND : T.TUNDRA;                                // norte frio
+      else {
+        const dd = U.dist(x, y, dc.x, dc.y) / (1 + wob(x, y, 45) * 0.5);
+        if (dd < sR) t = dd < dR && wd[i] > 1 ? T.DESERT : (t0 === T.SAND && wd[i] <= 1 ? T.SAND : T.STEPPE);   // deserto, estepe e margens de rio
+        else {
+          const md = U.dist(x, y, mc.x, mc.y) / (1 + wob(x, y, 30) * 0.6);
+          if (md < mR && t0 !== T.SAND && !nearTown(x, y, 11)) {
+            const pond = md < mR * 0.18 || (md < mR * 0.8 && U.fbm(nS, x / 7, y / 7, 2) > 0.62);
+            set(i, pond ? T.WATER : T.SWAMP, x, y, pond); continue;
+          }
+        }
+      }
+      if (t !== t0) set(i, t, x, y, false);
     }
-    // brejos: de 4 a 6 pântanos nas terras selvagens da faixa temperada, com uma lagoa no meio e borda irregular
-    const rr = U.mulberry32(seed ^ 0x4b1d), marshes = [], want = 4 + Math.floor(rr() * 3);
-    for (let tries = 0; tries < 6000 && marshes.length < want; tries++) {
-      const x = WORLD_PAD + 20 + Math.floor(rr() * (WORLD_W - 2 * WORLD_PAD - 40)), y = WORLD_PAD + 20 + Math.floor(rr() * (WORLD_H - 2 * WORLD_PAD - 40)), i = y * WORLD_W + x;
-      const lat = (y - WORLD_PAD) / (WORLD_H - 2 * WORLD_PAD);
-      if (lat < 0.24 || lat > 0.62 || prot[i] || this.terr[i] >= 0 && tries < 4000) continue;
-      if (this.tiles[i] !== T.GRASS && this.tiles[i] !== T.FOREST) continue;
-      if (marshes.some(m => U.dist(m.x, m.y, x, y) < 70)) continue;
-      marshes.push({ x, y, r: 11 + Math.floor(rr() * 6) });
-    }
-    for (const m of marshes) for (let y = m.y - m.r - 4; y <= m.y + m.r + 4; y++) for (let x = m.x - m.r - 4; x <= m.x + m.r + 4; x++) {
-      if (!this.inb(x, y)) continue;
-      const i = y * WORLD_W + x, t0 = this.tiles[i], d = U.dist(x, y, m.x, m.y) / (m.r * (0.78 + U.fbm(nS, x / 6, y / 6, 2) * 0.5));
-      if (d > 1 || prot[i] || !(t0 === T.GRASS || t0 === T.FOREST || t0 === T.STEPPE || t0 === T.TUNDRA)) continue;
-      const pond = d < 0.22 || (d < 0.75 && U.hash2(x, y, seed + 5) < 0.12);
-      this.tiles[i] = pond ? T.WATER : T.SWAMP;
-      if (this.obj[i] && KEEP_OBJ.includes(this.obj[i]) && !pond) continue;
-      const o = pond ? 0 : objFor(T.SWAMP, x, y, i);
-      this.obj[i] = o; this.objHp[i] = o ? OBJ[o].hp : 0;
-    }
-    this.marshes = marshes;
     this.chunks = new Map();
   },
   // versão 9: 80% das colinas (as mais baixas) viram campo verde; os minérios e as cavernas continuam onde estão
