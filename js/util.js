@@ -10,20 +10,20 @@ const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 // Calendário sem dias: cada ciclo é um mês. Primeiro 1 minuto de noite (o mês acabou de virar) e depois
 // 5 minutos de dia, com a "pizza" do relógio se enchendo. Quando ela completa, escurece e vira o mês.
-// G.day conta os meses desde o começo; 12 meses = 1 ano = 72 minutos reais. O jogo começa em dezembro.
+// G.day conta os meses desde o começo; 12 meses = 1 ano = 72 minutos reais. O jogo começa em janeiro (jogos antigos: dezembro).
 const NIGHT_LEN = 60, DAYLIGHT_LEN = 300;
 const DAY_LEN = NIGHT_LEN + DAYLIGHT_LEN; // segundos reais por mês
 // a economia (impostos, soldos, salários, guerras, revoltas, colheitas) anda uma vez por mês
 const ECON_DAYS = 1;
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map(m => [m, 1]);
 const YEAR_DAYS = 12;
-const CAL_START = 11; // o primeiro mês do jogo é dezembro
+const CAL_START = 11; // jogos antigos começavam em dezembro; os novos guardam G.calStart = 0 (janeiro)
 // '1 mês' / '3 meses'
 const daysText = n => n + (n === 1 ? ' mês' : ' meses');
 const Calendar = {
   // mês de jogo (1, 2, 3...) -> { year, month (0 = janeiro) }
   of(day) {
-    const d = day - 1 + CAL_START;
+    const d = day - 1 + (typeof G !== 'undefined' && G.calStart !== undefined ? G.calStart : CAL_START);
     return { year: Math.floor(d / YEAR_DAYS) + 1, month: ((d % YEAR_DAYS) + YEAR_DAYS) % YEAR_DAYS, day: 1 };
   },
   text(day) { return MONTHS[this.of(day).month][0]; },

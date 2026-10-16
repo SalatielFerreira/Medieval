@@ -256,7 +256,7 @@ const Game = {
     G.spawn = { x: P.x, y: P.y };
     Object.assign(P, { sex: opts.sex, age: opts.age, hairBase: opts.hair, skin: opts.skin || '#f0c896', style: opts.style || null });
     Progress.diary(`🛖 ${name} ${G.surname} chegou à sua cabana, com ${opts.age} anos, para começar uma nova vida.`);
-    G.time = NIGHT_LEN; G.day = 1; G.ents = []; G.texts = []; G.parts = []; G.siege = null; G.placing = null; G.groups = {}; G.zone = -2;
+    G.time = NIGHT_LEN; G.day = 1; G.calStart = 0; G.ents = []; // o jogo novo começa em janeiro G.texts = []; G.parts = []; G.siege = null; G.placing = null; G.groups = {}; G.zone = -2;
     Ranged.projs = []; World.season = -1; Season.apply(false);
     Ports.place(); Graves.place(); Ports.ensureKeepers(); Shops.ensure(); NpcRoads.init(); // portos na costa (cada um com seu marinheiro); as vilas já nascem ligadas à estrada
     G.state = 'play'; G.paused = false; G.ping = null; UI.showGameUI(true);
@@ -273,7 +273,7 @@ const Game = {
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], stacks: P.stacks || {}, stackSeq: P.stackSeq || 0, style: P.style || null, seed: P.seed || null, water: P.water || 0, digMode: P.digMode || 'dig' },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
-      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], npcRoadFrom: G.npcRoadFrom || {}, roadCut: G.roadCut || {}, vacancies: G.vacancies || [], claims: G.claims || [], graves: G.graves || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
+      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], npcRoadFrom: G.npcRoadFrom || {}, roadCut: G.roadCut || {}, vacancies: G.vacancies || [], claims: G.claims || [], graves: G.graves || [], calStart: G.calStart === undefined ? CAL_START : G.calStart, mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, titles: Court.holdings(), titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
@@ -364,7 +364,7 @@ const Game = {
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
-    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.npcRoadFrom = s.npcRoadFrom || null; G.roadCut = s.roadCut || {}; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.graves = s.graves || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
+    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.npcRoadFrom = s.npcRoadFrom || null; G.roadCut = s.roadCut || {}; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.graves = s.graves || []; G.calStart = s.calStart === undefined ? CAL_START : s.calStart; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
     G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; if (G.place) Places.exit(true); G.place = null; G.warCall = s.warCall || null; G.warRest = s.warRest || {}; G.trial = s.trial || null; G.studyDay = s.studyDay; G.prayOrDay = s.prayOrDay; G.regency = s.regency || []; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
@@ -1122,7 +1122,7 @@ const Game = {
       if (src && src.faction === 'arena' && Arena.playerHit(d)) return;
       P.hp -= d; P.hurt = 0.25;
       this.addText(P.x, P.y - 40, '-' + d, '#ff5555');
-      if (P.hp <= 0) this.playerDie();
+      if (P.hp <= 0) this.playerDie(this.deathCause(src));
       return;
     }
     let d = Math.max(1, Math.round(amount * (0.85 + Math.random() * 0.3)));
@@ -1202,9 +1202,25 @@ const Game = {
     UI.msg(`Você saqueou o acampamento: +${g} 🪙 e 2 Barras de Ferro. Todos os reinos agradecem (+6 relação).`, 'gold');
   },
 
+  // como o herói morreu (aparece no fim de jogo, no diário e na lápide)
+  deathCause(src) {
+    if (War.isBattle()) return 'em batalha';
+    if (!src) return 'em combate';
+    if (src.npc) return 'morto por ' + People.full(src.npc);
+    const art = { wolf: 'um lobo', bear: 'um urso', croc: 'um crocodilo', boar: 'um javali', moose: 'um alce', spider: 'uma aranha gigante', bat: 'morcegos', troll: 'o Troll das Cavernas', dragon: 'o Dragão Ancestral', skeleton: 'um esqueleto', skel_king: 'o Rei Esqueleto', spider_queen: 'a Aranha Rainha' }[src.kind];
+    if (art) return 'atacado por ' + art;
+    if (src.kind === 'bandit') return src.tag === 'assassin' ? 'pelas mãos de um assassino' : 'morto por bandidos';
+    if (src.kind === 'guard' || src.kind === 'lord') return 'morto pelos soldados de ' + (CIV_DEFS[src.civ] ? CIV_DEFS[src.civ].short : 'um reino');
+    return 'em combate';
+  },
   playerDie(cause) {
     if (P.dead) return;
-    if (War.isBattle()) { War.knocked(); return; } // na guerra o herói cai ferido e é carregado do campo
+    if (War.isBattle()) {
+      // modo fácil: o herói cai ferido e é carregado do campo; nos outros, a morte na guerra é para valer
+      if (!DIFFICULTY[G.diff || 'normal'].gameover) { War.knocked(); return; }
+      try { G.place.knockedOut = true; War.finish(false); } catch (e) { War.leave(); }
+      cause = cause || 'em batalha';
+    }
     if (!DIFFICULTY[G.diff || 'normal'].gameover) {
       // modo fácil: acorda em casa e perde parte do ouro
       if (G.place) Places.exit(true);
