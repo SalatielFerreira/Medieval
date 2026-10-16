@@ -814,14 +814,14 @@ const World = {
       }
       case T.WFLOOR: {
         // tábuas corridas: quatro por bloco, com emendas desencontradas
-        const th = this.roomTheme === 'castle' ? '#7a4a2a' : base;
-        for (let k = 0; k < 4; k++) { g.fillStyle = U.shade(th, ((x * 7 + y * 3 + k * 5) % 5 - 2) * 0.035); g.fillRect(px, py + k * 4, HALF, 4); g.fillStyle = U.shade(th, -0.28); g.fillRect(px, py + k * 4 + 3, HALF, 1); g.fillRect(px + ((x * 5 + k * 7 + y) % 4) * 4 + 1, py + k * 4, 1, 3); }
+        const th = U.shade(this.roomTheme === 'castle' ? '#8a5a36' : base, 0.2); // madeira clara (interiores bem iluminados)
+        for (let k = 0; k < 4; k++) { g.fillStyle = U.shade(th, ((x * 7 + y * 3 + k * 5) % 5 - 2) * 0.035); g.fillRect(px, py + k * 4, HALF, 4); g.fillStyle = U.shade(th, -0.2); g.fillRect(px, py + k * 4 + 3, HALF, 1); g.fillRect(px + ((x * 5 + k * 7 + y) % 4) * 4 + 1, py + k * 4, 1, 3); }
         dot(U.shade(th, 0.1), 2);
         break;
       }
       case T.SFLOOR: {
         // lajotas de pedra com rejunte (a catedral e o castelo têm lajotas mais claras)
-        const sb = this.roomTheme === 'castle' ? '#8e8a84' : this.roomTheme === 'chapel' ? '#a8a29a' : base;
+        const sb = U.shade(this.roomTheme === 'castle' ? '#8e8a84' : this.roomTheme === 'chapel' ? '#a8a29a' : base, 0.16);
         for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) { g.fillStyle = U.shade(sb, (((x * 2 + i) * 13 + (y * 2 + j) * 7) % 7 - 3) * 0.03); g.fillRect(px + i * 8, py + j * 8, 8, 8); }
         g.fillStyle = U.shade(sb, -0.3); g.fillRect(px, py + 7, HALF, 1); g.fillRect(px, py + 15, HALF, 1); g.fillRect(px + 7 + ((y & 1) ? 0 : 0), py, 1, HALF); g.fillRect(px + 15, py, 1, HALF);
         if (this.roomTheme === 'chapel' && ((x + y) & 1)) { g.fillStyle = 'rgba(40,30,20,0.12)'; g.fillRect(px, py, HALF, HALF); }
@@ -838,8 +838,8 @@ const World = {
           else { g.fillStyle = U.shade(up, -0.1); g.fillRect(px + (x % 3) * 5, py + 2, 1, 7); }
           g.fillStyle = stone ? '#5d5a54' : '#6b4a2e'; g.fillRect(px, py + 10, HALF, 6); g.fillStyle = stone ? '#77736c' : '#8a6040'; g.fillRect(px, py + 10, HALF, 1); g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(px, py + 15, HALF, 1);
         } else {
-          g.fillStyle = stone ? '#2e2a26' : '#2a1d14'; g.fillRect(px, py, HALF, HALF);
-          g.fillStyle = stone ? '#4a4540' : '#4a3424';
+          g.fillStyle = stone ? '#4a4540' : '#4a3424'; g.fillRect(px, py, HALF, HALF);
+          g.fillStyle = stone ? '#6a655e' : '#6a4c34';
           if (below === T.IWALL || below === T.VOID) g.fillRect(px, py + HALF - 2, HALF, 2);
           const l = this.tile(x - 1, y), rr = this.tile(x + 1, y);
           if (l === T.WFLOOR || l === T.SFLOOR) g.fillRect(px, py, 2, HALF);

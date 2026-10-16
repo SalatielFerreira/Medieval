@@ -91,6 +91,8 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades: vilas até o nível 10 e fundação mais cara
 
+- **A vida continua lá fora:** entrar e sair de uma loja, taverna ou casa não apaga nem recria mais os moradores; quem estava na rua segue a rotina de onde estava.
+- **Interiores mais claros:** pisos, paredes e a luz de dentro das lojas, tavernas e casas ficaram bem mais claros (de dia quase como lá fora; à noite, lampiões e lareira).
 - **Personagens e animais redesenhados:** pessoas com formas arredondadas, luz e sombra, rosto com olhos, sobrancelhas, nariz e boca, cabelos e barbas com volume, roupas com cinto, decote e dobras, armaduras com ombreiras e rebites, elmos e coroas com brilho, mãos, sapatos e uma caminhada mais natural. Os animais (cervo, lobo, javali, raposa, coelho, cabra e urso) ganharam pescoço, peito e quadril, patas com joelho, cascos ou patas, focinho, orelhas, olhos com brilho e caudas próprias (galhada, chifres, presas, manchas do filhote de cervo). O desenho fica guardado em imagens prontas, então o jogo continua leve.
 - **Fundar uma vila custa 100.000 Salin**, para você e para os reis NPC: eles só fundam quando o tesouro do reino chega a esse valor, e pagam com ele.
 - **Vilas até o nível 10:** do nível 4 em diante, cada nível traz mais uma casa e uma família nova, e cabe mais gente.

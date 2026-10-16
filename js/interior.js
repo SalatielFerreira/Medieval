@@ -258,11 +258,11 @@ const Places = {
     const P0 = G.place, at = ([x, y]) => [P0.fx0 + x, P0.fy0 + y];
     const put = (p, spot, opts) => {
       if (!p || !p.alive) return null;
-      const old = G.spawned.get(p.id); if (old) { old.dead = true; G.spawned.delete(p.id); }
+      const old = G.spawned.get(p.id); // a pessoa lá fora continua (volta a ser ela quando você sair)
       const [tx, ty] = at(spot);
       const civ = p.civ >= 0 ? p.civ : typeof src.owner === 'number' ? src.owner : -1;
       const e = Game.spawn('villager', (tx + 0.5) * TILE, (ty + 0.85) * TILE, { civ, npc: p, leash: (opts && opts.leash) || 0.4 });
-      e.placeNpc = true; e.still = !!(opts && opts.still); e.dir = (opts && opts.dir) || 1;
+      e.placeNpc = true; e.still = !!(opts && opts.still); e.dir = (opts && opts.dir) || 1; e.outside = old && !old.dead && !old.placeNpc ? old : null;
       G.spawned.set(p.id, e);
       return e;
     };
@@ -328,7 +328,11 @@ const Places = {
   exit(quiet) {
     const pl = G.place;
     if (!pl) return;
-    for (const e of G.ents) if (e.placeNpc) { e.dead = true; if (e.npc && G.spawned.get(e.npc.id) === e) G.spawned.delete(e.npc.id); }
+    // as cópias de dentro somem; quem estava lá fora segue a vida de onde estava (ninguém é recriado na praça)
+    for (const e of G.ents) if (e.placeNpc) {
+      e.dead = true;
+      if (e.npc && G.spawned.get(e.npc.id) === e) { G.spawned.delete(e.npc.id); if (e.outside && !e.outside.dead) G.spawned.set(e.npc.id, e.outside); }
+    }
     G.ents = G.ents.filter(e => !e.dead);
     if (pl.keep) this.uncarve(pl.keep);
     this.furn = []; this.lightList = []; World.roomTheme = null;

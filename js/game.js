@@ -487,7 +487,7 @@ const Game = {
   // escurece só quando o dia acaba; clareia nos últimos segundos da noite
   calcDarkness() {
     if (G.dungeon) return 0.86;
-    if (G.place && G.place.kind === 'room') return Routine.phase() === 'day' ? 0.34 : 0.6; // lampiões, lareira e janelas
+    if (G.place && G.place.kind === 'room') return Routine.phase() === 'day' ? 0.08 : 0.3; // claro por dentro: janelas de dia; lampiões e lareira à noite
     const t = G.time, M = 0.62, fade = 6;
     if (t < NIGHT_LEN - fade) return M;
     if (t < NIGHT_LEN) return (NIGHT_LEN - t) / fade * M;
@@ -1303,10 +1303,13 @@ const Game = {
     return p;
   },
 
+  // onde o herói está no mundo: dentro de um lugar fechado, conta a porta por onde ele entrou
+  // (assim a vila lá fora continua viva e ninguém é apagado e recriado quando você sai)
+  anchor() { return G.place && G.place.back ? G.place.back : P; },
   spawnWild() {
-    const far = 44 * TILE;
+    const far = 44 * TILE, A = this.anchor();
     for (const e of G.ents) {
-      if (e.kind !== 'ally' && e.siegeOf < 0 && U.dist(e.x, e.y, P.x, P.y) > far) {
+      if (e.kind !== 'ally' && e.siegeOf < 0 && !e.placeNpc && U.dist(e.x, e.y, A.x, A.y) > far) {
         e.dead = true;
         if (e.npc) G.spawned.delete(e.npc.id);
         if (e.camp) e.camp.active = Math.max(0, (e.camp.active || 1) - 1);
@@ -1334,7 +1337,7 @@ const Game = {
   },
 
   ambient() {
-    const ptx = P.x / TILE, pty = P.y / TILE;
+    const A = this.anchor(), ptx = A.x / TILE, pty = A.y / TILE;
     // bandidos nos acampamentos
     for (const camp of World.camps) {
       if (camp.cleared) continue;
@@ -1368,7 +1371,7 @@ const Game = {
       for (const p of G.people) if (p.alive && p.rank === 'knight' && p.home.type === 'castle' && p.home.civ === c && !p.capanga && !G.spawned.has(p.id))
         spawnNpc(p, (cp.door.x + 0.5) * TILE, (cp.door.y + 2) * TILE, 6, c);
     }
-    if (U.dist(P.x, P.y, G.spawn.x, G.spawn.y) < 26 * TILE) for (const p of G.people) {
+    if (U.dist(A.x, A.y, G.spawn.x, G.spawn.y) < 26 * TILE) for (const p of G.people) {
       if (p.alive && p.home.type === 'player' && !p.capanga && !G.spawned.has(p.id)) spawnNpc(p, G.spawn.x, G.spawn.y + TILE, 4, -1);
     }
     World.villages.forEach((v, vi) => {
