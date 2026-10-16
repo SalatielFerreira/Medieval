@@ -36,7 +36,7 @@ const Urban = {
   // mudanças guardadas no jogo salvo (o mundo é refeito pela semente; só as diferenças são salvas)
   E() {
     const e = G.urban || (G.urban = {});
-    e.moved = e.moved || {}; e.removed = e.removed || []; e.added = e.added || []; e.roads = e.roads || {}; e.mine = e.mine || {};
+    e.moved = e.moved || {}; e.removed = e.removed || []; e.added = e.added || []; e.roads = e.roads || {}; e.mine = e.mine || {}; e.rlv = e.rlv || {};
     return e;
   },
 
@@ -98,6 +98,24 @@ const Urban = {
     Sound.play('chop', { vol: 0.4 });
     return true;
   },
+  // evoluir um bloco de estrada até o nível lv (paga só o material do nível escolhido)
+  upgradeRoad(tx, ty, lv, quiet) {
+    if (G.dungeon || !World.inb(tx, ty)) return false;
+    const i = World.idx(tx, ty), t = World.tiles[i], L = ROAD_LV[lv];
+    const cur = World.roadLv ? World.roadLv[i] || 1 : 1;
+    const err = t === T.BRIDGE ? 'Pontes não mudam de nível' : t !== T.ROAD ? 'Primeiro abra a estrada (de terra, grátis)' : cur >= lv ? `Já é ${ROAD_LV[cur].name.toLowerCase()} ou melhor`
+      : World.sgrid[i] >= 0 ? 'Há uma construção aqui' : U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10 ? 'Longe demais'
+      : this.foreignTown(tx, ty) ? `Só o chefe da vila ou o rei pode mexer nas estradas de ${this.foreignTown(tx, ty)}` : !Inv.has(L.cost) ? `Faltam materiais: ${Object.entries(L.cost).map(([k, n]) => n + ' ' + ITEMS[k].name).join(', ')} por bloco` : null;
+    if (err) { if (!quiet || !/^Já é|^Primeiro/.test(err)) this.warn(err); return false; }
+    Inv.pay(L.cost);
+    if (!World.roadLv || World.roadLv.length !== WORLD_W * WORLD_H) World.roadLv = new Uint8Array(WORLD_W * WORLD_H);
+    World.roadLv[i] = lv; this.E().rlv[i] = lv;
+    World.setTile(i, T.ROAD);
+    Game.burst((tx + 0.5) * TILE, (ty + 0.6) * TILE, '#9a9488', 6);
+    Sound.play('mine', { vol: 0.3 });
+    Progress.add('roadsUp');
+    return true;
+  },
   unroadErr(tx, ty) {
     if (G.dungeon || !World.inb(tx, ty)) return 'Fora do mapa';
     const i = World.idx(tx, ty), t = World.tiles[i];
@@ -125,6 +143,7 @@ const Urban = {
     const ground = mine ? E.mine[i] : this.groundOf(i);
     World.setTile(i, ground);
     if (mine) { delete E.mine[i]; delete E.roads[i]; } else E.roads[i] = ground;
+    if (World.roadLv) World.roadLv[i] = 0; delete E.rlv[i];
     NpcRoads.removed(i);
 
     Game.burst((tx + 0.5) * TILE, (ty + 0.6) * TILE, '#6e4f2e', 5);
@@ -271,6 +290,8 @@ const Urban = {
     for (const k in E.terra || {}) World.tiles[+k] = E.terra[k]; // buracos e aterros feitos com a pá
     for (const k in E.roads) World.tiles[+k] = E.roads[k];
     for (const k in E.roads) if (E.roads[k] === T.ROAD || E.roads[k] === T.BRIDGE) World.obj[+k] = 0;
+    World.roadLv = new Uint8Array(WORLD_W * WORLD_H);
+    for (const k in E.rlv || {}) if (World.tiles[+k] === T.ROAD) World.roadLv[+k] = E.rlv[k];
     const byKey = new Map();
     for (const s of World.structs) if (s.okey && !s.removed && !s.built && !byKey.has(s.okey)) byKey.set(s.okey, s);
     for (const k of E.removed) { const s = byKey.get(k); if (s) World.removeStruct(s); }
@@ -288,6 +309,8 @@ const Urban = {
     const tips = {
       road: '🛣️ Clique (ou segure e arraste) para abrir estradas. Sobre rio raso vira ponte.',
       'u:unroad': '⛏️ Clique (ou arraste) sobre a estrada que quer remover.',
+      'u:road2': '🪨 Clique (ou arraste) sobre a estrada para cascalhá-la.', 'u:road3': '🧱 Clique (ou arraste) sobre a estrada para calçá-la de pedra.',
+      'u:road4': '🛤️ Clique (ou arraste) sobre a estrada para fazer a calçada.', 'u:road5': '👑 Clique (ou arraste) sobre a estrada para fazer a Estrada Real.',
       'u:move': '🔀 Clique na construção que quer mudar de lugar.',
       'u:demolish': '💥 Clique na construção que quer demolir.',
     };
@@ -305,7 +328,7 @@ const Urban = {
   cancel() { if (this.pick) { this.pick = null; UI.msg('Mudança cancelada.'); } else this.stop(); },
   click() {
     const m = this.mode, t = this.mouseTile();
-    if (m === 'road' || m === 'u:unroad') { this.drag = true; this.last = null; this.paint(false); return; }
+    if (m === 'road' || m === 'u:unroad' || /^u:road\d$/.test(m)) { this.drag = true; this.last = null; this.paint(false); return; }
     if (m === 'u:demolish') { const s = this.structAt(t.x, t.y); if (s) this.demolish(s); else this.warn('Clique numa construção.'); return; }
     if (m === 'u:move') {
       if (!this.pick) {
@@ -350,6 +373,7 @@ const Urban = {
     for (let k = this.last ? 1 : 0; k <= n; k++) {
       const x = Math.round(from.x + (t.x - from.x) * (n ? k / n : 0)), y = Math.round(from.y + (t.y - from.y) * (n ? k / n : 0));
       if (this.mode === 'road') this.buildRoad(x, y, quiet || k > 0);
+      else if (/^u:road\d$/.test(this.mode)) this.upgradeRoad(x, y, +this.mode.slice(6), quiet || k > 0);
       else this.removeRoad(x, y, quiet || k > 0);
     }
     this.last = t;
@@ -357,7 +381,7 @@ const Urban = {
   update() {
     if (!this.mode) return;
     if (G.dungeon) { this.stop(); return; }
-    if (this.drag && (this.mode === 'road' || this.mode === 'u:unroad')) {
+    if (this.drag && (this.mode === 'road' || this.mode === 'u:unroad' || /^u:road\d$/.test(this.mode))) {
       const t = this.mouseTile();
       if (!this.last || t.x !== this.last.x || t.y !== this.last.y) this.paint(true);
     }
@@ -366,6 +390,7 @@ const Urban = {
     const m = this.mode;
     if (m === 'road') return '🛣️ <b>Abrindo estradas</b> — clique e arraste · de graça · botão direito/Esc encerra';
     if (m === 'u:unroad') return '⛏️ <b>Removendo estradas</b> — clique e arraste · botão direito/Esc encerra';
+    if (/^u:road\d$/.test(m)) { const L = ROAD_LV[+m.slice(6)]; return `${L.icon} <b>${L.name}</b> — clique e arraste sobre a estrada · ${Object.entries(L.cost).map(([k, n]) => n + ' ' + ITEMS[k].name).join(' + ')} por bloco · botão direito/Esc encerra`; }
     if (m === 'u:demolish') return '💥 <b>Demolir</b> — clique numa construção · botão direito/Esc encerra';
     if (m === 'u:move') return this.pick ? `🔀 Escolha o novo lugar para <b>${this.nameOf(this.pick)}</b> · botão direito solta` : '🔀 <b>Mudar de lugar</b> — clique numa construção · botão direito/Esc encerra';
     return `🏗️ Posicionando <b>${CIVIC[m.slice(2)].name}</b> — clique dentro da vila · botão direito/Esc encerra`;
@@ -412,6 +437,11 @@ const Urban = {
   info(k) {
     if (k === 'road') return { name: 'Estrada', icon: '🛣️', sub: 'de graça · clique e arraste', can: true, btn: '🛣️ Abrir estradas',
       desc: 'Abre uma estrada de terra batida, onde se anda 25% mais rápido. Não gasta material. Sobre rio raso vira ponte. Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode abrir estradas.' };
+    if (/^u:road\d$/.test(k)) {
+      const lv = +k.slice(6), L = ROAD_LV[lv];
+      return { name: `${L.name} (nível ${lv})`, icon: L.icon, cost: L.cost, sub: `+${Math.round((L.speed - 1) * 100)}% de velocidade · custo por bloco`, can: Inv.has(L.cost), btn: `${L.icon} Evoluir estradas`,
+        desc: `Evolui as estradas para ${L.name.toLowerCase()}: quem anda por ela (você, os moradores e os animais) vai ${Math.round((L.speed - 1) * 100)}% mais rápido que no campo (a de terra dá +25%). Clique e arraste sobre estradas já abertas; cada bloco gasta o material mostrado. Dá para pular níveis: você paga só o material do nível escolhido.` };
+    }
     if (k === 'u:unroad') return { name: 'Remover estrada', icon: '⛏️', sub: 'reforma', can: true, btn: '⛏️ Remover estradas',
       desc: 'Remove qualquer estrada ou ponte, inclusive as que já vêm no mapa (o terreno volta a ser campo, floresta ou rio). Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode remover.' };
     if (k === 'u:move') return { name: 'Mudar de lugar', icon: '🔀', sub: 'reforma', can: true, btn: '🔀 Escolher a construção',

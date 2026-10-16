@@ -1,0 +1,124 @@
+'use strict';
+// Ícones desenhados para todos os outros itens: recursos, comidas, bebidas, peixes, materiais, joias, poções e máquinas.
+// Cada desenho tem a forma do que o item é de verdade (tora, lingote, feixe, garrafa, peixe...) e a cor do material.
+
+Object.assign(MAT, {
+  oak: ['#8a5a30', '#5a3618', '#c8945a'], hard: ['#6a3e1e', '#3e220e', '#a06a3a'], yewd: ['#a0503a', '#6a2a1a', '#d08060'],
+  rock: ['#9a9a98', '#5e5e5c', '#c9c9c4'], clay: ['#b8704a', '#7a4026', '#e0a07a'], coal: ['#2e2e32', '#111114', '#5a5a62'],
+  gem: ['#4ac8e0', '#1a7a9a', '#d8f8ff'], ruby: ['#e04a5a', '#8a1a2a', '#ffc8d0'], straw: ['#e2c060', '#a88a2a', '#fff0a8'],
+  barley: ['#d8b860', '#9a7a2a', '#f8e8a8'], herb: ['#5aa83a', '#2e6a1e', '#a8e08a'], fiber: ['#c8d8a0', '#7a8a5a', '#eef8d8'],
+  honey: ['#e8a020', '#a8680a', '#ffd870'], resin: ['#d88a20', '#8a520a', '#ffc860'], milk: ['#f4f4f0', '#a8a8a0', '#ffffff'],
+  beer: ['#d8a030', '#8a5a10', '#fff0c0'], wine: ['#8a1a3a', '#4a0a1a', '#d85a7a'], mead: ['#e0b040', '#9a7010', '#fff0a0'],
+  red: ['#d8302a', '#8a1a14', '#ff8a7a'], green: ['#6aa84f', '#3a6a2a', '#b8e8a0'], orange: ['#e87a20', '#9a4a0a', '#ffb870'],
+  rawmeat: ['#d85a5a', '#8a2a2a', '#f8b0a8'], cooked: ['#9a5a2a', '#5a3010', '#d8985a'], bread: ['#d8a05a', '#8a5a20', '#f8d8a0'],
+  cheese: ['#f2c84a', '#b8862a', '#fff0a8'], egg: ['#f4ead8', '#b8a888', '#ffffff'], trout: ['#8aa0b0', '#4a5a6a', '#d8e8f0'],
+  carp: ['#c8883a', '#7a4a10', '#f0c880'], sardine: ['#a8c0d0', '#5a7080', '#ffffff'], cod: ['#b8a888', '#6a5a40', '#ece0c8'],
+  gfish: ['#f2b020', '#a86a0a', '#fff0a0'], shark: ['#7a8a9a', '#3a4a5a', '#d8e0e8'], whale: ['#3a4a6a', '#1a2440', '#8aa0c8'],
+  octo: ['#c84a8a', '#7a1a4a', '#f8a8d0'], potionr: ['#d8303a', '#7a1018', '#ff9aa0'], potiong: ['#3ac86a', '#1a6a3a', '#a8f8c0'],
+  potiony: ['#e8c030', '#8a6a0a', '#fff4a0'], potionp: ['#a84ad8', '#5a1a8a', '#e8b8ff'], potionb: ['#3a8ae0', '#1a4a8a', '#a8d8ff'],
+  linenc: ['#e2d8bc', '#a89f84', '#fbf6e8'], silkc: ['#c86ad8', '#7a2a8a', '#f4c8ff'], woolc: ['#c8b08a', '#7f6a48', '#ece0c8'],
+  feather: ['#f2f2f0', '#9a9a98', '#ffffff'], mush: ['#c8302a', '#7a1a14', '#f4e8d8'], brickc: ['#b8553a', '#7a2e1a', '#e08a6a'],
+  dragonsc: ['#c0402e', '#7a1e14', '#ffb08a'], coinc: ['#c8a040', '#7a5a10', '#f8e098'],
+});
+
+Object.assign(ART_SHAPES, {
+  // madeira: tora com anéis; tábuas empilhadas; viga
+  log: (m, d, l) => `<path d="M5 13 L23 7 L27 19 L9 25 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><ellipse cx="25" cy="13" rx="3.5" ry="6.2" transform="rotate(-18 25 13)" fill="${l}" stroke="${d}" stroke-width="1.2"/><ellipse cx="25" cy="13" rx="1.6" ry="3" transform="rotate(-18 25 13)" fill="none" stroke="${d}" stroke-width=".9"/><path d="M8 16 L20 12 M10 21 L22 17" stroke="${d}" stroke-width=".9" opacity=".6"/>`,
+  planks: (m, d, l) => [0, 1, 2].map(k => `<rect x="${4 + k}" y="${8 + k * 6}" width="24" height="5" rx="1" fill="${k % 2 ? m : l}" stroke="${d}" stroke-width="1"/>`).join('') + `<path d="M10 9 L10 26 M22 9 L22 26" stroke="${d}" stroke-width=".7" opacity=".5"/>`,
+  beam: (m, d, l) => `<path d="M3 18 L20 9 L29 13 L12 22 Z" fill="${l}" stroke="${d}" stroke-width="1.2"/><path d="M3 18 L12 22 L12 27 L3 23 Z" fill="${d}"/><path d="M12 22 L29 13 L29 18 L12 27 Z" fill="${m}" stroke="${d}" stroke-width="1"/>`,
+  // pedras, argila, carvão e gemas
+  rock: (m, d, l) => `<path d="M4 24 L7 13 L15 7 L25 10 L29 22 L21 27 L9 27 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M9 14 L15 9 L20 11" stroke="${l}" stroke-width="1.6" fill="none"/><path d="M15 16 L22 19 M11 21 L16 23" stroke="${d}" stroke-width="1" opacity=".6"/>`,
+  lump: (m, d, l) => `<path d="M5 22 Q4 12 13 10 Q22 7 27 15 Q29 24 20 26 Q10 28 5 22 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M10 15 Q14 12 19 13" stroke="${l}" stroke-width="1.6" fill="none"/>`,
+  gem: (m, d, l) => `<path d="M8 12 L12 6 L20 6 L24 12 L16 27 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M8 12 L24 12 M12 6 L14 12 L16 27 L18 12 L20 6" stroke="${d}" stroke-width=".9" fill="none"/><path d="M12 7 L14 11 L10 11 Z" fill="${l}"/>`,
+  brick: (m, d, l) => `<path d="M4 15 L12 10 L28 13 L20 18 Z" fill="${l}" stroke="${d}" stroke-width="1.1"/><path d="M4 15 L20 18 L20 25 L4 22 Z" fill="${m}" stroke="${d}" stroke-width="1.1"/><path d="M20 18 L28 13 L28 20 L20 25 Z" fill="${d}"/>`,
+  // fibras, ervas e grãos em feixe
+  sheaf: (m, d, l) => `<path d="M16 28 L10 10 M16 28 L13 8 M16 28 L16 6 M16 28 L19 8 M16 28 L22 10" stroke="${d}" stroke-width="1.6"/>` + [[10, 9], [13, 7], [16, 5], [19, 7], [22, 9]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="2.2" ry="4" fill="${m}" stroke="${d}" stroke-width=".8"/>`).join('') + `<rect x="12" y="18" width="8" height="3" rx="1" fill="#8a5a2e"/>`,
+  herbs: (m, d, l) => `<path d="M16 29 L16 12" stroke="${d}" stroke-width="1.6"/>` + [[10, 12, -30], [22, 11, 30], [11, 19, -40], [21, 18, 40], [16, 7, 0]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="6" transform="rotate(${r} ${x} ${y})" fill="${m}" stroke="${d}" stroke-width=".9"/>`).join('') + `<path d="M13 23 L19 23" stroke="#8a5a2e" stroke-width="2.4"/>`,
+  fiberb: (m, d, l) => `<path d="M8 27 Q12 16 9 5 M12 27 Q15 15 14 4 M16 27 Q17 15 18 4 M20 27 Q19 15 23 5 M24 27 Q21 16 26 7" stroke="${m}" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M8 18 L24 18" stroke="${d}" stroke-width="2.6"/>`,
+  // sacos e jarros
+  sack: (m, d, l) => `<path d="M9 10 Q16 6 23 10 L26 25 Q16 30 6 25 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M10 10 Q16 13 22 10" stroke="${d}" stroke-width="1.6" fill="none"/><path d="M13 6 L19 6" stroke="${d}" stroke-width="2"/><circle cx="13" cy="19" r="1.2" fill="${l}"/><circle cx="18" cy="21" r="1.2" fill="${l}"/><circle cx="16" cy="16" r="1.2" fill="${l}"/>`,
+  seeds: (m, d, l) => `<path d="M8 12 Q16 8 24 12 L25 26 Q16 29 7 26 Z" fill="#c8b07a" stroke="#7a6a48" stroke-width="1.3"/><path d="M11 9 L21 9" stroke="#7a6a48" stroke-width="2.2"/>` + [[12, 18], [16, 21], [20, 17], [14, 24], [19, 24]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.6" ry="2.2" fill="${m}" stroke="${d}" stroke-width=".6"/>`).join(''),
+  jar: (m, d, l) => `<path d="M10 9 L22 9 L23 12 Q27 16 25 24 Q23 28 16 28 Q9 28 7 24 Q5 16 9 12 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><rect x="9" y="5" width="14" height="4" rx="1" fill="#8a5a2e"/><path d="M11 15 Q12 13 14 13" stroke="${l}" stroke-width="2" fill="none"/>`,
+  pot: (m, d, l) => `<path d="M11 7 L21 7 L20 10 Q27 13 26 20 Q24 28 16 28 Q8 28 6 20 Q5 13 12 10 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M8 17 Q16 20 24 17" stroke="${d}" stroke-width="1.1" fill="none"/><path d="M10 13 Q12 12 13 12" stroke="${l}" stroke-width="1.6" fill="none"/>`,
+  bucket: (m, d, l) => `<path d="M7 11 L25 11 L22 27 L10 27 Z" fill="#8a8d93" stroke="#55575c" stroke-width="1.4"/><ellipse cx="16" cy="11" rx="9" ry="3" fill="${m}" stroke="#55575c" stroke-width="1.2"/><path d="M7 11 Q16 -2 25 11" stroke="#55575c" stroke-width="1.4" fill="none"/>`,
+  // bebidas e poções
+  bottle: (m, d, l) => `<path d="M13 3 L19 3 L19 10 Q25 13 25 19 L25 27 Q25 29 23 29 L9 29 Q7 29 7 27 L7 19 Q7 13 13 10 Z" fill="#3a5a3a" stroke="#1e2e1e" stroke-width="1.3" opacity=".9"/><path d="M8 19 L24 19 L24 27 Q24 28 23 28 L9 28 Q8 28 8 27 Z" fill="${m}"/><rect x="12" y="1" width="8" height="4" rx="1" fill="#8a5a2e"/><rect x="9" y="20" width="14" height="6" fill="${l}" opacity=".6"/>`,
+  flask: (m, d, l) => `<path d="M13 3 L19 3 L19 11 L26 24 Q27 29 22 29 L10 29 Q5 29 6 24 L13 11 Z" fill="#dfeef4" stroke="#7a9aa8" stroke-width="1.3" opacity=".9"/><path d="M9 20 L23 20 L25 25 Q26 28 22 28 L10 28 Q6 28 7 25 Z" fill="${m}"/><rect x="12" y="1" width="8" height="4" rx="1" fill="#8a5a2e"/><circle cx="12" cy="24" r="1.4" fill="${l}"/><circle cx="18" cy="22" r="1" fill="${l}"/>`,
+  mug: (m, d, l) => `<path d="M7 9 L22 9 L22 27 Q22 29 20 29 L9 29 Q7 29 7 27 Z" fill="#8a5a2e" stroke="#4a2e16" stroke-width="1.3"/><path d="M22 13 Q28 13 28 19 Q28 24 22 24" stroke="#4a2e16" stroke-width="2.4" fill="none"/><path d="M8 11 L21 11 L21 27 L8 27 Z" fill="${m}" opacity=".85"/><path d="M6 10 Q9 4 14 7 Q18 3 23 8 L22 11 L7 11 Z" fill="#fff8e6" stroke="#d8c8a0" stroke-width=".8"/><path d="M11 9 L11 27 M17 9 L17 27" stroke="#4a2e16" stroke-width=".8" opacity=".5"/>`,
+  jug: (m, d, l) => `<path d="M11 6 L21 6 L20 10 Q26 14 25 22 Q24 28 16 28 Q8 28 7 22 Q6 14 12 10 Z" fill="#c8a878" stroke="#7a5a3a" stroke-width="1.3"/><path d="M8 18 Q16 21 24 18 L24 22 Q23 27 16 27 Q9 27 8 22 Z" fill="${m}" opacity=".9"/><path d="M24 12 Q30 14 26 22" stroke="#7a5a3a" stroke-width="2" fill="none"/>`,
+  // comidas
+  fruit: (m, d, l) => `<circle cx="16" cy="18" r="10" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M16 8 Q15 4 17 2" stroke="#5a3618" stroke-width="2" fill="none"/><path d="M17 6 Q23 3 25 8 Q20 9 17 6 Z" fill="#4f8a36"/><ellipse cx="12" cy="14" rx="2.6" ry="3.6" fill="${l}" opacity=".7"/>`,
+  berries: (m, d, l) => [[11, 15], [18, 13], [15, 21], [22, 20], [9, 22]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.4" fill="${m}" stroke="${d}" stroke-width="1"/><circle cx="${x - 1.4}" cy="${y - 1.4}" r="1.2" fill="${l}"/>`).join('') + `<path d="M14 9 Q18 5 22 6" stroke="#4f8a36" stroke-width="2" fill="none"/>`,
+  coconut: () => `<circle cx="16" cy="17" r="11" fill="#7a4a22" stroke="#4a2a10" stroke-width="1.4"/><path d="M8 13 Q16 17 24 12 M7 19 Q16 23 25 19" stroke="#5a3418" stroke-width="1.2" fill="none"/><circle cx="13" cy="11" r="1.5" fill="#2a1a0a"/><circle cx="18" cy="10" r="1.5" fill="#2a1a0a"/><circle cx="16" cy="14" r="1.5" fill="#2a1a0a"/>`,
+  carrot: () => `<path d="M8 27 L22 10 Q26 9 26 13 L11 29 Q8 30 8 27 Z" fill="#e87a20" stroke="#9a4a0a" stroke-width="1.2"/><path d="M14 22 L17 23 M17 18 L20 19 M20 14 L22 15" stroke="#9a4a0a" stroke-width="1"/><path d="M23 10 Q22 3 26 2 M24 10 Q27 4 30 5 M25 11 Q30 9 30 12" stroke="#4f8a36" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  cabbage: () => `<circle cx="16" cy="17" r="11" fill="#7ab85a" stroke="#3a6a2a" stroke-width="1.4"/><path d="M16 7 Q10 14 16 27 M16 7 Q22 14 16 27 M6 17 Q16 12 26 17" stroke="#3a6a2a" stroke-width="1.1" fill="none"/><circle cx="16" cy="17" r="4" fill="#c8e8a0"/>`,
+  mush: (m, d, l) => `<path d="M13 16 L12 27 Q16 29 20 27 L19 16 Z" fill="#f4e8d8" stroke="#a89880" stroke-width="1.2"/><path d="M4 17 Q5 5 16 5 Q27 5 28 17 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><circle cx="11" cy="11" r="1.8" fill="${l}"/><circle cx="19" cy="9" r="1.5" fill="${l}"/><circle cx="22" cy="14" r="1.4" fill="${l}"/>`,
+  egg: (m, d, l) => `<ellipse cx="16" cy="17" rx="8.5" ry="11" fill="${m}" stroke="${d}" stroke-width="1.3"/><ellipse cx="13" cy="12" rx="2.2" ry="3.4" fill="${l}"/>`,
+  meat: (m, d, l) => `<path d="M6 14 Q8 6 17 7 Q26 8 26 16 Q25 24 16 25 Q8 25 6 14 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M11 13 Q16 11 21 14" stroke="${l}" stroke-width="2" fill="none"/><path d="M24 20 L29 25" stroke="#efe6d2" stroke-width="3.4" stroke-linecap="round"/><circle cx="29" cy="26" r="2.2" fill="#efe6d2"/>`,
+  sausage: (m, d, l) => `<path d="M6 10 Q12 6 18 12 Q24 18 28 14" stroke="${d}" stroke-width="7.5" fill="none" stroke-linecap="round"/><path d="M6 10 Q12 6 18 12 Q24 18 28 14" stroke="${m}" stroke-width="5.5" fill="none" stroke-linecap="round"/><path d="M6 20 Q14 18 18 24 Q22 28 28 25" stroke="${d}" stroke-width="7.5" fill="none" stroke-linecap="round"/><path d="M6 20 Q14 18 18 24 Q22 28 28 25" stroke="${m}" stroke-width="5.5" fill="none" stroke-linecap="round"/>`,
+  bread: (m, d, l) => `<path d="M4 20 Q4 10 16 10 Q28 10 28 20 Q28 25 16 25 Q4 25 4 20 Z" fill="${m}" stroke="${d}" stroke-width="1.4"/><path d="M10 13 L12 18 M15 12 L17 17 M20 13 L22 18" stroke="${l}" stroke-width="1.6"/>`,
+  pie: (m, d, l) => `<ellipse cx="16" cy="20" rx="13" ry="6" fill="#b8884a" stroke="#6a4220" stroke-width="1.3"/><path d="M3 19 Q16 8 29 19 Q16 24 3 19 Z" fill="${m}" stroke="${d}" stroke-width="1.2"/><path d="M9 16 L23 16 M12 13 L20 13 M10 19 L14 13 M16 19 L18 13 M21 19 L22 15" stroke="${l}" stroke-width="1.2"/>`,
+  cake: (m, d, l) => `<path d="M5 15 L27 15 L27 26 L5 26 Z" fill="#d8a05a" stroke="#8a5a20" stroke-width="1.3"/><path d="M5 15 Q16 8 27 15 L27 18 Q22 21 20 18 Q16 22 12 18 Q8 21 5 18 Z" fill="${m}" stroke="${d}" stroke-width="1"/><circle cx="16" cy="9" r="2.4" fill="#d8302a"/>`,
+  cheese: (m, d, l) => `<path d="M4 22 L26 10 L28 18 L28 25 L4 25 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M4 22 L28 18" stroke="${d}" stroke-width="1"/><circle cx="12" cy="23" r="1.6" fill="${d}"/><circle cx="20" cy="22" r="1.3" fill="${d}"/><circle cx="23" cy="15" r="1.2" fill="${d}"/>`,
+  bowl: (m, d, l) => `<path d="M4 15 L28 15 Q27 27 16 27 Q5 27 4 15 Z" fill="#8a5a2e" stroke="#4a2e16" stroke-width="1.3"/><ellipse cx="16" cy="15" rx="12" ry="3.4" fill="${m}" stroke="${d}" stroke-width="1"/><circle cx="12" cy="15" r="1.6" fill="${l}"/><circle cx="19" cy="14.5" r="1.4" fill="${l}"/><path d="M12 9 Q11 6 13 4 M18 9 Q17 6 19 4" stroke="#d8d8d8" stroke-width="1.2" fill="none" opacity=".7"/>`,
+  omelette: () => `<ellipse cx="16" cy="20" rx="13" ry="6" fill="#d8d8d0" stroke="#8a8a80" stroke-width="1.2"/><path d="M5 19 Q16 9 27 19 Q16 25 5 19 Z" fill="#f2c84a" stroke="#b8862a" stroke-width="1.2"/><circle cx="13" cy="17" r="1.4" fill="#6aa84f"/><circle cx="19" cy="16" r="1.4" fill="#d8302a"/>`,
+  // peixes e criaturas do mar
+  fish: (m, d, l) => `<path d="M4 16 Q12 7 22 12 L29 7 L28 16 L29 25 L22 20 Q12 25 4 16 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><circle cx="9" cy="14.5" r="1.4" fill="#1a1a1a"/><path d="M12 16 Q16 13 20 16" stroke="${l}" stroke-width="1.4" fill="none"/><path d="M14 11 L17 8 L19 11" fill="${d}"/>`,
+  octopus: (m, d, l) => `<path d="M9 15 Q8 4 16 4 Q24 4 23 15 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/>` + [8, 12, 16, 20, 24].map((x, i) => `<path d="M${x + 1} 14 Q${x - 2} 22 ${x + (i % 2 ? 3 : -3)} 28" stroke="${m}" stroke-width="3" fill="none" stroke-linecap="round"/>`).join('') + `<circle cx="13" cy="10" r="1.6" fill="#fff"/><circle cx="19" cy="10" r="1.6" fill="#fff"/><circle cx="13" cy="10" r=".8" fill="#000"/><circle cx="19" cy="10" r=".8" fill="#000"/>`,
+  // tecidos, cordas e papéis
+  roll: (m, d, l) => `<rect x="5" y="9" width="18" height="14" rx="2" fill="${m}" stroke="${d}" stroke-width="1.3"/><ellipse cx="23" cy="16" rx="4" ry="7" fill="${l}" stroke="${d}" stroke-width="1.2"/><ellipse cx="23" cy="16" rx="1.6" ry="3" fill="${d}"/><path d="M5 23 L5 28 L17 26" fill="${m}" stroke="${d}" stroke-width="1.1"/><path d="M9 9 L9 23 M14 9 L14 23" stroke="${d}" stroke-width=".8" opacity=".5"/>`,
+  rope: (m, d, l) => `<circle cx="16" cy="16" r="10" fill="none" stroke="#b8945a" stroke-width="4"/><circle cx="16" cy="16" r="5.5" fill="none" stroke="#a07a40" stroke-width="3.4"/><circle cx="16" cy="16" r="10" fill="none" stroke="#6a4a20" stroke-width="1" stroke-dasharray="2 2"/><path d="M24 22 Q28 27 25 30" stroke="#b8945a" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+  web: () => `<circle cx="16" cy="16" r="12" fill="none" stroke="#e8e8f0" stroke-width="1.2"/><circle cx="16" cy="16" r="7" fill="none" stroke="#e8e8f0" stroke-width="1.2"/><circle cx="16" cy="16" r="3" fill="none" stroke="#e8e8f0" stroke-width="1"/><path d="M16 3 L16 29 M3 16 L29 16 M7 7 L25 25 M25 7 L7 25" stroke="#e8e8f0" stroke-width="1"/>`,
+  tapestry: () => `<rect x="7" y="4" width="18" height="24" fill="#8e1f2a" stroke="#4a0e14" stroke-width="1.3"/><path d="M5 4 L27 4" stroke="#8a5a2e" stroke-width="2.6"/><path d="M10 8 L22 8 L22 22 L10 22 Z" fill="none" stroke="#d8a84a" stroke-width="1.4"/><path d="M16 10 L20 16 L16 20 L12 16 Z" fill="#d8a84a"/><path d="M9 28 L9 31 M13 28 L13 31 M17 28 L17 31 M21 28 L21 31" stroke="#d8a84a" stroke-width="1.2"/>`,
+  scroll: () => `<path d="M8 6 L24 6 L24 26 L8 26 Z" fill="#f0e2bc" stroke="#a8946a" stroke-width="1.3"/><rect x="6" y="4" width="20" height="4" rx="2" fill="#d8c898" stroke="#a8946a"/><rect x="6" y="24" width="20" height="4" rx="2" fill="#d8c898" stroke="#a8946a"/><path d="M11 12 L21 12 M11 16 L21 16 M11 20 L18 20" stroke="#8a7a5a" stroke-width="1"/>`,
+  book: () => `<path d="M6 6 L22 4 L26 7 L26 28 L10 29 L6 26 Z" fill="#7a2a2a" stroke="#3a0e0e" stroke-width="1.3"/><path d="M10 9 L26 7 L26 28 L10 29 Z" fill="#9a3a2a"/><path d="M6 26 L10 29 L10 9 L6 6" fill="#f0e2bc" stroke="#a8946a" stroke-width=".8"/><path d="M14 13 L22 12 M14 16 L22 15" stroke="#d8a84a" stroke-width="1.4"/>`,
+  candle: () => `<rect x="12" y="11" width="8" height="15" rx="1" fill="#f2ead8" stroke="#a89880" stroke-width="1.2"/><path d="M16 11 L16 8" stroke="#2a2a2a" stroke-width="1"/><path d="M16 2 Q19 6 16 9 Q13 6 16 2 Z" fill="#ffb02a"/><path d="M16 5 Q17 7 16 8 Q15 7 16 5 Z" fill="#fff0a0"/><ellipse cx="16" cy="27" rx="9" ry="2.6" fill="#c8a050" stroke="#7a5a20"/>`,
+  // joias, moedas e escamas
+  ring: (m, d, l) => `<ellipse cx="16" cy="19" rx="9" ry="8" fill="none" stroke="${d}" stroke-width="4.4"/><ellipse cx="16" cy="19" rx="9" ry="8" fill="none" stroke="${m}" stroke-width="2.6"/><path d="M12 6 L16 3 L20 6 L16 11 Z" fill="${l}" stroke="${d}" stroke-width="1"/>`,
+  coin: (m, d, l) => `<circle cx="16" cy="16" r="11" fill="${m}" stroke="${d}" stroke-width="1.6"/><circle cx="16" cy="16" r="7.5" fill="none" stroke="${d}" stroke-width="1"/><path d="M12 13 L16 10 L20 13 L19 20 L13 20 Z" fill="${l}" opacity=".8"/>`,
+  scale: (m, d, l) => [[10, 9], [20, 9], [15, 17], [5, 17], [25, 17]].map(([x, y]) => `<path d="M${x} ${y} Q${x + 5} ${y + 2} ${x + 5} ${y + 8} Q${x} ${y + 11} ${x - 5} ${y + 8} Q${x - 5} ${y + 2} ${x} ${y} Z" fill="${m}" stroke="${d}" stroke-width="1.1"/><path d="M${x - 2} ${y + 4} Q${x} ${y + 3} ${x + 2} ${y + 4}" stroke="${l}" stroke-width="1" fill="none"/>`).join(''),
+  amulet: () => `<path d="M8 4 Q16 16 24 4" stroke="#8a5a2e" stroke-width="1.6" fill="none"/><path d="M16 12 Q22 18 20 28 Q16 22 12 28 Q10 18 16 12 Z" fill="#f2ead8" stroke="#a89880" stroke-width="1.3"/><circle cx="16" cy="13" r="2" fill="#c8a050"/>`,
+  // ossos, presas e penas
+  bone: () => `<path d="M9 23 L23 9" stroke="#e6dcc4" stroke-width="4.4" stroke-linecap="round"/><circle cx="7" cy="22" r="3" fill="#e6dcc4" stroke="#a89c80"/><circle cx="10" cy="25" r="3" fill="#e6dcc4" stroke="#a89c80"/><circle cx="22" cy="7" r="3" fill="#e6dcc4" stroke="#a89c80"/><circle cx="25" cy="10" r="3" fill="#e6dcc4" stroke="#a89c80"/>`,
+  tusk: () => `<path d="M6 26 Q8 10 24 5 Q16 12 13 27 Z" fill="#f2ead8" stroke="#a89880" stroke-width="1.3"/><path d="M8 22 L12 22 M9 17 L13 18" stroke="#c8b898" stroke-width="1"/>`,
+  antler: () => `<path d="M16 29 L16 14 M16 18 L9 10 M9 10 L6 4 M9 10 L4 12 M16 14 L23 6 M23 6 L27 2 M23 6 L28 9 M16 21 L22 17" stroke="#d8c8a0" stroke-width="2.6" fill="none" stroke-linecap="round"/>`,
+  feather: (m, d, l) => `<path d="M7 27 L24 6" stroke="#8a8a88" stroke-width="1.3"/><path d="M24 5 Q30 12 20 20 L10 25 Q12 14 24 5 Z" fill="${m}" stroke="${d}" stroke-width="1.1"/><path d="M13 21 L18 18 M15 17 L21 13 M18 13 L23 9" stroke="${d}" stroke-width=".8"/>`,
+  // ferramentas e máquinas
+  arrows: (m, d, l) => [0, 4, 8].map(o => `<path d="M${5 + o} 28 L${23 + o} 6" stroke="#8a5a2e" stroke-width="1.6"/><path d="M${21 + o} 5 L${27 + o} 3 L${25 + o} 9 Z" fill="${m}" stroke="${d}" stroke-width=".8"/><path d="M${5 + o} 28 L${4 + o} 23 M${5 + o} 28 L${10 + o} 27" stroke="#e8e8e0" stroke-width="1.6"/>`).join(''),
+  rod: () => `<path d="M5 28 L26 4" stroke="#8a5a2e" stroke-width="2.4" stroke-linecap="round"/><path d="M26 4 Q30 14 24 22" stroke="#e8e8e8" stroke-width=".9" fill="none"/><path d="M24 22 Q22 25 24 27" stroke="#9a9aa2" stroke-width="1.2" fill="none"/><circle cx="9" cy="23" r="3" fill="none" stroke="#5a5a62" stroke-width="1.6"/>`,
+  can: () => `<path d="M7 13 L19 13 L19 27 L7 27 Z" fill="#7a9ab0" stroke="#3a5a70" stroke-width="1.3"/><path d="M19 17 L28 9 L29 11 L20 21" fill="#7a9ab0" stroke="#3a5a70" stroke-width="1.2"/><path d="M8 13 Q13 4 18 13" stroke="#3a5a70" stroke-width="2" fill="none"/><circle cx="29" cy="8" r="1" fill="#9ac8f0"/><circle cx="30" cy="12" r="1" fill="#9ac8f0"/>`,
+  boat: () => `<path d="M3 17 L29 17 Q26 27 16 27 Q6 27 3 17 Z" fill="#8a5a2e" stroke="#4a2e16" stroke-width="1.4"/><path d="M5 20 L27 20" stroke="#c8945a" stroke-width="1.4"/><path d="M10 15 L26 5" stroke="#6b4420" stroke-width="2"/><path d="M24 4 L29 6 L26 10 Z" fill="#6b4420"/>`,
+  ram: () => `<rect x="4" y="12" width="24" height="7" rx="3" fill="#7a4a22" stroke="#4a2a10" stroke-width="1.3"/><path d="M26 12 L30 15.5 L26 19 Z" fill="#8a8d93" stroke="#55575c"/><circle cx="9" cy="23" r="3.6" fill="#5a3a1e" stroke="#2a1a0a"/><circle cx="21" cy="23" r="3.6" fill="#5a3a1e" stroke="#2a1a0a"/><path d="M6 12 L10 6 L22 6 L26 12" stroke="#6b4423" stroke-width="1.6" fill="none"/>`,
+  catapult: () => `<rect x="4" y="20" width="24" height="4" fill="#7a4a22" stroke="#4a2a10"/><circle cx="8" cy="26" r="3" fill="#5a3a1e"/><circle cx="24" cy="26" r="3" fill="#5a3a1e"/><path d="M12 20 L22 4" stroke="#6b4423" stroke-width="2.6"/><ellipse cx="22" cy="5" rx="4" ry="2.4" fill="#8a5a2e"/><circle cx="22" cy="3" r="2.4" fill="#8a8a88"/><path d="M10 20 L16 12 L20 20" stroke="#6b4423" stroke-width="1.8" fill="none"/>`,
+  nails: () => [[8, 6], [15, 4], [22, 7]].map(([x, y]) => `<path d="M${x} ${y} L${x + 2} ${y + 20}" stroke="#7d848c" stroke-width="2.2" stroke-linecap="round"/><ellipse cx="${x}" cy="${y}" rx="3.4" ry="1.6" fill="#a5acb4" stroke="#5d646c"/>`).join(''),
+  oldboot: () => `<path d="M8 5 L16 6 L15 20 L26 22 Q28 27 24 28 L7 28 Z" fill="#6a5440" stroke="#3a2a1e" stroke-width="1.4"/><path d="M10 9 L15 10 M9 14 L15 14" stroke="#3a2a1e" stroke-width="1"/><path d="M20 22 Q22 18 25 21" stroke="#6a8a5a" stroke-width="1.6" fill="none"/><circle cx="12" cy="24" r="1.4" fill="#3a2a1e"/>`,
+});
+
+Object.assign(ART_ITEMS, {
+  // madeira e recursos
+  wood: ['log', 'oak'], hardwood: ['log', 'hard'], yew_wood: ['log', 'yewd'], plank: ['planks', 'oak'], beam: ['beam', 'hard'],
+  stone: ['rock', 'rock'], clay: ['lump', 'clay'], coal: ['lump', 'coal'], gem: ['gem', 'gem'], brick: ['brick', 'brickc'], mortar: ['bucket', 'rock'], nails: ['nails', 'iron'],
+  spider_silk: ['web', 'linenc'], resin: ['jar', 'resin'], honey: ['jar', 'honey'], fiber: ['fiberb', 'fiber'], herb: ['herbs', 'herb'],
+  wheat: ['sheaf', 'straw'], barley: ['sheaf', 'barley'], wool: ['lump', 'woolc'], feather: ['feather', 'feather'],
+  wheat_seed: ['seeds', 'straw'], carrot_seed: ['seeds', 'orange'], cabbage_seed: ['seeds', 'green'], barley_seed: ['seeds', 'barley'], spices: ['sack', 'red'],
+  bone: ['bone', 'bone'], deer_antler: ['antler', 'bone'], boar_tusk: ['tusk', 'bone'], dragon_scale: ['scale', 'dragonsc'],
+  rope: ['rope', 'oak'], cloth: ['roll', 'linenc'], silk_cloth: ['roll', 'silkc'], wool_cloth: ['roll', 'woolc'], tapestry: ['tapestry', 'red'], parchment: ['scroll', 'linenc'],
+  book: ['book', 'red'], candle: ['candle', 'linenc'], clay_pot: ['pot', 'clay'],
+  // comidas
+  berries: ['berries', 'potionp'], apple: ['fruit', 'red'], coconut: ['coconut', 'oak'], carrot: ['carrot', 'orange'], cabbage: ['cabbage', 'green'], mushroom: ['mush', 'mush'],
+  egg: ['egg', 'egg'], milk: ['jug', 'milk'], cheese: ['cheese', 'cheese'], meat: ['meat', 'rawmeat'], cooked_meat: ['meat', 'cooked'], smoked_meat: ['meat', 'hard'], sausage: ['sausage', 'cooked'],
+  bread: ['bread', 'bread'], meat_pie: ['pie', 'cooked'], apple_pie: ['pie', 'bread'], honey_cake: ['cake', 'honey'], omelette: ['omelette', 'cheese'],
+  stew: ['bowl', 'cooked'], veg_soup: ['bowl', 'green'], fish_stew: ['bowl', 'carp'], mushroom_soup: ['bowl', 'bread'],
+  beer: ['mug', 'beer'], mead: ['bottle', 'mead'], wine: ['bottle', 'wine'], aged_wine: ['bottle', 'wine'],
+  trout: ['fish', 'trout'], carp: ['fish', 'carp'], sardine: ['fish', 'sardine'], cod: ['fish', 'cod'], goldfish: ['fish', 'gfish'], shark: ['fish', 'shark'], whale: ['fish', 'whale'], octopus: ['octopus', 'octo'],
+  cooked_fish: ['fish', 'cooked'], smoked_fish: ['fish', 'hard'],
+  // poções e remédios
+  herbal_salve: ['jar', 'herb'], healing_potion: ['flask', 'potionr'], stamina_potion: ['flask', 'potiony'], strength_potion: ['flask', 'potionp'], elixir: ['flask', 'potionb'], tonic: ['bottle', 'wine'],
+  // joias e tesouros
+  silver_ring: ['ring', 'silver'], gold_ring: ['ring', 'gold'], gem_ring: ['ring', 'gold'], ancient_coin: ['coin', 'coinc'], tusk_amulet: ['amulet', 'bone'],
+  // roupas novas
+  wool_hood: ['hood', 'wool'], fur_boots: ['boots', 'wolf'],
+  // ferramentas e máquinas
+  arrow: ['arrows', 'stone'], iron_arrow: ['arrows', 'iron'], fishing_rod: ['rod', 'oak'], watering_can: ['can', 'iron'], boat: ['boat', 'oak'],
+  ram: ['ram', 'oak'], catapult: ['catapult', 'oak'], old_boot: ['oldboot', 'leather'],
+});

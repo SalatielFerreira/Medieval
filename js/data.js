@@ -564,3 +564,81 @@ Object.assign(BUILDINGS, {
 Object.assign(CIV_STRUCTS, {
   vfountain: { name: 'Chafariz', blocks: true }, vstatue: { name: 'Estátua', blocks: true }, vlamp: { name: 'Lampião', blocks: true }, vmarket: { name: 'Feira', blocks: true },
 });
+
+// ====================================================================== mais materiais, oficinas e construções
+Object.assign(ITEMS, {
+  plank:          { name: 'Tábua',               icon: '🪵', cat: 'Materiais', price: 3 },
+  beam:           { name: 'Viga',                icon: '🪵', cat: 'Materiais', price: 14 },
+  nails:          { name: 'Pregos',              icon: '📌', cat: 'Materiais', price: 2 },
+  parchment:      { name: 'Pergaminho',          icon: '📜', cat: 'Materiais', price: 9 },
+  mortar:         { name: 'Argamassa',           icon: '🪣', cat: 'Materiais', price: 5 },
+  feather:        { name: 'Pena',                icon: '🪶', cat: 'Recursos', price: 2 },
+  mushroom:       { name: 'Cogumelo',            icon: '🍄', cat: 'Comida', price: 4, food: 10, heal: 2 },
+  mushroom_soup:  { name: 'Sopa de Cogumelos',   icon: '🥣', cat: 'Comida', price: 24, food: 45, heal: 15, buff: 'wisdom' },
+  stamina_potion: { name: 'Poção de Vigor',      icon: '🧪', cat: 'Comida', price: 40, food: 0, heal: 20, buff: 'vigor' },
+  strength_potion:{ name: 'Poção de Força',      icon: '🧪', cat: 'Comida', price: 55, food: 0, heal: 15, buff: 'str' },
+  elixir:         { name: 'Elixir Real',         icon: '⚗️', cat: 'Comida', price: 160, food: 10, heal: 150, buff: 'holy' },
+  aged_wine:      { name: 'Vinho Envelhecido',   icon: '🍷', cat: 'Comida', price: 60, food: 8, heal: 30, buff: 'courage' },
+});
+RECIPES.push(
+  { out: 'plank',           n: 3,  cost: { wood: 2 },                                   station: 'carpintaria' },
+  { out: 'beam',            n: 1,  cost: { hardwood: 2 },                               station: 'carpintaria' },
+  { out: 'nails',           n: 10, cost: { iron_bar: 1 },                               station: 'forja' },
+  { out: 'leather',         n: 2,  cost: { rabbit_hide: 2 },                            station: 'curtidor' },
+  { out: 'leather',         n: 2,  cost: { fox_pelt: 1 },                               station: 'curtidor' },
+  { out: 'parchment',       n: 2,  cost: { leather: 1 },                                station: 'curtidor' },
+  { out: 'hard_leather',    n: 1,  cost: { leather: 2, resin: 1 },                      station: 'curtidor' },
+  { out: 'mortar',          n: 3,  cost: { clay: 2, stone: 2 },                         station: 'olaria' },
+  { out: 'stamina_potion',  n: 1,  cost: { herb: 2, honey: 1, clay_pot: 1 },            station: 'alquimia' },
+  { out: 'strength_potion', n: 1,  cost: { herb: 2, bear_claw: 1, clay_pot: 1 },        station: 'alquimia' },
+  { out: 'healing_potion',  n: 2,  cost: { herb: 4, honey: 1, clay_pot: 2 },            station: 'alquimia' },
+  { out: 'elixir',          n: 1,  cost: { healing_potion: 1, gem: 1, mead: 1 },        station: 'alquimia' },
+  { out: 'mushroom_soup',   n: 1,  cost: { mushroom: 3, milk: 1 },                      station: 'cozinha' },
+  { out: 'arrow',           n: 20, cost: { wood: 2, feather: 3, stone: 1 },             station: 'bancada' },
+  { out: 'book',            n: 1,  cost: { parchment: 3, leather: 1 },                  station: 'bancada' },
+);
+Object.assign(STATIONS, {
+  carpintaria: { name: 'Carpintaria',       types: ['carpentry'] },
+  alquimia:    { name: 'Mesa de Alquimia',  types: ['alchemy'] },
+  curtidor:    { name: 'Curtidor',          types: ['tanrack'] },
+});
+STATIONS.fogueira.types.push('hut', 'villa', 'lodge');
+Object.assign(BUILDINGS, {
+  // moradia
+  hut:        { name: 'Choupana',          w: 2, h: 2, blocks: true,  cost: { wood: 12, fiber: 6 },                       desc: 'Abrigo simples de palha: salvar, dormir e cozinhar. Barata, boa para começar longe de casa.' },
+  lodge:      { name: 'Chalé de Caça',     w: 3, h: 2, blocks: true,  cost: { wood: 35, plank: 10, wolf_pelt: 2 },        desc: 'Casa de troncos com troféus: salvar e dormir. Dormir aqui dá Coragem para a próxima caçada.' },
+  villa:      { name: 'Solar',             w: 4, h: 3, blocks: true,  cost: { brick: 40, beam: 6, plank: 20, nails: 20, mortar: 10 }, desc: 'Casa senhorial de dois andares: salvar, dormir e +5 de fama ao construir.' },
+  // produção
+  carpentry:  { name: 'Carpintaria',       w: 2, h: 2, blocks: true,  cost: { wood: 25, stone: 6, iron_bar: 1 },          desc: 'Serre madeira em tábuas e vigas, materiais das construções maiores.' },
+  alchemy:    { name: 'Mesa de Alquimia',  w: 2, h: 1, blocks: true,  cost: { wood: 10, clay_pot: 3, herb: 4 },           desc: 'Poções de vigor, de força e de cura, e o raro Elixir Real.' },
+  tanrack:    { name: 'Curtidor',          w: 2, h: 1, blocks: true,  cost: { wood: 12, rope: 3 },                        desc: 'Curta peles em couro, couro curtido e pergaminho.' },
+  // fazenda e animais
+  pigsty:     { name: 'Chiqueiro',         w: 3, h: 2, blocks: false, cost: { wood: 20, plank: 6 },                       desc: 'Porcos: carne e couro todo mês.' },
+  dovecote:   { name: 'Pombal',            w: 1, h: 1, blocks: true,  cost: { wood: 10, plank: 4 },                       desc: 'Pombos: penas (para flechas) e alguns ovos todo mês.' },
+  fishpond:   { name: 'Viveiro de Peixes', w: 3, h: 3, blocks: true,  cost: { stone: 20, dirt: 8 },                       desc: 'Um tanque com carpas e trutas: peixe todo mês (metade no inverno).' },
+  herbgarden: { name: 'Canteiro de Ervas', w: 2, h: 1, blocks: false, cost: { dirt: 4, wood: 4 },                         desc: 'Ervas medicinais todo mês, para unguentos e poções.' },
+  flaxfield:  { name: 'Linhal',            w: 3, h: 2, blocks: false, cost: { wood: 8, dirt: 4 },                         desc: 'Linho: fibras todo mês (nada no inverno), para cordas e tecidos.' },
+  mushroom:   { name: 'Cogumelal',         w: 2, h: 2, blocks: true,  cost: { wood: 15, dirt: 6 },                        desc: 'Uma cabana úmida e escura: cogumelos o ano todo.' },
+  // praça
+  flagpole_p: { name: 'Mastro com Estandarte', w: 1, h: 1, blocks: true, cost: { wood: 6, cloth: 3 },                     desc: 'O estandarte da sua casa tremulando ao vento.' },
+  pergola:    { name: 'Caramanchão',       w: 2, h: 2, blocks: false, cost: { plank: 10, beam: 2, rope: 2 },              desc: 'Uma pérgola com trepadeiras e flores para descansar à sombra: sentar recupera a energia.' },
+  sundial:    { name: 'Relógio de Sol',    w: 1, h: 1, blocks: true,  cost: { stone: 15, iron_bar: 1 },                   desc: 'Mostra a hora certa do dia (e quanto falta para anoitecer).' },
+  // cultura e treino
+  stage:      { name: 'Palco dos Menestréis', w: 3, h: 2, blocks: true, cost: { plank: 20, beam: 4, cloth: 6 },           desc: 'Uma noite de música por mês: Coragem para você e os capangas, e +2 de fama.' },
+  archery:    { name: 'Estande de Tiro',   w: 3, h: 2, blocks: false, cost: { wood: 20, rope: 4 },         desc: 'Alvos para treinar com arco: muita experiência (precisa de um arco equipado).' },
+  // baús e estábulo
+  big_chest:  { name: 'Arca Reforçada',    w: 2, h: 1, blocks: true,  cost: { plank: 8, iron_bar: 3, nails: 10 },         desc: 'Um baú grande com cantos de ferro. Guarda itens fora da mochila.' },
+  cellar:     { name: 'Adega',             w: 2, h: 2, blocks: true,  cost: { stone: 30, plank: 10, beam: 2 },            desc: 'Guarde vinho, cerveja e hidromel: todo mês parte do vinho guardado vira Vinho Envelhecido (vale muito mais).' },
+  kennel:     { name: 'Canil',             w: 2, h: 2, blocks: true,  cost: { wood: 20, plank: 6, meat: 4 },              desc: 'Cria um cão de guarda que segue você e morde inimigos. Se ele cair, outro filhote cresce no mês seguinte.' },
+  // defesa
+  archer_tower: { name: 'Torre de Arqueiros', w: 2, h: 2, blocks: true, cost: { wood: 30, stone: 30, arrow: 40, beam: 2 }, desc: 'Atira flechas sozinha em bandidos, feras e inimigos que chegarem perto.' },
+  spikes:     { name: 'Estacas',           w: 1, h: 1, blocks: false, cost: { wood: 4 },                                  desc: 'Estacas pontudas no chão: ferem os inimigos que passam por cima (você e os seus passam livres).' },
+  armory:     { name: 'Arsenal',           w: 3, h: 2, blocks: true,  cost: { stone: 30, plank: 12, iron_bar: 8 },        desc: 'Armas e armaduras guardadas para a sua tropa: capangas com +3 de dano e +2 de defesa.' },
+  // empreendimentos
+  biz_carpentry: { name: 'Marcenaria',     w: 3, h: 2, blocks: true,  cost: { wood: 40, stone: 10, iron_bar: 2 },         desc: 'Empreendimento: até 3 marceneiros (madeireiros rendem mais). Produz tábuas e vigas.' },
+  biz_chandler:  { name: 'Cerieiro',       w: 2, h: 2, blocks: true,  cost: { wood: 25, stone: 10, honey: 4 },            desc: 'Empreendimento: até 2 cerieiros. Produz velas.' },
+  biz_pottery:   { name: 'Olaria Comercial', w: 3, h: 2, blocks: true, cost: { stone: 30, clay: 15, wood: 10 },           desc: 'Empreendimento: até 3 oleiros (pedreiros rendem mais). Produz potes de barro e tijolos.' },
+  biz_bank:      { name: 'Casa de Câmbio', w: 3, h: 2, blocks: true,  cost: { stone: 50, brick: 20, gold_bar: 2 },        desc: 'Empreendimento: até 2 cambistas (comerciantes rendem mais). Empresta e troca moedas: ouro todo mês, muito mais perto de cidades cheias.' },
+  biz_dairy:     { name: 'Laticínio',      w: 3, h: 2, blocks: true,  cost: { wood: 30, stone: 10, clay_pot: 4 },         desc: 'Empreendimento: até 3 queijeiros. Produz leite e queijo.' },
+});
+CREATURES.dog = { name: 'Cão de Guarda', hp: 90, dmg: 9, speed: 120, r: 10, faction: 'player', xp: 0, aggro: 7 };

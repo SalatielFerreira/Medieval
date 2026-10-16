@@ -38,6 +38,15 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626, 10: 0.7626, 11: 0.7626 };
 const TERRAIN_V = 11, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
+// níveis das estradas (Construção → Infraestrutura): quanto mais alto, mais rápido se anda; o custo é por bloco
+const ROAD_LV = [null,
+  { name: 'Estrada de terra', icon: '🟫', speed: 1.25, cost: {} },
+  { name: 'Estrada de cascalho', icon: '🪨', speed: 1.35, cost: { stone: 1 } },
+  { name: 'Estrada de pedra', icon: '🧱', speed: 1.45, cost: { stone: 2, clay: 1 } },
+  { name: 'Calçada', icon: '🛤️', speed: 1.6, cost: { brick: 1, stone: 1 } },
+  { name: 'Estrada Real', icon: '👑', speed: 1.75, cost: { brick: 1, mortar: 1, stone: 1 } },
+];
+
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
   /* 2 */ { name: 'Pinheiro',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [2, 4], resin: [0, 2] },     regrow: 240,  pc: '#2d5e3a' },
@@ -578,6 +587,7 @@ const World = {
   speedAt(px, py) {
     const t = this.tile(Math.floor(px / TILE), Math.floor((py - 2) / TILE));
     if (t === T.WATER && this.season === 3) return 0.9; // gelo
+    if (t === T.ROAD && this.roadLv) { const lv = this.roadLv[this.idx(Math.floor(px / TILE), Math.floor((py - 2) / TILE))]; if (lv > 1) return ROAD_LV[lv].speed; }
     return TINFO[t].speed || 1;
   },
   terrAt(px, py) {
@@ -788,7 +798,20 @@ const World = {
         dot(U.shade(base, 0.06), 4, 2, 1); dot('#0e0c0a', 3);
         if (this.tile(x, y + 1) === T.CFLOOR) { g.fillStyle = '#2e2822'; g.fillRect(px, py + 11, HALF, 5); g.fillStyle = '#4a4036'; g.fillRect(px, py + 11, HALF, 1); }
         break;
-      case T.ROAD: dot(U.shade(base, -0.12), 4); dot(U.shade(base, 0.08), 3); break;
+      case T.ROAD: {
+        const lv = this.roadLv ? this.roadLv[this.idx(x, y)] || 1 : 1;
+        if (lv <= 1) { dot(U.shade(base, -0.12), 4); dot(U.shade(base, 0.08), 3); break; }
+        if (lv === 2) { g.fillStyle = '#9a9286'; g.fillRect(px, py, HALF, HALF); dot('#7d766c', 9); dot('#b8b0a4', 6); dot('#6a645c', 3, 2, 1); break; }
+        // pedra, calçada e estrada real: lajes (maiores e mais claras a cada nível)
+        const c = lv === 3 ? '#8e8a84' : lv === 4 ? '#857f78' : '#c8bca4', m = lv === 5 ? '#8a7a5a' : '#5d5a54', sz = lv === 3 ? 8 : lv === 4 ? 4 : 8;
+        g.fillStyle = m; g.fillRect(px, py, HALF, HALF);
+        for (let j = 0; j < HALF; j += sz) for (let i = 0; i < HALF; i += sz) {
+          const off = ((j / sz) & 1) && lv === 4 ? 2 : 0;
+          g.fillStyle = U.shade(c, ((x * 3 + y * 7 + i + j) % 5 - 2) * 0.03); g.fillRect(px + i + off, py + j, sz - 1, sz - 1);
+        }
+        if (lv === 5) { const n = DIRS4.map(([dx, dy]) => this.tile(x + dx, y + dy) === T.ROAD); g.fillStyle = '#d8b860'; if (!n[2]) g.fillRect(px, py + HALF - 1, HALF, 1); if (!n[3]) g.fillRect(px, py, HALF, 1); if (!n[0]) g.fillRect(px + HALF - 1, py, 1, HALF); if (!n[1]) g.fillRect(px, py, 1, HALF); }
+        break;
+      }
       case T.WFLOOR: {
         // tábuas corridas: quatro por bloco, com emendas desencontradas
         const th = this.roomTheme === 'castle' ? '#7a4a2a' : base;

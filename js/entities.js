@@ -174,7 +174,7 @@ class Creature {
       return;
     }
     if (this.kind === 'caravan') { this.anim += dt; this.hurt -= dt; Caravans.move(this, dt); return; }
-    if (this.kind === 'ally' && Places.room()) { this.anim += dt; this.moving = false; return; } // os capangas esperam do lado de fora
+    if ((this.kind === 'ally' && Places.room()) || (this.kind === 'dog' && G.place)) { this.anim += dt; this.moving = false; return; } // os capangas esperam do lado de fora
     if (this.faction === 'engine') { if (this.battleCat) War.catUpdate(this, dt); else Sieges.engineUpdate(this, dt); return; }
     if (this.follow) { if (this.follow.dead) this.follow = null; else { this.home.x = this.follow.x - 24; this.home.y = this.follow.y + 14; } }
     // capangas: a ordem do grupo e a postura de cada um decidem de que distância eles atacam
@@ -259,6 +259,7 @@ class Creature {
     const hurt = this.hurt > 0;
     switch (this.kind) {
       case 'deer': case 'wolf': case 'boar': case 'fox': case 'rabbit': case 'goat': case 'bear': drawAnimal(ctx, x, y, this.kind, this.dir, this.moving, this.anim, hurt); break;
+      case 'dog': drawAnimal(ctx, x, y, 'wolf', this.dir, this.moving, this.anim, hurt); ctx.fillStyle = '#c8302a'; ctx.fillRect(Math.round(x + this.dir * 6) - 3, Math.round(y) - 15, 6, 2); break; // cão de guarda (coleira vermelha)
       case 'spider': drawSpider(ctx, x, y, 1, this.anim, hurt, '#2a2028'); break;
       case 'chicken': case 'cow': case 'sheep': drawFarmAnimal(ctx, x, y, this.kind, this.dir, this.moving, this.anim); break;
       case 'caravan': drawCaravan(ctx, x, y, this.dir, this.anim, this.moving, this.car && this.car.owner === 'player' ? PLAYER_COLOR : Game.civColor(this.civ), hurt); break;

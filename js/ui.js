@@ -671,18 +671,18 @@ const UI = {
   binfo(k) {
     if (!BUILDINGS[k]) return Urban.info(k);
     const b = BUILDINGS[k], n = World.structs.filter(s => s.owner === 'player' && s.type === k && !s.removed).length;
-    return { name: b.name, icon: Game.buildIcon(k), cost: b.cost, desc: b.desc, sub: `${b.w}×${b.h} · ${n ? `você tem ${n}` : 'nenhuma ainda'}`, can: Inv.has(b.cost),
+    return { name: b.name, icon: Content2.thumb(k) || Game.buildIcon(k), cost: b.cost, desc: b.desc, sub: `${b.w}×${b.h} · ${n ? `você tem ${n}` : 'nenhuma ainda'}`, can: Inv.has(b.cost),
       cat: `${b.w}×${b.h} espaços · ${b.blocks ? 'sólida' : 'pode-se andar por cima'}`, btn: '📍 Construir no mapa', owned: n, size: `${b.w}×${b.h}` };
   },
   showBuild() {
     const S = this.sel;
     // categorias no menu lateral: [chave, ícone, nome, itens]
-    const cats = [['moradia', '🏠', 'Moradia', ['cabin', 'house', 'manor', 'pcastle']], ['producao', '🔨', 'Produção', ['campfire', 'workbench', 'forge', 'oven', 'brewery', 'smokehouse', 'loom', 'kiln']],
-      ['fazenda', '🐄', 'Fazenda e animais', ['farm', 'garden', 'orchard', 'coop', 'pen', 'beehive']], ['negocios', '💼', 'Empreendimentos', ['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop', 'ptavern',
-        'biz_bakery', 'biz_brewery', 'biz_tannery', 'biz_weaver', 'biz_fishery', 'biz_winery', 'biz_ranch', 'biz_inn', 'biz_jeweler', 'biz_apothecary']],
-      ['praca', '⛲', 'Praça e decoração', ['well_p', 'fountain', 'statue', 'lamppost', 'bench', 'flowerbed', 'hedge', 'fence']], ['cultura', '📚', 'Cultura, fé e treino', ['library', 'oratory', 'training', 'watchtower']],
-      ['guarda', '📦', 'Baús e estábulo', ['chest', 'stable']], ['defesa', '🛡️', 'Defesa e exército', ['barracks', 'wall_wood', 'wall_stone']],
-      ['estradas', '🛣️', 'Estradas', ['road', 'u:unroad']], ['reformas', '🔀', 'Reformas', ['u:move', 'u:demolish']]]
+    const cats = [['moradia', '🏠', 'Moradia', ['hut', 'cabin', 'house', 'lodge', 'manor', 'villa', 'pcastle']], ['producao', '🔨', 'Produção', ['campfire', 'workbench', 'carpentry', 'forge', 'oven', 'brewery', 'smokehouse', 'loom', 'kiln', 'tanrack', 'alchemy']],
+      ['fazenda', '🐄', 'Fazenda e animais', ['farm', 'garden', 'orchard', 'flaxfield', 'herbgarden', 'mushroom', 'coop', 'pen', 'pigsty', 'dovecote', 'fishpond', 'beehive']], ['negocios', '💼', 'Empreendimentos', ['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop', 'ptavern',
+        'biz_bakery', 'biz_brewery', 'biz_tannery', 'biz_weaver', 'biz_fishery', 'biz_winery', 'biz_ranch', 'biz_inn', 'biz_jeweler', 'biz_apothecary', 'biz_carpentry', 'biz_chandler', 'biz_pottery', 'biz_dairy', 'biz_bank']],
+      ['praca', '⛲', 'Praça e decoração', ['well_p', 'fountain', 'statue', 'lamppost', 'bench', 'pergola', 'sundial', 'flagpole_p', 'flowerbed', 'hedge', 'fence']], ['cultura', '📚', 'Cultura, fé e treino', ['library', 'oratory', 'training', 'archery', 'stage', 'watchtower']],
+      ['guarda', '📦', 'Baús e estábulo', ['chest', 'big_chest', 'cellar', 'stable', 'kennel']], ['defesa', '🛡️', 'Defesa e exército', ['barracks', 'archer_tower', 'armory', 'spikes', 'wall_wood', 'wall_stone']],
+      ['infra', '🛣️', 'Infraestrutura', ['road', 'u:road2', 'u:road3', 'u:road4', 'u:road5', 'u:unroad', 'u:move', 'u:demolish']]]
       .map(([k, ic, name, ks]) => [k, ic, name, ks.filter(x => BUILDINGS[x] || x.includes(':') || x === 'road')]);
     const auth = Urban.hasAny();
     if (auth) cats.push(['obras', '🏗️', 'Obras nas vilas', Object.keys(CIVIC).map(k => 'c:' + k)]);
@@ -708,7 +708,8 @@ const UI = {
     const detail = `<div class="cdt-in">${this.buildDetailHtml(S.build)}</div>
       <div class="act-row"><button class="primary" data-act="${BUILDINGS[S.build] ? 'build' : 'urban'}" data-k="${S.build}" ${b.can ? '' : 'disabled'}>${b.btn}</button></div>`;
     const ready = c => c[3].filter(k => { const x = this.binfo(k); return x.cost && x.can; }).length;
-    const groups = [['Sua base', cats.slice(0, 6).map(c => [c[0], c[1], c[2], ready(c)])], ['Estradas e vilas', cats.slice(6).map(c => [c[0], c[1], c[2]])]];
+    const vil = c => c[0] === 'infra' || c[0] === 'obras';
+    const groups = [['Sua base', cats.filter(c => !vil(c)).map(c => [c[0], c[1], c[2], ready(c)])], ['Estradas e vilas', cats.filter(vil).map(c => [c[0], c[1], c[2]])]];
     this.open('Construção', `<div class="bld iconnav">${this.navHtml(groups, S.bcat, 'bcat', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail bld-dt">${detail}</div></div>`)}</div>`,
       'showBuild', [], 'Erga sua base, abra estradas e reforme as vilas');
     this.fitDetail('.bld-dt', cat[3], k => this.buildDetailHtml(k), S.bcat);
@@ -727,7 +728,7 @@ const UI = {
       ${tags.length ? `<div class="chips">${tags.map(t => `<span class="chip">${t}</span>`).join('')}</div>` : ''}
       ${req ? `<div><div class="sec">Custo</div><div class="req">${req}</div></div>` : ''}
       ${B ? '<small class="muted">Depois de clicar, escolha o local perto de você. Não dá para construir sobre estradas ou água, nem dentro das cidades dos outros.</small>' : ''}
-      ${['estradas', 'reformas', 'obras'].includes(cat && cat[0]) ? this.buildPower : ''}`;
+      ${['infra', 'obras'].includes(cat && cat[0]) ? this.buildPower : ''}`;
   },
 
   // ============================================================ menu lateral (Reino, Ajustes e Construção)

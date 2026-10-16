@@ -170,7 +170,7 @@ const Places = {
   def(s) {
     if (!s || s.removed) return null;
     if (ROOM_TYPES[s.type]) {
-      if ((['cabin', 'house', 'manor', 'ptavern'].includes(s.type) || ROOM_TYPES[s.type].owned) && s.owner !== 'player') return null;
+      if ((['cabin', 'house', 'manor', 'ptavern', 'hut', 'lodge', 'villa'].includes(s.type) || ROOM_TYPES[s.type].owned) && s.owner !== 'player') return null;
       return ROOM_TYPES[s.type];
     }
     if (BIZ_ROOMS[s.type] && s.owner === 'player') return { lay: BIZ_ROOMS[s.type], theme: ['smithy', 'quarry', 'mine'].includes(BIZ_ROOMS[s.type]) ? 'stone' : 'wood', mine: true, biz: true, name: () => `${/(a|gem)$/i.test(BUILDINGS[s.type].name.split(' ')[0]) ? 'Sua' : 'Seu'} ${BUILDINGS[s.type].name}` };

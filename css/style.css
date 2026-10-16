@@ -3563,3 +3563,7 @@ body.small #panel .kpg { overflow: visible; }
 .lv-intro { margin: 0 0 10px; } .lv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
 .lv-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 10px; text-align: center; }
 .lv-opt span { font-size: 30px; } .lv-opt b { font-size: 16px; color: #ffe9a8; } .lv-opt small { font-size: 14px; color: #9ad65a; font-weight: 700; } .lv-opt i { font-style: normal; font-size: 12px; color: #c9b48a; }
+
+/* miniaturas das construções no menu */
+.ri img.bthumb, .dt-ic img.bthumb { width: 100%; height: 100%; object-fit: contain; display: block; }
+.ri:has(img.bthumb) { padding: 2px; }

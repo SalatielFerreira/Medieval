@@ -581,7 +581,7 @@ const Game = {
     Battles.update();
     Caravans.update(dt);
     Families.update(dt); Chiefdom.update(dt); Urban.update();
-    Sieges.update(dt); Arena.update(); Places.update(dt);
+    Sieges.update(dt); Arena.update(); Places.update(dt); Content2.update(dt);
     this.progT = (this.progT || 0) - dt;
     if (this.progT <= 0) {
       this.progT = 2;
@@ -900,7 +900,7 @@ const Game = {
       const b = this.boatAction(); if (b) b.run(); return;
     }
     switch (s.type) {
-      case 'cabin': case 'house': case 'manor': UI.showRest(s.id); break;
+      case 'cabin': case 'house': case 'manor': case 'hut': case 'lodge': case 'villa': UI.showRest(s.id); break;
       case 'chest': UI.showChest(s.id); break;
       case 'coop': case 'pen': case 'beehive': UI.showAnimals(s.id); break;
       case 'ptavern': UI.showPTavern(s.id); break;

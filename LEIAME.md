@@ -89,7 +89,15 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
-## Novidades: lugares fechados, guerras de verdade e o dobro de coisas
+## Novidades: muito mais construções, Infraestrutura e ícones desenhados
+
+- **Construção**: Moradia 7, Produção 11, Fazenda e animais 12, Empreendimentos 23, Praça e decoração 11, Cultura, fé e treino 6, Baús e estábulo 5, Defesa e exército 6 opções. O menu mostra a miniatura desenhada de cada construção.
+- **Infraestrutura** (antes Estradas e Reformas): a estrada de terra continua grátis; depois ela evolui até 5 níveis (cascalho, pedra, calçada, Estrada Real), cada um mais rápido para você, os moradores e os animais.
+- **Destaques**: torre de arqueiros que atira sozinha, estacas, arsenal para os capangas, canil com cão de guarda, adega que envelhece o vinho, palco dos menestréis, estande de tiro, viveiro de peixes, pombal (penas para flechas), cogumelal.
+- **Materiais novos**: tábua, viga, pregos, pergaminho, argamassa, pena, cogumelo, poções de vigor e de força, Elixir Real, vinho envelhecido.
+- **Ícones**: todos os itens têm desenho próprio, no formato e na cor do que são.
+
+## Novidades anteriores: lugares fechados, guerras de verdade e o dobro de coisas
 
 - **Interiores**: entre nas lojas, taverna, capela, catedral, castelo (sala do trono), nas suas casas e nos seus empreendimentos. O dono atende no balcão; de dia ele trabalha lá dentro e à noitinha a taverna enche de fregueses. As lojas fecham à noite.
 - **Um dono para cada loja**: duas madeireiras na mesma vila têm dois madeireiros.
@@ -245,6 +253,8 @@ js/arena.js       arenas, duelos, justas, Grande Torneio e apostas
 js/interior.js    lado de dentro das construções e um dono por loja
 js/war.js         guerras de verdade: conselho de guerra e campo de batalha
 js/content.js     empreendimentos, construções e obras novas
+js/content2.js    mais construções (oficinas, criações, defesa, canil) e miniaturas do menu
+js/icons2.js      ícones desenhados de todos os outros itens
 js/ambience.js    efeitos de ambiente (luz, fumaça, água, nuvens)
 js/faith.js       capelas, catedrais, padres, bênçãos, casamento na igreja e santuários
 js/input.js       controle (gamepad) e controles de toque
