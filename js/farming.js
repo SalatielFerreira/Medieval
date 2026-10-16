@@ -3,7 +3,7 @@
 
 const Farm = {
   plots() { return G.plots || (G.plots = {}); },
-  tillable(t) { return t === T.GRASS || t === T.FOREST || t === T.HILL || t === T.SAND; },
+  tillable(t) { return t === T.GRASS || t === T.FOREST || t === T.HILL || t === T.SAND || t === T.STEPPE || t === T.SWAMP; },
   seedList() { return Object.keys(P.inv).filter(k => ITEMS[k].seed); },
   // semente escolhida pelo jogador (ou a primeira da mochila)
   seed() { if (P.seed && Inv.count(P.seed) > 0) return P.seed; return this.seedList()[0] || null; },

@@ -1317,7 +1317,7 @@ const Game = {
       }
     }
     if (G.place) return;
-    const wild = G.ents.filter(e => !e.dead && ['deer', 'boar', 'wolf', 'fox', 'rabbit', 'goat', 'bear'].includes(e.kind)).length;
+    const wild = G.ents.filter(e => !e.dead && WILD_ANIMALS.includes(e.kind)).length;
     if (wild >= 14) return;
     const a = Math.random() * Math.PI * 2, d = U.rnd(16, 26) * TILE;
     const x = P.x + Math.cos(a) * d, y = P.y + Math.sin(a) * d;
@@ -1328,10 +1328,15 @@ const Game = {
     let kind = null;
     if (t === T.FOREST) kind = r < 0.25 + (night ? 0.2 : 0) ? 'wolf' : r < 0.55 ? 'deer' : r < 0.7 ? 'fox' : r < 0.76 ? 'bear' : 'boar';
     else if (t === T.GRASS) kind = r < (night ? 0.3 : 0.06) ? 'wolf' : r < 0.45 ? 'deer' : r < 0.7 ? 'rabbit' : r < 0.8 ? 'fox' : 'boar';
-    else if (t === T.SNOW || t === T.HILL) kind = r < 0.35 ? 'wolf' : r < 0.7 ? 'goat' : r < 0.8 ? 'bear' : 'deer';
+    else if (t === T.SNOW || t === T.HILL) kind = r < 0.35 ? 'wolf' : r < 0.6 ? 'goat' : r < 0.72 ? 'moose' : r < 0.8 ? 'bear' : 'deer';
+    // biomas novos: crocodilo no pântano, alce na tundra, camelo no deserto e na estepe
+    else if (t === T.SWAMP || (t === T.WATER && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => World.tile(tx + dx, ty + dy) === T.SWAMP))) kind = r < 0.42 ? 'croc' : r < 0.6 ? 'boar' : r < 0.78 ? 'deer' : r < 0.88 ? 'fox' : 'rabbit';
+    else if (t === T.TUNDRA) kind = r < 0.38 ? 'moose' : r < 0.55 + (night ? 0.15 : 0) ? 'wolf' : r < 0.7 ? 'deer' : r < 0.8 ? 'fox' : r < 0.87 ? 'bear' : 'goat';
+    else if (t === T.DESERT) kind = r < 0.6 ? 'camel' : r < 0.82 ? 'fox' : 'rabbit';
+    else if (t === T.STEPPE) kind = r < 0.25 ? 'camel' : r < 0.45 ? 'deer' : r < 0.65 ? 'rabbit' : r < 0.78 ? 'fox' : r < (night ? 0.92 : 0.84) ? 'wolf' : 'boar';
     if (!kind) return;
     const nearTown = World.capitals.some(c => U.dist(tx, ty, c.x, c.y) < 14) || World.villages.some(v => U.dist(tx, ty, v.x, v.y) < 10);
-    if ((kind === 'wolf' || kind === 'bear') && (nearTown || (G.day === 1 && !night))) return;
+    if ((kind === 'wolf' || kind === 'bear' || kind === 'croc') && (nearTown || (G.day === 1 && !night))) return;
     if (Season.winter() && kind === 'deer' && Math.random() < 0.4) kind = 'wolf';
     this.spawn(kind, x, y, { leash: 14, mult: kind === 'wolf' && Season.winter() ? 1.35 : 1 });
   },

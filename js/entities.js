@@ -32,7 +32,7 @@ function fac(e) {
 }
 
 // animais que fogem de você (não atacam)
-const PREY_FLEE = ['deer', 'fox', 'rabbit', 'goat'];
+const PREY_FLEE = ['deer', 'fox', 'rabbit', 'goat', 'camel'];
 // a quer atacar b?
 function hostile(a, b) {
   if (a.faction === 'pet' || b.faction === 'pet' || a.kind === 'caravan') return false;
@@ -258,7 +258,7 @@ class Creature {
     const x = this.x - cx, y = this.y - cy;
     const hurt = this.hurt > 0;
     switch (this.kind) {
-      case 'deer': case 'wolf': case 'boar': case 'fox': case 'rabbit': case 'goat': case 'bear': drawAnimal(ctx, x, y, this.kind, this.dir, this.moving, this.anim, hurt); break;
+      case 'deer': case 'wolf': case 'boar': case 'fox': case 'rabbit': case 'goat': case 'bear': case 'moose': case 'camel': case 'croc': drawAnimal(ctx, x, y, this.kind, this.dir, this.moving, this.anim, hurt); break;
       case 'dog': drawAnimal(ctx, x, y, 'wolf', this.dir, this.moving, this.anim, hurt); ctx.fillStyle = '#c8302a'; ctx.fillRect(Math.round(x + this.dir * 6) - 3, Math.round(y) - 15, 6, 2); break; // cão de guarda (coleira vermelha)
       case 'spider': drawSpider(ctx, x, y, 1, this.anim, hurt, '#2a2028'); break;
       case 'chicken': case 'cow': case 'sheep': drawFarmAnimal(ctx, x, y, this.kind, this.dir, this.moving, this.anim); break;
@@ -581,14 +581,18 @@ const ANIMAL_LOOK = {
   fox:    { c: '#d0682a', b: '#f6efe2', d: '#7a3a14', s: '#1a1a1a', leg: 6,  bx: 9,  bh: 6,  hr: 3,   na: -0.5, nl: 4,  snout: 3.8, ear: 'fox',   tail: 'fox',  hoof: '#2a1a10', lw: 1.8 },
   rabbit: { c: '#c9b99c', b: '#f2ece0', d: '#8a7a60', s: '#c08080', leg: 3,  bx: 7,  bh: 7,  hr: 3.2, na: -0.9, nl: 2,  snout: 1.6, ear: 'rabbit', tail: 'puff', hoof: '#8a7a60', lw: 2.2 },
   goat:   { c: '#cfc6b4', b: '#ece6d8', d: '#7e7464', s: '#5a4a3a', leg: 10, bx: 10, bh: 8,  hr: 3.2, na: -1.0, nl: 6,  snout: 3.4, ear: 'goat',  tail: 'goat', hoof: '#2a2420', lw: 2   },
+  moose:  { c: '#5a3e2a', b: '#7a5a42', d: '#3a2618', s: '#2a1a10', leg: 14, bx: 13, bh: 11, hr: 3.8, na: -0.45, nl: 7, snout: 5.2, ear: 'goat', tail: 'stub', hoof: '#1a1208', lw: 2.8 },
+  camel:  { c: '#c8a46a', b: '#e0c890', d: '#8a6a3a', s: '#4a3626', leg: 15, bx: 12, bh: 9,  hr: 3.2, na: -1.25, nl: 12, snout: 4, ear: 'goat', tail: 'goat', hoof: '#5a4228', lw: 2.4 },
   bear:   { c: '#5e3c24', b: '#7a5234', d: '#36220f', s: '#2a1a10', leg: 8,  bx: 13, bh: 12, hr: 4.6, na: -0.25, nl: 4, snout: 3.6, ear: 'bear',  tail: 'stub', hoof: '#1a1208', lw: 4   },
 };
 function drawAnimal(ctx, x, y, kind, dir, moving, anim, hurt) {
+  if (kind === 'croc') { drawCroc(ctx, x, y, dir, moving, anim, hurt); return; }
   const L = ANIMAL_LOOK[kind] || ANIMAL_LOOK.deer;
   ctx.save();
   ctx.translate(Math.round(x), Math.round(y));
   ctx.scale(dir, 1);
   if (kind === 'bear') ctx.scale(1.25, 1.25);
+  if (kind === 'moose') ctx.scale(1.2, 1.2);
   if (kind === 'rabbit') ctx.scale(0.62, 0.62);
   const H = c => hurt ? shd('#ff8a8a', c === L.d ? -0.2 : 0) : c;
   const body = H(L.c), dark = H(L.d), belly = H(L.b);
@@ -623,6 +627,8 @@ function drawAnimal(ctx, x, y, kind, dir, moving, anim, hurt) {
   ell(ctx, -L.bx * 0.55, by - L.bh * 0.08, L.bh * 0.55, L.bh * 0.58, body);
   ell(ctx, L.bx * 0.55, by - L.bh * 0.05, L.bh * 0.58, L.bh * 0.6, body);
   if (kind === 'bear') ell(ctx, L.bx * 0.25, top + 1.4, L.bx * 0.45, L.bh * 0.3, body); // corcova
+  if (kind === 'camel') { ell(ctx, -1, top - 1.6, L.bx * 0.5, L.bh * 0.62, body); ell(ctx, -1.6, top - 3.4, L.bx * 0.3, L.bh * 0.3, shd(body, 0.1)); }
+  if (kind === 'moose') ell(ctx, L.bx * 0.45, top + 0.6, L.bx * 0.42, L.bh * 0.3, dark);
   ell(ctx, 0.5, by + L.bh * 0.24, L.bx * 0.72, L.bh * 0.24, belly);
   ell(ctx, -1, top + L.bh * 0.18, L.bx * 0.8, L.bh * 0.16, 'rgba(0,0,0,0.14)');
   ell(ctx, 1, top + L.bh * 0.08, L.bx * 0.5, L.bh * 0.08, 'rgba(255,255,255,0.12)');
@@ -657,12 +663,48 @@ function drawAnimal(ctx, x, y, kind, dir, moving, anim, hurt) {
   else if (L.ear === 'boar') poly(ctx, [ex2 - 1.6, ey2 + 1.4, ex2 - 0.6, ey2 - 2.6, ex2 + 1.2, ey2 + 1], dark);
   else { ell(ctx, ex2 - 1.2, ey2 + 0.6, 2.2, 0.9, body, -0.5); ell(ctx, ex2 - 1.2, ey2 + 0.6, 1.2, 0.45, H('#d8b0a0'), -0.5); }
   if (kind === 'goat') { ctx.strokeStyle = H('#6a5a42'); ctx.lineWidth = 1.2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(hx - 0.6, hy - L.hr * 0.8); ctx.quadraticCurveTo(hx - 5, hy - 7, hx - 5.6, hy - 2.4); ctx.stroke(); }
+  if (kind === 'moose') {
+    // galhada em pá
+    const ac = H('#d8c49a');
+    ell(ctx, hx - 3.4, hy - 5.4, 3.6, 1.6, ac, -0.35); ell(ctx, hx + 1.4, hy - 6, 3, 1.4, ac, 0.3);
+    ctx.fillStyle = ac; for (const [ax, ay] of [[-6.4, -7], [-4.6, -7.6], [-2.6, -7.4], [0, -7.8], [2.6, -7.6], [4, -7]]) ctx.fillRect(hx + ax, hy + ay, 0.9, 1.6);
+    limb(ctx, sx + L.snout * 0.4, sy + 1.2, sx + L.snout * 0.3, sy + 4.2, 1.4, dark); // barbela
+  }
   if (kind === 'deer') {
     ctx.strokeStyle = H('#d9c39a'); ctx.lineWidth = 0.9; ctx.lineCap = 'round'; ctx.beginPath();
     ctx.moveTo(hx - 0.4, hy - L.hr * 0.8); ctx.lineTo(hx - 2, hy - 9); ctx.lineTo(hx - 4.6, hy - 12.4);
     ctx.moveTo(hx - 1.4, hy - 6.4); ctx.lineTo(hx + 1.4, hy - 9.2); ctx.moveTo(hx - 2, hy - 9); ctx.lineTo(hx - 0.6, hy - 12.6); ctx.moveTo(hx - 3.6, hy - 11); ctx.lineTo(hx - 6.6, hy - 11.4);
     ctx.stroke();
   }
+  ctx.restore();
+}
+
+function drawCroc(ctx, x, y, dir, moving, anim, hurt) {
+  const body = hurt ? '#ff8a8a' : '#4f6030', dark = hurt ? shd('#ff8a8a', -0.2) : '#2e3a1a', belly = hurt ? '#ffb0b0' : '#b4b07a';
+  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(dir, 1);
+  ell(ctx, 0, 0, 17, 3.2, 'rgba(0,0,0,0.26)');
+  const sw = moving ? Math.sin(anim * 9) : Math.sin(anim * 1.5) * 0.3;
+  // patas abertas
+  for (const [lx, ph, far] of [[-6, 0, true], [6, Math.PI, true], [-5, Math.PI, false], [7, 0, false]]) {
+    const a = moving ? Math.sin(anim * 9 + ph) * 2 : 0;
+    limb2(ctx, lx, -3.5, lx + a - 1.5, -1.2, lx + a + 0.5, -0.2, 2.2, far ? shd(dark, -0.1) : body);
+    ell(ctx, lx + a + 1, -0.3, 1.4, 0.7, dark);
+  }
+  // cauda (balança)
+  ctx.beginPath(); ctx.moveTo(-8, -6.4); ctx.quadraticCurveTo(-15, -5 + sw * 2, -23, -2.4 + sw * 3); ctx.lineTo(-8, -2.2); ctx.closePath(); ctx.fillStyle = body; ctx.fill();
+  ctx.fillStyle = dark; for (let k = 0; k < 5; k++) { const tx = -10 - k * 2.6, ty = -6 + k * 0.7 + sw * (k * 0.5); ctx.fillRect(tx, ty - 0.8, 1.2, 1); }
+  // corpo
+  ell(ctx, 0, -4.2, 10, 3.2, body);
+  ell(ctx, 0.5, -2.6, 8.4, 1.4, belly);
+  ctx.fillStyle = dark; for (let k = -7; k <= 7; k += 2.2) ctx.fillRect(k, -7.4 + Math.abs(k) * 0.06, 1.3, 1.1); // escamas do dorso
+  ctx.fillStyle = shd(body, 0.14); for (let k = -6; k <= 6; k += 3) ctx.fillRect(k + 1, -5.6, 1, 1);
+  // cabeça e focinho
+  ell(ctx, 10.4, -4.4, 3.6, 2.6, body);
+  poly(ctx, [11, -5.8, 20.5, -4.6, 21, -3.2, 11, -2.4], body);
+  poly(ctx, [11.5, -3.2, 20.6, -3.4, 20.2, -2.2, 11.5, -2], shd(body, -0.12));
+  ctx.fillStyle = '#f2efe2'; for (let k = 13; k < 20.5; k += 1.6) { ctx.fillRect(k, -3.3, 0.6, 0.9); }
+  ell(ctx, 11.6, -6.3, 1.3, 1, shd(body, 0.08)); ell(ctx, 11.9, -6.5, 0.6, 0.55, '#e8c040'); ctx.fillStyle = '#1a120a'; ctx.fillRect(11.8, -6.9, 0.3, 0.8);
+  ell(ctx, 20.2, -5, 0.5, 0.35, dark);
   ctx.restore();
 }
 

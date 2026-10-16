@@ -6,7 +6,7 @@
 const VILLAGE_R = 16; // meio lado (em blocos) da área quadrada de uma vila
 // distância "em quadrado": a área da vila é um quadrado de lado 2 × VILLAGE_R + 1, centrado na praça
 const sqDist = (x1, y1, x2, y2) => Math.max(Math.abs(x1 - x2), Math.abs(y1 - y2));
-const ROAD_GROUND = [T.GRASS, T.FOREST, T.HILL, T.SAND, T.SNOW];
+const ROAD_GROUND = [T.GRASS, T.FOREST, T.HILL, T.SAND, T.SNOW, T.SWAMP, T.DESERT, T.TUNDRA, T.STEPPE];
 // imóveis públicos que chefes e reis podem erguer dentro das vilas
 const CIVIC = {
   vhouse: { name: 'Casa',      icon: '🏠', w: 2, h: 2, cost: { wood: 30, stone: 15 },              desc: 'Moradia para os aldeões da vila.' },
@@ -662,7 +662,7 @@ const Guards = {
 // Aterrar: a Terra da mochila enche o mar aberto (vira água rasa) e a água rasa (vira terra firme).
 // Serve para abrir canais e lagos, fossos de defesa (ninguém atravessa o mar aberto a pé), ligar ilhas,
 // levar a água até uma vila para erguer um porto ou ganhar terreno do mar.
-const DIG_LAND = [T.GRASS, T.FOREST, T.HILL, T.SAND, T.SNOW];
+const DIG_LAND = [T.GRASS, T.FOREST, T.HILL, T.SAND, T.SNOW, T.SWAMP, T.DESERT, T.TUNDRA, T.STEPPE];
 const Dig = {
   prog: {}, // esforço já feito em cada bloco (só enquanto joga)
   warnT: 0,
