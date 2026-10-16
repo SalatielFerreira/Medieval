@@ -145,7 +145,7 @@ const LAYOUTS = {
       center: [11, 7], seats: [[3, 11], [18, 11], [5, 12], [16, 12]] };
   },
   harbor() {
-    return { w: 16, h: 9, tiles: [[T.WATER, 11, 0, 5, 9], [T.BRIDGE, 11, 3, 4, 2]],
+    return { w: 16, h: 9, tiles: [[T.DEEP, 11, 0, 5, 9], [T.BRIDGE, 11, 3, 4, 2]], // a água do porto é funda: só se anda no cais
       items: [['counter', 3, 3, 4, 1, { act: 'port' }], ['nets', 0, -1, 2], ['nets', 6, -1, 2], ['window', 3, -1], ['lamp', 9, -1], ['lamp', 2, -1],
         ['barrel', 0, 0], ['barrel', 1, 0], ['crate', 0, 1], ['crate', 8, 0], ['crate', 9, 0], ['sacks', 9, 1], ['fishrack', 0, 6, 3], ['barrel', 9, 7], ['crate', 9, 8],
         ['anchor', 7, 6], ['rowboat', 13, 5, 2, 2, { act: 'sail' }], ['bollard', 10, 2], ['bollard', 10, 6]],
