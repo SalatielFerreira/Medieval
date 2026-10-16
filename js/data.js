@@ -439,10 +439,11 @@ const CROPS = {
   barley:  { name: 'Cevada',  seed: 'barley_seed',  item: 'barley',  days: 3, yield: [3, 5], color: '#c8c86a' },
 };
 const ANIMAL_PRICES = { chicken: 15, cow: 120, sheep: 60 };
+// a dificuldade só muda os adversários (dano e resistência); a morte é para valer em todas (fim de jogo, continue como seu filho)
 const DIFFICULTY = {
-  easy:   { name: 'Fácil',   dmg: 0.6, hp: 0.8, hunger: 0.7, gameover: false, sell: 1.2, desc: 'Inimigos mais fracos; ao morrer você volta para casa e perde só parte do ouro.' },
-  normal: { name: 'Normal',  dmg: 1,   hp: 1,   hunger: 1,   gameover: true,  sell: 1,   desc: 'A experiência pensada para o jogo. Morrer é fim de jogo (continue como seu filho).' },
-  hard:   { name: 'Difícil', dmg: 1.4, hp: 1.3, hunger: 1.3, gameover: true,  sell: 0.9, desc: 'Inimigos fortes, mais fome e preços piores. Para veteranos.' },
+  easy:   { name: 'Fácil',   dmg: 0.6, hp: 0.8, hunger: 1, gameover: true, sell: 1, desc: 'Adversários mais fracos: causam menos dano e caem mais rápido. Morrer é fim de jogo (continue como seu filho).' },
+  normal: { name: 'Normal',  dmg: 1,   hp: 1,   hunger: 1, gameover: true, sell: 1, desc: 'A experiência pensada para o jogo. Morrer é fim de jogo (continue como seu filho).' },
+  hard:   { name: 'Difícil', dmg: 1.4, hp: 1.3, hunger: 1, gameover: true, sell: 1, desc: 'Adversários fortes: causam mais dano e resistem mais. Morrer é fim de jogo (continue como seu filho).' },
 };
 const SEASONS = [
   { name: 'Primavera', icon: '🌸', wheat: 1.0, farm: 6 },

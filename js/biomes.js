@@ -58,7 +58,7 @@ for (let k = RECIPES.length - 1; k >= 0; k--) if (!ITEMS[RECIPES[k].out]) RECIPE
 
 // ---------------------------------------------------------------- animais novos
 Object.assign(CREATURES, {
-  croc:  { name: 'Crocodilo', hp: 95, dmg: 14, speed: 62, r: 13, faction: 'wild', drops: { croc_hide: [1, 1], croc_tooth: [1, 2], meat: [1, 3] }, xp: 30, aggro: 4 },
+  croc:  { name: 'Crocodilo', hp: 120, dmg: 15, speed: 62, r: 20, faction: 'wild', drops: { croc_hide: [1, 1], croc_tooth: [1, 2], meat: [1, 3] }, xp: 30, aggro: 4 },
   moose: { name: 'Alce',      hp: 75, dmg: 10, speed: 78, r: 14, faction: 'prey', drops: { meat: [3, 4], leather: [1, 2], moose_antler: [0, 1], bone: [1, 2] }, xp: 18, aggro: 0 },
   camel: { name: 'Camelo',    hp: 55, dmg: 0,  speed: 80, r: 13, faction: 'prey', drops: { meat: [2, 3], camel_hair: [2, 4], leather: [1, 1] }, xp: 10 },
 });

@@ -786,7 +786,7 @@ function drawAnimal(ctx, x, y, kind, dir, moving, anim, hurt) {
 
 function drawCroc(ctx, x, y, dir, moving, anim, hurt) {
   const body = hurt ? '#ff8a8a' : '#4f6030', dark = hurt ? shd('#ff8a8a', -0.2) : '#2e3a1a', belly = hurt ? '#ffb0b0' : '#b4b07a';
-  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(dir, 1);
+  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(dir * 1.6, 1.6); // crocodilos são grandes
   ell(ctx, 0, 0, 17, 3.2, 'rgba(0,0,0,0.26)');
   const sw = moving ? Math.sin(anim * 9) : Math.sin(anim * 1.5) * 0.3;
   // patas abertas

@@ -2738,4 +2738,4 @@ const HELP_HTML = `
 <li>Conquiste um castelo (ou compre o trono pela diplomacia) e torne-se <b>Rei</b>!</li>
 </ol>
 <p>Como rei, você controla impostos, tesouro, armazéns, investimentos e a guarnição de cada reino, separados do seu ouro pessoal. Cuide da felicidade do povo ou ele se revoltará.</p>
-<p class="muted">Salve na sua Cabana, nas Casas ou a qualquer momento em Ajustes (Esc). No modo Fácil, ao morrer você volta para casa e perde parte do ouro. Controle (gamepad) e toque também funcionam.</p>`;
+<p class="muted">Salve na sua Cabana, nas Casas ou a qualquer momento em Ajustes (Esc). Em qualquer dificuldade, morrer é fim de jogo: o salvo é apagado e você pode continuar como um dos seus filhos. Controle (gamepad) e toque também funcionam.</p>`;
