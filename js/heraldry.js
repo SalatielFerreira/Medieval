@@ -15,7 +15,7 @@ const HERALDRY_DEFAULT = [
   { flag: 'saltire',  metal: '#e8eef4', division: 'fess',      charge: '❄' }, // Winterfel
   { flag: 'border',   metal: '#f2c45a', division: 'plain',     charge: '♣' }, // Valáquia
   { flag: 'chevron',  metal: '#e8eef4', division: 'bend',      charge: '☾' }, // Olympus
-  { flag: 'quarters', metal: '#e8eef4', division: 'quarterly', charge: '⚓' }, // Persépolis
+  { flag: 'quarters', metal: '#e8eef4', division: 'quarterly', charge: '⚓' }, // Babilônia
   { flag: 'vertical', metal: '#e8eef4', division: 'plain',     charge: '✿' }, // Gondor
 ];
 // nomes e cores originais (o jogo muda CIV_DEFS quando o rei renomeia ou troca a cor)

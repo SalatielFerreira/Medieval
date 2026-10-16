@@ -365,7 +365,7 @@ const World = {
     this.capitals[4] = take(c => around(c, [T.HILL, T.MOUNT]));   // Olympus: colinas
     this.capitals[1] = take(c => around(c, [T.HILL, T.SAND]));    // Dorne
     this.capitals[6] = take(c => around(c, [T.HILL]));            // Gondor: colinas suaves
-    this.capitals[5] = take(c => around(c, [T.SAND, T.WATER]));   // Persépolis: costa
+    this.capitals[5] = take(c => around(c, [T.SAND, T.WATER]));   // Babilônia: costa
     this.capitals[0] = left[0];                                   // Midgard
 
     // territórios

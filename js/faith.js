@@ -90,7 +90,7 @@ const Faith = {
     P.gold -= 30; c.almsDay = G.day; this.addPiety(3);
     const poor = vi !== undefined && vi !== null ? People.residents(vi).filter(q => q.rank === 'beggar') : [];
     for (const q of poor) q.aff = Math.min(100, q.aff + 15);
-    const v = World.villages[vi]; if (v) v.prosper = Math.min(30, (v.prosper || 0) + 0.5);
+    const v = World.villages[vi]; if (v) v.prosper = Math.min(PROSPER_MAX, (v.prosper || 0) + 0.5);
     if (poor.length && Math.random() < 0.5) { const q = poor[0]; q.rank = 'peasant'; UI.msg(`💛 Com a sua ajuda, ${q.name} deixou de mendigar e voltou a trabalhar no campo.`, 'gold'); }
     else UI.msg(`💛 Você deu esmolas aos pobres${v ? ' de ' + v.name : ''}. ${poor.length ? poor.length + (poor.length === 1 ? ' mendigo agradece.' : ' mendigos agradecem.') : 'As famílias mais pobres agradecem.'}`, 'gold');
   },

@@ -1,7 +1,12 @@
 'use strict';
 // Vida das cidades (crescimento, muralhas e ruínas) e caravanas de comércio entre os reinos.
 
+// prosperidade necessária para cada nível (1 a 10): nível 2 ganha casas e poço, 3 ergue muralhas,
+// do 4 ao 10 cada nível traz mais uma casa e uma família nova (e cabe mais gente)
+const VILLAGE_LVLS = [0, 9, 20, 32, 45, 60, 76, 93, 111, 130], VILLAGE_MAX = 10, PROSPER_MAX = 140;
+const REALM_LVL = 5; // nível que a vila livre do herói precisa para virar reino
 const Towns = {
+  levelOf(p) { let l = 1; for (let k = 1; k < VILLAGE_LVLS.length; k++) if (p >= VILLAGE_LVLS[k]) l = k + 1; return l; },
   init() { for (const v of World.villages) if (v.prosper === undefined) Object.assign(v, { prosper: U.rnd(4, 12), level: 1, ruin: 0 }); },
   // posições de expansão calculadas sempre na mesma ordem (o resultado é igual ao recarregar o jogo)
   build(v, vi) {
@@ -13,6 +18,13 @@ const Towns = {
       const x = Math.round(v.x + Math.cos(a) * r) - 1, y = Math.round(v.y + Math.sin(a) * r * 0.8) - 1;
       if (!World.areaOk(x - 1, y - 1, 4, 4) || !World.areaFree(x - 1, y - 1, 4, 4) || this.onRoad(x, y, 2, 2)) continue;
       v.extra.houses.push(World.addStruct('vhouse', x, y, 2, 2, civ, { growth: 2, village: vi }));
+    }
+    // uma casa a mais em cada nível do 4 ao 10
+    for (let r = 10, lv = 4; r <= 15 && lv <= VILLAGE_MAX; r++) for (let k = 0; k < 28 && lv <= VILLAGE_MAX; k++) {
+      const a = k / 28 * Math.PI * 2 + vi * 1.7;
+      const x = Math.round(v.x + Math.cos(a) * r) - 1, y = Math.round(v.y + Math.sin(a) * r * 0.8) - 1;
+      if (!World.areaOk(x - 1, y - 1, 4, 4) || !World.areaFree(x - 1, y - 1, 4, 4) || this.onRoad(x, y, 2, 2)) continue;
+      v.extra.houses.push(World.addStruct('vhouse', x, y, 2, 2, civ, { growth: lv++, village: vi }));
     }
     if (World.areaOk(v.x + 3, v.y - 1, 1, 1) && World.areaFree(v.x + 3, v.y - 1, 1, 1)) v.extra.well = World.addStruct('well', v.x + 3, v.y - 1, 1, 1, civ, { growth: 2, village: vi });
     const R = 16;
@@ -55,15 +67,15 @@ const Towns = {
       const c = G.civs[v.civ], raided = v.raid && v.raid.until >= G.day - ECON_DAYS;
       // vila livre: cresce por conta própria, sem depender da felicidade e do tesouro de um reino
       const happy = v.free ? 60 : c.happy, rich = v.free ? false : c.treasury > 600;
-      v.prosper = U.clamp(v.prosper + (happy - 45) / 35 + (rich ? 0.5 : 0) + U.rnd(-0.4, 0.8) - (raided ? 5 : 0), 0, 30);
+      v.prosper = U.clamp(v.prosper + (happy - 45) / 35 + (rich ? 0.5 : 0) + U.rnd(-0.4, 0.8) - (raided ? 5 : 0), 0, PROSPER_MAX);
       if (raided && Math.random() < 0.6) v.ruin = Math.min(3, v.ruin + 1);
       else if (!raided && v.ruin > 0 && Math.random() < 0.3) v.ruin--;
-      const lvl = v.prosper >= 20 ? 3 : v.prosper >= 9 ? 2 : 1;
+      const lvl = this.levelOf(v.prosper);
       const known = U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 60 || c.ruler === 'player';
       if (lvl > v.level) {
-        if (known) Game.note(`🏘️ ${v.name} prosperou: ${lvl === 3 ? 'ergueu muralhas!' : 'ganhou novas casas e um poço.'}`, 'gold');
+        if (known) Game.note(`🏘️ ${v.name} prosperou e chegou ao nível ${lvl}: ${lvl === 3 ? 'ergueu muralhas!' : lvl === 2 ? 'ganhou novas casas e um poço.' : 'mais uma casa e uma família nova.'}${lvl === REALM_LVL && v.free && v.lord === 'player' ? ' Agora ela pode virar um reino: erga o Castelo.' : ''}`, 'gold');
         Diplo.chronicle(`🏘️ ${v.name.startsWith("Vila ") ? "A " + v.name : "A vila de " + v.name} (${v.free ? 'vila livre' : Diplo.name(v.civ)}) cresceu e chegou ao nível ${lvl}.`);
-        if (lvl === 2) { const fam = People.create({ rank: 'peasant', civ: v.civ, home: { type: 'village', idx: vi }, age: U.rint(20, 40) }); fam.met = false; }
+        if (lvl >= 2) { const fam = People.create({ rank: 'peasant', civ: v.civ, home: { type: 'village', idx: vi }, age: U.rint(20, 40) }); fam.met = false; }
       } else if (lvl < v.level && known) UI.msg(`🏚️ ${v.name} está em decadência.`, 'bad');
       v.level = lvl;
       this.show(v);

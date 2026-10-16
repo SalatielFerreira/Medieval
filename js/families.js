@@ -13,7 +13,7 @@ const FAMILY_BIZ = {
 const RANK_INCOME = { knight: 7, merchant: 12, smith: 10, lumber: 8, mason: 8, innkeeper: 10, hunter: 6, mercenary: 5, peasant: 3, wanderer: 1 };
 const NOBLE_RANKS = ['ruler', 'consort', 'heir'];
 const SHOP_RANKS = ['merchant', 'smith', 'lumber', 'mason', 'innkeeper'];
-const FOUND_COST = { gold: 10000 };
+const FOUND_COST = { gold: 100000 }; // fundar uma vila: o mesmo preço para o herói e para os reis NPC
 const MAX_FOUNDED = 12;
 // limite suave da população: acima disso nascem cada vez menos crianças
 const POP_SOFT = 600, POP_HARD = 850;
@@ -237,7 +237,7 @@ const Families = {
     const { x: vx, y: vy, civ } = spec, vi = World.villages.length;
     // free: vila livre (fundada pelo herói), fora de qualquer reino; civ fica só como referência interna
     const v = { civ, free: !!spec.free, x: vx, y: vy, name: spec.name, founded: true, lord: spec.lord, lordFam: spec.lordFam, foundedDay: spec.day,
-      extra: { houses: [], walls: [], well: null }, prosper: 6, level: 1, ruin: 0 };
+      prosper: 6, level: 1, ruin: 0 };
     for (let y = vy - 5; y < vy + 7; y++) for (let x = vx - 7; x < vx + 8; x++) if (World.inb(x, y)) World.obj[World.idx(x, y)] = 0;
     const add = (t, x, y, w, h) => World.addStruct(t, x, y, w, h, civ, { village: vi, fvillage: true });
     v.store = add('store', vx - 7, vy - 4, 3, 2);
@@ -255,19 +255,20 @@ const Families = {
       const path = others.length ? World.findPath(vx, vy - 1, others[0].x, others[0].y) : null;
       if (path) { World.carveRoad(path); spec.road = path; }
     }
+    Towns.build(v, vi); // casas de crescimento (níveis 2 e 4 a 10), poço e muralhas, como nas outras vilas
     World.chunks.clear();
     World.buildMinimap();
     return v;
   },
-  // rei NPC: quando uma vila do reino chega ao tamanho máximo (nível 3 e cheia), a coroa funda uma vila nova perto
-  // e famílias da vila lotada se mudam para lá (uma vez a cada 6 meses por reino; custa 300 do tesouro)
+  // rei NPC: só funda uma vila nova quando o tesouro do reino chega ao preço da fundação (o mesmo do herói);
+  // a vila nasce perto da vila mais cheia do reino e famílias de lá se mudam (uma vez a cada 6 meses por reino)
   crownTick() {
     for (const c of G.civs) {
-      if (c.ruler === 'player' || c.treasury < 300 || G.day - (c.lastCrownFound || -999) < 6 * ECON_DAYS) continue;
-      if (G.founded.filter(x => x.crown && x.civ === c.id).length >= 4) continue;
-      const full = World.villages.map((v, i) => ({ v, i })).find(x => x.v.civ === c.id && !x.v.free && !x.v.ruin && x.v.level >= 3 && People.residents(x.i).length >= this.vcap(x.v) - 2);
-      if (!full) continue;
-      if (this.crownFound(c, full.v)) c.lastCrownFound = G.day;
+      if (c.ruler === 'player' || c.treasury < FOUND_COST.gold || G.day - (c.lastCrownFound || -999) < 6 * ECON_DAYS) continue;
+      const from = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === c.id && !x.v.free && !x.v.ruin)
+        .sort((a, b) => People.residents(b.i).length - People.residents(a.i).length)[0];
+      if (!from) continue;
+      if (this.crownFound(c, from.v)) c.lastCrownFound = G.day;
     }
   },
   crownFound(c, from) {
@@ -278,13 +279,13 @@ const Families = {
     const spec = { name, x: spot.x, y: spot.y, civ: c.id, day: G.day, crown: true };
     const v = this.makeVillage(spec);
     G.founded.push(spec);
-    c.treasury -= 300;
+    c.treasury -= FOUND_COST.gold;
     const vi = World.villages.indexOf(v);
     for (const rank of ['merchant', 'innkeeper']) People.create({ age: U.rint(24, 45), rank, civ: c.id, home: { type: 'village', idx: vi } });
     this.settle(v, vi, 4);
     Towns.init(); Towns.show(v); this.refresh();
     const known = U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 70;
-    Diplo.chronicle(`🏘️ ${c.rulerName} fundou ${v.name}, em ${Diplo.name(c.id)}, porque ${from.name} já não cabia mais gente.`, known);
+    Diplo.chronicle(`🏘️ ${c.rulerName} gastou ${FOUND_COST.gold.toLocaleString('pt-BR')} Salin do tesouro e fundou ${v.name}, em ${Diplo.name(c.id)}.`, known);
     if (known) UI.msg(`🏘️ ${c.rulerName} fundou a vila de ${v.name} aqui perto.`, 'gold');
     return v;
   },
@@ -705,7 +706,7 @@ const Biz = {
 };
 
 // ================================================================ fundar o próprio reino
-// Da vila livre (fundada pelo jogador) nasce um reino: quando ela chega ao nível 3, o castelo
+// Da vila livre (fundada pelo jogador) nasce um reino: quando ela chega ao nível 5, o castelo
 // (Construção → Moradia) cria um reino novo de verdade: entra na lista dos reinos, com castelo, guarnição,
 // território em volta e diplomacia. Só um reino fundado por vez: se ele for tomado, dá para fundar outro.
 const REALM_GOLD = 3000;
@@ -725,7 +726,7 @@ const Realm = {
     const cx = tx + 3, cy = ty + 3, vi = this.villageFor(cx, cy);
     if (vi === null) return 'O castelo precisa ficar perto da sua vila livre (funde uma em Portfólio → Vilas e guardas)';
     const v = World.villages[vi];
-    if ((v.level || 1) < 3) return `${v.name} ainda precisa crescer até o nível 3 para virar um reino`;
+    if ((v.level || 1) < REALM_LVL) return `${v.name} ainda precisa crescer até o nível ${REALM_LVL} para virar um reino (está no ${v.level || 1})`;
     if (World.capitals.some(c => U.dist(c.x, c.y, cx, cy) < 30)) return 'Muito perto do castelo de outro reino';
     return null;
   },

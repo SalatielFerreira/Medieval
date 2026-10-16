@@ -65,7 +65,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Família e linhagem:** case-se, tenha filhos (sexo aleatório, você escolhe o nome). O ano segue o calendário de 12 meses (12 meses; cada mês dura 6 minutos reais). Morrer é fim de jogo, mas você pode continuar como seu filho ou filha, que herda tudo.
 
 - **Mapa fixo** de 320×320 tiles, o mesmo em todas as partidas: cerca de 73% de terra, com campos, florestas, colinas, montanhas, neve, rios e lagos. Há **8 ilhas** no mar que só se alcançam de barco e guardam prata, ouro, gemas e carvalhos anciões.
-- **7 reinos:** Midgard, Dorne, Winterfel, Valáquia, Olympus, Persépolis e Gondor. Cada um tem castelo, 3 vilas espaçadas (Armazém, Ferreiro, Madeireira, Pedreira, Taverna, casas e plantações), território com fronteiras, estradas e economia própria. Há 14 acampamentos de bandidos; quando um é destruído, ele some e, depois de alguns dias, renasce em outro canto da terra selvagem (fora dos reinos).
+- **7 reinos:** Midgard, Dorne, Winterfel, Valáquia, Olympus, Babilônia e Gondor. Cada um tem castelo, 3 vilas espaçadas (Armazém, Ferreiro, Madeireira, Pedreira, Taverna, casas e plantações), território com fronteiras, estradas e economia própria. Há 14 acampamentos de bandidos; quando um é destruído, ele some e, depois de alguns dias, renasce em outro canto da terra selvagem (fora dos reinos).
 - **Árvores:** Carvalho, Pinheiro (resina), Bétula, Teixo, Macieira, Coqueiro e Carvalho Ancião (madeira nobre, exige machado de ferro).
 - **Minérios:** Rocha, Carvão, Cobre e Estanho (picareta de pedra); Ferro (bronze); Prata e Ouro (ferro); Gemas (aço). Também há Argila, Linho e Ervas.
 - **Ferramenta escolhida por você:** a ferramenta empunhada (tecla Q) define o que você coleta e com que força.
@@ -89,7 +89,13 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
-## Novidades: muito mais construções, Infraestrutura e ícones desenhados
+## Novidades: vilas até o nível 10 e fundação mais cara
+
+- **Fundar uma vila custa 100.000 Salin**, para você e para os reis NPC: eles só fundam quando o tesouro do reino chega a esse valor, e pagam com ele.
+- **Vilas até o nível 10:** do nível 4 em diante, cada nível traz mais uma casa e uma família nova, e cabe mais gente.
+- **A sua vila livre vira reino a partir do nível 5** (antes era o 3).
+
+## Novidades anteriores: muito mais construções, Infraestrutura e ícones desenhados
 
 - **Construção**: Moradia 7, Produção 11, Fazenda e animais 12, Empreendimentos 23, Praça e decoração 11, Cultura, fé e treino 6, Baús e estábulo 5, Defesa e exército 6 opções. Cada construção tem um ícone desenhado próprio, do tamanho de um emoji.
 - **Infraestrutura** (antes Estradas e Reformas): a estrada de terra continua grátis; depois ela evolui até 5 níveis (cascalho, pedra, calçada, Estrada Real), cada um mais rápido para você, os moradores e os animais.
@@ -122,7 +128,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **7 ilhas em anel (jogos novos):** as ilhas rodeiam a terra firme com espaços quase iguais entre elas e a mesma folga até a costa; os tamanhos continuam diferentes (as maiores ficam onde há mais mar). Ficam fora de qualquer reino, e o barco sempre consegue dar a volta no mapa.
 - **Mundo sem montanhas e com 2 vilas por reino (jogos novos):** as montanhas viraram colinas e neve (os minérios continuam lá, e as cavernas também), e cada reino começa com 2 vilas. Os reis fundam vilas novas quando elas lotam. Jogos salvos antigos continuam como estavam.
 - **Mais mar e portos (jogos novos):** o mapa ficou maior, com uma faixa larga de mar aberto em volta do continente para navegar. Cada reino com mar por perto tem um **Porto** na costa, onde o mestre do porto compra peixes, **polvos**, **tubarões** e **baleias** e vende barco, vara e corda. Tubarões e baleias vivem no alto-mar: pesque de barco, longe da costa. Jogos salvos antigos continuam com o mapa de antes.
-- **Fundar o próprio reino:** quando a sua vila livre chega ao nível 3, erga o **Castelo** (Construir → Moradia, depois do Casarão; 3000 🪙 e materiais). Nasce o "Reino <sobrenome>" com castelo, guarnição, território e diplomacia. Um reino fundado por vez: se ele cair, dá para fundar outro.
+- **Fundar o próprio reino:** quando a sua vila livre chega ao nível 5, erga o **Castelo** (Construir → Moradia, depois do Casarão; 3000 🪙 e materiais). Nasce o "Reino <sobrenome>" com castelo, guarnição, território e diplomacia. Um reino fundado por vez: se ele cair, dá para fundar outro.
 - **Reino conquistado leva a sua marca:** quem já é rei e toma outro reino passa a usar nele a bandeira, o brasão e a cor do reino principal (os dois continuam reinos diferentes, com relações próprias). Dá para voltar ao brasão próprio na aba Bandeira e brasão.
 - **Capangas de guarda em qualquer lugar:** "Ficar de guarda ou esperar" deixa o capanga parado onde você está, numa vila ou castelo seu, ou esperando numa vila ou cidade qualquer. Converse com ele lá para ele voltar a seguir você.
 - **Estradas dos moradores:** as casas, lojas, capelas e empreendimentos das vilas são ligados à estrada; todo mês os moradores abrem caminhos até o que ainda não tem acesso.
@@ -191,7 +197,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Seus empreendimentos:** construa (B → Empreendimentos) Fazenda Comercial, Moinho, Serraria, Pedreira Própria, Mina, Ferraria e Empório, e contrate moradores (na conversa ou no próprio empreendimento). Cada funcionário recebe salário todo dia; especialistas do ofício rendem +50%. A produção fica guardada para recolher, ou é vendida automaticamente e o faturamento cai direto no seu ouro, sem precisar ir até lá. Funcionários na sua Taverna aumentam as vendas.
 - **Até 10 capangas** desde o início, andando com você em formação.
 - **População viva:** solteiros se casam, casais têm filhos, e a população dos reinos cresce. Vilas lotadas mandam famílias para vilas com espaço ou para vilas novas.
-- **Fundar sua vila:** em Portfólio → Vilas e guardas (sem precisar de título nem de conquista), funde a "Vila <seu sobrenome>" no lugar onde estiver, livre de qualquer reino (10.000 🪙). Colonos chegam, a vila cresce e paga 2 🪙 por morador todo dia.
+- **Fundar sua vila:** em Portfólio → Vilas e guardas (sem precisar de título nem de conquista), funde a "Vila <seu sobrenome>" no lugar onde estiver, livre de qualquer reino (100.000 🪙, o mesmo preço que os reis NPC pagam do tesouro para fundar uma vila). Colonos chegam, a vila cresce e paga 2 🪙 por morador todo dia.
 - **Janela Portfólio (K):** além dos seus reinos, tem **Reino** (os 7 reinos: pessoas, crianças, famílias, vilas, nascimentos, corte real, famílias influentes e o chefe de cada vila), **Grandes Casas** (ranking das casas mais poderosas do mundo e as casas inquietas, com pouca lealdade à coroa), **Família**, **Vilas e guardas** e **Empreendimentos**.
 - O criador de herói agora pede o **sobrenome da família**.
 
@@ -199,7 +205,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 
 - **NPCs espalhados:** cada morador fica perto da própria casa e eles se afastam uns dos outros. Clique direto numa pessoa para conversar (um anel dourado mostra quem está sob o cursor).
-- **Cidades vivas:** vilas prósperas ganham casas novas e um poço (nível 2) e depois muralhas (nível 3). Vilas atacadas na guerra ficam com casas em ruínas, que se reconstroem com o tempo.
+- **Cidades vivas:** vilas prósperas sobem até o nível 10: casas novas e um poço (nível 2), muralhas (nível 3) e, do 4 ao 10, mais uma casa e uma família nova a cada nível. Vilas atacadas na guerra ficam com casas em ruínas, que se reconstroem com o tempo.
 - **Batalhas em campo aberto:** reinos em guerra mandam exércitos se enfrentarem. Ao chegar perto, escolha um lado ou fique de fora; vencendo, você ganha ouro, experiência e relação.
 - **Combate novo:** escudos (Madeira, Ferro e Aço) com bloqueio pelo botão direito, golpe forte carregado (segure V) e esquiva (Z). Ordens aos capangas com T.
 - **Lavoura:** Enxada para arar, plantar (trigo, cenoura, repolho e cevada) e colher; Regador (encha na água). A chuva também rega e no inverno a terra congela. **Criação:** Galinheiro (ovos), Curral (leite de vaca e lã de ovelha) e Colmeia (mel). Os animais passeiam perto das construções.

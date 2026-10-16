@@ -979,7 +979,7 @@ const UI = {
         <div class="card"><div class="sec">Como virar chefe de uma vila</div><div class="ways">
           <div class="way"><span class="way-ic">📜</span><b>Pedir ao rei</b><small>No castelo do reino, com boa relação e ouro.</small></div>
           <div class="way"><span class="way-ic">⚔️</span><b>Conquistar</b><small>Converse com o chefe da vila e desafie-o. O rei decide se é uma afronta.</small></div>
-          <div class="way"><span class="way-ic">🏗️</span><b>Fundar</b><small>A Vila ${this.esc(G.surname)}, livre de qualquer reino (10.000 Salin).</small></div></div></div>
+          <div class="way"><span class="way-ic">🏗️</span><b>Fundar</b><small>A Vila ${this.esc(G.surname)}, livre de qualquer reino (${FOUND_COST.gold.toLocaleString('pt-BR')} Salin).</small></div></div></div>
         <div class="card found"><div class="sec">🏗️ Fundar uma vila (você escolhe o nome)</div>
           <p class="dt-desc">Fique no centro de um lugar aberto (longe de outras vilas e castelos) e funde uma vila com o nome da sua família, livre de qualquer reino. Colonos se mudam para lá e pagam impostos a você.</p>
           <div class="found-row"><span class="found-lab">Custo</span><div class="cost">${this.fmtCost(FOUND_COST, have)}</div></div>
