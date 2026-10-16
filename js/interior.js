@@ -260,7 +260,8 @@ const Places = {
   },
   // quem está lá dentro
   people(src, d, L) {
-    const P0 = G.place, at = ([x, y]) => [P0.fx0 + x, P0.fy0 + y];
+    const P0 = G.place, at = ([x, y]) => [P0.fx0 + x, P0.fy0 + y], door = P0.back;
+    const away = p => { const o = G.spawned.get(p.id); return !!o && !o.dead && !o.placeNpc && U.dist(o.x, o.y, door.x, door.y) > 14 * TILE; };
     const put = (p, spot, opts) => {
       if (!p || !p.alive) return null;
       const old = G.spawned.get(p.id); // a pessoa lá fora continua (volta a ser ela quando você sair)
@@ -268,13 +269,14 @@ const Places = {
       const civ = p.civ >= 0 ? p.civ : typeof src.owner === 'number' ? src.owner : -1;
       const e = Game.spawn('villager', (tx + 0.5) * TILE, (ty + 0.85) * TILE, { civ, npc: p, leash: (opts && opts.leash) || 0.4 });
       e.placeNpc = true; e.still = !!(opts && opts.still); e.dir = (opts && opts.dir) || 1; e.outside = old && !old.dead && !old.placeNpc ? old : null;
+      if (e.outside) e.outside.inRoom = true; // a pessoa de fora "entrou": não anda lá fora enquanto você está aqui
       G.spawned.set(p.id, e);
       return e;
     };
     const used = new Set();
     const take = p => { if (!p || used.has(p.id)) return null; used.add(p.id); return p; };
     const vi = src.village, ph = Routine.phase();
-    const locals = () => vi !== undefined ? People.residents(vi).filter(p => People.isAdult(p) && !People.isCourt(p) && !p.trip && !p.shop && p.rank !== 'priest' && !used.has(p.id)) : [];
+    const locals = () => vi !== undefined ? People.residents(vi).filter(p => People.isAdult(p) && !People.isCourt(p) && !p.trip && !p.shop && p.rank !== 'priest' && !used.has(p.id) && !away(p)) : [];
     const pick = (list, n, salt) => list.map(p => ({ p, h: U.hash2(p.id, G.day, salt) })).sort((a, b) => a.h - b.h).slice(0, n).map(o => o.p);
     const wanderers = (n, salt) => { let k = 0; for (const p of pick(locals(), n, salt)) put(take(p), L.wander[k++ % L.wander.length], { leash: 2.2 }); };
     if (d.lay === 'throne') {
@@ -313,10 +315,11 @@ const Places = {
         royals = [ruler, ...G.people.filter(p => atCourt(p) && p.rank === 'consort'), ...G.people.filter(p => atCourt(p) && p.rank === 'heir'),
           ...(ruler ? ruler.children.map(id => G.people[id]).filter(q => q && atCourt(q)) : [])].filter((p, k, a) => p && a.indexOf(p) === k);
       }
+      royals = royals.filter(p => !away(p));
       royals.slice(0, L.royal.length).forEach((p, k) => put(take(p), L.royal[k], { still: true, dir: k % 2 ? -1 : 1 }));
       // plateia: gente do reino nas arquibancadas, mais cheia de dia
       const ofCiv = p => p.civ === ci || (p.home.type === 'village' && World.villages[p.home.idx] && World.villages[p.home.idx].civ === ci);
-      const crowd = G.people.filter(p => p.alive && People.isAdult(p) && !p.capanga && !p.kin && p.spouse !== 'player' && !People.isCourt(p) && !p.trip && ofCiv(p) && !used.has(p.id));
+      const crowd = G.people.filter(p => p.alive && People.isAdult(p) && !p.capanga && !p.kin && p.spouse !== 'player' && !People.isCourt(p) && !p.trip && ofCiv(p) && !used.has(p.id) && !away(p));
       const n = Math.min(L.crowd.length, ph === 'day' ? 20 : 12);
       let j = 0; for (const p of pick(crowd, n, 37)) { const sp = L.crowd[j++]; put(take(p), sp, { still: true, dir: sp[0] < 11 ? 1 : -1 }); }
       return;
@@ -361,6 +364,12 @@ const Places = {
     for (const e of G.ents) if (e.placeNpc) {
       e.dead = true;
       if (e.npc && G.spawned.get(e.npc.id) === e) { G.spawned.delete(e.npc.id); if (e.outside && !e.outside.dead) G.spawned.set(e.npc.id, e.outside); }
+    }
+    // quem estava lá dentro sai junto pela porta (quem morreu lá dentro não volta)
+    for (const o of G.ents) if (o.inRoom) {
+      o.inRoom = false;
+      if (o.npc && !o.npc.alive) { o.dead = true; continue; }
+      const sp = freeSpotNear(pl.back.x + U.rnd(-40, 40), pl.back.y + U.rnd(10, 40), 60); o.x = sp.x; o.y = sp.y; o.target = null;
     }
     G.ents = G.ents.filter(e => !e.dead);
     if (pl.keep) this.uncarve(pl.keep);

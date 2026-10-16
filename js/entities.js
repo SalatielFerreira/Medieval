@@ -166,6 +166,7 @@ class Creature {
 
   update(dt) {
     const d = this.def;
+    if (this.inRoom) return; // está lá dentro do lugar onde o herói entrou (sai com ele pela porta)
     // dormindo em casa (rotina dos moradores): só espera o dia chegar
     if (this.sleeping) { Routine.update(this, dt, 0); return; }
     // acompanhando o jogador (mercador perdido)
@@ -257,7 +258,7 @@ class Creature {
   }
 
   draw(ctx, cx, cy) {
-    if (this.sleeping) return;
+    if (this.sleeping || this.inRoom) return;
     const x = this.x - cx, y = this.y - cy;
     const hurt = this.hurt > 0;
     switch (this.kind) {
