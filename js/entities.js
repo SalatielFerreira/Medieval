@@ -351,37 +351,43 @@ function poly(ctx, pts, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(
 function limb(ctx, x1, y1, x2, y2, w, col) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
 function limb2(ctx, x1, y1, x2, y2, x3, y3, w, col) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.stroke(); }
 
-// corpo da pessoa (tudo menos a arma), já na origem: pés em (0, 0), olhando para +x e espelhado por dir
+// corpo da pessoa (tudo menos a arma e a sombra), já na origem: pés em (0, 0), olhando para +x e espelhado por dir.
+// Rosto com íris, pálpebra, cílios e lábios; cabelo e barba com volume e mechas; roupas com gola, cadarço, barra,
+// punhos e algibeira; armadura com cota de malha; botas com cano dobrado.
 function humanBody(ctx, o, dir, t) {
-  const hurt = o.hurt;
+  const hurt = o.hurt, fem = !!(o.fem || o.skirt);
   const C = c => hurt ? '#ff8a8a' : c, S = (c, k) => shd(C(c), k);
-  // sombra macia no chão
-  ell(ctx, 0, 0, 9.5, 3.2, 'rgba(0,0,0,0.26)'); ell(ctx, 0, 0, 6, 2, 'rgba(0,0,0,0.12)');
   const step = o.moving ? Math.sin(t * 12) : 0;
   const bob = o.moving ? -Math.abs(Math.sin(t * 12)) * 1.1 : Math.sin(t * 2.2) * 0.3;
   const body = o.body || '#7a6a50', legs = o.legs || '#3b2a1a', skin = o.skin || '#f0c896', hair = o.hair || '#5a3a1a';
   const sleeve = o.armor || body, holding = !!(o.weapon || o.swing > 0 || o.rod);
+  const trim = S(body, fem ? 0.3 : -0.34), hc = C(hair), hd = shd(hc, -0.22), hl = shd(hc, 0.26);
+  const seed = ((hair + skin).split('').reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7) >>> 0);
+  const eyeCol = ['#5a3a20', '#3a5a8a', '#4a7a3a', '#6a4a2a', '#2a2a2a'][seed % 5];
 
   ctx.save(); ctx.scale(dir, 1);
-  // ---- capa (atrás de tudo)
+  // ---- capa (atrás de tudo), com forro e broche
   if (o.cape) {
     const sw = o.moving ? Math.sin(t * 12) * 1.2 : 0;
     poly(ctx, [-6, -23 + bob, 5, -23 + bob, 6 - sw, -3, -2 - sw, -1.5, -10 - sw, -3], S(o.cape, -0.18));
     poly(ctx, [-6, -23 + bob, 2, -23 + bob, -1 - sw, -3, -10 - sw, -3.5], C(o.cape));
-    limb(ctx, -8 - sw, -10, -9.5 - sw, -4, 0.8, S(o.cape, -0.3));
+    limb(ctx, -8 - sw, -10, -9.5 - sw, -4, 0.8, S(o.cape, -0.32)); limb(ctx, -4.5 - sw, -12, -5.4 - sw, -3.5, 0.7, S(o.cape, 0.14));
+    ctx.fillStyle = S(o.cape, -0.4); ctx.fillRect(-10 - sw, -3.6, 9, 0.8);
   }
   // ---- escudo nas costas
   if (o.shield && !o.shieldUp) {
-    const sc = C(o.shield);
     poly(ctx, [-11.5, -22 + bob, -4.5, -22 + bob, -4.5, -15 + bob, -8, -9.5 + bob, -11.5, -15 + bob], S(o.shield, -0.4));
-    poly(ctx, [-10.8, -21.2 + bob, -5.2, -21.2 + bob, -5.2, -15.3 + bob, -8, -10.8 + bob, -10.8, -15.3 + bob], sc);
+    poly(ctx, [-10.8, -21.2 + bob, -5.2, -21.2 + bob, -5.2, -15.3 + bob, -8, -10.8 + bob, -10.8, -15.3 + bob], C(o.shield));
+    limb(ctx, -10.2, -20.4 + bob, -5.8, -20.4 + bob, 0.6, S(o.shield, 0.25));
     ell(ctx, -8, -16.5 + bob, 1.3, 1.3, S(o.shield, 0.35));
   }
-  // ---- braço de trás
+  // ---- braço de trás (manga, punho e mão)
   const bArm = o.moving ? Math.sin(t * 12 + Math.PI) * 0.55 : 0.12;
   const bhx = -3.6 + Math.sin(bArm) * 5, bhy = -21 + bob + Math.cos(bArm) * 7;
-  limb(ctx, -3.6, -21 + bob, bhx, bhy, 3.4, S(sleeve, -0.25)); ell(ctx, bhx, bhy + 0.6, 1.5, 1.5, S(skin, -0.15));
-  // ---- pernas
+  limb(ctx, -3.6, -21 + bob, bhx, bhy, 3.4, S(sleeve, -0.25));
+  limb(ctx, -3.6 + (bhx + 3.6) * 0.78, -21 + bob + (bhy + 21 - bob) * 0.78, bhx, bhy - 0.4, 3.6, o.armor ? S(o.armor, -0.1) : S(sleeve, -0.34));
+  ell(ctx, bhx, bhy + 0.7, 1.4, 1.5, S(skin, -0.18));
+  // ---- pernas, joelhos e botas
   if (o.seated) {
     limb2(ctx, -2, -10, 6, -10, 6.5, -2, 4.2, S(legs, -0.15));
     limb2(ctx, 1, -10, 8, -10, 8.5, -2, 4.2, C(legs));
@@ -389,119 +395,205 @@ function humanBody(ctx, o, dir, t) {
   } else {
     const lift = k => Math.max(0, k) * 1.6;
     const bx = -1.6 - step * 2.2, fx = 1.4 + step * 2.2;
-    rr(ctx, bx - 2.1, -10.5, 4.2, 10.5 - lift(-step), 1.6, S(legs, -0.2));
+    rr(ctx, bx - 2.1, -10.5, 4.2, 10.5 - lift(-step), 1.6, S(legs, -0.22));
     rr(ctx, fx - 2.1, -10.5, 4.2, 10.5 - lift(step), 1.6, C(legs));
     rr(ctx, fx + 0.6, -10, 1.2, 8.5 - lift(step), 0.6, S(legs, 0.14));
-    const shoe = C(o.boots || '#3b2a1e'), bh = o.boots ? 4.4 : 2.6;
-    rr(ctx, bx - 2.4, -bh - lift(-step), 5.6, bh, 1.2, shd(shoe, -0.15));
-    rr(ctx, fx - 2.4, -bh - lift(step), 5.8, bh, 1.2, shoe);
-    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(fx - 2.4, -0.9 - lift(step), 5.8, 0.9); ctx.fillRect(bx - 2.4, -0.9 - lift(-step), 5.6, 0.9);
+    ell(ctx, fx + 0.4, -5.6 - lift(step) * 0.5, 1.4, 0.7, S(legs, -0.12));   // dobra do joelho
+    const shoe = C(o.boots || '#3b2a1e'), bh = o.boots ? 5 : 2.8;
+    for (const [lx, l, front] of [[bx, lift(-step), false], [fx, lift(step), true]]) {
+      const sc = front ? shoe : shd(shoe, -0.18);
+      rr(ctx, lx - 2.4, -bh - l, 5.8, bh, 1.2, sc);
+      rr(ctx, lx + 1.6, -2.4 - l, 2.4, 2.4, 1.1, sc);                          // bico
+      if (o.boots) { ctx.fillStyle = shd(sc, 0.22); ctx.fillRect(lx - 2.4, -bh - l, 5.8, 1.2); }   // cano dobrado
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(lx - 2.4, -0.9 - l, 6.4, 0.9);              // sola
+      if (front) { ctx.fillStyle = shd(sc, 0.3); ctx.fillRect(lx + 0.4, -bh - l + (o.boots ? 1.6 : 0.4), 0.8, 0.6); }
+    }
   }
   ctx.translate(0, bob);
-  // ---- saia / roupa de baixo
+  // ---- saia (vestido) ou aba da túnica
   if (o.skirt) {
-    poly(ctx, [-6.4, -12.5, 6.4, -12.5, 8.2, -2.5, -8.2, -2.5], S(body, -0.06));
-    ctx.fillStyle = S(body, -0.2); ctx.fillRect(-8.2, -3.4, 16.4, 1);
-    limb(ctx, -2.5, -11, -3.4, -3.5, 0.7, S(body, -0.2)); limb(ctx, 2, -11, 2.6, -3.5, 0.7, S(body, -0.2)); limb(ctx, 5, -11.5, 6.4, -3.5, 0.7, S(body, 0.1));
+    poly(ctx, [-6.4, -12.5, 6.4, -12.5, 8.4, -2.4, -8.4, -2.4], S(body, -0.05));
+    poly(ctx, [-6.4, -12.5, -3, -12.5, -4.4, -2.4, -8.4, -2.4], S(body, -0.18));
+    for (const [x1, x2, k] of [[-1.4, -2, -0.22], [2, 2.8, -0.2], [4.6, 5.8, 0.12]]) limb(ctx, x1, -11.6, x2, -3.2, 0.7, S(body, k));
+    ctx.fillStyle = trim; ctx.fillRect(-8.4, -3.6, 16.8, 1.2);
+    ctx.fillStyle = S(body, -0.3); ctx.fillRect(-8.4, -2.6, 16.8, 0.4);
+  } else if (!o.seated) {
+    poly(ctx, [-6.6, -12.2, 6.6, -12.2, 7.3, -6.4, -7.3, -6.4], S(body, -0.06));
+    poly(ctx, [-6.6, -12.2, -3, -12.2, -3.4, -6.4, -7.3, -6.4], S(body, -0.2));
+    ctx.fillStyle = trim; ctx.fillRect(-7.3, -7.4, 14.6, 1);
+    limb(ctx, 1.2, -10.6, 1.4, -6.6, 0.6, S(body, -0.28));                     // abertura da túnica
   }
-  // ---- tronco
+  // ---- tronco: luz, sombra, gola, cadarço e dobras
   rr(ctx, -6.6, -23.6, 13.2, 14, 3.2, C(body));
   rr(ctx, -6.6, -23.6, 4.2, 14, 3, S(body, -0.2));
   rr(ctx, 3.4, -22.4, 2.2, 11, 1.1, S(body, 0.16));
-  limb(ctx, -0.5, -19, 0.2, -13, 0.6, S(body, -0.16));
-  poly(ctx, [0.2, -23.6, 4, -23.6, 2, -20.6], S(skin, -0.05));        // decote
-  ctx.fillStyle = S(body, -0.3); ctx.fillRect(-6, -23.8, 12, 0.9);     // gola
-  ctx.fillStyle = C('#4a3020'); ctx.fillRect(-6.6, -12.9, 13.2, 2);    // cinto
+  limb(ctx, -0.8, -19, -0.2, -13.4, 0.6, S(body, -0.16)); limb(ctx, 3, -15.8, 4.6, -13.6, 0.5, S(body, -0.14));
+  if (fem) {
+    rr(ctx, -0.8, -23.8, 5.6, 2.8, 1.3, S(skin, -0.04));                       // decote redondo
+    ctx.fillStyle = trim; ctx.fillRect(-1, -21.4, 6, 0.8);
+    ctx.strokeStyle = S(body, -0.22); ctx.lineWidth = 0.3; ctx.beginPath();     // cadarço do corpete
+    for (let y = -20.2; y < -15.5; y += 1.6) { ctx.moveTo(0.8, y); ctx.lineTo(2.8, y + 1.2); ctx.moveTo(2.8, y); ctx.lineTo(0.8, y + 1.2); }
+    ctx.stroke();
+  } else {
+    poly(ctx, [0, -23.6, 4.2, -23.6, 2, -20.2], S(skin, -0.05));               // decote em V
+    limb(ctx, 0, -23.4, 2, -20.2, 0.7, trim); limb(ctx, 4.2, -23.4, 2, -20.2, 0.7, trim);
+    ctx.strokeStyle = S(body, -0.24); ctx.lineWidth = 0.3; ctx.beginPath();
+    for (let y = -19.6; y < -17; y += 1.4) { ctx.moveTo(1.2, y); ctx.lineTo(2.8, y + 1); ctx.moveTo(2.8, y); ctx.lineTo(1.2, y + 1); }
+    ctx.stroke();
+  }
+  ctx.fillStyle = shd(trim, -0.1); ctx.fillRect(-6, -23.9, 6, 0.9);            // gola atrás
+  // cinto com fivela e algibeira
+  ctx.fillStyle = C('#4a3020'); ctx.fillRect(-6.6, -12.9, 13.2, 2);
+  ctx.fillStyle = C('#6a4a2a'); ctx.fillRect(-6.6, -12.9, 13.2, 0.5);
+  rr(ctx, -6.4, -12.4, 3, 3.6, 0.9, C('#6a4428')); ctx.fillStyle = C('#4a2e16'); ctx.fillRect(-6.4, -12.4, 3, 0.9);
   ctx.fillStyle = C('#d8b25a'); ctx.fillRect(2.2, -13.2, 2.2, 2.6); ctx.fillStyle = C('#8a6a2a'); ctx.fillRect(2.8, -12.6, 1, 1.4);
   if (o.armor) {
     const a = o.armor;
+    // cota de malha por baixo, aparecendo na cintura
+    rr(ctx, -6.8, -13.4, 13.6, 4.8, 1.4, S(a, -0.18));
+    ctx.fillStyle = S(a, 0.18); for (let y = -13; y < -9; y += 1.2) for (let x = -6.4 + ((y * 10) % 2 ? 0.6 : 0); x < 6.6; x += 1.3) ctx.fillRect(x, y, 0.6, 0.6);
     rr(ctx, -6.6, -23.6, 13.2, 10.6, 3.2, C(a));
     rr(ctx, -6.6, -23.6, 4, 10.6, 3, S(a, -0.22));
     rr(ctx, 1.6, -22.6, 3.2, 7.4, 1.6, S(a, 0.3));
+    limb(ctx, 0.4, -22.8, 0.6, -14.2, 0.6, S(a, -0.3));                         // aresta do peitoral
     ctx.fillStyle = S(a, -0.35); ctx.fillRect(-6.4, -13.6, 12.8, 0.9);
     ctx.fillStyle = S(a, 0.45); for (const [rx, ry] of [[-4.5, -21.5], [4.5, -21.5], [-4.5, -15], [4.5, -15]]) ctx.fillRect(rx, ry, 0.9, 0.9);
     ell(ctx, -5.2, -22.6, 3.2, 2.3, S(a, -0.2)); ell(ctx, 4.8, -22.6, 3.3, 2.5, S(a, 0.06)); ell(ctx, 5.2, -23.6, 1.2, 0.55, S(a, 0.32));
+    limb(ctx, 2, -21.4, 7.6, -21.4, 0.5, S(a, -0.25));                          // lâmina da ombreira
   }
-  // ---- pescoço e cabeça
-  rr(ctx, -1.4, -25.5, 3.4, 3, 1, S(skin, -0.14));
-  const hs = o.hairStyle || 'short', hc = C(hair), bareHead = !o.hood && !o.helmet;
+  // ---- pescoço
+  rr(ctx, -1.4, -25.5, 3.4, 3, 1, S(skin, -0.16));
+  ell(ctx, 0.4, -23.6, 1.8, 0.6, S(skin, -0.25));
+  // ---- cabelo de trás (antes da cabeça)
+  const hs = o.hairStyle || 'short', bareHead = !o.hood && !o.helmet;
+  const strand = (x1, y1, x2, y2, c, w) => limb(ctx, x1, y1, x2, y2, w || 0.5, c);
   if (bareHead && !o.cap) {
-    if (hs === 'long') { rr(ctx, -6, -34.5, 7.4, 14.5, 3.2, S(hair, -0.12)); rr(ctx, -5.4, -34, 2, 13, 1, S(hair, -0.25)); }
-    if (hs === 'braids') { for (const bx of [-5.6, -2.6]) { rr(ctx, bx, -31, 2.4, 13, 1.2, S(hair, -0.1)); ctx.fillStyle = S(hair, -0.3); for (let k = -29; k < -19; k += 2.5) ctx.fillRect(bx, k, 2.4, 0.6); } }
-    if (hs === 'ponytail') { rr(ctx, -8.2, -32.6, 3.6, 11, 1.8, S(hair, -0.12)); ctx.fillStyle = C('#8a2a2a'); ctx.fillRect(-7.8, -31.4, 2.8, 1); }
-    if (hs === 'curly') ell(ctx, -0.6, -31, 7, 6.2, S(hair, -0.12));
+    if (hs === 'long') {
+      rr(ctx, -6.2, -34.8, 7.8, 15.6, 3.4, hd); rr(ctx, -5.6, -34, 6.4, 14, 3, hc);
+      for (const x of [-4.6, -2.8, -1]) strand(x, -31, x - 0.4, -21.6, hd, 0.5);
+      strand(-3.6, -32, -4, -24, hl, 0.45);
+      poly(ctx, [-6, -21.4, -4.6, -19.4, -3.4, -21, -2, -19.2, -0.6, -21.2, 1.2, -20.4, 1.2, -22, -6, -22], hc);   // pontas desfiadas
+    }
+    if (hs === 'braids') for (const bx of [-5.8, -2.8]) {
+      rr(ctx, bx, -31.4, 2.6, 14, 1.3, hd);
+      for (let k = -30.4; k < -18.4; k += 2.2) { ell(ctx, bx + 1.3, k + 0.8, 1.4, 1.1, hc); strand(bx + 0.5, k + 0.3, bx + 2, k + 1.4, hl, 0.4); }
+      rr(ctx, bx + 0.4, -18.6, 1.8, 1, 0.4, C('#b03040'));
+    }
+    if (hs === 'ponytail') {
+      const sw = o.moving ? Math.sin(t * 12) * 1.1 : 0;
+      ctx.fillStyle = hd; ctx.beginPath(); ctx.moveTo(-5, -33); ctx.quadraticCurveTo(-10 - sw, -30, -8.4 - sw, -21.4); ctx.lineTo(-6.4 - sw, -21.8); ctx.quadraticCurveTo(-7.4, -28, -4, -31); ctx.fill();
+      strand(-6.4, -30, -7.6 - sw, -23, hl, 0.45);
+      rr(ctx, -6.4, -32.6, 2.2, 1.6, 0.6, C('#8a2a2a'));
+    }
+    if (hs === 'curly') { ell(ctx, -0.6, -31, 7.2, 6.4, hd); for (const [cx, cy] of [[-5.6, -28], [-5.8, -32], [-3.8, -35]]) ell(ctx, cx, cy, 2.4, 2.4, hc); }
   }
+  // ---- cabeça
   rr(ctx, -4.9, -34.8, 10.2, 10.8, 4.2, C(skin));
   rr(ctx, -4.9, -34.8, 3.4, 10.8, 3.2, S(skin, -0.12));
-  ell(ctx, 1.2, -25, 3.4, 1, S(skin, -0.1));                           // queixo
-  ell(ctx, -2.3, -29.2, 1.3, 1.9, S(skin, -0.1)); ctx.fillStyle = S(skin, -0.3); ctx.fillRect(-2.5, -29.6, 0.6, 1.2); // orelha
-  // rosto (olhando para a frente)
-  ctx.fillStyle = '#f6f2ea'; ctx.fillRect(2.3, -30.6, 2, 1.9);
-  ctx.fillStyle = '#2a1a12'; ctx.fillRect(3.4, -30.6, 1.1, 1.9); ctx.fillRect(-0.4, -30.4, 1, 1.6);
-  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(3.5, -30.5, 0.5, 0.5);
-  ctx.fillStyle = shd(hc, -0.15); ctx.fillRect(2, -32.2, 2.8, 0.8); ctx.fillRect(-0.8, -32, 1.6, 0.7);   // sobrancelhas
-  ctx.fillStyle = S(skin, -0.16); ctx.fillRect(4.9, -29.6, 1.1, 2.3);                                       // nariz
-  ctx.fillStyle = S(skin, -0.4); ctx.fillRect(2.6, -26.6, 2.1, 0.7);                                        // boca
-  ctx.fillStyle = 'rgba(220,90,90,0.16)'; ctx.fillRect(2, -28.4, 2.6, 1.2);                                  // bochecha
-  // cabelo da frente
+  ell(ctx, 1.4, -25.2, 3.4, 1, S(skin, -0.12));                                  // sombra do queixo
+  ell(ctx, 3.8, -28.6, 1.4, 0.9, 'rgba(255,255,255,0.12)');                      // maçã do rosto
+  ell(ctx, -2.3, -29.2, 1.35, 2, S(skin, -0.1)); ctx.fillStyle = S(skin, -0.32); ctx.fillRect(-2.6, -29.8, 0.6, 1.4); ctx.fillRect(-2.4, -28.4, 0.8, 0.4);
+  // olhos
+  rr(ctx, 2.2, -30.9, 2.4, 2.1, 0.7, '#f6f2ea');
+  ctx.fillStyle = eyeCol; ctx.fillRect(3.3, -30.9, 1.3, 2.1);
+  ctx.fillStyle = '#120a06'; ctx.fillRect(3.6, -30.5, 0.8, 1.4);
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(3.4, -30.7, 0.5, 0.5);
+  ctx.fillStyle = S(skin, -0.45); ctx.fillRect(2.1, -31.2, 2.7, 0.55);          // pálpebra
+  rr(ctx, -0.8, -30.8, 1.5, 1.9, 0.5, '#e8e2d8'); ctx.fillStyle = eyeCol; ctx.fillRect(-0.3, -30.7, 0.9, 1.8); ctx.fillStyle = '#120a06'; ctx.fillRect(-0.1, -30.4, 0.5, 1.2);
+  ctx.fillStyle = S(skin, -0.45); ctx.fillRect(-0.9, -31.1, 1.7, 0.5);
+  if (fem) { ctx.fillStyle = '#1a0e08'; ctx.fillRect(4.4, -31.6, 0.9, 0.5); ctx.fillRect(4.7, -31.2, 0.6, 0.4); ctx.fillRect(-1.2, -31.4, 0.6, 0.4); }
+  // sobrancelhas
+  if (fem) { limb(ctx, 2, -32.1, 4.9, -32.5, 0.5, hd); limb(ctx, -1, -31.9, 0.8, -32.2, 0.45, hd); }
+  else { poly(ctx, [1.9, -32.2, 5, -32.7, 5, -31.9, 1.9, -31.6], hd); poly(ctx, [-1.1, -31.9, 0.9, -32.3, 0.9, -31.6, -1.1, -31.4], hd); }
+  // nariz, boca e bochecha
+  rr(ctx, 4.8, -30, 1.4, 2.9, 0.6, S(skin, -0.1)); ctx.fillStyle = S(skin, 0.14); ctx.fillRect(4.9, -30, 0.5, 1.6);
+  ctx.fillStyle = S(skin, -0.35); ctx.fillRect(5.3, -27.4, 0.8, 0.4); ctx.fillRect(4.6, -27.3, 0.5, 0.5);
+  if (fem) { ctx.fillStyle = C('#a84858'); ctx.fillRect(2.5, -26.9, 2.4, 0.6); ctx.fillStyle = C('#d07a84'); ctx.fillRect(2.7, -26.3, 2, 0.6); }
+  else { ctx.fillStyle = S(skin, -0.42); ctx.fillRect(2.6, -26.6, 2.2, 0.6); ctx.fillStyle = S(skin, -0.2); ctx.fillRect(2.9, -26, 1.6, 0.4); }
+  ctx.fillStyle = fem ? 'rgba(230,100,110,0.22)' : 'rgba(220,90,90,0.13)'; ctx.fillRect(2, -28.5, 2.8, 1.3);
+  // ---- cabelo da frente, com mechas e brilho
   if (bareHead && !o.cap) {
-    const top = (yy, h) => { rr(ctx, -5.3, yy, 10.8, h, 3.2, hc); rr(ctx, -5.3, yy + 1.5, 3.4, 6.5, 1.6, hc); ctx.fillStyle = shd(hc, 0.22); rr(ctx, -2.4, yy + 0.4, 5, 1.1, 0.5, shd(hc, 0.22)); };
+    const cap = (yy, h) => {
+      rr(ctx, -5.5, yy, 11.2, h, 3.3, hd); rr(ctx, -5.2, yy + 0.3, 10.6, h - 0.6, 3, hc);
+      rr(ctx, -5.4, yy + 1.4, 3.6, 7, 1.7, hc); rr(ctx, -5.4, yy + 1.4, 1.4, 7, 0.7, hd);       // lado (costeleta)
+      for (const x of [-2.4, 0.2, 2.6]) strand(x, yy + 0.8, x + 1.4, yy + h - 0.4, hd, 0.45);
+      strand(-1.4, yy + 0.6, 2.8, yy + 0.9, hl, 0.6);
+    };
     switch (hs) {
-      case 'bald': ell(ctx, -1, -33.6, 2.6, 0.9, 'rgba(255,255,255,0.22)'); rr(ctx, -5.2, -31, 2.4, 4.5, 1, hc); break;
-      case 'mohawk': rr(ctx, -2, -39, 3.2, 6, 1.5, hc); rr(ctx, -1.6, -38.6, 1, 4.6, 0.5, shd(hc, 0.25)); ctx.fillStyle = 'rgba(0,0,0,0.12)'; ctx.fillRect(-4.6, -34, 9, 1.4); break;
-      case 'curly': for (const [cx, cy] of [[-4, -33], [-1.5, -35], [1.5, -35.3], [4, -33.6], [-4.8, -30.5]]) ell(ctx, cx, cy, 2.4, 2.2, hc); ell(ctx, 0, -35, 1.2, 0.7, shd(hc, 0.25)); break;
-      case 'bun': top(-36, 4.6); ell(ctx, -3.4, -37.2, 2.5, 2.3, hc); ell(ctx, -3, -37.8, 1, 0.7, shd(hc, 0.25)); break;
-      case 'long': top(-36.2, 5); rr(ctx, 3.6, -33.6, 1.8, 3, 0.8, hc); break;
-      default: top(-36, 4.6); rr(ctx, 3.4, -33.4, 2.2, 1.8, 0.8, hc);
+      case 'bald':
+        ell(ctx, -0.6, -33.8, 2.8, 0.9, 'rgba(255,255,255,0.24)'); rr(ctx, -5.2, -31.4, 2.6, 5, 1.1, hc);
+        ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(-4.4, -33.2, 8.6, 1.2); break;
+      case 'mohawk':
+        rr(ctx, -2.2, -39.4, 3.6, 6.6, 1.6, hd); rr(ctx, -1.8, -39, 2.8, 5.8, 1.3, hc); strand(-0.8, -38.6, -0.4, -34, hl, 0.6);
+        ctx.fillStyle = 'rgba(0,0,0,0.14)'; ctx.fillRect(-4.6, -34, 9, 1.4); break;
+      case 'curly':
+        for (const [cx, cy] of [[-4.2, -33], [-1.8, -35.2], [1.2, -35.6], [3.8, -34], [-4.9, -30.6], [4.9, -32]]) { ell(ctx, cx, cy, 2.5, 2.3, hd); ell(ctx, cx + 0.2, cy - 0.2, 2.1, 1.9, hc); ell(ctx, cx + 0.6, cy - 0.8, 0.8, 0.5, hl); }
+        break;
+      case 'bun':
+        cap(-36.2, 4.8); ell(ctx, -3.6, -37.6, 2.8, 2.5, hd); ell(ctx, -3.4, -37.8, 2.3, 2.1, hc); strand(-5, -38.4, -2, -36.8, hl, 0.5);
+        rr(ctx, -4.6, -35.8, 2.4, 0.8, 0.3, C('#8a2a2a')); break;
+      case 'long': cap(-36.4, 5.2); rr(ctx, 3.4, -33.8, 2.2, 3.4, 0.9, hc); strand(4, -33.4, 4.4, -30.8, hd, 0.4); break;
+      case 'braids': case 'ponytail': cap(-36.2, 4.6); break;
+      default: cap(-36.2, 4.8); rr(ctx, 3.2, -33.6, 2.6, 2, 0.9, hc); poly(ctx, [5.8, -33.4, 6.2, -32, 4.6, -32.6], hc);   // franja
     }
   }
-  // barba
+  // ---- barba e bigode, com textura
   const bs = o.beardStyle || (o.beard ? 'short' : 'none');
   if (bs !== 'none' && !o.hood) {
-    const bc = shd(hc, -0.05);
-    if (bs === 'short') poly(ctx, [-1.6, -28.4, 5.2, -27, 4.6, -24.2, 0.6, -23.6, -2.2, -26], bc);
-    if (bs === 'full') { poly(ctx, [-2.2, -29.6, 0.6, -27.6, 5.3, -27.2, 5, -24, 2.6, -22.6, 0, -23, -2.6, -26], bc); ell(ctx, 2, -24.4, 1, 0.45, shd(hc, 0.2)); }
-    if (bs === 'long') { poly(ctx, [-1.8, -28.4, 5.2, -27, 4.2, -20.5, 1.2, -19.6, -1.6, -24], bc); limb(ctx, 1.6, -26, 2.2, -21.5, 0.5, shd(hc, 0.2)); }
-    if (bs === 'goatee') { rr(ctx, 2.4, -26, 2.4, 2.8, 1, bc); }
-    if (bs !== 'goatee' || true) { ctx.fillStyle = bc; ctx.fillRect(2.2, -27.7, 3.4, 0.9); } // bigode
-    ctx.fillStyle = S(skin, -0.4); ctx.fillRect(2.8, -26.6, 1.6, 0.5);
+    const bc = shd(hc, -0.04), bd = shd(hc, -0.28);
+    const tex = (x0, y0, x1, y1) => { for (let x = x0; x < x1; x += 1.3) strand(x, y0, x + 0.3, y1, bd, 0.4); };
+    if (bs === 'short') { poly(ctx, [-1.8, -28.6, 0, -27.2, 5.3, -27, 4.8, -24.4, 2.6, -23.4, 0.4, -23.8, -2.4, -26.2], bc); tex(0.2, -26.8, 4.6, -24.2); }
+    if (bs === 'full') { poly(ctx, [-2.4, -30, 0.4, -27.6, 5.4, -27.2, 5.1, -24, 2.8, -22.4, 0, -22.8, -2.8, -25.8], bc); tex(-1.6, -27, 4.8, -23.2); ell(ctx, 1.8, -23.6, 2.4, 0.8, bd); ell(ctx, 2.4, -26.4, 1, 0.4, shd(hc, 0.2)); }
+    if (bs === 'long') { poly(ctx, [-1.8, -28.6, 5.3, -27, 4.6, -22.2, 2.6, -19.2, 0.8, -19.6, -1.6, -24], bc); tex(0.6, -26, 4, -20.4); strand(1.8, -25.4, 2.2, -20.6, shd(hc, 0.22), 0.5); }
+    if (bs === 'goatee') { rr(ctx, 2.3, -26.2, 2.6, 3.2, 1.1, bc); tex(2.6, -25.6, 4.6, -23.4); }
+    // bigode em arco (todas)
+    ctx.fillStyle = bc; ctx.beginPath(); ctx.moveTo(1.8, -26.8); ctx.quadraticCurveTo(3.8, -28.4, 5.8, -27.1); ctx.lineTo(5.6, -26.5); ctx.quadraticCurveTo(3.8, -27.4, 2, -26.2); ctx.fill();
+    strand(2.6, -27.4, 5, -27.3, shd(hc, 0.2), 0.35);
+    ctx.fillStyle = S(skin, -0.42); ctx.fillRect(2.9, -26.3, 1.7, 0.45);
   }
-  // capuz, gorro, elmo, coroa
+  // ---- capuz, gorro, elmo e coroa
   if (o.hood) {
-    const h = C(o.hood);
     rr(ctx, -6.4, -27, 13, 4.4, 2, S(o.hood, -0.12));
-    rr(ctx, -6, -36.6, 8.6, 12.4, 4.4, h);
-    rr(ctx, -6, -36.6, 12, 4.4, 3, h);
+    rr(ctx, -6, -36.6, 8.6, 12.4, 4.4, C(o.hood));
+    rr(ctx, -6, -36.6, 12, 4.4, 3, C(o.hood));
     rr(ctx, -6, -36.6, 3.4, 12.4, 3, S(o.hood, -0.2));
-    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(1.6, -32.2, 4.4, 2.2);
+    limb(ctx, -3, -35, -2.4, -27, 0.5, S(o.hood, -0.28)); limb(ctx, 0.4, -36, 3.4, -33.6, 0.5, S(o.hood, 0.14));
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(1.6, -32.2, 4.4, 2.4);
   } else if (o.cap) {
-    if (bareHead) { rr(ctx, -5.2, -33, 2.6, 6, 1.2, hc); }
+    if (bareHead) { rr(ctx, -5.2, -33, 2.6, 6, 1.2, hc); strand(-4.4, -32.4, -4.6, -27.6, hd, 0.45); }
     rr(ctx, -5.6, -36.6, 11, 4.6, 2.6, C(o.cap)); rr(ctx, -5.6, -36.6, 3.4, 4.6, 2, S(o.cap, -0.2));
     rr(ctx, 2.6, -33.2, 4.2, 1.3, 0.6, S(o.cap, -0.25)); rr(ctx, -2, -36.2, 4.2, 1, 0.5, S(o.cap, 0.2));
+    limb(ctx, -1, -36.4, 1.6, -32.6, 0.45, S(o.cap, -0.3));
   } else if (o.helmet) {
     const hm = o.helmet;
     rr(ctx, -5.8, -31.6, 2.8, 6, 1, S(hm, -0.3));
     rr(ctx, -5.8, -37.4, 11.6, 7.6, 4.4, C(hm));
     rr(ctx, -5.8, -37.4, 4, 7.6, 3.4, S(hm, -0.2));
     ctx.fillStyle = S(hm, -0.35); ctx.fillRect(-5.8, -31.9, 11.6, 1.5);
+    ctx.fillStyle = S(hm, 0.3); for (const x of [-3.6, -0.6, 2.4]) ctx.fillRect(x, -31.6, 0.7, 0.7);
     rr(ctx, 3.6, -32, 1.3, 4.6, 0.5, S(hm, -0.1));
+    limb(ctx, 0.4, -37.2, 0.6, -32.2, 0.6, S(hm, -0.18));                         // crista
     rr(ctx, -2.2, -36.6, 4.4, 1.3, 0.6, S(hm, 0.4)); ctx.fillStyle = S(hm, 0.55); ctx.fillRect(-1.4, -36.3, 1.4, 0.6);
   }
   if (o.crown) {
     const g = C('#e8b923'), gd = shd(g, -0.3);
     ctx.fillStyle = gd; ctx.fillRect(-5.2, -36.4, 10.4, 2.4);
     poly(ctx, [-5.2, -36, -4.4, -40, -3.2, -36.4], g); poly(ctx, [-1.4, -36.4, -0.2, -40.8, 1, -36.4], g); poly(ctx, [2.8, -36.4, 4, -40, 5.2, -36], g);
+    ell(ctx, -4.4, -40.2, 0.6, 0.6, C('#f4f0e8')); ell(ctx, -0.2, -41, 0.7, 0.7, C('#f4f0e8')); ell(ctx, 4, -40.2, 0.6, 0.6, C('#f4f0e8'));
     ctx.fillStyle = g; ctx.fillRect(-5.2, -36.8, 10.4, 1.4);
     ctx.fillStyle = C('#d0303a'); ctx.fillRect(-0.7, -35.6, 1.4, 1.4); ctx.fillStyle = C('#3a6ad0'); ctx.fillRect(-4, -35.4, 1.1, 1.1); ctx.fillRect(3, -35.4, 1.1, 1.1);
     ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(-4.6, -36.6, 8, 0.4);
   }
-  // ---- braço da frente
+  // ---- braço da frente: manga, punho e mão com polegar
   let fhx, fhy;
   if (holding) { fhx = 6.6; fhy = -15; }
   else { const fa = o.moving ? Math.sin(t * 12) * 0.55 : 0.05; fhx = 4.6 + Math.sin(fa) * 6; fhy = -21 + Math.cos(fa) * 8.6; }
-  limb2(ctx, 3.8, -21.2, (3.8 + fhx) / 2 + 0.6, (-21.2 + fhy) / 2 + 0.4, fhx, fhy, 3.5, C(sleeve));
-  limb(ctx, 4.6, -20.6, (4.6 + fhx) / 2 + 0.8, (-20.6 + fhy) / 2, 1, S(sleeve, 0.18));
+  const ex = (3.8 + fhx) / 2 + 0.6, ey = (-21.2 + fhy) / 2 + 0.4;
+  limb2(ctx, 3.8, -21.2, ex, ey, fhx, fhy, 3.5, C(sleeve));
+  limb(ctx, 4.6, -20.6, ex + 0.2, ey, 1, S(sleeve, 0.18));
+  limb(ctx, ex + (fhx - ex) * 0.62, ey + (fhy - ey) * 0.62, fhx, fhy - 0.3, 3.7, o.armor ? S(o.armor, 0.12) : trim);   // punho
   ell(ctx, fhx, fhy + 0.5, 1.45, 1.6, S(skin, -0.06)); ell(ctx, fhx + 0.4, fhy + 0.1, 0.6, 0.5, S(skin, 0.12));
+  ell(ctx, fhx + 1.1, fhy - 0.2, 0.55, 0.75, S(skin, -0.12));                    // polegar
   // ---- escudo erguido
   if (o.shieldUp && o.shield) {
     poly(ctx, [4.6, -26, 13.2, -26, 13.2, -17.4, 8.9, -9.4, 4.6, -17.4], S(o.shield, -0.4));
@@ -523,12 +615,20 @@ function drawHuman(ctx, x, y, o) {
   const s = o.scale || 1, dir = o.dir < 0 ? -1 : 1, fr = humanFrame(o);
   const tf = ctx.getTransform(), res = Math.max(1, Math.min(10, Math.round(Math.hypot(tf.a, tf.b) * s * 2) / 2));
   const key = [fr.key, dir, res, o.body, o.legs, o.skin, o.hair, o.hairStyle, o.beardStyle, o.beard, o.armor, o.helmet, o.cap, o.hood, o.crown, o.cape,
-    o.skirt, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, !!(o.weapon || o.swing > 0 || o.rod)].join('|');
+    o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, !!(o.weapon || o.swing > 0 || o.rod)].join('|');
   let cv = HUMAN_CACHE.get(key);
   if (!cv) {
     cv = document.createElement('canvas'); cv.width = Math.ceil(44 * res); cv.height = Math.ceil(54 * res);
     const g = cv.getContext('2d'); g.scale(res, res); g.translate(22, 46);
     humanBody(g, o, dir, fr.t);
+    // contorno escuro e suave em volta da figura (deixa a pessoa nítida sobre qualquer chão)
+    const sil = document.createElement('canvas'); sil.width = cv.width; sil.height = cv.height;
+    const sg = sil.getContext('2d'); sg.drawImage(cv, 0, 0); sg.globalCompositeOperation = 'source-in'; sg.fillStyle = 'rgba(24,14,8,0.62)'; sg.fillRect(0, 0, sil.width, sil.height);
+    const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height;
+    const og = out.getContext('2d'), d1 = Math.max(1, Math.round(res * 0.5));
+    for (const [dx, dy] of [[d1, 0], [-d1, 0], [0, d1], [0, -d1]]) og.drawImage(sil, dx, dy);
+    og.drawImage(cv, 0, 0);
+    cv = out;
     if (HUMAN_CACHE.size > 900) HUMAN_CACHE.delete(HUMAN_CACHE.keys().next().value);
     HUMAN_CACHE.set(key, cv);
   }
@@ -536,6 +636,7 @@ function drawHuman(ctx, x, y, o) {
   ctx.save();
   ctx.translate(Math.round(x), Math.round(y));
   ctx.scale(s, s);
+  ell(ctx, 0, 0, 9.5, 3.2, 'rgba(0,0,0,0.26)'); ell(ctx, 0, 0, 6, 2, 'rgba(0,0,0,0.12)'); // sombra no chão
   ctx.drawImage(cv, -22, -46, cv.width / res, cv.height / res);
 
   // ---- arma ou ferramenta (no mundo: a mira não é espelhada)
@@ -724,7 +825,7 @@ function playerLook() {
   return {
     body: torso ? torso.color : ((P.style && P.style.tunic) || (female ? '#8f3d5e' : '#3d6b8f')), legs: legs ? legs.color : ((P.style && P.style.pants) || '#4a3a2a'),
     hair: People.hairAt(P.hairBase || '#4a2a12', P.age || 25), hairStyle: (P.style && P.style.hair) || (female ? 'long' : 'short'),
-    beardStyle: female ? 'none' : ((P.style && P.style.beard) || ((P.age || 25) >= 22 ? 'short' : 'none')), skirt: female && !legs && !(P.style && P.style.noSkirt), skin: P.skin || '#f0c896',
+    beardStyle: female ? 'none' : ((P.style && P.style.beard) || ((P.age || 25) >= 22 ? 'short' : 'none')), fem: female, skirt: female && !legs && !(P.style && P.style.noSkirt), skin: P.skin || '#f0c896',
     shield: P.equip.shield ? ITEMS[P.equip.shield].color : null, shieldUp: !!P.blocking,
     armor: torso && torso.def >= 3 ? torso.color : null,
     boots: feet ? feet.color : null,

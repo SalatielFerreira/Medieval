@@ -199,7 +199,7 @@ const People = {
       cap: head && head.def < 2 ? head.color : (p.rank === 'hunter' ? '#3a4a20' : null),
       hood: p.rank === 'beggar' ? '#5a4a38' : null,
       hair: this.hairAt(p.hair, p.age), skin: p.skin, hairStyle: p.hairStyle || (p.sex === 'f' ? 'long' : 'short'),
-      beardStyle: p.sex === 'm' && p.age >= 18 ? (p.beardStyle || (p.id % 3 ? 'short' : 'none')) : 'none', skirt: p.sex === 'f',
+      fem: p.sex === 'f', beardStyle: p.sex === 'm' && p.age >= 18 ? (p.beardStyle || (p.id % 3 ? 'short' : 'none')) : 'none', skirt: p.sex === 'f',
       crown: royal, cape: royal ? '#7a1f2a' : (p.rank === 'heir' ? '#2a4a8a' : null),
       weapon: it('weapon') ? it('weapon').color : (RANKS[p.rank].fighter || p.capanga ? '#cfd6dd' : null), wlen: it('weapon') ? it('weapon').len : 18,
       shield: p.rank === 'knight' && p.civ >= 0 ? CIV_DEFS[p.civ].color : null,
