@@ -92,6 +92,7 @@ const Urban = {
     World.regrow = World.regrow.filter(r => r.i !== i);
     const E = this.E();
     E.roads[i] = k; E.mine[i] = orig;
+    NpcRoads.rebuilt(i);
     Progress.add('roads');
     Game.burst((tx + 0.5) * TILE, (ty + 0.6) * TILE, '#a8885a', 5);
     Sound.play('chop', { vol: 0.4 });
@@ -124,6 +125,7 @@ const Urban = {
     const ground = mine ? E.mine[i] : this.groundOf(i);
     World.setTile(i, ground);
     if (mine) { delete E.mine[i]; delete E.roads[i]; } else E.roads[i] = ground;
+    NpcRoads.removed(i);
 
     Game.burst((tx + 0.5) * TILE, (ty + 0.6) * TILE, '#6e4f2e', 5);
     Sound.play('mine', { vol: 0.35 });
@@ -426,7 +428,7 @@ const Chiefdom = {
   vilOf(p) { return World.villages.findIndex(v => v.chief === p.id); },
   // pela diplomacia: pedir a chefia ao rei
   askNeed(vi) {
-    const v = World.villages[vi], t = Court.T(), noble = t.civ === v.civ && t.lvl >= 1;
+    const v = World.villages[vi], noble = Court.levelIn(v.civ) >= 1;
     return { rel: noble ? 35 : 50, gold: Math.max(100, 250 + People.residents(vi).length * 15 - (noble ? 100 : 0)), noble };
   },
   ask(vi) {
@@ -465,7 +467,7 @@ const Chiefdom = {
         + (['orgulhoso', 'desconfiado', 'corajoso'].includes(tr) ? 0.15 : 0) - (['gentil', 'alegre'].includes(tr) ? 0.1 : 0), 0.05, 0.9);
       if (Math.random() < p) {
         c.atWar = true; Game.addRelation(v.civ, -40);
-        if (Court.T().civ === v.civ) Court.loseTitle('você atacou uma vila do seu suserano');
+        if (Court.levelIn(v.civ) >= 0) Court.loseTitle('você atacou uma vila do seu suserano', v.civ);
         UI.msg(`👑 ${c.rulerName} considera o ataque a ${v.name} uma afronta à coroa e declara guerra a você!`, 'bad');
         Diplo.chronicle(`⚔️ ${G.name} ${G.surname} atacou ${v.name} e ${c.rulerName} declarou guerra.`, true);
       } else {

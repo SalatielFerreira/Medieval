@@ -113,15 +113,28 @@ const Routine = {
     return e.house && !e.house.removed ? this.door(e.house) : null;
   },
   update(e, dt, sp) {
-    if (G.dungeon || e.vi === undefined || !e.npc) return false;
+    if (G.dungeon || !e.npc) return false;
+    // partindo em viagem: anda até a saída da vila e some na estrada
+    if (e.leaving) {
+      this.go(e, e.leaving.x, e.leaving.y, sp * 0.7, dt);
+      if (U.dist(e.x, e.y, e.leaving.x, e.leaving.y) < 20 || U.dist(e.x, e.y, P.x, P.y) > 26 * TILE) { e.dead = true; G.spawned.delete(e.npc.id); }
+      return true;
+    }
+    if (e.vi === undefined) return false;
     const ph = this.phase();
     if (e.sleeping) { if (ph === 'night' && e.house && !e.house.removed) return true; e.sleeping = false; return false; }
     if (ph === 'day') {
       e.nightT = 0;
+      // de manhã quem trabalha sai de casa e vai a pé até o trabalho (loja, capela, porto, empreendimento)
+      if (e.workAt && !e.atWork) {
+        if (U.dist(e.x, e.y, e.workAt.x, e.workAt.y) > 18) { this.go(e, e.workAt.x, e.workAt.y, sp * 0.65, dt); return true; }
+        e.atWork = true; e.home = { x: e.workAt.x, y: e.workAt.y };
+      }
       // quem está construindo a casa da família trabalha na obra
       const b = e.npc.age >= 16 && !SHOP_RANKS.includes(e.npc.rank) && e.npc.rank !== 'priest' ? Homes.buildOf(e.npc) : null;
       return b ? Homes.work(e, b, dt, sp) : false;
     }
+    e.atWork = false; // amanhã cedo vai de novo até o trabalho
     e.house = Homes.houseOf(e.npc); // a casa pode ter ficado pronta (ou ter sido demolida)
     // larga o trabalho: o que estava carregando vai para a vila
     if (e.work && e.work.mode !== 'idle') { if (e.work.carry) NPCWork.deposit(e, e.work); e.work.mode = 'idle'; e.work.t = 5; }
@@ -150,4 +163,64 @@ const Routine = {
     const h = Game.hour();
     return this.occ.has(s.id) || (h >= 17 && h < 22);
   },
+};
+
+// ====================================================================== passeios para outros reinos
+// Desempregados e crianças viajam de vez em quando para vilas de outros reinos que estão em paz com o seu.
+// Ficam lá alguns meses como visitantes (você os encontra pela vila) e depois voltam para casa.
+const Trips = {
+  canGo(p) {
+    if (!p || !p.alive || p.trip || p.home.type !== 'village' || !World.villages[p.home.idx]) return false;
+    if (G.day - (p.tripBack === undefined ? -99 : p.tripBack) < 3) return false; // fica um tempo em casa entre um passeio e outro
+    if (p.capanga || p.kin || p.council || p.port || p.spouse === 'player' || (p.job !== undefined && p.job !== null) || p.hostile) return false;
+    if (Families.isChief(p) || People.isCourt(p)) return false;
+    return (p.age >= 6 && p.age < 14) || (p.age >= 14 && ['peasant', 'wanderer', 'beggar', 'child'].includes(p.rank));
+  },
+  civOfVillage(vi) { const v = World.villages[vi]; return v ? v.civ : -1; },
+  peaceful(a, b) { return a !== b && a >= 0 && b >= 0 && !Diplo.atWar(a, b); },
+  destinations(p) {
+    const from = World.villages[p.home.idx], civ = from.civ;
+    return World.villages.map((v, vi) => ({ v, vi })).filter(x => !x.v.free && this.peaceful(civ, x.v.civ))
+      .sort((a, b) => U.dist(a.v.x, a.v.y, from.x, from.y) - U.dist(b.v.x, b.v.y, from.x, from.y));
+  },
+  where(p) { return p && p.trip && World.villages[p.trip.vi] ? World.villages[p.trip.vi] : null; },
+  // uma vez por mês: quem está fora volta (no fim da viagem ou se estourar uma guerra) e alguns saem para passear
+  monthTick() {
+    if (G.dungeon) return;
+    for (const p of G.people) {
+      if (!p.alive || !p.trip) continue;
+      const home = p.home.type === 'village' ? this.civOfVillage(p.home.idx) : -1, dest = this.civOfVillage(p.trip.vi);
+      const war = !this.peaceful(home, dest);
+      if (G.day >= p.trip.until || war || !this.canStay(p)) this.end(p, war);
+    }
+    for (const p of G.people) {
+      if (!this.canGo(p)) continue;
+      if (Math.random() > (p.age < 14 ? 0.025 : 0.04)) continue;
+      const list = this.destinations(p);
+      if (!list.length) continue;
+      const pick = list[Math.min(list.length - 1, Math.floor(Math.random() * Math.min(4, list.length)))];
+      this.start(p, pick.vi, U.rint(1, 3));
+    }
+  },
+  canStay(p) { return p.alive && !p.capanga && (p.job === undefined || p.job === null); },
+  start(p, vi, months) {
+    p.trip = { vi, until: G.day + months, since: G.day };
+    const e = G.spawned.get(p.id);
+    if (e && !e.dead) {
+      // sai andando pela estrada, na direção da vila de destino
+      const v = World.villages[vi], a = Math.atan2(v.y * TILE - e.y, v.x * TILE - e.x);
+      e.leaving = { x: e.x + Math.cos(a) * 18 * TILE, y: e.y + Math.sin(a) * 18 * TILE };
+      e.sleeping = false;
+    }
+    if (p.met || p.aff >= 10) UI.msg(`🧳 ${People.full(p)} saiu para passear em ${World.villages[vi].name} (${CIV_DEFS[World.villages[vi].civ].short}).`);
+  },
+  end(p, war) {
+    const v = this.where(p);
+    delete p.trip; p.tripBack = G.day;
+    const e = G.spawned.get(p.id);
+    if (e) { e.dead = true; G.spawned.delete(p.id); } // reaparece em casa
+    if (v && (p.met || p.aff >= 10)) UI.msg(war ? `⚔️ ${People.full(p)} voltou às pressas de ${v.name}: estourou uma guerra.` : `🏠 ${People.full(p)} voltou do passeio em ${v.name}.`);
+  },
+  // visitantes aparecem pela vila de destino (perto da taverna ou da praça)
+  visitors(vi) { return G.people.filter(p => p.alive && p.trip && p.trip.vi === vi); },
 };

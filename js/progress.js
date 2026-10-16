@@ -114,3 +114,74 @@ const Progress = {
     this.diary(`${PROFESSIONS[k].icon} ${p.name} escolheu ser ${p.sex === 'f' ? PROFESSIONS[k].f : PROFESSIONS[k].name}.`);
   },
 };
+
+// ====================================================================== ranking do mundo (Diário → Ranking)
+// Atributos das pessoas criados na primeira vez que alguém olha (e guardados com elas): força, inteligência e mortes
+// combinam com quem a pessoa é (cavaleiro forte, padre e conselheiro estudados, caçador que já abateu muito...).
+const Ranking = {
+  STR: { knight: 70, mercenary: 66, smith: 60, mason: 58, lumber: 56, hunter: 55, sailor: 52, peasant: 42, ruler: 50, heir: 48, consort: 38, merchant: 34, innkeeper: 38, priest: 28, wanderer: 40, beggar: 26, child: 12 },
+  INT: { priest: 72, ruler: 66, consort: 60, merchant: 60, heir: 56, innkeeper: 48, smith: 46, knight: 44, sailor: 42, mason: 38, lumber: 34, hunter: 36, mercenary: 34, peasant: 32, wanderer: 40, beggar: 26, child: 20 },
+  KILLS: { knight: [8, 45], mercenary: [12, 60], hunter: [25, 90], ruler: [2, 20], heir: [0, 10], sailor: [0, 8] },
+  // gera os atributos de uma pessoa (uma vez só)
+  stats(p) {
+    if (p.str === undefined) {
+      const h = (n) => U.hash2(p.id, n, 4321);
+      const ageF = p.age < 14 ? 0.35 + p.age * 0.04 : p.age > 55 ? Math.max(0.55, 1 - (p.age - 55) * 0.02) : 1;
+      p.str = Math.round(U.clamp(((this.STR[p.rank] || 40) + (h(1) - 0.5) * 30) * ageF, 3, 99));
+      p.int = Math.round(U.clamp((this.INT[p.rank] || 35) + (h(2) - 0.5) * 34 + (p.comp ? p.comp * 2 : 0) + Math.min(10, p.age / 6), 3, 99));
+      const k = this.KILLS[p.rank]; p.kills = (p.kills || 0) + (k ? Math.round(k[0] + h(3) * (k[1] - k[0])) : Math.round(h(3) * 2));
+    }
+    return p;
+  },
+  // o nível de uma pessoa: idade, mortes, cargo e (para capangas) o nível de capanga
+  level(p) {
+    this.stats(p);
+    const rankB = { ruler: 8, consort: 4, heir: 3, knight: 6, mercenary: 5, hunter: 3, priest: 2, merchant: 2, smith: 2, sailor: 2 }[p.rank] || 0;
+    return Math.max(1, Math.min(40, Math.round(1 + Math.min(p.age, 50) / 10 + p.kills / 8 + rankB + (p.clvl || 0) + (p.council ? 3 : 0))));
+  },
+  wealth(p) {
+    const f = Families.of(p), share = f && !f.player ? f.wealth / Math.max(1, Families.adults(f).length) : 0;
+    const crown = p.rank === 'ruler' && p.civ >= 0 && G.civs[p.civ] ? G.civs[p.civ].treasury * 0.25 : 0;
+    return Math.round((p.purse || 0) + share + crown);
+  },
+  // popularidade: o quanto o povo conhece e admira a pessoa (cargo, família, filhos, chefia de vila)
+  popularity(p) {
+    const rankB = { ruler: 90, consort: 55, heir: 40, knight: 28, priest: 26, merchant: 18, innkeeper: 22, smith: 14, sailor: 12, mercenary: 10, hunter: 10 }[p.rank] || 4;
+    const f = Families.of(p);
+    return Math.round(rankB + (f && !f.player ? Families.influence(f) / 4 : 0) + (Families.isChief(p) ? 30 : 0) + p.children.length * 3 + (p.council ? 20 : 0) + Math.max(0, p.aff) / 10);
+  },
+  // o herói nas mesmas escalas
+  hero() {
+    const kids = G.people.filter(q => q.alive && (q.kin === 'child' || (q.parents || []).includes('player'))).length;
+    return { you: true, name: `${G.name} ${G.surname || ''}`.trim(), sub: 'Você',
+      wealth: P.gold, popularity: Math.round(Court.fame() + G.civs.filter(c => c.ruler === 'player').length * 90 + Court.titledCivs().length * 25 + kids * 3),
+      kills: Court.kills(G.stats || {}), children: kids, str: Math.round(U.clamp(18 + P.level * 3 + Game.pDmg() * 0.8, 1, 99)),
+      int: Math.round(U.clamp(22 + P.level * 2.5 + (Faith.piety ? Faith.piety() / 8 : 0) + (G.stats.crafted || 0) / 25, 1, 99)), level: P.level, age: P.age };
+  },
+  rows() {
+    const out = [this.hero()];
+    for (const p of G.people) {
+      if (!p.alive) continue;
+      this.stats(p);
+      out.push({ p, name: People.full(p), sub: People.title(p), wealth: this.wealth(p), popularity: this.popularity(p), kills: p.kills, children: p.children.length,
+        str: p.str, int: p.int, level: this.level(p), age: p.age, friend: p.aff });
+    }
+    return out;
+  },
+  CATS: [
+    ['wealth', '💰', 'Mais ricos', v => v.toLocaleString('pt-BR') + ' 🪙'],
+    ['popularity', '🌟', 'Mais populares', v => v + ' de prestígio'],
+    ['kills', '⚔️', 'Que mais derrotaram inimigos', v => v + (v === 1 ? ' derrota' : ' derrotas')],
+    ['children', '👶', 'Que têm mais filhos', v => v + (v === 1 ? ' filho' : ' filhos')],
+    ['str', '💪', 'Mais fortes', v => 'força ' + v],
+    ['int', '🧠', 'Mais inteligentes', v => 'inteligência ' + v],
+    ['level', '⭐', 'Nível mais alto', v => 'nível ' + v],
+    ['age', '🧓', 'Mais velhos', v => v + ' anos'],
+    ['friend', '🤝', 'Seus maiores amigos', v => 'amizade ' + Math.round(v)],
+  ],
+  top(rows, key, n = 3) {
+    return rows.filter(r => r[key] !== undefined && !(key === 'friend' && (r.you || r.friend <= 0))).sort((a, b) => b[key] - a[key] || (a.you ? -1 : 0)).slice(0, n);
+  },
+  // posição do herói em cada categoria
+  place(rows, key) { const s = rows.filter(r => r[key] !== undefined).sort((a, b) => b[key] - a[key]); return s.findIndex(r => r.you) + 1; },
+};

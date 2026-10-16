@@ -26,7 +26,20 @@ const COUNCIL = {
 
 const Court = {
   // ------------------------------------------------------------ títulos do herói
+  // o herói pode ter um título em cada reino (até mesmo sendo rei do seu). G.titles = { reino: nível }.
+  // G.title continua guardando o título principal (o mais alto), que é o que aparece no nome e dá as vantagens gerais.
   T() { return G.title || (G.title = { lvl: -1, civ: -1 }); },
+  holdings() {
+    if (!G.titles) { G.titles = {}; const t = this.T(); if (t.lvl >= 0 && t.civ >= 0) G.titles[t.civ] = t.lvl; }
+    return G.titles;
+  },
+  levelIn(ci) { const h = this.holdings(); return h[ci] !== undefined ? h[ci] : -1; },
+  // reinos onde o herói tem título, do mais alto para o mais baixo
+  titledCivs() { const h = this.holdings(); return Object.keys(h).map(Number).filter(ci => h[ci] >= 0).sort((a, b) => h[b] - h[a] || a - b); },
+  syncPrincipal() {
+    const t = this.T(), list = this.titledCivs();
+    if (list.length) { t.civ = list[0]; t.lvl = this.holdings()[list[0]]; } else { t.civ = -1; t.lvl = -1; }
+  },
   title() { const t = this.T(); return t.lvl >= 0 ? NOBLE_TITLES[t.lvl] : null; },
   titleName(lvl, civ) {
     const t = NOBLE_TITLES[lvl === undefined ? this.T().lvl : lvl];
@@ -57,7 +70,7 @@ const Court = {
   },
   // o que falta para o próximo título neste reino
   nextReq(ci) {
-    const t = this.T(), lvl = t.civ === ci ? t.lvl + 1 : 0, nt = NOBLE_TITLES[lvl];
+    const lvl = this.levelIn(ci) + 1, nt = NOBLE_TITLES[lvl];
     if (!nt) return null;
     const c = G.civs[ci], serv = this.service(ci) + Math.floor(this.fame() / 5);
     return { lvl, t: nt, checks: [
@@ -71,19 +84,14 @@ const Court = {
   requestTitle(ci) {
     const r = this.nextReq(ci);
     if (!r || !r.checks.every(x => x[1])) { UI.msg('Você ainda não cumpre as exigências para este título.', 'bad'); return false; }
-    const t = this.T();
-    if (t.civ >= 0 && t.civ !== ci && t.lvl >= 0) {
-      Dialog.confirm({ icon: '⚜️', title: 'Jurar lealdade', text: `Jurar lealdade a ${CIV_DEFS[ci].short}? Você perde o título de ${this.titleName()}.`, ok: 'Jurar lealdade', danger: true },
-        () => { this.grantTitle(ci, r); UI.refresh(); });
-      return false;
-    }
+    if (G.civs[ci].ruler === 'player') { UI.msg('Este reino já é seu: quem concede títulos aqui é você.', 'bad'); return false; }
     return this.grantTitle(ci, r);
   },
   grantTitle(ci, r) {
-    const t = this.T();
     P.gold -= r.t.fee; G.civs[ci].treasury += r.t.fee;
-    t.lvl = r.lvl; t.civ = ci;
-    const name = this.titleName();
+    this.holdings()[ci] = r.lvl;
+    this.syncPrincipal();
+    const name = this.titleName(r.lvl, ci);
     UI.banner(`${r.t.icon} ${G.name}, ${name}!`);
     UI.msg(`${G.civs[ci].rulerName} concede a você o título de ${name}. ${r.t.perks}.`, 'gold', true);
     Progress.diary(`${r.t.icon} Recebeu o título de ${name}.`);
@@ -91,24 +99,29 @@ const Court = {
     Game.addRelation(ci, 5);
     return true;
   },
-  loseTitle(why) {
-    const t = this.T();
-    if (t.lvl < 0) return;
-    UI.msg(`Você perdeu o título de ${this.titleName()} — ${why}.`, 'bad');
-    Progress.diary(`💔 Perdeu o título de ${this.titleName()} (${why}).`);
-    t.lvl = -1; t.civ = -1;
+  // perde o título de um reino (por padrão, o principal); os títulos dos outros reinos continuam
+  loseTitle(why, ci) {
+    if (ci === undefined) ci = this.T().civ;
+    const lvl = this.levelIn(ci);
+    if (lvl < 0) return;
+    const name = this.titleName(lvl, ci);
+    UI.msg(`Você perdeu o título de ${name} — ${why}.`, 'bad');
+    Progress.diary(`💔 Perdeu o título de ${name} (${why}).`);
+    delete this.holdings()[ci];
+    this.syncPrincipal();
   },
   capBonus() { const t = this.title(); return t ? t.caps : 0; },
   villageTax() { const t = this.title(); return t ? t.tax : 2; },
   canFound() { return true; }, // qualquer um pode fundar a própria vila (basta o ouro e um lugar aberto)
-  discount(ci) { const t = this.T(); return t.lvl >= 0 && t.civ === ci ? 0.05 + t.lvl * 0.02 : 0; },
+  discount(ci) { const l = this.levelIn(ci); return l >= 0 ? 0.05 + l * 0.02 : 0; },
+  // cada reino onde você tem título paga a renda do título (menos os reinos que já são seus)
   stipendTick() {
-    const t = this.title();
-    if (!t || !t.stipend) return;
-    const c = G.civs[this.T().civ];
-    if (c.ruler === 'player') return;
-    const g = Math.min(t.stipend, Math.max(0, c.treasury - 50));
-    if (g > 0) { c.treasury -= g; P.gold += g; Game.note(`${t.icon} Renda do seu título: +${g} 🪙 de ${CIV_DEFS[this.T().civ].short}.`); }
+    for (const ci of this.titledCivs()) {
+      const t = NOBLE_TITLES[this.levelIn(ci)], c = G.civs[ci];
+      if (!t || !t.stipend || !c || c.ruler === 'player') continue;
+      const g = Math.min(t.stipend, Math.max(0, c.treasury - 50));
+      if (g > 0) { c.treasury -= g; P.gold += g; Game.note(`${t.icon} Renda do título de ${this.titleName(this.levelIn(ci), ci)}: +${g} 🪙.`); }
+    }
   },
 
   // ------------------------------------------------------------ conselho real

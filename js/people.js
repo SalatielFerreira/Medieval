@@ -34,6 +34,7 @@ const RANKS = {
   mercenary: { m: 'Mercenário', f: 'Mercenária', fighter: true, order: 6 },
   peasant:   { m: 'Camponês', f: 'Camponesa', order: 7 },
   priest:    { m: 'Padre', f: 'Madre', order: 6 },
+  sailor:    { m: 'Marinheiro', f: 'Marinheira', order: 6 },
   wanderer:  { m: 'Andarilho', f: 'Andarilha', order: 8 },
   beggar:    { m: 'Mendigo', f: 'Mendiga', order: 9 },
   child:     { m: 'Criança', f: 'Criança', order: 10 },
@@ -42,7 +43,7 @@ const RANKS = {
 const RANK_LOOK = {
   ruler: '#7a1f2a', consort: '#6a2a6a', heir: '#2a4a8a', knight: '#8d949c', merchant: '#6d7f4a', smith: '#4a3a30',
   lumber: '#6a4a26', mason: '#7a7468', innkeeper: '#8a5a3a', hunter: '#4a5a2a', mercenary: '#5a4a3a', peasant: '#8a6d4a',
-  wanderer: '#5a6a7a', beggar: '#6b5a45', child: '#a07a50', priest: '#2a2a34',
+  wanderer: '#5a6a7a', beggar: '#6b5a45', child: '#a07a50', sailor: '#2a4a6a', priest: '#2a2a34',
 };
 
 const TRAITS = {
@@ -405,7 +406,7 @@ const People = {
     // ofício passa para um filho adulto
     const shopRanks = ['merchant', 'smith', 'lumber', 'mason', 'innkeeper', 'hunter', 'ruler'];
     if (shopRanks.includes(p.rank)) {
-      const heir = p.children.map(id => G.people[id]).filter(c => c && c.alive && c.age >= 14 && !c.capanga && !c.kin && c.spouse !== 'player').sort((a, b) => b.age - a.age)[0];
+      const heir = p.children.map(id => G.people[id]).filter(c => c && c.alive && c.age >= 14 && !c.capanga && !c.kin && c.spouse !== 'player' && (p.rank === 'ruler' || !this.isCourt(c))).sort((a, b) => b.age - a.age)[0];
       if (heir) {
         heir.rank = p.rank; heir.home = p.home;
         if (known || p.rank === 'ruler') UI.msg(`${this.full(heir)} herdou o ofício de ${this.title(heir)}.`, 'gold');
@@ -429,8 +430,13 @@ const People = {
   },
   // ofício sem herdeiro: o rei escolhe um morador sem emprego da mesma vila para cuidar da loja
   // (rei NPC escolhe na hora; no reino do jogador, o ofício fica vago até você nomear alguém — Portfólio → seu reino)
+  // cargo real ou na corte (família real, cavaleiros, conselheiros e quem mora no castelo): não trabalha em loja
+  isCourt(p) {
+    return !!p && (['ruler', 'consort', 'heir', 'knight'].includes(p.rank) || !!p.council || (p.home && p.home.type === 'castle') ||
+      (G.courtier && G.courtier.npc === p.id));
+  },
   shopCandidates(vi, rank) {
-    return this.residents(vi).filter(q => q.age >= 18 && (q.rank === 'peasant' || q.rank === 'wanderer' || q.rank === 'beggar') && !q.kin && q.spouse !== 'player' && !q.capanga && !Families.isChief(q))
+    return this.residents(vi).filter(q => q.age >= 18 && (q.rank === 'peasant' || q.rank === 'wanderer' || q.rank === 'beggar') && !q.kin && q.spouse !== 'player' && !q.capanga && !Families.isChief(q) && !this.isCourt(q))
       .sort((a, b) => (b.age < 50) - (a.age < 50) || b.aff - a.aff);
   },
   // quem nomeia o novo dono de uma loja vaga: o senhor da vila (inclusive a vila que você fundou) ou o rei dela

@@ -32,24 +32,50 @@ const Arena = {
   fighterName(ci, tier) { return `${U.pick(NAMES_M.concat(NAMES_F))} ${U.pick(EPITHETS)}`; },
 
   // ------------------------------------------------------------ duelo na arena (não é mortal)
+  // ------------------------------------------------------------ só quem luta pisa na arena
+  zoneAt(x, y) {
+    if (typeof World === 'undefined' || !World.capitals || G.dungeon) return null;
+    for (const cp of World.capitals) {
+      const s = cp && cp.arena;
+      if (!s || s.removed || s.hidden) continue;
+      if (x >= s.x * TILE && x < (s.x + s.w) * TILE && y >= s.y * TILE && y < (s.y + s.h) * TILE + 6) return s;
+    }
+    return null;
+  },
+  fighter(e) { return !!G.duel && (e === P || e === G.duel.ent); },
+  // impede entrar na arena quem não está lutando (quem já está dentro pode sair)
+  keepsOut(e, x, y) {
+    const a = this.zoneAt(x, y);
+    if (!a || this.zoneAt(e.x, e.y) === a || this.fighter(e)) return false;
+    return true;
+  },
+  // tira da arena quem não está lutando (e põe o herói na entrada quando a luta acaba)
+  clear(s, keepPlayer) {
+    if (!s) return;
+    const out = (e) => { const p = freeSpotNear((s.x + s.w / 2) * TILE, (s.y + s.h + 1.6) * TILE, 2.5 * TILE); e.x = p.x; e.y = p.y; };
+    for (const e of G.ents) if (!e.dead && e !== (G.duel && G.duel.ent) && this.zoneAt(e.x, e.y) === s) out(e);
+    if (!keepPlayer && this.zoneAt(P.x, P.y) === s) out(P);
+  },
   startDuel(ci, tier, bet, round) {
     if (G.duel) return;
     if (bet > P.gold) bet = P.gold;
     P.gold -= bet;
     const t = ARENA_TIERS[tier], c = this.center(ci);
-    P.x = c.x - 70; P.y = c.y; P.mounted = false;
+    P.x = c.x - 40; P.y = c.y; P.mounted = false; // os dois lutadores começam dentro da arena
     for (const a of Game.allies()) { const s = freeSpotNear(c.x - 160, c.y + 60, 60); a.x = s.x; a.y = s.y; }
-    const e = Game.spawn('champion', c.x + 70, c.y, { leash: 6 * TILE });
+    const e = Game.spawn('champion', c.x + 40, c.y, { leash: 6 * TILE });
     const mult = 1 + (P.level - 1) * 0.06;
     e.hp = e.maxHp = Math.round(t.hp * mult); e.dmg = Math.round(t.dmg * mult); e.home = { x: c.x, y: c.y }; e.leash = 6 * TILE;
     e.duelName = this.fighterName(ci, tier); e.aggroOv = 20; e.target = P;
     G.duel = { ci, tier, bet, ent: e, round: round || 0, tourney: round !== undefined };
+    this.clear(this.arenaOf(ci), true); // a plateia sai da areia
     UI.close();
     UI.banner(`⚔️ ${e.duelName} (${t.name})`);
     UI.msg(`Duelo na arena de ${CIV_DEFS[ci].short}! Derrote ${e.duelName}. Ninguém morre: quem cair primeiro perde.${bet ? ` Aposta: ${bet} 🪙 (paga ${t.odds}×).` : ''}`, 'gold');
   },
   // o campeão foi derrotado
   win() {
+    const ar = G.duel ? this.arenaOf(G.duel.ci) : null;
     const d = G.duel; if (!d) return;
     G.duel = null;
     const t = ARENA_TIERS[d.tier], won = Math.round(d.bet * t.odds);
@@ -58,9 +84,11 @@ const Arena = {
     P.hp = Math.max(P.hp, P.maxHp * 0.5);
     UI.msg(`🏆 Vitória na arena! Prêmio ${t.prize} 🪙${won ? ` + aposta ${won} 🪙` : ''} · +${t.fame} de fama.`, 'gold', true);
     Sound.play('levelup');
-    if (d.tourney) this.tourneyNext(d.ci, d.round);
+    if (d.tourney && d.round < 2) this.tourneyNext(d.ci, d.round);
+    else { if (d.tourney) this.tourneyNext(d.ci, d.round); this.clear(ar); } // luta acabou: o herói sai da areia
   },
   lose(reason) {
+    const ar = G.duel ? this.arenaOf(G.duel.ci) : null;
     const d = G.duel; if (!d) return;
     G.duel = null;
     if (d.ent && !d.ent.dead) d.ent.dead = true;
@@ -68,6 +96,7 @@ const Arena = {
     UI.banner('😵 Derrota na arena');
     UI.msg(`Você ${reason || 'caiu na areia'}.${d.bet ? ` Perdeu a aposta de ${d.bet} 🪙.` : ''}${d.tourney ? ' Sua participação no torneio terminou.' : ''}`, 'bad');
     if (d.tourney) { const tr = this.tourney(); if (tr) tr.out = true; }
+    this.clear(ar);
   },
   update() {
     const d = G.duel;

@@ -335,12 +335,27 @@ const Families = {
     if (civ < 0) civ = World.capitals.map((c, i) => ({ i, d: U.dist(c.x, c.y, vx, vy) })).sort((a, b) => a.d - b.d)[0].i;
     return { ok: r, x: vx, y: vy, civ };
   },
-  playerFound() {
+  // nome livre para uma vila nova (não pode repetir o de outra vila ou reino)
+  nameErr(name) {
+    const n = name.toLowerCase();
+    if (name.length < 3) return 'O nome precisa de pelo menos 3 letras.';
+    if (World.villages.some(v => v.name.toLowerCase() === n)) return 'Já existe uma vila com esse nome.';
+    if (CIV_DEFS.some(d => d.name.toLowerCase() === n || d.short.toLowerCase() === n)) return 'Esse é o nome de um reino.';
+    return null;
+  },
+  nameIdeas() {
+    const base = ['Vila ' + G.surname, 'Porto ' + G.surname, 'Monte ' + (G.name || 'Real'), 'Pedra Alta', 'Vale Dourado', 'Fonte Clara', 'Campo Verde', 'Rocha Nova', 'Bosque Antigo', 'Ribeira Mansa'];
+    return base.filter(x => !this.nameErr(x)).slice(0, 5);
+  },
+  playerFound(name) {
     const s = this.playerSite();
     if (s.ok !== true) { UI.msg('Não dá para fundar aqui: ' + s.ok, 'bad'); return false; }
     if (!Inv.has(FOUND_COST)) { UI.msg('Faltam recursos para fundar a vila.', 'bad'); return false; }
     Inv.pay(FOUND_COST);
-    const spec = { name: 'Vila ' + G.surname, x: s.x, y: s.y, civ: s.civ, lord: 'player', day: G.day, free: true };
+    name = (name || '').trim();
+    if (!name || this.nameErr(name)) name = 'Vila ' + G.surname;
+    if (this.nameErr(name)) name = name + ' ' + (G.founded.length + 1);
+    const spec = { name, x: s.x, y: s.y, civ: s.civ, lord: 'player', day: G.day, free: true };
     const v = this.makeVillage(spec);
     G.founded.push(spec);
     const vi = World.villages.indexOf(v);
@@ -543,6 +558,8 @@ const Biz = {
   can(p) {
     if (!p.alive || !People.isAdult(p)) return 'É jovem demais para trabalhar.';
     if (NOBLE_RANKS.includes(p.rank)) return 'Nobres não trabalham para os outros!';
+    if (People.isCourt(p)) return 'Sirvo à coroa: não posso trabalhar numa loja.';
+    if (p.port) return 'Eu cuido do porto: não posso largar o cais.';
     if (p.capanga) return 'Já é seu capanga.';
     if (p.job !== undefined && p.job !== null) return 'Já trabalha para você.';
     if (SHOP_RANKS.includes(p.rank)) return 'Já tenho meu próprio ofício para cuidar.';
@@ -576,19 +593,36 @@ const Biz = {
       .map(p => { const v = World.villages[p.home.idx]; return { p, d: v ? U.dist(v.x, v.y, s.x, s.y) : 999 }; })
       .sort((a, b) => (this.skilled(b.p, s) - this.skilled(a.p, s)) || a.d - b.d).slice(0, 6);
   },
+  // ------------------------------------------------------------ contas: faturamento, salários e lucro
+  // s.earn = { rev, wages, months, cur: {rev, wages}, last: {rev, wages} }. Faturamento = ouro do caixa + valor do que foi
+  // produzido (pelo preço de venda automática, 60%). Lucro = faturamento − salários.
+  earn(s) { return s.earn || (s.earn = { rev: 0, wages: 0, months: 0, cur: { rev: 0, wages: 0 }, last: null }); },
+  addRev(s, n) { if (!n) return; const e = this.earn(s); e.rev += n; e.cur.rev += n; },
+  addWages(s, n) { if (!n) return; const e = this.earn(s); e.wages += n; e.cur.wages += n; },
+  goodsValue(out) { let v = 0; for (const it in out || {}) v += Math.round(ITEMS[it].price * 0.6 * out[it]); return v; },
+  // soma de todos os seus empreendimentos (total desde o início e o último mês)
+  totals() {
+    const t = { rev: 0, wages: 0, lastRev: 0, lastWages: 0, curRev: 0, curWages: 0 };
+    for (const s of this.list()) { const e = this.earn(s); t.rev += e.rev; t.wages += e.wages; if (e.last) { t.lastRev += e.last.rev; t.lastWages += e.last.wages; } t.curRev += e.cur.rev; t.curWages += e.cur.wages; }
+    t.profit = t.rev - t.wages; t.lastProfit = t.lastRev - t.lastWages;
+    return t;
+  },
   dayTick() {
     let wages = 0, gold = 0, paid = 0, made = {}, quit = [];
+    // fecha o mês anterior de cada empreendimento
+    for (const s of this.list()) { const e = this.earn(s); e.last = e.cur; e.cur = { rev: 0, wages: 0 }; e.months++; }
     for (const s of this.list()) {
       s.workers = (s.workers || []).filter(id => G.people[id] && G.people[id].alive && G.people[id].job === s.id);
       const ws = this.workers(s);
       if (!ws.length) continue;
       const fc = this.forecast(s);
-      if (P.gold >= fc.wages) { P.gold -= fc.wages; wages += fc.wages; for (const p of ws) People.addAff(p, 1); }
+      if (P.gold >= fc.wages) { P.gold -= fc.wages; wages += fc.wages; this.addWages(s, fc.wages); for (const p of ws) People.addAff(p, 1); }
       else { for (const p of ws) { People.addAff(p, -15); if (p.aff < -10) { quit.push(p); } } continue; }
       if (s.type === 'ptavern') continue; // a taverna vende com Farm.tavernTick
       s.goods = s.goods || {};
       for (const it in fc.out) if (fc.out[it] > 0) { s.goods[it] = (s.goods[it] || 0) + fc.out[it]; made[it] = (made[it] || 0) + fc.out[it]; }
       if (fc.gold) { s.till = (s.till || 0) + fc.gold; gold += fc.gold; }
+      this.addRev(s, (fc.gold || 0) + this.goodsValue(fc.out));
       if (s.autosell) {
         for (const it in s.goods) gold += Math.round(ITEMS[it].price * 0.6 * s.goods[it]);
         paid += this.cashOut(s);

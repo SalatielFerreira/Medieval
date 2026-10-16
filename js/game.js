@@ -28,16 +28,68 @@ const Inv = {
       for (const s in P.equip) if (P.equip[s] === k) P.equip[s] = null;
       for (let q = 0; q < P.quick.length; q++) if (P.quick[q] === k) P.quick[q] = null;
     }
+    this.normStacks(k);
+  },
+  // ------------------------------------------------------------ pilhas divididas
+  // P.inv[k] continua sendo o total do item (todo o resto do jogo só olha isso). Quando o jogador divide uma pilha,
+  // as partes separadas ficam em P.stacks[k] = [{ id, n }]; a pilha principal é o total menos as partes.
+  // Na mochila cada parte ocupa a sua casa, com o código "item#id".
+  stackId(k, id) { return k + '#' + id; },
+  baseOf(cell) { const i = cell.indexOf('#'); return i < 0 ? cell : cell.slice(0, i); },
+  extras(k) { return (P.stacks && P.stacks[k]) || []; },
+  mainN(k) { return (P.inv[k] || 0) - this.extras(k).reduce((s, x) => s + x.n, 0); },
+  // quantidade guardada numa casa da mochila (pilha principal ou parte separada)
+  cellN(cell) {
+    const k = this.baseOf(cell);
+    if (cell === k) return this.mainN(k);
+    const e = this.extras(k).find(x => this.stackId(k, x.id) === cell);
+    return e ? e.n : 0;
+  },
+  // mantém as partes coerentes com o total: se a principal acabar, a última parte volta a ser a principal
+  normStacks(k) {
+    if (!P.stacks || !P.stacks[k]) return;
+    const total = P.inv[k] || 0;
+    let arr = P.stacks[k].filter(x => x.n > 0);
+    while (arr.length && total - arr.reduce((s, x) => s + x.n, 0) < 1) arr.pop();
+    if (arr.length) P.stacks[k] = arr; else delete P.stacks[k];
+  },
+  // separa n unidades de uma casa numa nova pilha; devolve o código da nova casa
+  split(cell, n) {
+    const k = this.baseOf(cell), have = this.cellN(cell);
+    n = Math.floor(n);
+    if (n < 1 || n >= have) return null;
+    P.stacks = P.stacks || {};
+    const arr = P.stacks[k] || (P.stacks[k] = []);
+    if (cell !== k) arr.find(x => this.stackId(k, x.id) === cell).n -= n;
+    P.stackSeq = (P.stackSeq || 0) + 1;
+    arr.push({ id: P.stackSeq, n });
+    const id = this.stackId(k, P.stackSeq);
+    this.toBag(id);
+    return id;
+  },
+  // junta uma parte de volta (na principal ou em outra parte do mesmo item)
+  merge(from, into) {
+    const k = this.baseOf(from);
+    if (this.baseOf(into) !== k || from === into) return false;
+    const arr = this.extras(k), src = arr.find(x => this.stackId(k, x.id) === from), dst = arr.find(x => this.stackId(k, x.id) === into);
+    if (src && dst) { dst.n += src.n; src.n = 0; }
+    else if (src) src.n = 0;                     // parte -> principal
+    else if (dst) dst.n = 0;                     // principal recebe a parte de destino
+    this.normStacks(k);
+    return true;
   },
   // a mochila tem casas fixas (P.bag): cada item fica onde você colocou. Itens nos bolsos ou equipados saem da
   // mochila; quando voltam (ou chegam itens novos) ocupam a primeira casa livre. São 18 casas (crescem de 6 em 6 se precisar).
   bag() {
     const out = new Set([...P.quick, ...Object.values(P.equip)].filter(Boolean));
+    // item equipado ou no bolso vai inteiro: as partes separadas se juntam de novo
+    if (P.stacks) for (const k of out) delete P.stacks[k];
     const want = Object.keys(P.inv).filter(k => P.inv[k] > 0 && ITEMS[k] && !out.has(k));
+    for (const k of [...want]) { this.normStacks(k); for (const x of this.extras(k)) want.push(this.stackId(k, x.id)); }
     const fresh = !P.bag || !P.bag.length;
     const seen = new Set(), b = (P.bag || []).map(k => { if (!k || !want.includes(k) || seen.has(k)) return null; seen.add(k); return k; });
     const missing = want.filter(k => !seen.has(k));
-    if (fresh && missing.length) { const ord = UI.invKeys(['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos']); missing.sort((a, c) => ord.indexOf(a) - ord.indexOf(c)); }
+    if (fresh && missing.length) { const ord = UI.invKeys(['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos']); missing.sort((a, c) => ord.indexOf(Inv.baseOf(a)) - ord.indexOf(Inv.baseOf(c)) || (a.includes('#') - c.includes('#'))); }
     for (const k of missing) { const i = b.indexOf(null); if (i >= 0) b[i] = k; else b.push(k); }
     while (b.length > 18 && b[b.length - 1] === null) b.pop();
     const n = Math.max(18, Math.ceil(b.length / 6) * 6);
@@ -162,7 +214,7 @@ const Game = {
       inv: {}, equip: { weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null }, bag: [],
       quick: [null, null], sailing: false, fishing: null, sex: 'm', age: 25, hairBase: '#5a3a1a', skin: '#f0c896',
       aim: 0, dir: 1, atkCd: 0, swing: 0, hurt: 0, moving: false, anim: 0, dead: false, toolAnim: null,
-      horse: null, cart: false, mounted: false, stepT: 0, bagLvl: 1, invOrder: [],
+      horse: null, cart: false, mounted: false, stepT: 0, bagLvl: 1, invOrder: [], stacks: {}, stackSeq: 0,
     });
   },
 
@@ -197,8 +249,8 @@ const Game = {
     Arena.init(); Faith.init();
     Families.init(); Families.ensurePlayer(); Faith.ensurePriests();
     G.homes = {}; G.npcHouses = []; G.npcHouseSeq = 0; Homes.touch(); Homes.dayTick(false);
-    G.title = { lvl: -1, civ: -1 }; G.civilTitles = {}; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
-    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.vacancies = []; G.claims = []; G.npcRoads = []; G.church = null; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
+    G.title = { lvl: -1, civ: -1 }; G.titles = {}; G.civilTitles = {}; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
+    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.vacancies = []; G.claims = []; G.npcRoads = []; G.npcRoadFrom = {}; G.roadCut = {}; G.church = null; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
     const d = World.start.door;
     this.resetPlayer((d.x + 0.5) * TILE, (d.y + 1) * TILE);
     G.spawn = { x: P.x, y: P.y };
@@ -206,7 +258,7 @@ const Game = {
     Progress.diary(`🛖 ${name} ${G.surname} chegou à sua cabana, com ${opts.age} anos, para começar uma nova vida.`);
     G.time = NIGHT_LEN; G.day = 1; G.ents = []; G.texts = []; G.parts = []; G.siege = null; G.placing = null; G.groups = {}; G.zone = -2;
     Ranged.projs = []; World.season = -1; Season.apply(false);
-    Ports.place(); NpcRoads.init(); // portos na costa; as vilas já nascem ligadas à estrada
+    Ports.place(); Ports.ensureKeepers(); NpcRoads.init(); // portos na costa (cada um com seu marinheiro); as vilas já nascem ligadas à estrada
     G.state = 'play'; G.paused = false; G.ping = null; UI.showGameUI(true);
   },
 
@@ -218,16 +270,16 @@ const Game = {
     return {
       v: 5, slot: G.slot, savedAt: Date.now(), seed: World.seed, terrain: G.terrain || TERRAIN_V, ping: G.ping, name: G.name, surname: G.surname, time: G.time, day: G.day, spawn: G.spawn,
       player: { x: P.x, y: P.y, hp: P.hp, maxHp: P.maxHp, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
-        quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], style: P.style || null, seed: P.seed || null, water: P.water || 0, digMode: P.digMode || 'dig' },
+        quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], stacks: P.stacks || {}, stackSeq: P.stackSeq || 0, style: P.style || null, seed: P.seed || null, water: P.water || 0, digMode: P.digMode || 'dig' },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
-      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], vacancies: G.vacancies || [], claims: G.claims || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
+      urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], npcRoadFrom: G.npcRoadFrom || {}, roadCut: G.roadCut || {}, vacancies: G.vacancies || [], claims: G.claims || [], mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
-      title: G.title, titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
+      title: G.title, titles: Court.holdings(), titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
       shrines: G.shrines, pilgrim: G.pilgrim, prayDay: G.prayDay, pcaravans: (G.caravans || []).filter(c => c.owner === 'player' && !c.done), civs: G.civs, storage: G.storage, dungeons: G.dungeons, diplo: G.diplo,
       vciv: World.villages.map(v => v.civ),
-      built: World.structs.filter(s => s.built && !s.removed).map(s => ({ type: s.type, x: s.x, y: s.y, animals: s.animals, goods: s.goods, stock: s.stock, till: s.till, workers: s.workers, autosell: s.autosell, oldId: s.id })),
+      built: World.structs.filter(s => s.built && !s.removed).map(s => ({ type: s.type, x: s.x, y: s.y, animals: s.animals, goods: s.goods, stock: s.stock, till: s.till, workers: s.workers, autosell: s.autosell, earn: s.earn, oldId: s.id })),
       camps: World.camps.map(c => ({ cleared: c.cleared, left: c.left, respawnDay: c.respawnDay, x: c.x, y: c.y })),
       obj: U.u8ToB64(World.obj),
       regrow: World.regrow,
@@ -274,14 +326,14 @@ const Game = {
     P.mounted = false; P.hx = P.x - 30; P.hy = P.y;
     P.quick = [(P.quick || [])[0] || null, (P.quick || [])[1] || null];
     P.equip = Object.assign({ weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null }, P.equip || {});
-    P.bag = P.bag || [];
+    P.bag = P.bag || []; P.stacks = P.stacks || {}; P.stackSeq = P.stackSeq || 0;
     (s.vlife || []).forEach((l, i) => { if (World.villages[i]) Object.assign(World.villages[i], l); });
     Towns.init(); Towns.applyAll();
     Arena.init(); Faith.init();
     const idMap = {};
     for (const b of s.built) {
       const def = BUILDINGS[b.type];
-      if (def) { const st = World.addStruct(b.type, b.x, b.y, def.w, def.h, 'player', { built: true, animals: b.animals, goods: b.goods, stock: b.stock, till: b.till, workers: b.workers, autosell: b.autosell }); if (b.oldId !== undefined) idMap[b.oldId] = st.id; }
+      if (def) { const st = World.addStruct(b.type, b.x, b.y, def.w, def.h, 'player', { built: true, animals: b.animals, goods: b.goods, stock: b.stock, till: b.till, workers: b.workers, autosell: b.autosell, earn: b.earn }); if (b.oldId !== undefined) idMap[b.oldId] = st.id; }
     }
     G.fams = s.fams || {}; G.famSeq = s.famSeq || 0; G.founded = s.founded || []; G.revolts = s.revolts || [];
     G.births = s.births || {}; G.lastBirths = s.lastBirths || {}; G.playerFam = s.playerFam;
@@ -303,11 +355,12 @@ const Game = {
     G.surname = s.surname || Families.newSurname();
     if (!s.fams) Families.init(); else { for (const p of G.people) Families.attach(p); }
     Families.ensurePlayer(); Families.refresh(); Faith.ensurePriests();
-    G.title = s.title || { lvl: -1, civ: -1 }; G.civilTitles = s.civilTitles || {}; if (!s.titleV && G.title.lvl >= 3) G.title.lvl++; /* Marquês entrou antes do Duque */ G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
+    G.title = s.title || { lvl: -1, civ: -1 }; G.civilTitles = s.civilTitles || {}; if (!s.titleV && G.title.lvl >= 3) G.title.lvl++; /* Marquês entrou antes do Duque */
+    G.titles = s.titles || null; Court.holdings(); Court.syncPrincipal(); /* jogos antigos: o título único vira o primeiro da lista */ G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
-    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
+    G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.npcRoadFrom = s.npcRoadFrom || null; G.roadCut = s.roadCut || {}; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
     G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
@@ -321,7 +374,7 @@ const Game = {
     Towns.init(); Towns.applyAll();
     G.homes = s.homes || {}; G.npcHouses = s.npcHouses || []; G.npcHouseSeq = s.npcHouseSeq || 0;
     Homes.restore();
-    Ports.place(); Urban.restore(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
+    Ports.place(); Urban.restore(); Ports.ensureKeepers(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
     Towns.syncOwners(); // construções de cada vila com as cores do reino dela
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
@@ -1056,6 +1109,7 @@ const Game = {
   },
 
   kill(e, src) {
+    if (src && src !== P && src.npc && src.npc.alive && e.kind !== 'chicken') { Ranking.stats(src.npc); src.npc.kills = (src.npc.kills || 0) + 1; }
     e.dead = true;
     this.burst(e.x, e.y - 12, '#8a1a1a', 14);
     const byPlayer = src === P || (src && fac(src) === 'player');
@@ -1099,7 +1153,7 @@ const Game = {
 
   campCleared(camp) {
     Progress.add('camps');
-    camp.cleared = true; camp.respawnDay = G.day + 4 * ECON_DAYS;
+    camp.cleared = true; camp.respawnDay = G.day + 4 * ECON_DAYS * Crown.campDelay(Math.floor(camp.x), Math.floor(camp.y));
     // os bandidos fogem: o acampamento some daqui e se esconde em outro canto da terra selvagem
     const sp = World.campSpot(camp);
     if (sp) { Urban.relocate(camp, sp.x, sp.y, true); World.chunks.clear(); }
@@ -1281,15 +1335,25 @@ const Game = {
       });
       // cada morador tem a sua casa (mendigos dormem na praça); de dia fica no trabalho ou perto de casa
       for (const p of People.residents(vi)) {
-        if (G.spawned.has(p.id)) continue;
+        if (G.spawned.has(p.id) || p.port || p.trip) continue; // o marinheiro aparece no porto; quem está viajando, na vila que visita
         const h = Homes.houseOf(p); // a casa da família (pode ainda não ter: aí fica pela praça)
         const work = { merchant: v.store, smith: v.smith, lumber: v.lumber, mason: v.quarry, innkeeper: v.tavern, priest: v.chapel }[p.rank];
         let e;
-        if (work && !work.removed && p.age >= 14) e = spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ);
+        const hr = this.hour(), morning = hr >= 6 && hr < 9;
+        // de manhã quem trabalha aparece em casa e vai a pé até o trabalho; no resto do dia já está lá
+        if (work && !work.removed && p.age >= 14 && morning && h) { e = spawnNpc(p, (h.x + h.w / 2) * TILE, (h.y + h.h + 0.9) * TILE, 1.5, v.civ); e.workAt = { x: (work.x + work.w / 2) * TILE, y: (work.y + work.h + 0.8) * TILE }; }
+        else if (work && !work.removed && p.age >= 14) { e = spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ); e.workAt = { x: e.home.x, y: e.home.y }; e.atWork = true; }
         else if (h) e = spawnNpc(p, (h.x + h.w / 2) * TILE, (h.y + h.h + 0.9) * TILE, p.rank === 'hunter' ? 36 : p.rank === 'wanderer' ? 32 : 4.5, v.civ);
         else e = spawnNpc(p, (v.x + 0.5) * TILE, (v.y - 0.3) * TILE, p.rank === 'hunter' ? 36 : p.rank === 'wanderer' ? 32 : p.rank === 'beggar' ? 6 : 9, v.civ);
         e.house = h; e.vi = vi;
         Routine.placed(e);
+      }
+      // visitantes de outros reinos passeando pela vila
+      for (const p of Trips.visitors(vi)) {
+        if (G.spawned.has(p.id)) continue;
+        const spot = v.tavern && !v.tavern.removed ? v.tavern : null;
+        const e = spot ? spawnNpc(p, (spot.x + spot.w / 2) * TILE, (spot.y + spot.h + 1.2) * TILE, 8, v.civ) : spawnNpc(p, (v.x + 0.5) * TILE, (v.y + 0.5) * TILE, 9, v.civ);
+        e.visitor = true;
       }
       if (!v.free && G.civs[v.civ].garrison > 0) this.ensureGroup('vg' + vi, 1, () => {
         const s = freeSpotNear((v.x + 0.5) * TILE, (v.y - 0.5) * TILE, 2 * TILE);
@@ -1297,6 +1361,7 @@ const Game = {
       });
     });
     Biz.ambient(spawnNpc);
+    Ports.ambient(spawnNpc);
     Guards.ambient();
     Farm.ambient();
   },
@@ -1319,7 +1384,7 @@ const Game = {
   declareWar(ci) {
     const c = G.civs[ci];
     c.atWar = true; this.addRelation(ci, -60);
-    if (Court.T().civ === ci) Court.loseTitle('você declarou guerra ao seu suserano');
+    if (Court.levelIn(ci) >= 0) Court.loseTitle('você declarou guerra ao seu suserano', ci);
     if (RoyalCourt.isMember(ci)) RoyalCourt.leave('você declarou guerra ao rei');
     for (const o of G.civs) if (o.id !== ci) this.addRelation(o.id, -8);
     UI.banner(`⚔️ Guerra contra ${CIV_DEFS[ci].short}!`);
@@ -1388,7 +1453,7 @@ const Game = {
     Progress.add('castlesTaken');
     this.becomeRuler(ci, `O castelo caiu e você saqueou ${spoils} 🪙.`);
   },
-  claimNeeds(ci) { const duke = Court.T().civ === ci && Court.T().lvl >= 4; return { rel: duke ? 60 : 75, gold: duke ? 800 : 1500 }; },
+  claimNeeds(ci) { const duke = Court.levelIn(ci) >= 4; return { rel: duke ? 60 : 75, gold: duke ? 800 : 1500 }; },
   claimThrone(ci) {
     const c = G.civs[ci], need = this.claimNeeds(ci);
     if (c.relation < need.rel || P.gold < need.gold) return;
@@ -1407,7 +1472,7 @@ const Game = {
     if (prod !== undefined) mod = U.clamp(1.35 - prod / 30, 0.6, 1.4);
     const st = G.civs[ci].stock[k];
     if (st !== undefined) mod *= U.clamp(1.3 - st / 400, 0.7, 1.3);
-    mod *= Market.f(ci, k);
+    mod *= Market.f(ci, k) * Crown.priceMul(ci);
     return { buy: Math.max(1, Math.round(base * mod * 1.3)), sell: Math.max(1, Math.floor(base * mod * 0.7)) };
   },
   priceFor(ci, k, owner) {
@@ -1461,8 +1526,8 @@ const Game = {
     const d = CIV_DEFS[c.id], f = c.pop / 150;
     const byRes = { wheat: 'farms', wood: 'sawmill', stone: 'quarry', iron_ore: 'mines' };
     const prod = {};
-    for (const r of KINGDOM_RES) prod[r] = Math.round((d.prod[r] || 0) * f * (1 + 0.25 * c.invest[byRes[r]]) * (r === 'wheat' ? Season.cur().wheat : 1));
-    return { prod, wheat: prod.wheat, need: Math.round(c.pop * 0.13), income: Math.round(c.pop * c.tax * 2), upkeep: c.garrison };
+    for (const r of KINGDOM_RES) prod[r] = Math.round((d.prod[r] || 0) * f * (1 + 0.25 * c.invest[byRes[r]]) * (r === 'wheat' ? Season.cur().wheat * Crown.wheatMul(c) : 1));
+    return { prod, wheat: prod.wheat, need: Math.round(c.pop * 0.13), income: Math.round(c.pop * c.tax * 2 * Crown.incomeMul(c)), upkeep: c.garrison };
   },
   tickCiv(c) {
     const fc = this.civForecast(c);
@@ -1472,7 +1537,7 @@ const Game = {
     c.treasury += fc.income - fc.upkeep;
     let broke = false;
     if (c.treasury < 0) { c.treasury = 0; broke = true; }
-    const target = U.clamp(78 - c.tax * 160 + (fed ? 5 : -30) + (broke ? -15 : 0) + (c.festival || 0), 0, 100);
+    const target = U.clamp(78 - c.tax * 160 + (fed ? 5 : -30) + (broke ? -15 : 0) + (c.festival || 0) + Crown.happyBonus(c), 0, 100);
     c.festival = 0;
     c.happy = U.clamp(c.happy + (target - c.happy) * 0.3, 0, 100);
     if (fed && c.happy > 50) c.pop = Math.min(this.popCap(c), Math.round(c.pop * 1.03 + 1));
@@ -1482,6 +1547,7 @@ const Game = {
       if (c.garrison < this.maxGarrison(c) && c.treasury > 150) { c.garrison = Math.min(this.maxGarrison(c), c.garrison + 2); c.treasury -= 80; }
       if (!c.atWar && c.relation < 0) c.relation = Math.min(0, c.relation + 2);
     } else {
+      Crown.monthCiv(c); // decretos, audiências e efeitos das ações do rei
       if (!fed) UI.msg(`⚠️ ${CIV_DEFS[c.id].short}: falta trigo! O povo passa fome.`, 'bad');
       if (c.happy < 15) {
         c.rebel++;

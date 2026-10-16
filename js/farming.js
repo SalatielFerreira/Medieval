@@ -154,6 +154,7 @@ const Farm = {
         if (s.stock[k] <= 0) delete s.stock[k];
       }
       s.till += earned;
+      if (earned && typeof Biz !== 'undefined') Biz.addRev(s, earned);
       if (sold) {
         if (civ >= 0) Game.addRelation(civ, 1);
         Game.note(`🍺 Sua taverna vendeu ${sold} itens e lucrou ${earned} 🪙.`);

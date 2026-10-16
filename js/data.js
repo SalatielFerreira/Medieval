@@ -187,7 +187,7 @@ const RECIPES = [
   { out: 'stone_axe',     n: 1, cost: { wood: 3, stone: 3 },                    station: null },
   { out: 'stone_pick',    n: 1, cost: { wood: 3, stone: 4 },                    station: null },
   { out: 'club',          n: 1, cost: { wood: 6 },                              station: null },
-  { out: 'rope',          n: 1, cost: { fiber: 3 },                             station: null },
+  { out: 'rope',          n: 1, cost: { fiber: 3 },                             station: 'bancada' },
   { out: 'fishing_rod',   n: 1, cost: { wood: 3, rope: 1 },                     station: null },
   { out: 'stone_spear',   n: 1, cost: { wood: 4, stone: 3, rope: 1 },           station: null },
   { out: 'hoe',           n: 1, cost: { wood: 3, stone: 2 },                    station: null },

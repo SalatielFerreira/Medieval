@@ -73,6 +73,7 @@ const Towns = {
     Faith.monthTick();
     People.purseTick(); // as lojas rendem para os próprios donos
     Ports.monthTick();
+    Trips.monthTick(); // desempregados e crianças passeiam por reinos em paz
   },
 };
 
@@ -292,8 +293,23 @@ const NPCWork = {
 // as vilas e castelos). Cada vila abre até 2 caminhos por mês; no começo do jogo as vilas já nascem ligadas.
 // As estradas ficam em G.npcRoads (índices dos blocos) e são refeitas ao carregar o jogo.
 const ROAD_TYPES = ['vhouse', 'store', 'tavern', 'smith', 'lumber', 'quarry', 'chapel'];
+// Regras: cada construção de morador abre UMA estrada a partir do lugar onde está, sempre até a estrada principal
+// (as estradas do mapa e as que você fez). Se você destruir essa estrada, ela continua destruída: o morador não refaz
+// a estrada do mesmo lugar. Se você mudar a construção de lugar, ele abre uma estrada nova a partir do lugar novo.
+// G.npcRoadFrom[okey] = porta de onde a construção já abriu (ou já tinha) estrada · G.roadCut[i] = blocos que você destruiu.
 const NpcRoads = {
   isRoad(i) { const t = World.tiles[i]; return t === T.ROAD || t === T.BRIDGE; },
+  cut() { return G.roadCut || (G.roadCut = {}); },
+  from() { return G.npcRoadFrom || (G.npcRoadFrom = {}); },
+  doorKey(s) { const d = this.door(s); return d.x + ',' + d.y; },
+  // estrada principal: estrada que não foi aberta pelos moradores
+  mainSet() { const n = new Set(G.npcRoads || []); return i => this.isRoad(i) && !n.has(i); },
+  // o jogador destruiu um bloco de estrada
+  removed(i) { this.cut()[i] = 1; if (G.npcRoads) G.npcRoads = G.npcRoads.filter(x => x !== i); },
+  // o jogador construiu estrada (de novo) num bloco
+  rebuilt(i) { delete this.cut()[i]; },
+  // jogos salvos antes destas regras: tudo o que já existe conta como "já tem estrada"
+  adopt() { if (G.npcRoadFrom) return; const F = this.from(); for (const s of World.structs) if (this.wants(s)) F[s.okey] = this.doorKey(s); },
   // porta: o bloco logo abaixo do meio da construção
   door(s) { return { x: s.x + Math.floor(s.w / 2), y: s.y + s.h }; },
   wants(s) { return s && !s.removed && !s.hidden && s.village !== undefined && (ROAD_TYPES.includes(s.type) || s.fam !== undefined) && World.villages[s.village]; },
@@ -307,12 +323,12 @@ const NpcRoads = {
   path(s, R = 22) {
     const d = this.door(s);
     if (!World.inb(d.x, d.y) || World.sgrid[World.idx(d.x, d.y)] >= 0 || World.isWater(World.tiles[World.idx(d.x, d.y)])) return null;
-    const W = 2 * R + 1, from = new Int32Array(W * W).fill(-2), q = [];
+    const W = 2 * R + 1, from = new Int32Array(W * W).fill(-2), q = [], isMain = this.mainSet(), cut = this.cut();
     const loc = (x, y) => (y - d.y + R) * W + (x - d.x + R);
     from[loc(d.x, d.y)] = -1; q.push(d.x, d.y);
     for (let h = 0; h < q.length; h += 2) {
       const x = q[h], y = q[h + 1], i = World.idx(x, y);
-      if (this.isRoad(i)) {
+      if (isMain(i)) {
         const out = []; let k = loc(x, y);
         for (let cx = x, cy = y; ; ) { const p = from[k]; if (p === -1) break; const px = p % W + d.x - R, py = ((p / W) | 0) + d.y - R; out.push(World.idx(px, py)); k = p; cx = px; cy = py; }
         return out.length <= 34 ? out : null;
@@ -322,7 +338,7 @@ const NpcRoads = {
         if (Math.abs(nx - d.x) > R || Math.abs(ny - d.y) > R || !World.inb(nx, ny)) continue;
         const l = loc(nx, ny); if (from[l] !== -2) continue;
         const ni = World.idx(nx, ny);
-        if (World.sgrid[ni] >= 0 || (World.isWater(World.tiles[ni]) && World.tiles[ni] !== T.BRIDGE)) continue;
+        if (World.sgrid[ni] >= 0 || (World.isWater(World.tiles[ni]) && World.tiles[ni] !== T.BRIDGE) || cut[ni]) continue;
         from[l] = loc(x, y); q.push(nx, ny);
       }
     }
@@ -340,11 +356,15 @@ const NpcRoads = {
   tick(n = 2) {
     if (G.dungeon) return;
     let any = false;
-    const per = {};
+    const per = {}, F = this.from();
     for (const s of World.structs) {
-      if (!this.wants(s) || this.connected(s) || (s.noRoad !== undefined && G.day - s.noRoad < 12)) continue;
+      if (!this.wants(s)) continue;
+      const key = this.doorKey(s);
+      if (F[s.okey] === key) continue;                                  // já abriu (ou já tinha) estrada deste lugar
+      if (this.connected(s)) { F[s.okey] = key; continue; }
+      if (s.noRoad !== undefined && s.noRoadAt === key && G.day - s.noRoad < 12) continue;
       if ((per[s.village] = (per[s.village] || 0) + 1) > n) continue;
-      if (this.build(s)) any = true;
+      if (this.build(s)) { any = true; F[s.okey] = key; } else s.noRoadAt = key;
     }
     if (any) { World.chunks.clear(); if (World.mini) World.buildMinimap(); }
     return any;
@@ -353,7 +373,10 @@ const NpcRoads = {
   init() { this.tick(99); },
   // ao carregar: refaz as estradas abertas pelos moradores
   restore() {
+    const cut = this.cut();
+    if (G.npcRoads) G.npcRoads = G.npcRoads.filter(i => !cut[i]);
     for (const i of G.npcRoads || []) if (World.sgrid[i] < 0 && !this.isRoad(i)) World.carveRoad([i]);
+    this.adopt();
   },
 };
 
@@ -398,5 +421,38 @@ const Ports = {
     if (P.gold < price) { UI.msg('Salin insuficiente.', 'bad'); return; }
     P.gold -= price; st.purse += price; Inv.add(k, 1); UI.msg(`⚓ Comprou ${ITEMS[k].name}.`, 'gold');
   },
-  monthTick() { for (const k in G.ports || {}) G.ports[k].purse = Math.min(6000, G.ports[k].purse + 400); },
+  monthTick() { for (const k in G.ports || {}) G.ports[k].purse = Math.min(6000, G.ports[k].purse + 400); this.ensureKeepers(); },
+  // ------------------------------------------------------------ marinheiro que toma conta do porto
+  // cada porto tem um marinheiro (p.port = código do porto). Ele mora na vila mais próxima e fica no cais;
+  // se morrer, outro marinheiro chega no mês seguinte.
+  keeper(s) { return G.people.find(p => p.alive && p.port === s.okey) || null; },
+  portOf(p) { return p && p.port ? this.list().find(s => s.okey === p.port) || null : null; },
+  homeFor(s) {
+    if (s.village !== undefined && World.villages[s.village]) return s.village;
+    // vila mais próxima do mesmo reino (ou, se não houver, a mais próxima de todas)
+    const near = list => list.sort((a, c) => U.dist(a.v.x, a.v.y, s.x, s.y) - U.dist(c.v.x, c.v.y, s.x, s.y))[0];
+    const all = World.villages.map((v, vi) => ({ v, vi })), same = all.filter(x => x.v.civ === s.owner);
+    const pick = near(same.length ? same : all);
+    return pick ? pick.vi : -1;
+  },
+  ensureKeepers() {
+    for (const s of this.list()) {
+      if (this.keeper(s)) continue;
+      const vi = this.homeFor(s);
+      const civ = typeof s.owner === 'number' && s.owner >= 0 ? s.owner : vi >= 0 ? World.villages[vi].civ : 0;
+      const p = People.create({ rank: 'sailor', age: U.rint(22, 55), civ, home: vi >= 0 ? { type: 'village', idx: vi } : { type: 'wild' },
+        trait: U.pick(['alegre', 'corajoso', 'leal', 'rabugento', 'ganancioso']) });
+      p.port = s.okey;
+    }
+  },
+  // o marinheiro aparece no cais quando você está por perto
+  ambient(spawnNpc) {
+    for (const s of this.list()) {
+      if (U.dist(P.x / TILE, P.y / TILE, s.x + s.w / 2, s.y + s.h / 2) > 28) continue;
+      const p = this.keeper(s);
+      if (!p || G.spawned.has(p.id)) continue;
+      const e = spawnNpc(p, (s.x + s.w / 2) * TILE, (s.y + s.h + 0.9) * TILE, 2, typeof s.owner === 'number' ? s.owner : -1);
+      if (e) e.atPort = s.okey;
+    }
+  },
 };

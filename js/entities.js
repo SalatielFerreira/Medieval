@@ -4,8 +4,8 @@
 function moveEnt(e, dx, dy) {
   const r = e.r * 0.8;
   let moved = false;
-  if (dx) { const nx = e.x + dx; if (!World.blockedAt(nx, e.y, r, e.sailing)) { e.x = nx; moved = true; } }
-  if (dy) { const ny = e.y + dy; if (!World.blockedAt(e.x, ny, r, e.sailing)) { e.y = ny; moved = true; } }
+  if (dx) { const nx = e.x + dx; if (!World.blockedAt(nx, e.y, r, e.sailing) && !Arena.keepsOut(e, nx, e.y)) { e.x = nx; moved = true; } }
+  if (dy) { const ny = e.y + dy; if (!World.blockedAt(e.x, ny, r, e.sailing) && !Arena.keepsOut(e, e.x, ny)) { e.y = ny; moved = true; } }
   return moved;
 }
 
@@ -13,7 +13,13 @@ function freeSpotNear(px, py, radiusPx) {
   for (let k = 0; k < 40; k++) {
     const a = Math.random() * Math.PI * 2, d = Math.random() * radiusPx;
     const x = px + Math.cos(a) * d, y = py + Math.sin(a) * d;
-    if (!World.blockedAt(x, y, 9)) return { x, y };
+    if (!World.blockedAt(x, y, 9) && !Arena.zoneAt(x, y)) return { x, y };
+  }
+  // sem lugar livre por perto: procura mais longe antes de desistir
+  for (let k = 0; k < 40; k++) {
+    const a = Math.random() * Math.PI * 2, d = radiusPx + Math.random() * Math.max(64, radiusPx * 2);
+    const x = px + Math.cos(a) * d, y = py + Math.sin(a) * d;
+    if (!World.blockedAt(x, y, 9) && !Arena.zoneAt(x, y)) return { x, y };
   }
   return { x: px, y: py };
 }
