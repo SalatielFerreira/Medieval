@@ -1174,7 +1174,8 @@ const Game = {
     if (byPlayer && e.def.gold) Sound.play('coin');
     // regicídio na sala do trono: a coroa passa para você (antes da sucessão normal)
     if (e.npc && e.npc.rank === 'ruler' && (byPlayer || (src && fac(src) === 'player')) && G.place && G.place.lay === 'throne' && G.place.src && G.place.src.owner === e.npc.civ) this.usurp(e.npc.civ, e.npc);
-    if (e.npc) People.die(e.npc, byPlayer && !e.npc.capanga ? 'morto por você' : 'em combate');
+    const beast = src && !src.npc && { wolf: 'morto por um lobo', bear: 'morto por um urso', croc: 'morto por um crocodilo' }[src.kind];
+    if (e.npc) People.die(e.npc, byPlayer && !e.npc.capanga ? 'morto por você' : beast || 'em combate');
     if (byPlayer) { Progress.add('kill_' + e.kind); if (e.def.boss) Progress.add('bosses'); }
     if (e.kind === 'caravan' && e.car && byPlayer) Caravans.loot(e.car, e);
     if (e.kind === 'rebel') Families.rebelKilled(e);

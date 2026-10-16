@@ -33,6 +33,7 @@ function fac(e) {
 
 // animais que fogem de você (não atacam)
 const PREY_FLEE = ['deer', 'fox', 'rabbit', 'goat', 'camel'];
+const PREDATORS = ['wolf', 'bear', 'croc'];
 // a quer atacar b?
 function hostile(a, b) {
   if (a.faction === 'pet' || b.faction === 'pet' || a.kind === 'caravan') return false;
@@ -54,6 +55,8 @@ function hostile(a, b) {
   // soldados de lados opostos numa batalha em campo aberto
   if (a.battle && a.battle === b.battle && a.civ !== b.civ) return true;
   const fa = fac(a), fb = fac(b);
+  // predadores (lobo, urso, crocodilo) atacam moradores e viajantes, podendo matá-los (não dentro dos lugares fechados)
+  if (PREDATORS.includes(a.kind) && b.kind === 'villager' && b.npc && !b.placeNpc) return true;
   if (fa === fb || a.dmg <= 0 || b.kind === 'villager') return false;
   if (a.kind === 'boar') return a.provoked && fb === 'player';
   if (b.kind === 'deer' || b.kind === 'boar' || PREY_FLEE.includes(b.kind)) return false;
