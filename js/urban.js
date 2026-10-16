@@ -259,6 +259,7 @@ const Urban = {
     const s = World.addStruct(type, tx, ty, d.w, d.h, v ? v.civ : 0, { village: vi, added: true });
     // loja, taverna ou capela nova assume o lugar da que não existe mais
     if (d.slot && v && (!v[d.slot] || v[d.slot].removed)) v[d.slot] = s;
+    if (!quiet && d.prosper && v) v.prosper = (v.prosper || 0) + d.prosper; // chafariz, estátua e feira fazem a vila prosperar
     if (!quiet) this.E().added.push({ type, x: tx, y: ty, village: vi });
     return s;
   },

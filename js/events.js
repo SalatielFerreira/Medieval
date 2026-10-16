@@ -1,7 +1,6 @@
 'use strict';
 // Eventos no mundo, perto do jogador: raramente, um dragão fora das cavernas. Um evento de cada vez; eles não ficam no jogo salvo.
 
-const MERCHANT_GOODS = ['spices', 'silk_cloth', 'wine', 'honey', 'cloth'];
 
 const WorldEvents = {
   t: 150, // segundos reais até o primeiro evento
@@ -104,12 +103,19 @@ const Routine = {
   placed(e) {
     if (this.phase() === 'night' && e.house && !G.dungeon) { const d = this.door(e.house); e.x = d.x; e.y = d.y; e.sleeping = true; }
   },
+  // quem fica lá dentro: o dono da loja de dia (o da taverna também à noitinha); os fregueses da taverna à noitinha
+  staysIn(e, s, ph) {
+    const own = e.npc.shop === s.okey;
+    if (own) return ph === 'day' || (s.type === 'tavern' && ph === 'evening');
+    return s.type === 'tavern' && ph === 'evening';
+  },
+  entersWork(e) { const s = World.structs[e.workS]; return !!s && !s.removed && Shops.isShop(s) && e.npc.shop === s.okey; },
   goesOut(e) { return e.npc.rank === 'innkeeper' || (e.npc.age >= 16 && U.hash2(e.npc.id, 3, 77) < 0.55); },
   eveningTarget(e) {
     const v = World.villages[e.vi];
     if (!v) return null;
     if (e.npc.rank === 'priest' && v.chapel && !v.chapel.removed) return this.door(v.chapel);
-    if (this.goesOut(e) && v.tavern && !v.tavern.removed) return this.door(v.tavern);
+    if (this.goesOut(e) && v.tavern && !v.tavern.removed) return Object.assign(this.door(v.tavern), { s: v.tavern });
     return e.house && !e.house.removed ? this.door(e.house) : null;
   },
   update(e, dt, sp) {
@@ -122,6 +128,14 @@ const Routine = {
     }
     if (e.vi === undefined) return false;
     const ph = this.phase();
+    // dentro da loja ou da taverna: some do mapa (e aparece lá dentro quando você entra)
+    if (e.inside !== undefined && e.inside !== null) {
+      const s = World.structs[e.inside];
+      if (s && !s.removed && this.staysIn(e, s, ph)) return true;
+      const d = s ? this.door(s) : { x: e.x, y: e.y };
+      e.inside = null; e.sleeping = false; e.x = d.x; e.y = d.y + 6;
+      return false;
+    }
     if (e.sleeping) { if (ph === 'night' && e.house && !e.house.removed) return true; e.sleeping = false; return false; }
     if (ph === 'day') {
       e.nightT = 0;
@@ -130,6 +144,8 @@ const Routine = {
         if (U.dist(e.x, e.y, e.workAt.x, e.workAt.y) > 18) { this.go(e, e.workAt.x, e.workAt.y, sp * 0.65, dt); return true; }
         e.atWork = true; e.home = { x: e.workAt.x, y: e.workAt.y };
       }
+      // chegou na loja: entra e atende lá dentro
+      if (e.atWork && e.workS !== undefined && this.entersWork(e)) { e.inside = e.workS; e.sleeping = true; return true; }
       // quem está construindo a casa da família trabalha na obra
       const b = e.npc.age >= 16 && !SHOP_RANKS.includes(e.npc.rank) && e.npc.rank !== 'priest' ? Homes.buildOf(e.npc) : null;
       return b ? Homes.work(e, b, dt, sp) : false;
@@ -145,6 +161,9 @@ const Routine = {
     if (ph === 'night') e.nightT = (e.nightT || 0) + dt;
     if (ph === 'night' && (d < 16 || e.nightT > DAY_LEN * 0.12)) { e.sleeping = true; e.x = tg.x; e.y = tg.y; return true; }
     if (d > 44) { this.go(e, tg.x, tg.y, Math.max(sp, 34), dt); return true; }
+    // chegou na taverna: entra
+    if (tg.s && tg.s.type === 'tavern' && ph === 'evening' && d < 30) { e.inside = tg.s.id; e.sleeping = true; return true; }
+    if (tg.s && d >= 30) { this.go(e, tg.x, tg.y, Math.max(sp, 34), dt); return true; }
     // chegou: fica conversando por ali
     const r = e.rt || (e.rt = { t: 0, x: tg.x, y: tg.y });
     r.t -= dt;
@@ -155,7 +174,7 @@ const Routine = {
   // uma vez por quadro: quais casas têm alguém dormindo
   frame() {
     this.occ = new Set();
-    for (const e of G.ents) if (e.sleeping && e.house) this.occ.add(e.house.id);
+    for (const e of G.ents) if (e.sleeping) { if (e.inside != null) this.occ.add(e.inside); else if (e.house) this.occ.add(e.house.id); }
   },
   // janela acesa: alguém em casa, ou começo da noite (quando todos ainda estão acordados)
   lit(s) {

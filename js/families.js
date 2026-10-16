@@ -539,6 +539,8 @@ const BIZ_TYPES = {
   biz_shop:   { skill: 'merchant',  slots: 3, wage: 4, gold: 9 },
   ptavern:    { skill: 'innkeeper', slots: 2, wage: 4, sales: 3 },
 };
+// o que cada empreendimento vende e compra no balcão (a mesma lista da loja de vila parecida)
+const BIZ_TRADE = { biz_shop: 'store', biz_smithy: 'smith', biz_lumber: 'lumber', biz_quarry: 'quarry', biz_mine: 'quarry', biz_mill: 'store', biz_farm: 'store', ptavern: 'store' };
 const Biz = {
   list() { return World.structs.filter(s => s.owner === 'player' && BIZ_TYPES[s.type]); },
   workers(s) { return (s.workers || []).map(id => G.people[id]).filter(p => p && p.alive && p.job === s.id); },
@@ -552,7 +554,7 @@ const Biz = {
     const k = ws.reduce((a, p) => a + (this.skilled(p, s) ? 1.5 : 1), 0) * (d.season && Season.winter() ? 0.5 : 1);
     const out = {};
     if (d.out) for (const it in d.out) out[it] = Math.round(d.out[it] * k);
-    const gold = d.gold ? Math.round(d.gold * k * (World.terr[World.idx(s.x, s.y)] >= 0 ? 1.5 : 1)) : 0;
+    const gold = d.gold ? Math.round(d.gold * k * this.popMul(s)) : 0;
     return { out, gold, wages: ws.reduce((a, p) => a + this.wage(p, s), 0), k };
   },
   can(p) {
@@ -599,7 +601,52 @@ const Biz = {
   earn(s) { return s.earn || (s.earn = { rev: 0, wages: 0, months: 0, cur: { rev: 0, wages: 0 }, last: null }); },
   addRev(s, n) { if (!n) return; const e = this.earn(s); e.rev += n; e.cur.rev += n; },
   addWages(s, n) { if (!n) return; const e = this.earn(s); e.wages += n; e.cur.wages += n; },
-  goodsValue(out) { let v = 0; for (const it in out || {}) v += Math.round(ITEMS[it].price * 0.6 * out[it]); return v; },
+  goodsValue(out, s) { const f = s ? this.sellK(s) : 0.6; let v = 0; for (const it in out || {}) v += Math.round(ITEMS[it].price * f * out[it]); return v; },
+  // ------------------------------------------------------------ freguesia: quanto mais gente por perto, mais vende e lucra
+  crowd(s) {
+    let vi = null, bd = 30;
+    World.villages.forEach((v, i) => { const d = U.dist(v.x, v.y, s.x + s.w / 2, s.y + s.h / 2); if (d < bd) { bd = d; vi = i; } });
+    const n = vi !== null ? People.residents(vi).length : 0;
+    const ci = World.terr[World.idx(s.x, s.y)], pop = ci >= 0 && G.civs[ci] ? G.civs[ci].pop : 0;
+    return { n, vi, pop, ci };
+  },
+  // multiplicador do lucro pela população: moradores da vila mais próxima e povo do reino
+  popMul(s) { const c = this.crowd(s); return Math.round(U.clamp(0.7 + Math.min(1.2, c.n / 30) + Math.min(0.8, c.pop / 600), 0.7, 2.7) * 100) / 100; },
+  // parte do preço que a produção rende quando é vendida sozinha (60% com pouca gente, até 77% numa cidade cheia)
+  sellK(s) { return Math.round((0.5 + 0.1 * this.popMul(s)) * 100) / 100; },
+  civOf(s) { const c = this.crowd(s); return c.ci >= 0 ? c.ci : c.vi !== null && World.villages[c.vi] ? Math.max(0, World.villages[c.vi].civ) : 0; },
+  trade(s) { return SHOPS[BIZ_TRADE[s.type] || 'store']; },
+  wholesale(s, k) { return Math.max(1, Math.round(Game.price(this.civOf(s), k).buy * 0.7)); },
+  shelfPay(s, k) { return Math.max(1, Math.round(Game.price(this.civOf(s), k).sell * 1.15)); },
+  // o dono pega a produção guardada (de graça: é sua)
+  take(s, k, n) { const have = (s.goods || {})[k] || 0; n = Math.min(n, have); if (n <= 0) return; Inv.add(k, n); s.goods[k] -= n; if (s.goods[k] <= 0) delete s.goods[k]; UI.msg(`Você pegou ${n} ${ITEMS[k].name} do estoque.`); },
+  // o dono compra mercadoria pelo preço de atacado (30% mais barato que nas lojas)
+  ownerBuy(s, k, n) {
+    const pr = this.wholesale(s, k), can = Math.min(n, Math.floor(P.gold / pr));
+    if (can <= 0) { UI.msg('Ouro insuficiente.', 'bad'); return; }
+    P.gold -= pr * can; Inv.add(k, can); Sound.play('coin');
+    UI.msg(`🏪 Comprou ${can} ${ITEMS[k].name} no atacado por ${pr * can} 🪙.`, 'gold');
+  },
+  // o dono põe mercadoria no balcão: o caixa paga na hora e os fregueses compram ao longo dos meses (pelo preço cheio)
+  ownerSell(s, k, n) {
+    const pay = this.shelfPay(s, k), can = Math.min(n, Inv.count(k), Math.floor((s.till || 0) / pay));
+    if (can <= 0) { UI.msg(Inv.count(k) <= 0 ? 'Você não tem esse item.' : `O caixa do empreendimento não tem ${pay} 🪙 para pagar.`, 'bad'); return; }
+    Inv.add(k, -can); s.till -= pay * can; P.gold += pay * can; s.shelf = s.shelf || {}; s.shelf[k] = (s.shelf[k] || 0) + can; Sound.play('coin');
+    UI.msg(`🏪 ${can} ${ITEMS[k].name} no balcão: o caixa pagou ${pay * can} 🪙.`, 'gold');
+  },
+  unshelf(s, k) { const n = (s.shelf || {})[k] || 0; if (!n) return; Inv.add(k, n); delete s.shelf[k]; UI.msg(`Você tirou ${n} ${ITEMS[k].name} do balcão.`); },
+  // uma vez por mês os fregueses compram o que está no balcão
+  shelfSales(s) {
+    if (!s.shelf) return 0;
+    const mul = this.popMul(s);
+    let left = Math.round(3 + 4 * mul * (1 + this.workerCount(s) * 0.25)), rev = 0;
+    for (const k of Object.keys(s.shelf).sort((a, b) => ITEMS[b].price - ITEMS[a].price)) {
+      while (left > 0 && s.shelf[k] > 0) { s.shelf[k]--; left--; rev += Math.round(ITEMS[k].price * Math.min(1.25, 0.9 + 0.1 * mul)); }
+      if (s.shelf[k] <= 0) delete s.shelf[k];
+    }
+    if (rev) { s.till = (s.till || 0) + rev; this.addRev(s, rev); }
+    return rev;
+  },
   // soma de todos os seus empreendimentos (total desde o início e o último mês)
   totals() {
     const t = { rev: 0, wages: 0, lastRev: 0, lastWages: 0, curRev: 0, curWages: 0 };
@@ -618,13 +665,14 @@ const Biz = {
       const fc = this.forecast(s);
       if (P.gold >= fc.wages) { P.gold -= fc.wages; wages += fc.wages; this.addWages(s, fc.wages); for (const p of ws) People.addAff(p, 1); }
       else { for (const p of ws) { People.addAff(p, -15); if (p.aff < -10) { quit.push(p); } } continue; }
+      gold += this.shelfSales(s);
       if (s.type === 'ptavern') continue; // a taverna vende com Farm.tavernTick
       s.goods = s.goods || {};
       for (const it in fc.out) if (fc.out[it] > 0) { s.goods[it] = (s.goods[it] || 0) + fc.out[it]; made[it] = (made[it] || 0) + fc.out[it]; }
       if (fc.gold) { s.till = (s.till || 0) + fc.gold; gold += fc.gold; }
-      this.addRev(s, (fc.gold || 0) + this.goodsValue(fc.out));
+      this.addRev(s, (fc.gold || 0) + this.goodsValue(fc.out, s));
       if (s.autosell) {
-        for (const it in s.goods) gold += Math.round(ITEMS[it].price * 0.6 * s.goods[it]);
+        for (const it in s.goods) gold += Math.round(ITEMS[it].price * this.sellK(s) * s.goods[it]);
         paid += this.cashOut(s);
       }
     }
@@ -636,7 +684,7 @@ const Biz = {
   // vende o que está guardado (60% do preço) e passa o caixa inteiro para o seu ouro; devolve quanto você recebeu
   cashOut(s) {
     let g = s.till || 0;
-    for (const it in s.goods || {}) g += Math.round(ITEMS[it].price * 0.6 * s.goods[it]);
+    for (const it in s.goods || {}) g += Math.round(ITEMS[it].price * this.sellK(s) * s.goods[it]);
     s.goods = {}; s.till = 0; P.gold += g;
     return g;
   },

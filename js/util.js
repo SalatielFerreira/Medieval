@@ -28,7 +28,6 @@ const Calendar = {
   text(day) { return MONTHS[this.of(day).month][0]; },
   full(day) { const c = this.of(day); return `${MONTHS[c.month][0]} do ano ${c.year}`; },
   short(day) { const c = this.of(day); return `${MONTHS[c.month][0].slice(0, 3)} · ano ${c.year}`; },
-  isNewYear(day) { return (day - 1 + CAL_START) % YEAR_DAYS === 0; },
   // estações do hemisfério norte: primavera (mar–mai), verão (jun–ago), outono (set–nov), inverno (dez–fev)
   season(day) { return Math.floor(((this.of(day).month + 10) % 12) / 3); },
 };
@@ -64,7 +63,6 @@ const U = {
     return v / tot;
   },
   clamp(v, a, b) { return v < a ? a : v > b ? b : v; },
-  lerp(a, b, t) { return a + (b - a) * t; },
   dist(ax, ay, bx, by) { const dx = ax - bx, dy = ay - by; return Math.sqrt(dx * dx + dy * dy); },
   rnd(a, b) { return a + Math.random() * (b - a); },
   rint(a, b) { return Math.floor(a + Math.random() * (b - a + 1)); },

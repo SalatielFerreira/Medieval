@@ -405,7 +405,7 @@ const CAT_WEIGHT = { Recursos: 1, Materiais: 1.5, Comida: 0.3, Ferramentas: 3, A
 const WEIGHT_OVERRIDE = { dirt: 1, stone: 1.5, iron_ore: 1.5, copper_ore: 1.5, tin_ore: 1.5, silver_ore: 1, gold_ore: 0.5, gem: 0.3, arrow: 0.05, iron_arrow: 0.08,
   boat: 0, fiber: 0.2, herb: 0.2, ancient_coin: 0.1, silver_ring: 0.1, berries: 0.2 };
 function itemWeight(k) { return WEIGHT_OVERRIDE[k] !== undefined ? WEIGHT_OVERRIDE[k] : (CAT_WEIGHT[ITEMS[k].cat] || 1); }
-const BASE_CARRY = 220, HORSE_CARRY = 120, CART_CARRY = 450;
+const HORSE_CARRY = 120, CART_CARRY = 450;
 // níveis da mochila: carga e materiais para melhorar (feito na bancada)
 const BAG_LEVELS = [
   { cap: 220, name: 'Saco de Pano' },
@@ -481,4 +481,86 @@ const RUMORS = [
   'A argila das margens dos rios vira tijolo na forja. Tijolos erguem casarões!',
 ];
 
-const REBEL_NAMES = ['Gorm, o Rebelde', 'Lady Vesna', 'Capitão Darrow', 'Irmão Caius', 'Varga, a Ruiva'];
+
+// ====================================================================== conteúdo novo (itens, receitas, estações e construções)
+Object.assign(ITEMS, {
+  smoked_meat:  { name: 'Carne Defumada',      icon: '🥓', cat: 'Comida', price: 16, food: 40, heal: 10 },
+  smoked_fish:  { name: 'Peixe Defumado',      icon: '🐟', cat: 'Comida', price: 14, food: 35, heal: 8 },
+  sausage:      { name: 'Linguiça',            icon: '🌭', cat: 'Comida', price: 12, food: 28, heal: 6, buff: 'vigor' },
+  cheese:       { name: 'Queijo',              icon: '🧀', cat: 'Comida', price: 18, food: 30, heal: 8, buff: 'def' },
+  fish_stew:    { name: 'Caldeirada de Peixe', icon: '🥘', cat: 'Comida', price: 28, food: 55, heal: 25, buff: 'regen' },
+  healing_potion: { name: 'Poção de Cura',     icon: '🧪', cat: 'Comida', price: 45, food: 0, heal: 90 },
+  tonic:        { name: 'Tônico do Guerreiro', icon: '🍷', cat: 'Comida', price: 38, food: 5, heal: 20, buff: 'holy' },
+  wool_cloth:   { name: 'Tecido de Lã',        icon: '🧶', cat: 'Materiais', price: 10 },
+  clay_pot:     { name: 'Pote de Barro',       icon: '🏺', cat: 'Materiais', price: 8 },
+  candle:       { name: 'Vela',                icon: '🕯️', cat: 'Diversos', price: 6 },
+  book:         { name: 'Livro',               icon: '📕', cat: 'Diversos', price: 48 },
+  tapestry:     { name: 'Tapeçaria',           icon: '🖼️', cat: 'Diversos', price: 95 },
+  tusk_amulet:  { name: 'Amuleto de Presa',    icon: '📿', cat: 'Diversos', price: 45 },
+  gold_ring:    { name: 'Anel de Ouro',        icon: '💍', cat: 'Diversos', price: 80 },
+  gem_ring:     { name: 'Anel de Gema',        icon: '💎', cat: 'Diversos', price: 180 },
+  wool_hood:    { name: 'Gorro de Lã',         icon: '🧣', cat: 'Armaduras', price: 30, slot: 'head', def: 2, color: '#b8a888' },
+  fur_boots:    { name: 'Botas de Pele',       icon: '👢', cat: 'Armaduras', price: 42, slot: 'feet', def: 2, color: '#6a5a4a' },
+});
+RECIPES.push(
+  { out: 'smoked_meat',  n: 2, cost: { meat: 2, wood: 1 },                    station: 'defumador' },
+  { out: 'smoked_fish',  n: 2, cost: { fish: 2, wood: 1 },                    station: 'defumador' },
+  { out: 'sausage',      n: 3, cost: { meat: 2, herb: 1 },                    station: 'defumador' },
+  { out: 'cheese',       n: 1, cost: { milk: 3 },                             station: 'cozinha' },
+  { out: 'fish_stew',    n: 1, cost: { fish: 2, carrot: 1, cabbage: 1 },      station: 'cozinha' },
+  { out: 'healing_potion', n: 1, cost: { herb: 3, honey: 1, clay_pot: 1 },    station: 'cozinha' },
+  { out: 'tonic',        n: 1, cost: { herb: 2, mead: 1 },                    station: 'cozinha' },
+  { out: 'wool_cloth',   n: 2, cost: { wool: 3 },                             station: 'tear' },
+  { out: 'tapestry',     n: 1, cost: { wool_cloth: 3, cloth: 2 },             station: 'tear' },
+  { out: 'wool_hood',    n: 1, cost: { wool_cloth: 2 },                       station: 'tear' },
+  { out: 'clay_pot',     n: 2, cost: { clay: 3 },                             station: 'olaria' },
+  { out: 'brick',        n: 4, cost: { clay: 4, coal: 1 },                    station: 'olaria' },
+  { out: 'candle',       n: 3, cost: { honey: 1, fiber: 1 },                  station: 'bancada' },
+  { out: 'book',         n: 1, cost: { cloth: 2, leather: 1, candle: 1 },     station: 'bancada' },
+  { out: 'tusk_amulet',  n: 1, cost: { boar_tusk: 2, rope: 1 },               station: 'bancada' },
+  { out: 'fur_boots',    n: 1, cost: { wolf_pelt: 1, leather: 1 },            station: 'bancada' },
+  { out: 'gold_ring',    n: 1, cost: { gold_bar: 1 },                         station: 'forja' },
+  { out: 'gem_ring',     n: 1, cost: { gold_ring: 1, gem: 1 },                station: 'forja' },
+);
+Object.assign(STATIONS, {
+  defumador: { name: 'Defumadouro', types: ['smokehouse'] },
+  tear:      { name: 'Tear',        types: ['loom'] },
+  olaria:    { name: 'Olaria',      types: ['kiln'] },
+});
+Object.assign(BUILDINGS, {
+  // empreendimentos novos
+  biz_bakery:     { name: 'Padaria',            w: 2, h: 2, blocks: true,  cost: { wood: 25, stone: 20, clay: 6 },  desc: 'Empreendimento: até 3 padeiros. Produz pão e tortas de maçã todo mês.' },
+  biz_brewery:    { name: 'Cervejaria Comercial', w: 3, h: 2, blocks: true, cost: { wood: 40, stone: 10, iron_bar: 3, rope: 2 }, desc: 'Empreendimento: até 2 mestres cervejeiros. Produz cerveja e hidromel.' },
+  biz_tannery:    { name: 'Curtume',            w: 3, h: 2, blocks: true,  cost: { wood: 30, stone: 15, rope: 3 },  desc: 'Empreendimento: até 3 curtidores (caçadores rendem mais). Produz couro e couro curtido.' },
+  biz_weaver:     { name: 'Tecelagem',          w: 3, h: 2, blocks: true,  cost: { wood: 35, stone: 8, rope: 4 },   desc: 'Empreendimento: até 3 tecelões. Produz tecido de linho, corda e tecido de lã.' },
+  biz_fishery:    { name: 'Pesqueiro',          w: 3, h: 2, blocks: true,  cost: { wood: 35, rope: 6 },             desc: 'Empreendimento: até 3 pescadores (marinheiros rendem mais). Produz trutas, bacalhau e sardinhas.' },
+  biz_winery:     { name: 'Vinícola',           w: 3, h: 3, blocks: false, cost: { wood: 30, stone: 10 },           desc: 'Empreendimento: até 3 vinhateiros. Produz vinho (metade no inverno).' },
+  biz_ranch:      { name: 'Rancho',             w: 4, h: 3, blocks: false, cost: { wood: 40, stone: 6, rope: 4 },   desc: 'Empreendimento: até 3 vaqueiros. Produz carne, lã, leite e couro.' },
+  biz_inn:        { name: 'Estalagem',          w: 3, h: 3, blocks: true,  cost: { wood: 50, stone: 30, brick: 10, cloth: 6 }, desc: 'Empreendimento: até 3 estalajadeiros. Hóspedes pagam todo mês: quanto mais gente por perto, mais lucro.' },
+  biz_jeweler:    { name: 'Joalheria',          w: 2, h: 2, blocks: true,  cost: { stone: 25, wood: 10, silver_bar: 2, gold_bar: 1 }, desc: 'Empreendimento: até 2 joalheiros (ferreiros rendem mais). Produz anéis de prata e de ouro.' },
+  biz_apothecary: { name: 'Botica',             w: 2, h: 2, blocks: true,  cost: { wood: 25, stone: 12, clay: 8 },  desc: 'Empreendimento: até 2 boticários. Produz unguentos e poções de cura.' },
+  // produção
+  smokehouse: { name: 'Defumadouro',       w: 2, h: 2, blocks: true,  cost: { wood: 25, stone: 10 },          desc: 'Defume carnes e peixes: comida que alimenta mais. Também faz linguiça.' },
+  loom:       { name: 'Tear',              w: 2, h: 1, blocks: true,  cost: { wood: 20, rope: 4 },            desc: 'Teça lã: tecido de lã, gorro de lã e tapeçarias valiosas.' },
+  kiln:       { name: 'Olaria',            w: 2, h: 2, blocks: true,  cost: { stone: 20, clay: 10 },          desc: 'Potes de barro e tijolos mais baratos (4 tijolos com 4 de argila).' },
+  // fazenda
+  garden:     { name: 'Horta',             w: 3, h: 2, blocks: false, cost: { wood: 8, dirt: 4 },             desc: 'Produz cenouras e repolhos todo mês (metade no inverno).' },
+  orchard:    { name: 'Pomar',             w: 3, h: 3, blocks: false, cost: { wood: 12, dirt: 6 },            desc: 'Macieiras: maçãs todo mês, menos no inverno.' },
+  // praça e decoração
+  well_p:     { name: 'Poço',              w: 1, h: 1, blocks: true,  cost: { stone: 14, rope: 1 },           desc: 'Água fresca: beber recupera toda a energia.' },
+  fountain:   { name: 'Chafariz',          w: 2, h: 2, blocks: true,  cost: { stone: 40, iron_bar: 2 },       desc: 'Enfeita a sua vila e traz prestígio (+3 de fama). Jogue uma moeda para dar sorte.' },
+  statue:     { name: 'Estátua do Herói',  w: 1, h: 1, blocks: true,  cost: { stone: 60, gold_bar: 1 },       desc: 'Uma estátua sua: +5 de fama. O povo vai lembrar de você.' },
+  lamppost:   { name: 'Lampião',           w: 1, h: 1, blocks: true,  cost: { iron_bar: 1, wood: 2, candle: 2 }, desc: 'Ilumina a noite em volta.' },
+  bench:      { name: 'Banco de Praça',    w: 2, h: 1, blocks: true,  cost: { wood: 8 },                      desc: 'Sentar um pouco recupera metade da energia.' },
+  flowerbed:  { name: 'Canteiro de Flores', w: 2, h: 1, blocks: false, cost: { dirt: 4, wood: 2 },            desc: 'Flores coloridas que mudam com as estações.' },
+  hedge:      { name: 'Cerca Viva',        w: 1, h: 1, blocks: true,  cost: { dirt: 2, wood: 1 },             desc: 'Arbustos aparados para cercar jardins.' },
+  fence:      { name: 'Cerca de Madeira',  w: 1, h: 1, blocks: true,  cost: { wood: 2 },                      desc: 'Cerca baixa de tábuas.' },
+  // cultura, fé e treino
+  library:    { name: 'Biblioteca',        w: 3, h: 2, blocks: true,  cost: { wood: 40, stone: 20, book: 3 }, desc: 'Estudar uma vez por mês dá experiência e Sabedoria (+30% de experiência por um tempo).' },
+  training:   { name: 'Campo de Treino',   w: 3, h: 3, blocks: false, cost: { wood: 25, rope: 4, leather: 2 }, desc: 'Bonecos de palha: treinar gasta energia e dá experiência. Os capangas também treinam.' },
+  oratory:    { name: 'Oratório',          w: 2, h: 2, blocks: true,  cost: { stone: 25, wood: 10, candle: 4 }, desc: 'Rezar uma vez por mês dá a Bênção (vida recupera 2× e +2 de defesa).' },
+  watchtower: { name: 'Torre de Vigia',    w: 2, h: 2, blocks: true,  cost: { wood: 40, stone: 20, rope: 2 }, desc: '+2 seguidores. Do alto você vê bandidos e exércitos por perto.' },
+});
+Object.assign(CIV_STRUCTS, {
+  vfountain: { name: 'Chafariz', blocks: true }, vstatue: { name: 'Estátua', blocks: true }, vlamp: { name: 'Lampião', blocks: true }, vmarket: { name: 'Feira', blocks: true },
+});

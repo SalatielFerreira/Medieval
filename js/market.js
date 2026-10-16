@@ -41,16 +41,8 @@ const Market = {
   robbed(c) { for (const g of c.goods || c.cargo || []) this.bump(c.to, g.k, 1.25); },
   trend(ci, k) { const v = this.f(ci, k); return v > 1.12 ? 'up' : v < 0.88 ? 'down' : ''; },
   sellPrice(ci, k) { return Game.price(ci, k).sell; },
-  buyPrice(ci, k) { return Game.price(ci, k).buy; },
 
   // ------------------------------------------------------------ caravanas do jogador
-  origin() {
-    // reino de onde a caravana parte: o castelo ou vila mais próximos (até 14 passos)
-    let best = null, bd = 14;
-    for (let c = 0; c < CIV_DEFS.length; c++) { const cp = World.capitals[c]; const d = U.dist(P.x / TILE, P.y / TILE, cp.x, cp.y); if (d < bd) { bd = d; best = c; } }
-    for (const v of World.villages) { const d = U.dist(P.x / TILE, P.y / TILE, v.x, v.y); if (d < bd) { bd = d; best = v.civ; } }
-    return G.dungeon ? null : best;
-  },
   risk(from, to, guards) {
     let r = 0.2 + (Diplo.atWar(from, to) || G.civs[to].atWar ? 0.15 : 0) + (World.camps.filter(c => !c.cleared).length > 6 ? 0.05 : 0) - guards * 0.06;
     return U.clamp(r, 0.03, 0.6);

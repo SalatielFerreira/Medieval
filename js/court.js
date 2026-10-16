@@ -136,7 +136,6 @@ const Court = {
   },
   council(ci) { const c = G.civs[ci]; return c.council || (c.council = { treasurer: null, general: null, spy: null, diplomat: null }); },
   member(ci, seat) { const id = this.council(ci)[seat]; const p = id !== null && id !== undefined ? G.people[id] : null; return p && p.alive ? p : null; },
-  seatOf(p) { return p.council ? p.council.seat : null; },
   candidates(ci) {
     return G.people.filter(p => p.alive && p.age >= 20 && !p.capanga && (p.job === undefined || p.job === null) && !p.council && p.rank !== 'ruler' &&
       (Families.civOf(p) === ci || p.home.type === 'player')).map(p => this.traits(p))

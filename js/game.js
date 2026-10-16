@@ -11,7 +11,7 @@ const G = {
   groups: {}, timers: { spawn: 0, amb: 0, regrow: 0, hud: 0 }, name: 'Aventureiro',
   darkness: 0, realTime: 0, lastWarn: 0, ping: null,
   people: [], family: { spouse: null, tryChild: false, dueDay: 0 }, spawned: new Map(),
-  settings: { uiScale: 'auto', minimap: true, miniSize: 180, numbers: true, keysbar: false, music: 0.5, sfx: 0.7, mute: false, touch: 'auto' },
+  settings: { uiScale: 'auto', minimap: true, ambience: true, miniSize: 180, numbers: true, keysbar: false, music: 0.5, sfx: 0.7, mute: false, touch: 'auto' },
   storage: {}, dungeons: {}, dungeon: null, diplo: null, weather: null, slot: 1,
   plots: {}, order: 'follow', battles: [], caravans: [], stats: {}, ach: {}, diary: [], dynasty: [], diff: 'normal', hoverNpc: null,
 };
@@ -238,7 +238,7 @@ const Game = {
     if (!ok) throw new Error('Falha ao gerar o mundo');
     this.initCivs();
     G.family = { spouse: null, tryChild: false, dueDay: 0 };
-    G.spawned = new Map(); G.storage = {}; G.dungeons = {}; G.dungeon = null; G.weather = null;
+    G.spawned = new Map(); G.storage = {}; G.dungeons = {}; G.dungeon = null; G.place = null; G.warCall = null; G.warRest = {}; G.trial = null; G.weather = null;
     Diplo.init();
     People.generate();
     G.diff = opts.diff || 'normal';
@@ -258,18 +258,18 @@ const Game = {
     Progress.diary(`🛖 ${name} ${G.surname} chegou à sua cabana, com ${opts.age} anos, para começar uma nova vida.`);
     G.time = NIGHT_LEN; G.day = 1; G.ents = []; G.texts = []; G.parts = []; G.siege = null; G.placing = null; G.groups = {}; G.zone = -2;
     Ranged.projs = []; World.season = -1; Season.apply(false);
-    Ports.place(); Ports.ensureKeepers(); NpcRoads.init(); // portos na costa (cada um com seu marinheiro); as vilas já nascem ligadas à estrada
+    Ports.place(); Ports.ensureKeepers(); Shops.ensure(); NpcRoads.init(); // portos na costa (cada um com seu marinheiro); as vilas já nascem ligadas à estrada
     G.state = 'play'; G.paused = false; G.ping = null; UI.showGameUI(true);
   },
 
-  toMenu() { Resume.clear(); Urban.stop(); UI.close(); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
+  toMenu() { Resume.clear(); Urban.stop(); UI.close(); if (G.place) Places.exit(true); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
 
   // ================================================================ salvar / carregar (3 espaços)
   saveInfo() { return Saves.list().filter(Boolean).sort((a, b) => b.savedAt - a.savedAt)[0] || null; },
   snapshot() {
     return {
       v: 5, slot: G.slot, savedAt: Date.now(), seed: World.seed, terrain: G.terrain || TERRAIN_V, ping: G.ping, name: G.name, surname: G.surname, time: G.time, day: G.day, spawn: G.spawn,
-      player: { x: P.x, y: P.y, hp: P.hp, maxHp: P.maxHp, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
+      player: { x: G.place ? G.place.back.x : P.x, y: G.place ? G.place.back.y : P.y, hp: P.hp, maxHp: P.maxHp, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], stacks: P.stacks || {}, stackSeq: P.stackSeq || 0, style: P.style || null, seed: P.seed || null, water: P.water || 0, digMode: P.digMode || 'dig' },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
@@ -277,9 +277,11 @@ const Game = {
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, titles: Court.holdings(), titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
+      warCall: G.warCall ? Object.assign({}, G.warCall, { shown: false, deadline: null }) : null, warRest: G.warRest || {},
+      trial: G.trial || null, studyDay: G.studyDay, prayOrDay: G.prayOrDay,
       shrines: G.shrines, pilgrim: G.pilgrim, prayDay: G.prayDay, pcaravans: (G.caravans || []).filter(c => c.owner === 'player' && !c.done), civs: G.civs, storage: G.storage, dungeons: G.dungeons, diplo: G.diplo,
       vciv: World.villages.map(v => v.civ),
-      built: World.structs.filter(s => s.built && !s.removed).map(s => ({ type: s.type, x: s.x, y: s.y, animals: s.animals, goods: s.goods, stock: s.stock, till: s.till, workers: s.workers, autosell: s.autosell, earn: s.earn, oldId: s.id })),
+      built: World.structs.filter(s => s.built && !s.removed).map(s => ({ type: s.type, x: s.x, y: s.y, animals: s.animals, goods: s.goods, stock: s.stock, till: s.till, workers: s.workers, autosell: s.autosell, earn: s.earn, shelf: s.shelf, oldId: s.id })),
       camps: World.camps.map(c => ({ cleared: c.cleared, left: c.left, respawnDay: c.respawnDay, x: c.x, y: c.y })),
       obj: U.u8ToB64(World.obj),
       regrow: World.regrow,
@@ -300,6 +302,7 @@ const Game = {
   },
   save(at, quiet) {
     if (G.dungeon) { UI.msg('Não é possível salvar dentro de uma caverna.', 'bad'); return false; }
+    if (War.isBattle()) { if (!quiet) UI.msg('Não dá para salvar no meio da batalha.', 'bad'); return false; }
     if (at) G.spawn = { x: (at.x + at.w / 2) * TILE, y: (at.y + at.h + 0.9) * TILE };
     try {
       Saves.write(G.slot || 1, this.snapshot());
@@ -333,7 +336,7 @@ const Game = {
     const idMap = {};
     for (const b of s.built) {
       const def = BUILDINGS[b.type];
-      if (def) { const st = World.addStruct(b.type, b.x, b.y, def.w, def.h, 'player', { built: true, animals: b.animals, goods: b.goods, stock: b.stock, till: b.till, workers: b.workers, autosell: b.autosell, earn: b.earn }); if (b.oldId !== undefined) idMap[b.oldId] = st.id; }
+      if (def) { const st = World.addStruct(b.type, b.x, b.y, def.w, def.h, 'player', { built: true, animals: b.animals, goods: b.goods, stock: b.stock, till: b.till, workers: b.workers, autosell: b.autosell, earn: b.earn, shelf: b.shelf }); if (b.oldId !== undefined) idMap[b.oldId] = st.id; }
     }
     G.fams = s.fams || {}; G.famSeq = s.famSeq || 0; G.founded = s.founded || []; G.revolts = s.revolts || [];
     G.births = s.births || {}; G.lastBirths = s.lastBirths || {}; G.playerFam = s.playerFam;
@@ -361,7 +364,7 @@ const Game = {
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
     G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.npcRoadFrom = s.npcRoadFrom || null; G.roadCut = s.roadCut || {}; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
-    G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; G.diplo = s.diplo || null; G.weather = null;
+    G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; if (G.place) Places.exit(true); G.place = null; G.warCall = s.warCall || null; G.warRest = s.warRest || {}; G.trial = s.trial || null; G.studyDay = s.studyDay; G.prayOrDay = s.prayOrDay; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
     Borders.restore(); // fronteiras ampliadas e vilas anexadas
@@ -374,7 +377,7 @@ const Game = {
     Towns.init(); Towns.applyAll();
     G.homes = s.homes || {}; G.npcHouses = s.npcHouses || []; G.npcHouseSeq = s.npcHouseSeq || 0;
     Homes.restore();
-    Ports.place(); Urban.restore(); Ports.ensureKeepers(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
+    Ports.place(); Urban.restore(); Ports.ensureKeepers(); Shops.ensure(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
     Towns.syncOwners(); // construções de cada vila com as cores do reino dela
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
@@ -459,20 +462,19 @@ const Game = {
   },
   allies() { return G.ents.filter(e => e.kind === 'ally' && !e.dead); },
   followerCap() {
-    return 10 + Court.capBonus();
+    return 10 + Court.capBonus() + Content.capBonus(); // torres de vigia: +2 cada (até +4)
   },
   // cor do reino: a escolhida pelo rei; reinos do jogador sem cor própria usam o dourado do jogador
   civColor(ci) { const L = Heraldry.lead(ci); return G.civs[L] && G.civs[L].ruler === 'player' && !Heraldry.customColor(L) ? PLAYER_COLOR : CIV_DEFS[L].color; },
   // G.time: 0..NIGHT_LEN é a noite (21h às 6h), depois vem o dia (6h às 21h)
   hour() { const t = G.time; return t < NIGHT_LEN ? (21 + t / NIGHT_LEN * 9) % 24 : 6 + (t - NIGHT_LEN) / DAYLIGHT_LEN * 15; },
   isNight() { return G.time < NIGHT_LEN; },
-  // põe o relógio numa hora do dia (6h–21h é dia, 21h–6h é noite)
-  setHour(h) { h = ((h % 24) + 24) % 24; G.time = h >= 6 && h < 21 ? NIGHT_LEN + (h - 6) / 15 * DAYLIGHT_LEN : ((h - 21 + 24) % 24) / 9 * NIGHT_LEN; },
   // quanto do dia já passou (a "pizza" do relógio): 0 no amanhecer, 1 quando escurece
   dayFill() { return G.time < NIGHT_LEN ? 0 : U.clamp((G.time - NIGHT_LEN) / DAYLIGHT_LEN, 0, 1); },
   // escurece só quando o dia acaba; clareia nos últimos segundos da noite
   calcDarkness() {
     if (G.dungeon) return 0.86;
+    if (G.place && G.place.kind === 'room') return Routine.phase() === 'day' ? 0.34 : 0.6; // lampiões, lareira e janelas
     const t = G.time, M = 0.62, fade = 6;
     if (t < NIGHT_LEN - fade) return M;
     if (t < NIGHT_LEN) return (NIGHT_LEN - t) / fade * M;
@@ -490,7 +492,10 @@ const Game = {
     c.relation = U.clamp(c.relation + n, -100, 100);
   },
   buildIcon(k) { return { pcastle: '🏰', biz_farm: '🌾', biz_mill: '🌬️', biz_lumber: '🪚', biz_quarry: '🪨', biz_mine: '⛏️', biz_smithy: '⚒️', biz_shop: '🏪', cabin: '🛖', campfire: '🔥', workbench: '🪚', forge: '⚒️', house: '🏠', manor: '🏛️', farm: '🌾', barracks: '🛡️', wall_wood: '🪵', wall_stone: '🧱', chest: '📦', stable: '🐴',
-    oven: '🥖', brewery: '🍺', coop: '🐔', pen: '🐄', beehive: '🐝', ptavern: '🍻' }[k] || '🏗️'; },
+    oven: '🥖', brewery: '🍺', coop: '🐔', pen: '🐄', beehive: '🐝', ptavern: '🍻',
+    biz_bakery: '🥐', biz_brewery: '🍻', biz_tannery: '🦬', biz_weaver: '🧶', biz_fishery: '🐟', biz_winery: '🍇', biz_ranch: '🐂', biz_inn: '🛏️', biz_jeweler: '💍', biz_apothecary: '🧪',
+    smokehouse: '🥓', loom: '🧵', kiln: '🏺', garden: '🥕', orchard: '🍎', well_p: '🪣', fountain: '⛲', statue: '🗿', lamppost: '🏮', bench: '🪑', flowerbed: '🌷', hedge: '🌳', fence: '🪵',
+    library: '📚', training: '🎯', oratory: '⛪', watchtower: '🗼' }[k] || '🏗️'; },
 
   // ================================================================ entrada
   onKey(code) {
@@ -563,25 +568,30 @@ const Game = {
     Battles.update();
     Caravans.update(dt);
     Families.update(dt); Chiefdom.update(dt); Urban.update();
-    Sieges.update(dt); Arena.update();
+    Sieges.update(dt); Arena.update(); Places.update(dt);
     this.progT = (this.progT || 0) - dt;
     if (this.progT <= 0) {
       this.progT = 2;
       Progress.check();
       if (!G.dungeon && World.islands.some(is => U.dist(P.x / TILE, P.y / TILE, is.x, is.y) < is.r)) G.stats.islands = 1;
     }
+    War.update(dt);
     Ride.follow(dt);
     Season.weather(dt);
     this.updateAudio(dt);
 
     // câmera (com zoom suave até o nível escolhido na roda do mouse)
-    const want = this.zoomStep();
+    const want = G.place && G.place.zoom ? Math.max(this.zoomStep(), G.place.zoom) : this.zoomStep();
     this.zoom = this.zoom || want;
     this.zoom += (want - this.zoom) * Math.min(1, dt * 10);
     if (Math.abs(want - this.zoom) < 0.002) this.zoom = want;
     const zm = this.zoom, cw = this.canvas.width / zm, ch = this.canvas.height / zm;
     G.cam.x = U.clamp(P.x - cw / 2, 0, Math.max(0, WORLD_W * TILE - cw));
     G.cam.y = U.clamp(P.y - 16 - ch / 2, 0, Math.max(0, WORLD_H * TILE - ch));
+    // dentro de um cômodo que cabe na tela, a câmera fica parada no meio dele
+    const rm = Places.room();
+    if (rm && (rm.w + 2) * TILE <= cw) G.cam.x = (rm.fx0 + rm.w / 2) * TILE - cw / 2;
+    if (rm && (rm.h + 4) * TILE <= ch) G.cam.y = (rm.fy0 + rm.h / 2 - 0.6) * TILE - ch / 2;
     G.mouse.wx = G.mouse.x / zm + G.cam.x; G.mouse.wy = G.mouse.y / zm + G.cam.y;
 
     // mudança de território
@@ -591,18 +601,19 @@ const Game = {
       G.ping = null;
     }
     const z = G.dungeon ? -1 : World.terrAt(P.x, P.y);
-    if (z !== G.zone && !G.dungeon) {
+    if (z !== G.zone && !G.dungeon && !G.place) {
       if (G.zone !== -2) UI.banner(z >= 0 ? CIV_DEFS[z].name : 'Terras Selvagens');
       G.zone = z;
     }
     if (T_.hud <= 0) {
       T_.hud = 0.12;
       const npc = this.nearestNpc();
-      const s = npc ? null : this.nearestInteract();
-      const boat = s || npc ? null : this.boatAction();
+      const fu = npc ? null : Places.nearFurn();
+      const s = npc || fu || G.place ? null : this.nearestInteract();
+      const boat = s || npc || fu || G.place ? null : this.boatAction();
       UI.prompt(Urban.mode ? Urban.prompt() : G.placing ? `Posicionando <b>${BUILDINGS[G.placing].name}</b> — clique para construir · botão direito/Esc cancela`
         : P.fishing ? (P.fishing.state === 'bite' ? '<b>❗ O peixe mordeu! Clique ou aperte Espaço AGORA!</b>' : '🎣 Pescando... espere o peixe morder (andar recolhe a linha)')
-        : npc ? `${npc.npc.name} - Interagir` : s ? `${this.interactName(s)} - Interagir` : boat ? 'Barco - Interagir' : null);
+        : npc ? `${npc.npc.name} - Interagir` : fu ? Places.furnLabel(fu) : s ? `${this.interactName(s)} - ${Places.enterable(s) ? 'Entrar' : 'Interagir'}` : boat ? 'Barco - Interagir' : null);
     }
   },
 
@@ -765,14 +776,14 @@ const Game = {
       if (G.realTime - G.lastWarn > 2) {
         G.lastWarn = G.realTime;
         const tname = `${o.tool === 'axe' ? 'um Machado' : 'uma Picareta'} de ${TIER_NAMES[o.min]} ou melhor`;
-        UI.msg(better && ITEMS[better].tier >= o.min ? `Empunhe ${ITEMS[better].name} para isso — aperte Q para trocar a ferramenta.` : `${o.name} exige ${tname}.`, 'bad');
+        UI.msg(better && ITEMS[better].tier >= o.min ? `Empunhe ${ITEMS[better].name} para isso — aperte ${Keys.label('tool')} para trocar a ferramenta.` : `${o.name} exige ${tname}.`, 'bad');
       }
       this.addText(px, py - 10, '✖', '#ff6b6b');
       return;
     }
     if (better && G.realTime - (this.toolHint || 0) > 20) {
       this.toolHint = G.realTime;
-      UI.msg(`Dica: empunhe ${ITEMS[better].name} (tecla Q) para trabalhar mais rápido.`);
+      UI.msg(`Dica: empunhe ${ITEMS[better].name} (tecla ${Keys.label('tool')}) para trabalhar mais rápido.`);
     }
     World.objHp[i] = Math.max(0, World.objHp[i] - tool.power);
     World.shake(i);
@@ -827,7 +838,7 @@ const Game = {
       case 'arena': return '🏟️ Arena de ' + CIV_DEFS[s.owner].short + (Arena.tourney() && Arena.tourney().ci === s.owner ? ' — GRANDE TORNEIO!' : '');
     }
     if (BIZ_TYPES[s.type] && s.owner === 'player') return `💼 ${BUILDINGS[s.type].name} — ${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários`;
-    return '';
+    return Content.label(s);
   },
   // só o nome da coisa (sem emoji e sem a explicação depois do travessão)
   interactName(s) {
@@ -864,7 +875,12 @@ const Game = {
   interact() {
     const n = this.nearestNpc();
     if (n) { UI.showTalk(n.npc.id); return; }
+    if (G.place) { const f = Places.nearFurn(); if (f) Places.use(f); return; }
     const s = this.nearestInteract();
+    // lojas, taverna, capela, castelo, suas casas e empreendimentos: entra-se neles
+    if (s && Places.enterable(s) && Places.enterRoom(s)) return;
+    if (s && Content.interact(s)) return; // horta, pomar, poço, chafariz, treino, torre e oficinas novas
+    if (s && BIZ_TYPES[s.type] && s.owner === 'player' && s.type !== 'ptavern' && !['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop'].includes(s.type)) { UI.showBiz(s.id); return; }
     if (!s) {
       const car = G.ents.find(c => c.kind === 'caravan' && !c.dead && !c.hostileToPlayer && U.dist(c.x, c.y, P.x, P.y) < 2.4 * TILE);
       if (car) { UI.showCaravan(car); return; }
@@ -1068,6 +1084,7 @@ const Game = {
     Inv.pay(b.cost);
     if (k === 'pcastle') { P.gold -= REALM_GOLD; G.placing = null; Realm.found(tx, ty); return; }
     World.addStruct(k, tx, ty, b.w, b.h, 'player', { built: true });
+    Content.onBuild(k);
     this.burst((tx + b.w / 2) * TILE, (ty + b.h / 2) * TILE, '#c9a978', 20);
     UI.msg(`${b.name} construída!`, 'gold');
     Progress.add('built'); if (!G.stats['b_' + k]) { G.stats['b_' + k] = 1; Progress.diary(`🏗️ Construiu: ${b.name}.`); }
@@ -1127,7 +1144,7 @@ const Game = {
       else if (d.xp && src === P) for (const a of this.allies()) if (a.npc && U.dist(a.x, a.y, P.x, P.y) < 10 * TILE) People.capXp(a.npc, Math.ceil(d.xp / 3));
     }
     if (e.militia !== undefined) Chiefdom.killed(e);
-    else if ((e.kind === 'guard') && e.civ >= 0) {
+    else if ((e.kind === 'guard') && e.civ >= 0 && !e.noGarrison) {
       const c = G.civs[e.civ];
       c.garrison = Math.max(0, c.garrison - 1);
     }
@@ -1138,7 +1155,7 @@ const Game = {
         if (e.camp.left <= 0) this.campCleared(e.camp);
       }
     }
-    if (e.kind === 'lord') this.conquer(e.civ);
+    if (e.kind === 'lord' && !e.battleKing) this.conquer(e.civ); // no campo de batalha o rei é capturado
     if (e.def.boss) Dungeon.onBossKill(e);
     if (byPlayer && e.def.gold) Sound.play('coin');
     if (e.npc) People.die(e.npc, byPlayer && !e.npc.capanga ? 'morto por você' : 'em combate');
@@ -1167,8 +1184,10 @@ const Game = {
 
   playerDie(cause) {
     if (P.dead) return;
+    if (War.isBattle()) { War.knocked(); return; } // na guerra o herói cai ferido e é carregado do campo
     if (!DIFFICULTY[G.diff || 'normal'].gameover) {
       // modo fácil: acorda em casa e perde parte do ouro
+      if (G.place) Places.exit(true);
       if (G.dungeon) Dungeon.exit(true);
       const lost = Math.floor(P.gold * 0.25);
       P.gold -= lost; P.x = G.spawn.x; P.y = G.spawn.y; P.hp = P.maxHp; P.hunger = Math.max(P.hunger, 50); P.stamina = 100;
@@ -1191,6 +1210,7 @@ const Game = {
   },
   heirs() { return G.people.filter(p => p.alive && p.kin === 'child'); },
   continueAs(id) {
+    if (G.place) Places.exit(true);
     if (G.dungeon) Dungeon.exit(true);
     P.mounted = false;
     const c = People.get(id);
@@ -1268,6 +1288,7 @@ const Game = {
         if (e.tag) G.groups[e.tag] = Math.max(0, (G.groups[e.tag] || 1) - 1);
       }
     }
+    if (G.place) return;
     const wild = G.ents.filter(e => !e.dead && ['deer', 'boar', 'wolf', 'fox', 'rabbit', 'goat', 'bear'].includes(e.kind)).length;
     if (wild >= 14) return;
     const a = Math.random() * Math.PI * 2, d = U.rnd(16, 26) * TILE;
@@ -1337,12 +1358,12 @@ const Game = {
       for (const p of People.residents(vi)) {
         if (G.spawned.has(p.id) || p.port || p.trip) continue; // o marinheiro aparece no porto; quem está viajando, na vila que visita
         const h = Homes.houseOf(p); // a casa da família (pode ainda não ter: aí fica pela praça)
-        const work = { merchant: v.store, smith: v.smith, lumber: v.lumber, mason: v.quarry, innkeeper: v.tavern, priest: v.chapel }[p.rank];
+        const work = Shops.workOf(p) || (p.rank === 'priest' ? v.chapel : null);
         let e;
         const hr = this.hour(), morning = hr >= 6 && hr < 9;
         // de manhã quem trabalha aparece em casa e vai a pé até o trabalho; no resto do dia já está lá
-        if (work && !work.removed && p.age >= 14 && morning && h) { e = spawnNpc(p, (h.x + h.w / 2) * TILE, (h.y + h.h + 0.9) * TILE, 1.5, v.civ); e.workAt = { x: (work.x + work.w / 2) * TILE, y: (work.y + work.h + 0.8) * TILE }; }
-        else if (work && !work.removed && p.age >= 14) { e = spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ); e.workAt = { x: e.home.x, y: e.home.y }; e.atWork = true; }
+        if (work && !work.removed && p.age >= 14 && morning && h) { e = spawnNpc(p, (h.x + h.w / 2) * TILE, (h.y + h.h + 0.9) * TILE, 1.5, v.civ); e.workAt = { x: (work.x + work.w / 2) * TILE, y: (work.y + work.h + 0.8) * TILE }; e.workS = work.id; }
+        else if (work && !work.removed && p.age >= 14) { e = spawnNpc(p, (work.x + work.w / 2) * TILE, (work.y + work.h + 0.8) * TILE, 1.5, v.civ); e.workAt = { x: e.home.x, y: e.home.y }; e.atWork = true; e.workS = work.id; }
         else if (h) e = spawnNpc(p, (h.x + h.w / 2) * TILE, (h.y + h.h + 0.9) * TILE, p.rank === 'hunter' ? 36 : p.rank === 'wanderer' ? 32 : 4.5, v.civ);
         else e = spawnNpc(p, (v.x + 0.5) * TILE, (v.y - 0.3) * TILE, p.rank === 'hunter' ? 36 : p.rank === 'wanderer' ? 32 : p.rank === 'beggar' ? 6 : 9, v.civ);
         e.house = h; e.vi = vi;
@@ -1597,7 +1618,7 @@ const Game = {
     Market.dayTick(); Court.dayTick(); Court.rivalTick(); Court.stipendTick(); RoyalCourt.tick();
     if (!G.dungeon) Sieges.dayTick();
     Farm.dayTick(!!G.rainedToday); G.rainedToday = false;
-    Farm.produce(); Farm.tavernTick();
+    Farm.produce(); Farm.tavernTick(); Content.monthTick();
     if (!G.dungeon) { Towns.dayTick(); Caravans.dayTick(); Battles.dayTick(); }
     Progress.econTick();
     // resumo: uma linha só, com o saldo de ouro e o que entrou na mochila; os detalhes ficam no Diário
@@ -1720,6 +1741,8 @@ const Game = {
         if (gx < 0 || gy < 0 || gx * CH >= WORLD_W || gy * CH >= WORLD_H) continue;
         ctx.drawImage(World.getChunk(gx, gy), gx * CPX - cx, gy * CPX - cy, CPX + 1 / z, CPX + 1 / z);
       }
+    const amb = Ambience.on();
+    if (amb && Ambience.outdoors()) Ambience.drawWater(ctx, cx, cy, cw, ch, t);
 
     Routine.frame();
     // construções planas por baixo, demais ordenadas por profundidade
@@ -1732,7 +1755,10 @@ const Game = {
       if (!s.blocks && s.type !== 'campfire') World.drawStruct(ctx, s, sx, sy, t);
       else list.push({ y: (s.y + s.h) * TILE - 2, k: 1, s });
     }
-    if (!G.dungeon) Farm.draw(ctx, cx, cy, cw, ch);
+    if (!G.dungeon && !G.place) Farm.draw(ctx, cx, cy, cw, ch);
+    // móveis dos lugares fechados: tapetes no chão, o resto na ordem de profundidade
+    const furnList = [];
+    if (G.place) for (const f of Places.furn) { if (f.flat) Places.draw(ctx, f, f.x * TILE - cx, f.y * TILE - cy, t); else furnList.push({ y: (f.y + f.h) * TILE - (f.y < 0 ? 40 : 3), k: 5, f }); }
     // pessoa sob o cursor: destaque e conversa ao clicar
     G.hoverNpc = null;
     { let bd = 22;
@@ -1758,13 +1784,15 @@ const Game = {
       if (e.sleeping || e.x - cx < -40 || e.x - cx > cw + 40 || e.y - cy < -60 || e.y - cy > ch + 60) continue;
       list.push({ y: e.y, k: 2, e });
     }
+    for (const fu of furnList) list.push(fu);
     list.push({ y: P.y, k: 3 });
-    if (P.horse && !P.mounted && !G.dungeon && !P.sailing) list.push({ y: P.hy, k: 4 });
+    if (P.horse && !P.mounted && !G.dungeon && !P.sailing && !Places.room()) list.push({ y: P.hy, k: 4 });
     list.sort((a, b) => a.y - b.y);
     for (const d of list) {
       if (d.k === 0) World.drawObj(ctx, d.i, d.x * TILE - cx, d.ty * TILE - cy);
       else if (d.k === 1) World.drawStruct(ctx, d.s, d.s.x * TILE - cx, d.s.y * TILE - cy, t);
       else if (d.k === 2) d.e.draw(ctx, cx, cy);
+      else if (d.k === 5) Places.draw(ctx, d.f, d.f.x * TILE - cx, d.f.y * TILE - cy, t);
       else if (d.k === 4) drawHorse(ctx, P.hx - cx, P.hy - cy, P.hdir || 1, P.anim, P.hmoving, (P.horse.color || '#7a4a26'), P.cart);
       else drawPlayer(ctx, cx, cy);
     }
@@ -1787,6 +1815,7 @@ const Game = {
 
     Urban.draw(ctx, cx, cy, t);
     Dig.draw(ctx, cx, cy);
+    if (amb) { Ambience.updateSmoke(Math.min(0.1, t - (this.ambT || t)), vis); this.ambT = t; Ambience.drawSmoke(ctx, cx, cy); if (Ambience.outdoors()) Ambience.drawClouds(ctx, cx, cy, cw, ch, t); }
 
     // iluminação noturna
     if (G.darkness > 0.01) {
@@ -1798,12 +1827,15 @@ const Game = {
       l.fillRect(0, 0, sw, sh);
       l.globalCompositeOperation = 'destination-out';
       l.setTransform(z, 0, 0, z, 0, 0);
-      const hole = (x, y, r) => {
+      const glows = [];
+      const hole = (x, y, r, col) => {
+        if (col !== false) glows.push([x, y, r, col]);
         const g = l.createRadialGradient(x, y, 0, x, y, r);
         g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
         l.fillStyle = g; l.beginPath(); l.arc(x, y, r, 0, Math.PI * 2); l.fill();
       };
-      hole(P.x - cx, P.y - cy - 16, G.dungeon ? 250 : 170);
+      hole(P.x - cx, P.y - cy - 16, G.dungeon ? 250 : Places.room() ? 130 : 170, false);
+      for (const L of Places.lights()) hole(L.x - cx, L.y - cy, L.r + Math.sin(t * 8 + L.x) * 4, L.col);
       for (const s of vis) {
         const sx = (s.x + s.w / 2) * TILE - cx, sy = (s.y + s.h / 2) * TILE - cy;
         const flick = Math.sin(t * 9 + s.id) * 6;
@@ -1815,12 +1847,15 @@ const Game = {
         else if (s.type === 'castle') { hole(sx - 22, (s.y + s.h) * TILE - cy - 20, 110 + flick); hole(sx + 22, (s.y + s.h) * TILE - cy - 20, 110 + flick); }
         else if (s.type === 'vhouse' || s.type === 'tavern') { if (Routine.lit(s)) hole(sx, sy, s.type === 'tavern' ? 115 + flick : 80); }
         else if (s.type === 'cabin' || s.type === 'house' || s.type === 'store') hole(sx, sy, 80);
+        else if (Content.LIGHTS[s.type]) hole(s.type === 'lamppost' || s.type === 'vlamp' ? sx : sx, s.type === 'lamppost' || s.type === 'vlamp' ? sy - 18 : sy, Content.LIGHTS[s.type] + flick);
       }
       ctx.drawImage(this.light, 0, 0, cw, ch);
+      if (amb) Ambience.glow(ctx, glows, G.darkness);
     }
 
     Sieges.drawBoulders(ctx, cx, cy);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (amb) { Ambience.tint(ctx, sw, sh); Ambience.drawLife(ctx, sw, sh, t); Ambience.vignette(ctx, sw, sh); }
     // rótulos
     ctx.textAlign = 'center';
     for (const s of vis) {
@@ -1865,6 +1900,7 @@ const Game = {
     this.drawPing(ctx, cx, cy, sw, sh, z);
     Season.drawWeather(ctx, sw, sh);
     this.drawBossBar(ctx, sw);
+    War.drawHud(ctx, sw);
     Sieges.drawGateBar(ctx, sw);
     this.drawMinimap(ctx, sw);
   },
@@ -1910,7 +1946,7 @@ const Game = {
   },
 
   drawMinimap(ctx, cw) {
-    if (!G.settings.minimap) { this.miniRect = null; return; }
+    if (!G.settings.minimap || G.place) { this.miniRect = null; return; }
     const S = this.miniSizeNow || +G.settings.miniSize, x0 = cw - S - 18, y0 = 18, k = S / WORLD_W;
     this.miniRect = { x: x0, y: y0, s: S };
     // moldura

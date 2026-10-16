@@ -89,7 +89,17 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
-## Novidades desta versão
+## Novidades: lugares fechados, guerras de verdade e o dobro de coisas
+
+- **Interiores**: entre nas lojas, taverna, capela, catedral, castelo (sala do trono), nas suas casas e nos seus empreendimentos. O dono atende no balcão; de dia ele trabalha lá dentro e à noitinha a taverna enche de fregueses. As lojas fecham à noite.
+- **Um dono para cada loja**: duas madeireiras na mesma vila têm dois madeireiros.
+- **Seus empreendimentos**: balcão para comprar no atacado e pôr mercadoria à venda; o lucro cresce com a população por perto.
+- **Guerras de verdade**: quando o seu reino está em guerra você é convocado (não dá para fugir), monta o exército no Conselho de Guerra (soldados, arqueiros, cavaleiros, catapultas, capangas e formação) e luta num campo de batalha próprio, até um lado ser destruído. Reis aliados pedem ajuda nas guerras deles.
+- **Mais coisas**: 10 empreendimentos novos (18 ao todo), 27 construções novas (53 ao todo), 17 itens, 3 oficinas (defumadouro, tear, olaria), obras novas nas vilas.
+- **Coroa**: 14 decretos, 9 ações, 12 audiências, Grandes Obras reais e o Tribunal do Rei.
+- **Visual**: brilho quente das luzes, entardecer dourado, fumaça nas chaminés, reflexos na água, sombras de nuvens, pássaros e vaga-lumes (desligável em Ajustes → Tela).
+
+## Versão anterior (4)
 
 - **Fronteiras do reino crescem:** em Portfólio → seu reino → Obras, **Expandir fronteiras** (pago pelo tesouro e pelos armazéns do reino, até 8 níveis) faz a borda avançar 5 blocos sobre a terra selvagem, sem atravessar o mar aberto nem tomar terra de outro reino; o cartão mostra quantos blocos o reino vai ganhar. Em Portfólio → Vilas e guardas, uma vila livre sua perto de um reino seu ganha o botão **Anexar**: ela entra no reino (com as cores dele) levando a terra selvagem em volta (raio de 17 blocos), e você continua chefe dela.
 
@@ -224,6 +234,7 @@ js/progress.js    conquistas, estatísticas, diário, dinastia e profissões
 js/families.js    famílias, sobrenomes, chefes de vila, revoltas, vilas fundadas e empreendimentos com funcionários
 js/royalcourt.js  convite e vida na corte dos reis (cargos, salário, audiências)
 js/heraldry.js   bandeiras e brasões dos reinos (desenho e mudanças do rei)
+js/crown.js       decretos, ações, obras reais e tribunal do rei
 js/court.js       títulos de nobreza, conselho real, conspirações, casamentos arranjados e rivalidades
 js/market.js      preços dinâmicos e caravanas do jogador
 js/events.js      eventos no mundo e rotina dos moradores
@@ -231,6 +242,10 @@ js/homes.js       casas dos moradores (cada família constrói a sua)
 js/urban.js       estradas, chefia das vilas e obras de chefes e reis (mover, criar e demolir imóveis)
 js/siege.js       portões, aríetes, catapultas e ataques inimigos às suas terras
 js/arena.js       arenas, duelos, justas, Grande Torneio e apostas
+js/interior.js    lado de dentro das construções e um dono por loja
+js/war.js         guerras de verdade: conselho de guerra e campo de batalha
+js/content.js     empreendimentos, construções e obras novas
+js/ambience.js    efeitos de ambiente (luz, fumaça, água, nuvens)
 js/faith.js       capelas, catedrais, padres, bênçãos, casamento na igreja e santuários
 js/input.js       controle (gamepad) e controles de toque
 js/people.js      pessoas, famílias, conversas e lojas

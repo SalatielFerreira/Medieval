@@ -108,6 +108,7 @@ const Battles = {
   },
   tag(b, c) { return `bat${b.id}_${c}`; },
   update() {
+    if (G.place) return; // não decide batalhas enquanto você está num lugar fechado
     for (const b of this.active()) {
       const d = U.dist(P.x / TILE, P.y / TILE, b.x, b.y);
       if (!b.started && d < 34 && !G.dungeon) {
@@ -135,7 +136,7 @@ const Battles = {
     const enemy = side === b.a ? b.b : b.a;
     b.prevWar = G.civs[enemy].atWar;
     G.civs[enemy].atWar = true;
-    UI.msg(`Você luta por ${Diplo.name(side)}! Seus capangas atacarão os soldados de ${Diplo.name(enemy)}. (T muda as ordens)`, 'gold', true);
+    UI.msg(`Você luta por ${Diplo.name(side)}! Seus capangas atacarão os soldados de ${Diplo.name(enemy)}. (${Keys.label('orders')} muda as ordens)`, 'gold', true);
   },
   resolve(b, winner) {
     b.done = true;
@@ -162,7 +163,7 @@ const Battles = {
   },
   dayTick() {
     for (const b of this.active()) if (G.day - b.day > ECON_DAYS) this.resolve(b, null);
-    for (const w of Diplo.D().wars) if (!this.active().some(b => (b.a === w.a && b.b === w.b) || (b.a === w.b && b.b === w.a)) && Math.random() < 0.5) this.create(w.a, w.b);
+    for (const w of Diplo.D().wars) if (War.mySide(w) === null && !this.active().some(b => (b.a === w.a && b.b === w.b) || (b.a === w.b && b.b === w.a)) && Math.random() < 0.5) this.create(w.a, w.b);
     G.battles = this.list().filter(b => !b.done || G.day - b.day < 3 * ECON_DAYS);
   },
 };

@@ -113,7 +113,7 @@ const Ride = {
     if (!P.horse) return;
     const st = this.stall();
     if (st) { P.hx = (st.x + st.w / 2) * TILE; P.hy = (st.y + st.h) * TILE + 14; P.hmoving = false; P.hdir = 1; return; } // esperando na frente do estábulo
-    if (P.mounted || G.dungeon || P.sailing) { if (P.mounted) { P.hx = P.x; P.hy = P.y; } return; }
+    if (P.mounted || G.dungeon || P.sailing || Places.room()) { if (P.mounted) { P.hx = P.x; P.hy = P.y; } return; } // dentro de um lugar o cavalo espera na porta
     if (P.hx === undefined) { P.hx = P.x - 30; P.hy = P.y; }
     const d = U.dist(P.hx, P.hy, P.x, P.y);
     if (d > 20 * TILE) { P.hx = P.x - 30; P.hy = P.y; return; }
@@ -227,7 +227,7 @@ const Season = {
   },
   drawWeather(ctx, cw, ch) {
     const W = G.weather;
-    if (!W || W.level < 0.03 || G.dungeon) return;
+    if (!W || W.level < 0.03 || G.dungeon || Places.room()) return;
     const t = G.realTime;
     ctx.save();
     if (W.type === 'snow') {

@@ -115,6 +115,7 @@ const Sound = {
       case 'chest': this.noise(t, 0.2, { type: 'lowpass', freq: 500, gain: 0.15 }); this.tone(t + 0.05, 110, 0.25, { to: 80, gain: 0.12 }); this.tone(t + 0.2, 1046, 0.4, { type: 'triangle', gain: 0.05 }); break;
       case 'ui': this.tone(t, 1100, 0.035, { type: 'triangle', gain: 0.03 }); break;
       case 'die': this.tone(t, 220, 1.2, { to: 50, type: 'sawtooth', gain: 0.12, lp: 600 }); [392, 349, 311, 262].forEach((f, i) => this.pluck(t + 0.2 + i * 0.3, f, 1.5, 0.3)); break;
+      case 'horn': this.tone(t, 196, 0.5, { type: 'sawtooth', gain: 0.16, lp: 1200, att: 0.06 }); this.tone(t + 0.45, 262, 0.9, { type: 'sawtooth', gain: 0.18, lp: 1400, att: 0.05 }); this.tone(t + 0.45, 131, 0.9, { type: 'triangle', gain: 0.1, att: 0.05 }); break; // trombeta de guerra
       case 'roar': this.noise(t, 1.1, { type: 'lowpass', freq: 500, to: 150, gain: 0.35, att: 0.08 }); this.tone(t, 90, 1.0, { to: 45, type: 'sawtooth', gain: 0.18, lp: 400, att: 0.08 }); break;
       case 'crackle': this.noise(t, 0.025, { type: 'highpass', freq: 2500 + Math.random() * 2000, gain: 0.05 * v, bus: this.ambBus }); break;
       case 'block': this.tone(t, 620, 0.18, { type: 'square', gain: 0.07, lp: 2600 }); this.tone(t, 930, 0.14, { type: 'triangle', gain: 0.08 }); this.noise(t, 0.06, { type: 'highpass', freq: 2200, gain: 0.12 }); break;

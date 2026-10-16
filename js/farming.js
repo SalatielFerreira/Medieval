@@ -145,7 +145,7 @@ const Farm = {
       if (s.owner !== 'player' || s.type !== 'ptavern') continue;
       s.stock = s.stock || {}; s.till = s.till || 0;
       const civ = World.terr[World.idx(s.x, s.y)];
-      let left = (civ >= 0 ? 8 : 4) + Biz.workerCount(s) * BIZ_TYPES.ptavern.sales, sold = 0, earned = 0;
+      let left = Math.round(((civ >= 0 ? 8 : 4) + Biz.workerCount(s) * BIZ_TYPES.ptavern.sales) * Biz.popMul(s)), sold = 0, earned = 0; // mais gente por perto, mais fregueses
       for (const k of Object.keys(s.stock).sort((a, b) => ITEMS[b].price - ITEMS[a].price)) {
         while (left > 0 && s.stock[k] > 0) {
           s.stock[k]--; left--; sold++;

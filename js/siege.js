@@ -97,6 +97,7 @@ const Sieges = {
       b.t += dt;
       if (b.t >= b.dur && !b.hit) {
         b.hit = true;
+        if (b.war) { War.land(b); continue; } // pedra de catapulta no campo de batalha
         Game.burst(b.x1, b.y1, '#7a7468', 14);
         Sound.play('mine', { vol: 0.8 });
         const pos = this.targetPos(b.t2);

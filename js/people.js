@@ -224,7 +224,9 @@ const People = {
   },
   canRomance(p) { return this.isAdult(p) && P.age >= 16 && !p.kin && (p.spouse === null || p.spouse === 'player') && p.rank !== 'child'; },
   residents(vi) { return G.people.filter(p => p.alive && p.home.type === 'village' && p.home.idx === vi && !p.capanga && (p.job === undefined || p.job === null)); },
-  shopkeeper(vi, rank) {
+  shopkeeper(vi, rank, s) {
+    const shop = s || Shops.firstOf(vi, rank);
+    if (shop) return Shops.keeper(shop);
     const list = G.people.filter(p => p.alive && p.home.type === 'village' && p.home.idx === vi && p.rank === rank && !p.capanga);
     return list[0] || null;
   },
@@ -450,12 +452,14 @@ const People = {
     const out = [], slots = [['store', 'merchant'], ['smith', 'smith'], ['lumber', 'lumber'], ['quarry', 'mason'], ['tavern', 'innkeeper']];
     World.villages.forEach((v, vi) => {
       if (!this.canAppoint(vi)) return;
-      for (const [slot, rank] of slots) if (v[slot] && !v[slot].removed && !this.shopkeeper(vi, rank)) out.push({ vi, rank });
+      for (const s of Shops.vacant(vi)) if (slots.some(x => x[1] === SHOP_KEEPER[s.type])) out.push({ vi, rank: SHOP_KEEPER[s.type], sid: s.id });
     });
     return out;
   },
   appoint(q, rank, by) {
     q.rank = rank;
+    // assume a primeira loja vaga do ofício na vila
+    if (q.home.type === 'village') { const s = Shops.list(q.home.idx).find(x => SHOP_KEEPER[x.type] === rank && !Shops.keeper(x)); if (s) q.shop = s.okey; }
     if (q.met || q.aff >= 10) UI.msg(`🏪 ${by} nomeou ${this.full(q)} como ${RANKS[rank][q.sex]} de ${this.homeName(q)}.`, 'gold');
   },
   vacant(p, known) {

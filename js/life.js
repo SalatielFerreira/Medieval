@@ -73,6 +73,7 @@ const Towns = {
     Faith.monthTick();
     People.purseTick(); // as lojas rendem para os próprios donos
     Ports.monthTick();
+    Shops.ensure(); // cada loja com o seu responsável
     Trips.monthTick(); // desempregados e crianças passeiam por reinos em paz
   },
 };
@@ -193,7 +194,7 @@ const NPCWork = {
   can(e) {
     const p = e.npc;
     return !!p && p.alive && GATHER_RANKS.includes(p.rank) && p.age >= 16 && !p.capanga && (p.job === undefined || p.job === null) &&
-      !p.kin && !p.council && p.spouse !== 'player' && !p.hostile && e.kind === 'villager';
+      !p.kin && !p.council && p.spouse !== 'player' && !p.hostile && e.kind === 'villager' && !e.placeNpc && e.inside == null;
   },
   update(e, dt, sp) {
     if (!this.can(e) || G.dungeon) return false;

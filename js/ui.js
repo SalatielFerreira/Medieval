@@ -1,9 +1,6 @@
 'use strict';
 // Interface: HUD, mensagens e painéis (HTML sobre o canvas).
 
-const TRADE_GOODS = ['wood', 'stone', 'clay', 'coal', 'copper_ore', 'tin_ore', 'iron_ore', 'fiber', 'rope', 'leather', 'iron_bar', 'bronze_bar',
-  'wheat', 'berries', 'meat', 'cooked_meat', 'bread', 'cooked_fish', 'fishing_rod'];
-
 const PANEL_ICONS = {
   showInventory: 'backpack', showCrafting: 'hammer', showBuild: 'build', showKingdom: 'crown', showSettings: 'gear', showHelp: 'star',
   showPort: 'map', showArena: 'sword', showTalk: 'chat', showGift: 'star', showEquipC: 'shield', showShop: 'coin', showTavern: 'users', showCastle: 'castle',
@@ -116,7 +113,7 @@ const UI = {
         <div class="q-tool" data-qt="1" id="qToolBox" title="Ferramenta em mãos — clique ou Q para trocar"><span class="q-ic" id="qToolIc"></span><b id="qToolName"></b><em id="qToolSub"></em></div>
         <div class="q-load" id="qLoadBox" title="Carga da mochila"><span id="qLoadT"></span><div class="q-lbar"><i id="qLoad"></i></div></div></div>
       <div class="q-row">
-        <div class="q-slots" title="Bolsos: teclas 1 e 2 (arraste comidas e ferramentas para cá na Mochila)">${[0, 1].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span></div>`).join('')}</div>
+        <div class="q-slots" title="Bolsos: teclas ${Keys.label('quick1')} e ${Keys.label('quick2')} (arraste comidas e ferramentas para cá na Mochila)">${[0, 1].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span></div>`).join('')}</div>
         <div class="q-ord" data-qo="1" id="qOrdBox" title="Ordem aos capangas — clique ou T para trocar"><b id="qOrder"></b></div></div>`;
     quick.addEventListener('click', e => {
       if (G.state !== 'play' || G.paused) return;
@@ -341,7 +338,7 @@ const UI = {
         if (it) {
           html('pkIc' + q, UI.ii(it)); txt('pkN' + q, it.name); txt('pkC' + q, it.tool ? '' : '×' + Inv.count(k));
           txt('pkS' + q, it.tool ? (P.equip.tool === k ? 'em mãos' : 'empunhar') : it.food || it.heal ? (it.food ? 'comer' : 'usar') : 'usar');
-          const tt = `Bolso ${q + 1}: ${it.name} — clique ou tecla ${q + 1}`; if (b.title !== tt) b.title = tt;
+          const tt = `Bolso ${q + 1}: ${it.name} — clique ou tecla ${Keys.label('quick' + (q + 1))}`; if (b.title !== tt) b.title = tt;
           b.classList.toggle('on', !!it.tool && P.equip.tool === k);
         }
       }
@@ -679,8 +676,10 @@ const UI = {
   showBuild() {
     const S = this.sel;
     // categorias no menu lateral: [chave, ícone, nome, itens]
-    const cats = [['moradia', '🏠', 'Moradia', ['cabin', 'house', 'manor', 'pcastle']], ['producao', '🔨', 'Produção', ['campfire', 'workbench', 'forge', 'oven', 'brewery']],
-      ['fazenda', '🐄', 'Fazenda e animais', ['farm', 'coop', 'pen', 'beehive']], ['negocios', '💼', 'Empreendimentos', ['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop', 'ptavern']],
+    const cats = [['moradia', '🏠', 'Moradia', ['cabin', 'house', 'manor', 'pcastle']], ['producao', '🔨', 'Produção', ['campfire', 'workbench', 'forge', 'oven', 'brewery', 'smokehouse', 'loom', 'kiln']],
+      ['fazenda', '🐄', 'Fazenda e animais', ['farm', 'garden', 'orchard', 'coop', 'pen', 'beehive']], ['negocios', '💼', 'Empreendimentos', ['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop', 'ptavern',
+        'biz_bakery', 'biz_brewery', 'biz_tannery', 'biz_weaver', 'biz_fishery', 'biz_winery', 'biz_ranch', 'biz_inn', 'biz_jeweler', 'biz_apothecary']],
+      ['praca', '⛲', 'Praça e decoração', ['well_p', 'fountain', 'statue', 'lamppost', 'bench', 'flowerbed', 'hedge', 'fence']], ['cultura', '📚', 'Cultura, fé e treino', ['library', 'oratory', 'training', 'watchtower']],
       ['guarda', '📦', 'Baús e estábulo', ['chest', 'stable']], ['defesa', '🛡️', 'Defesa e exército', ['barracks', 'wall_wood', 'wall_stone']],
       ['estradas', '🛣️', 'Estradas', ['road', 'u:unroad']], ['reformas', '🔀', 'Reformas', ['u:move', 'u:demolish']]]
       .map(([k, ic, name, ks]) => [k, ic, name, ks.filter(x => BUILDINGS[x] || x.includes(':') || x === 'road')]);
@@ -1343,8 +1342,9 @@ const UI = {
   },
   showBiz(sid) {
     const s = World.structs[sid], d = BIZ_TYPES[s.type], fc = Biz.forecast(s), ws = Biz.workers(s);
-    const near = U.dist(P.x / TILE, P.y / TILE, s.x + s.w / 2, s.y + s.h / 2) < 6;
+    const near = (G.place && G.place.src === s) || U.dist(P.x / TILE, P.y / TILE, s.x + s.w / 2, s.y + s.h / 2) < 6;
     const goods = Object.keys(s.goods || {}).filter(k => s.goods[k] > 0);
+    const crowd = Biz.crowd(s), mul = Biz.popMul(s);
     const cands = Biz.candidates(s);
     const outTxt = Object.entries(fc.out).filter(([, n]) => n > 0).map(([k, n]) => `${UI.ii(k)} ${n} ${ITEMS[k].name}`).join(', ') + (fc.gold ? ` 🪙 ${fc.gold}` : '');
     const body = `<div class="kgrid two">
@@ -1355,7 +1355,7 @@ const UI = {
         ${cands.map(({ p, d: dd }) => `<div class="crow"><span class="ri">${p.sex === 'm' ? '👨' : '👩'}</span><span><b>${this.esc(People.full(p))}</b><small>${People.title(p)}, ${p.age} anos · ${this.esc(People.homeName(p))} · ${Math.round(dd)} passos${Biz.skilled(p, s) ? ' · ⭐ especialista' : ''}</small></span>
           <span class="act-row"><button class="primary" data-act="bizhire" data-s="${sid}" data-id="${p.id}" ${ws.length < d.slots && P.gold >= 15 ? '' : 'disabled'}>Contratar</button></span></div>`).join('') || '<p class="muted">Ninguém disponível por perto. Converse com moradores e use “Contratar para trabalhar”.</p>'}</div>
       <div class="card"><div class="sec">📦 Produção</div>
-        <div class="kv"><div>Produz por mês<b>${outTxt || '—'}</b></div><div>Salários por mês<b>${fc.wages} 🪙</b></div>${d.season ? `<div>Estação<b>${Season.winter() ? '❄️ metade no inverno' : 'normal'}</b></div>` : ''}${s.type === 'ptavern' ? `<div>Vendas extras/dia<b>+${ws.length * d.sales}</b></div>` : ''}</div>
+        <div class="kv"><div>Produz por mês<b>${outTxt || '—'}</b></div><div>Salários por mês<b>${fc.wages} 🪙</b></div><div>👥 Freguesia<b>${crowd.n} moradores perto${crowd.pop ? ` · reino com ${crowd.pop}` : ''} · vendas ×${mul.toFixed(2)}</b></div>${d.season ? `<div>Estação<b>${Season.winter() ? '❄️ metade no inverno' : 'normal'}</b></div>` : ''}${s.type === 'ptavern' ? `<div>Vendas extras/dia<b>+${ws.length * d.sales}</b></div>` : ''}</div>
         ${(() => { const e = Biz.earn(s), m = n => Math.round(n).toLocaleString('pt-BR');
           return `<div class="sec" style="margin-top:10px">📒 Contas <span>${e.months} ${e.months === 1 ? 'mês' : 'meses'}</span></div>
           <div class="bz-acc one"><div class="acc-col"><small>Último mês</small><div class="acc-row"><span>Faturamento</span><b class="ok">+${m(e.last ? e.last.rev : 0)}</b></div><div class="acc-row"><span>Salários</span><b class="bad">−${m(e.last ? e.last.wages : 0)}</b></div><div class="acc-row tot"><span>Lucro</span><b>${m(e.last ? e.last.rev - e.last.wages : 0)} 🪙</b></div></div>
@@ -1363,10 +1363,72 @@ const UI = {
         <div class="sec" style="margin-top:10px">Guardado</div>
         <div class="chips">${goods.map(k => `<span class="chip">${UI.ii(k)} ${s.goods[k]} ${ITEMS[k].name}</span>`).join('')}${s.till ? `<span class="chip">🪙 ${s.till}</span>` : ''}${!goods.length && !s.till ? '<span class="muted">Nada ainda.</span>' : ''}</div>
         <label class="chk"><input type="checkbox" data-act="bizauto" data-s="${sid}" ${s.autosell ? 'checked' : ''}> Vender a produção automaticamente (60% do preço, o dinheiro vai direto para você)</label>
-        <div class="act-row"><button class="primary" data-act="bizcollect" data-s="${sid}" ${near && (goods.length || s.till) ? '' : 'disabled'}>🧺 Recolher tudo</button>${near ? '' : '<small class="muted">Vá até o empreendimento para recolher.</small>'}</div></div></div>`;
+        <div class="act-row"><button class="primary" data-act="bizcollect" data-s="${sid}" ${near && (goods.length || s.till) ? '' : 'disabled'}>🧺 Recolher tudo</button>${s.type !== 'biz_farm' ? `<button data-act="bizshopopen" data-s="${sid}">🏪 Balcão: comprar e vender</button>` : ''}${near ? '' : '<small class="muted">Vá até o empreendimento para recolher.</small>'}</div></div></div>`;
     this.open('💼 ' + BUILDINGS[s.type].name, body, 'showBiz', [sid], 'Seu empreendimento');
   },
 
+
+  // ------------------------------------------------------------ guerra: conselho (montar o exército) e relatório
+  showWarCouncil() {
+    const wc = G.warCall;
+    if (!wc) { this.close(); return; }
+    War.clampCfg(wc);
+    const cfg = wc.cfg, c = G.civs[wc.side], own = wc.own;
+    const mine = own ? War.armyOf(wc.side, cfg) : War.armyOf(wc.side), foe = War.armyOf(wc.enemy);
+    if (!own) mine.cats += cfg.cats;
+    const pm = War.power(mine, cfg.capangas ? War.heroPower() : 2 + P.level / 3), pf = War.power(foe), pct = Math.round(pm / Math.max(1, pm + pf) * 100);
+    const lim = War.limits(wc);
+    const step = (k, label, val, max, d, hint, unit) => `<div class="wc-row"><span class="wc-l"><b>${label}</b><small>${hint}</small></span><span class="wc-step"><button data-act="wcfg" data-k="${k}" data-d="${-d}" ${val <= 0 ? 'disabled' : ''}>−</button><b>${val}${unit || ''}</b><button data-act="wcfg" data-k="${k}" data-d="${d}" ${val >= max ? 'disabled' : ''}>+</button></span></div>`;
+    const tog = (k, label, on, hint) => `<div class="wc-row"><span class="wc-l"><b>${label}</b><small>${hint}</small></span><button class="${on ? 'primary' : ''}" data-act="wcfg" data-k="${k}">${on ? '✔ Sim' : 'Não'}</button></div>`;
+    const army = (a, title, col, extra) => `<div class="card wc-army"><div class="sec"><span class="cdot" style="background:${col}"></span> ${title}</div>
+      <div class="wc-units"><span>🛡️ <b>${a.soldiers - Math.round(a.soldiers * a.archers / 100)}</b><small>infantaria</small></span><span>🏹 <b>${Math.round(a.soldiers * a.archers / 100)}</b><small>arqueiros</small></span><span>🐎 <b>${a.cav}</b><small>cavaleiros</small></span><span>🪨 <b>${a.cats}</b><small>catapultas</small></span><span>👑 <b>${a.king ? 1 : 0}</b><small>rei</small></span>${extra || ''}</div></div>`;
+    const body = `<div class="wc-head ${own ? 'own' : ''}"><div><b>${own ? `${CIV_DEFS[wc.enemy].name} declarou guerra ao seu reino` : `Ajudar ${CIV_DEFS[wc.side].name} contra ${CIV_DEFS[wc.enemy].name}`}</b>
+        <small>${own ? 'Você é o soberano: não há como fugir. Escolha quem vai e parta para o campo de batalha.' : `${c.rulerName} leva o exército dele; você leva os seus capangas${wc.reward ? ` · recompensa ~${wc.reward} 🪙` : ''}.`}</small></div>
+        ${own && wc.deadline ? `<span class="wc-clock">⏳ ${Math.max(0, Math.ceil(wc.deadline - G.realTime))} s</span>` : ''}</div>
+      <div class="kgrid two">
+        <div class="card"><div class="sec">⚙️ Seu exército <span>${own ? `guarnição: ${c.garrison} · tesouro: ${c.treasury} 🪙` : `seu ouro: ${P.gold} 🪙`}</span></div>
+          ${own ? step('soldiers', '🛡️ Soldados', cfg.soldiers, lim.soldiers, lim.soldiers > 20 ? 5 : 1, `até ${lim.soldiers} (os outros guardam o reino)`) + step('archers', '🏹 Arqueiros', cfg.archers, 70, 10, 'parte dos soldados que atira de longe', '%') : ''}
+          ${step('cats', '🪨 Catapultas', cfg.cats, lim.cats, 1, `${WAR_CAT_COST} 🪙 cada (${own ? 'pagas pelo tesouro' : 'pagas por você'})`)}
+          ${own ? tog('knights', '🐎 Cavaleiros', cfg.knights, `${War.knightsOf(wc.side)} cavaleiro(s) sagrados do reino, montados`) : ''}
+          ${tog('capangas', '👥 Capangas', cfg.capangas, `${Game.allies().length} capanga(s) lutam ao seu lado`)}
+          <div class="sec" style="margin-top:8px">🧭 Formação</div>
+          <div class="wc-forms">${Object.entries(FORMATIONS).map(([k, f]) => `<button class="${cfg.form === k ? 'on' : ''}" data-act="wform" data-k="${k}"><b>${f.icon} ${f.name}</b><small>${f.desc}</small></button>`).join('')}</div></div>
+        <div>${army(mine, own ? `Exército de ${CIV_DEFS[wc.side].short}` : `${CIV_DEFS[wc.side].short} (aliado)`, Game.civColor(wc.side), `<span>🗡️ <b>${cfg.capangas ? Game.allies().length : 0}</b><small>capangas</small></span>`)}
+          ${army(foe, `Exército de ${CIV_DEFS[wc.enemy].short}`, Game.civColor(wc.enemy))}
+          <div class="card"><div class="sec">📊 Forças <span>${pct >= 60 ? '<span class="ok">vantagem sua</span>' : pct >= 45 ? 'equilibrado' : '<span class="bad">o inimigo é mais forte</span>'}</span></div>
+            <div class="wc-bar"><i style="width:${pct}%;background:${Game.civColor(wc.side)}"></i><i style="width:${100 - pct}%;background:${Game.civColor(wc.enemy)}"></i></div>
+            <small class="muted">A batalha só termina quando um lado for destruído. Se o rei inimigo for capturado e não tiver mais soldados em casa, o reino dele se rende.</small></div></div></div>
+      <div class="act-row wc-go"><button class="primary" data-act="wgo">⚔️ Partir para a batalha</button>${own ? '' : '<button data-act="wdecline">Desistir</button>'}</div>`;
+    this.open('⚔️ Conselho de Guerra', body, 'showWarCouncil', [], own ? 'O seu reino vai à guerra' : 'Guerra de outro reino');
+  },
+  showWarReport(rep) {
+    const body = `<div class="wr-head ${rep.win ? 'win' : 'lose'}"><span>${rep.win ? '🏆' : '💀'}</span><div><b>${rep.win ? 'Vitória!' : 'Derrota'}</b><small>${CIV_DEFS[rep.side].short} × ${CIV_DEFS[rep.enemy].short}</small></div></div>
+      <div class="kv"><div>Inimigos caídos<b>${rep.lostFoe}</b></div><div>Suas perdas<b>${rep.lostMine}</b></div></div>
+      <ul class="wr-lines">${rep.lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
+    this.open(rep.win ? '🏆 Vitória na batalha' : '💀 Derrota na batalha', body, 'showWarReport', [rep]);
+    UI.banner(rep.win ? '🏆 Vitória!' : '💀 Derrota...');
+  },
+
+  // ------------------------------------------------------------ balcão do seu empreendimento: comprar e vender
+  showBizShop(sid) {
+    const s = World.structs[sid];
+    if (!s || !BIZ_TYPES[s.type]) return;
+    const sh = Biz.trade(s), mul = Biz.popMul(s), ci = Biz.civOf(s);
+    s.shelf = s.shelf || {};
+    const goods = Object.keys(s.goods || {}).filter(k => s.goods[k] > 0), shelf = Object.keys(s.shelf).filter(k => s.shelf[k] > 0);
+    const mine = Object.keys(P.inv).filter(k => P.inv[k] > 0 && ITEMS[k] && sh.buys(ITEMS[k]));
+    const row = (k, a, b, c) => `<tr><td>${UI.ii(ITEMS[k])} ${ITEMS[k].name}</td><td>${a}</td><td>${b}</td><td>${c}</td></tr>`;
+    let h = `<div class="bzs-head"><div><b>🪙 ${s.till || 0}</b><small>no caixa</small></div><div><b>×${mul.toFixed(2)}</b><small>freguesia (cresce com a população)</small></div><div><b>${Biz.workerCount(s)}</b><small>atendendo</small></div><div><b>${P.gold}</b><small>seu ouro</small></div></div>
+      <p class="muted">Como dono, você compra no atacado (30% mais barato) e pode pôr mercadoria no balcão: o caixa paga na hora e os fregueses compram aos poucos, todo mês, pelo preço cheio. Quanto mais gente mora perto, mais eles compram.</p>`;
+    if (goods.length) h += `<h3>📦 Produção guardada</h3><table class="trade"><tr><th>Item</th><th>Guardado</th><th>Preço</th><th></th></tr>${goods.map(k => row(k, s.goods[k], 'seu',
+      `<button data-act="bzget" data-s="${sid}" data-k="${k}" data-n="1">Pegar 1</button><button data-act="bzget" data-s="${sid}" data-k="${k}" data-n="9999">Tudo</button>`)).join('')}</table>`;
+    h += `<h3>🛒 Comprar no atacado</h3><table class="trade"><tr><th>Item</th><th>Você tem</th><th>Preço do dono</th><th></th></tr>${sh.sells.map(k => { const pr = Biz.wholesale(s, k);
+      return row(k, Inv.count(k), `${pr} 🪙 <small class="muted"><s>${Game.price(ci, k).buy}</s></small>`, `<button data-act="bzbuy" data-s="${sid}" data-k="${k}" data-n="1" ${P.gold >= pr ? '' : 'disabled'}>Comprar 1</button><button data-act="bzbuy" data-s="${sid}" data-k="${k}" data-n="10" ${P.gold >= pr ? '' : 'disabled'}>10</button>`); }).join('')}</table>`;
+    h += `<h3>🏷️ Pôr à venda no balcão</h3>${mine.length ? `<table class="trade"><tr><th>Item</th><th>Você tem</th><th>O caixa paga</th><th></th></tr>${mine.map(k => { const pay = Biz.shelfPay(s, k), ok = (s.till || 0) >= pay;
+      return row(k, Inv.count(k), `${pay} 🪙`, `<button data-act="bzsell" data-s="${sid}" data-k="${k}" data-n="1" ${ok ? '' : 'disabled'}>Pôr 1</button><button data-act="bzsell" data-s="${sid}" data-k="${k}" data-n="10" ${ok ? '' : 'disabled'}>10</button>`); }).join('')}</table>` : '<p class="muted">Nada na mochila que este empreendimento venda.</p>'}`;
+    if (shelf.length) h += `<h3>🧾 No balcão (os fregueses compram todo mês)</h3><table class="trade"><tr><th>Item</th><th>Quantidade</th><th>Vende por</th><th></th></tr>${shelf.map(k => row(k, s.shelf[k], `${Math.round(ITEMS[k].price * Math.min(1.25, 0.9 + 0.1 * mul))} 🪙`, `<button data-act="bzret" data-s="${sid}" data-k="${k}">Retirar</button>`)).join('')}</table>`;
+    this.open('🏪 Balcão · ' + BUILDINGS[s.type].name, h, 'showBizShop', [sid], 'Comprar e vender no seu empreendimento');
+  },
 
   // ============================================================ Ajustes: Jogo · Tela · Som · Controles · Como jogar
   showSettings(tab) {
@@ -1397,7 +1459,7 @@ const UI = {
           ${big('quit', 'quit', icon('run'), 'Sair para o menu', 'O que não foi salvo se perde')}</div></div>`;
     } else if (tab === 'tela') {
       page = this.pageHead('🖥️', 'Tela e interface', 'Minimapa e o que aparece na tela')
-        + `<div class="card st-screen kalone"><div class="st-cols">${small ? '' : `<div class="st-col"><div class="sec">🔍 Escala</div><small class="st-hint">A automática se ajusta ao tamanho da tela</small>${chips('uiScale', [['auto', 'Auto'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']], s.uiScale)}</div>`}<div class="st-col"><div class="sec">🗺️ Minimapa</div>${sw('minimap', '👁️', 'Mostrar', 'toque nele para abrir o mapa')}${chips('miniSize', [[140, 'P', 'pequeno'], [180, 'M', 'médio'], [230, 'G', 'grande']], s.miniSize)}</div><div class="st-col"><div class="sec">📋 Informações</div>${sw('numbers', '🔢', 'Números nas barras', 'vida, energia e fome')}${sw('keysbar', '⌨️', 'Barra de atalhos', 'teclas no rodapé')}</div><div class="st-col st-pcol"><div class="sec">👀 Prévia</div><div class="sp-screen"><div class="sp-hud">${[['hp', 100], ['en', 80], ['fo', 60]].map(([k, v]) => `<div class="sp-bar ${k}"><i style="width:${v}%"></i>${s.numbers ? `<em>${v}</em>` : ''}</div>`).join('')}</div>${s.minimap ? `<div class="sp-mini" style="--m:${s.miniSize / 230}"></div>` : ''}<div class="sp-hero"></div>${s.keysbar ? '<div class="sp-keys"><i></i><i></i><i></i><i></i><i></i></div>' : ''}</div></div></div></div>`;
+        + `<div class="card st-screen kalone"><div class="st-cols">${small ? '' : `<div class="st-col"><div class="sec">🔍 Escala</div><small class="st-hint">A automática se ajusta ao tamanho da tela</small>${chips('uiScale', [['auto', 'Auto'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']], s.uiScale)}</div>`}<div class="st-col"><div class="sec">🗺️ Minimapa</div>${sw('minimap', '👁️', 'Mostrar', 'toque nele para abrir o mapa')}${sw('ambience', '✨', 'Efeitos de ambiente', 'fumaça, nuvens, reflexos, pássaros, luz do pôr do sol')}${chips('miniSize', [[140, 'P', 'pequeno'], [180, 'M', 'médio'], [230, 'G', 'grande']], s.miniSize)}</div><div class="st-col"><div class="sec">📋 Informações</div>${sw('numbers', '🔢', 'Números nas barras', 'vida, energia e fome')}${sw('keysbar', '⌨️', 'Barra de atalhos', 'teclas no rodapé')}</div><div class="st-col st-pcol"><div class="sec">👀 Prévia</div><div class="sp-screen"><div class="sp-hud">${[['hp', 100], ['en', 80], ['fo', 60]].map(([k, v]) => `<div class="sp-bar ${k}"><i style="width:${v}%"></i>${s.numbers ? `<em>${v}</em>` : ''}</div>`).join('')}</div>${s.minimap ? `<div class="sp-mini" style="--m:${s.miniSize / 230}"></div>` : ''}<div class="sp-hero"></div>${s.keysbar ? '<div class="sp-keys"><i></i><i></i><i></i><i></i><i></i></div>' : ''}</div></div></div></div>`;
     } else if (tab === 'som') {
       page = this.pageHead('🔊', 'Som', 'Música e efeitos, todos criados pelo próprio jogo')
         + `<div class="card st-sound kalone">${range('music', '🎵', 'Música', 'Muda de dia, à noite, nas cavernas e em batalha')}${range('sfx', '🔔', 'Efeitos', 'Passos, golpes, machado, fogueira, chuva...')}
@@ -1492,7 +1554,7 @@ const UI = {
          <button data-act="hsell" data-s="${sid}" ${mine || here ? '' : 'disabled'}>💰 Vender${P.cart ? ' (com a carroça)' : ''} — ${Ride.sellPrice()} Salin</button>`;
     const h = `<div class="kgrid two">
       <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🐴</div><div><b>Cavalo</b><div class="dt-cat">${where}</div></div></div>
-        <p class="dt-desc">Quase o dobro da velocidade (tecla R para montar). Os alforjes carregam +${HORSE_CARRY} de peso. Deixe-o no estábulo para ele esperar por você; os alforjes ficam com ele.</p>
+        <p class="dt-desc">Quase o dobro da velocidade (tecla ${Keys.label('ride')} para montar). Os alforjes carregam +${HORSE_CARRY} de peso. Deixe-o no estábulo para ele esperar por você; os alforjes ficam com ele.</p>
         <div class="btns">${btns}</div></div>
       <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🛒</div><div><b>Carroça</b><div class="dt-cat">${P.cart ? 'Você tem uma carroça' : 'Precisa de um cavalo para puxar'}</div></div></div>
         <p class="dt-desc">Seu cavalo puxa a carroça e você carrega +${CART_CARRY} de peso.</p>
@@ -1840,7 +1902,7 @@ const UI = {
     } else {
       h += `<button data-act="peace" data-c="${ci}" ${P.gold >= 300 ? '' : 'disabled'}>🕊️ Propor paz — 300 🪙</button>`;
       if (!G.siege) h += `<button class="danger" data-act="siege" data-c="${ci}">⚔️ Iniciar o cerco</button>`;
-      else h += `<button data-act="deploy" data-k="ram" ${Inv.count('ram') ? '' : 'disabled'}>🪵 Montar aríete (${Inv.count('ram')}) — tecla G</button>
+      else h += `<button data-act="deploy" data-k="ram" ${Inv.count('ram') ? '' : 'disabled'}>🪵 Montar aríete (${Inv.count('ram')}) — tecla ${Keys.label('siege')}</button>
         <button data-act="deploy" data-k="catapult" ${Inv.count('catapult') ? '' : 'disabled'}>🏹 Montar catapulta (${Inv.count('catapult')})</button>
         <small class="muted">Derrube o portão (${Math.ceil(G.siege.gate || 0)} de resistência) com aríetes, catapultas ou golpes. Enquanto ele estiver de pé, arqueiros atiram das muralhas e o soberano não sai.</small>`;
     }
@@ -2101,11 +2163,19 @@ const UI = {
     const trib = others.map(o => { const r = Diplo.strength(ci) / Math.max(1, Diplo.strength(o.id)), war = Diplo.atWar(ci, o.id), cd = ((c.crownCd || {})['trib' + o.id] || -99) > G.day;
       return `<div class="crow"><span class="ri"><span class="cdot" style="background:${Game.civColor(o.id)}"></span></span><span><b>${CIV_DEFS[o.id].name}</b><small>tesouro ~${o.treasury} 🪙 · ${r >= 1.3 ? '<span class="ok">mais fraco que você: deve pagar</span>' : '<span class="bad">forte: deve recusar</span>'}</small></span>
         <span class="act-row"><button data-act="ctrib" data-c="${ci}" data-o="${o.id}" ${war || cd ? 'disabled' : ''}>${war ? 'em guerra' : cd ? 'aguarde' : '📜 Exigir tributo'}</button></span></div>`; }).join('');
-    return `${petHtml}
+    const tr = Crown.trial();
+    const trialHtml = tr && tr.ci === ci ? `<div class="card cr-pet kalone"><div class="sec">⚖️ Tribunal do Rei</div><p>${tr.t.icon} ${this.esc(tr.t.text(tr.v))}</p>
+        <div class="act-row">${tr.t.opts.map((o, i) => `<button class="${i ? '' : 'primary'}" data-act="ctrial" data-i="${i}">${o[0]}</button>`).join('')}</div></div>` : '';
+    const works = Object.entries(WORKS).map(([k, w]) => { const st = Crown.work(c, k), part = Math.ceil(w.gold / w.months), pr = st ? Math.min(1, st.paid / w.months) : 0;
+      return `<div class="cr-act cr-work ${st && st.done ? 'done' : ''}"><span class="cr-ic">${w.icon}</span><span class="cr-t"><b>${w.name}</b><small>${w.desc}</small>
+        ${st && !st.done ? `<span class="cr-prog"><i style="width:${Math.round(pr * 100)}%"></i></span><small>${st.paid}/${w.months} parcelas${st.stalled ? ' · <b class="bad">parada: falta ouro</b>' : ''}</small>` : ''}</span>
+        ${st && st.done ? '<span class="ok">✔ pronta</span>' : st ? `<span class="muted">${part} 🪙/mês</span>` : `<button class="primary" data-act="cwork" data-c="${ci}" data-k="${k}" ${c.treasury >= part ? '' : 'disabled'}>Começar · ${w.months} × ${part} 🪙</button>`}</div>`; }).join('');
+    return `${petHtml}${trialHtml}
       <div class="card kalone"><div class="sec">📜 Decretos <span>${up ? `custam ${up} 🪙 por mês ao tesouro${c.decreeOff ? ' · <b class="bad">SUSPENSOS: falta ouro</b>' : ''}` : 'nenhum em vigor'}</span></div>${decs}</div>
       <div class="card kalone"><div class="sec">👑 Ações do soberano <span>pagas com o tesouro (${c.treasury} 🪙)</span>${c.inflation ? ` <span class="bad">inflação: ${c.inflation} meses</span>` : ''}</div>${acts}</div>
       <div class="kgrid two"><div class="card"><div class="sec">🗡️ Sagrar cavaleiros <span>os mais fortes do reino</span></div>${knights}</div>
-        <div class="card"><div class="sec">📜 Exigir tributo <span>a cada 6 meses por reino</span></div>${trib}</div></div>`;
+        <div class="card"><div class="sec">📜 Exigir tributo <span>a cada 6 meses por reino</span></div>${trib}</div></div>
+      <div class="card kalone"><div class="sec">🏗️ Grandes Obras reais <span>pagas em parcelas mensais · até duas ao mesmo tempo</span></div>${works}</div>`;
   },
 
   // ------------------------------------------------------------ conselho real
@@ -2357,6 +2427,8 @@ const UI = {
       case 'cknight': Crown.knight(+d.c, +d.id); break;
       case 'ctrib': Crown.demand(+d.c, +d.o); break;
       case 'cpet': Crown.answer(d.y === '1'); break;
+      case 'ctrial': Crown.judge(+d.i); break;
+      case 'cwork': Crown.startWork(+d.c, d.k); break;
       // volta para a janela de onde você veio
       case 'wback': {
         const prev = (this.hist || []).pop();
@@ -2509,6 +2581,15 @@ const UI = {
       case 'bizhire': { const p = People.get(+d.id); Biz.hire(p, World.structs[+d.s]); this.showBiz(+d.s); return; }
       case 'bizfire2': { Biz.fire(People.get(+d.id)); this.showBiz(+d.s); return; }
       case 'bizcollect': Biz.collect(World.structs[+d.s]); break;
+      case 'bizshopopen': this.showBizShop(+d.s); return;
+      case 'wcfg': { const wc = G.warCall; if (!wc) break; if (d.k === 'knights' || d.k === 'capangas') wc.cfg[d.k] = !wc.cfg[d.k]; else wc.cfg[d.k] = Math.max(0, (wc.cfg[d.k] || 0) + (+d.d)); War.clampCfg(wc); break; }
+      case 'wform': if (G.warCall) G.warCall.cfg.form = d.k; break;
+      case 'wgo': War.start(); return;
+      case 'wdecline': War.decline(); this.close(); return;
+      case 'bzget': Biz.take(World.structs[+d.s], d.k, +d.n); break;
+      case 'bzbuy': Biz.ownerBuy(World.structs[+d.s], d.k, +d.n); break;
+      case 'bzsell': Biz.ownerSell(World.structs[+d.s], d.k, +d.n); break;
+      case 'bzret': Biz.unshelf(World.structs[+d.s], d.k); break;
       case 'bizauto': { const s = World.structs[+d.s]; s.autosell = !s.autosell;
         // ao ligar, o que já estava guardado é vendido e o faturamento cai na hora no seu ouro
         if (s.autosell) { const g = Biz.cashOut(s); if (g) { this.msg(`🪙 Produção vendida: você recebeu ${g} 🪙.`, 'gold'); Sound.play('coin'); } }

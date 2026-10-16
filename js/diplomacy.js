@@ -48,6 +48,7 @@ const Diplo = {
   makePeace(a, b, why) {
     const D = this.D();
     D.wars = D.wars.filter(w => this.pairKey(w.a, w.b) !== this.pairKey(a, b));
+    if (G.warCall && this.pairKey(G.warCall.side, G.warCall.enemy) === this.pairKey(a, b)) { G.warCall = null; War.badge(null); } // a paz cancela a batalha marcada
     this.D().rel[a][b] = this.D().rel[b][a] = Math.max(this.rel(a, b), -15);
     this.chronicle(`🕊️ ${this.name(a)} e ${this.name(b)} assinaram a paz${why ? ' — ' + why : ''}.`, this.involves(a, b));
     for (const [x, y] of [[a, b], [b, a]]) if (G.civs[x].ruler === 'player' && G.civs[y].ruler !== 'player' && !this.warsOf(y).some(w => G.civs[w.a].ruler === 'player' || G.civs[w.b].ruler === 'player')) G.civs[y].atWar = false;
@@ -109,8 +110,15 @@ const Diplo = {
       else if (r > 45 && !this.allied(a, b) && aiA && G.civs[b].ruler !== 'player') this.ally(a, b);
       else if (r > 25 && aiA && G.civs[b].ruler !== 'player' && Math.random() < 0.3) this.royalWedding(a, b);
     }
-    // batalhas das guerras em andamento
+    // batalhas das guerras em andamento (as do seu reino você luta no campo de batalha)
+    let invited = false;
     for (const w of D.wars.slice()) {
+      if (War.mySide(w) !== null) { War.monthWar(w); continue; }
+      // um rei amigo pode pedir a sua ajuda
+      if (!invited && !G.warCall && Math.random() < 0.3) {
+        const friend = [w.a, w.b].find(x => G.civs[x].ruler !== 'player' && (G.civs[x].relation >= 35 || Court.levelIn(x) >= 0));
+        if (friend !== undefined && !G.civs[friend === w.a ? w.b : w.a].atWar) { invited = true; War.invite(friend, friend === w.a ? w.b : w.a); }
+      }
       const sa = this.strength(w.a) + U.rnd(0, 8), sb = this.strength(w.b) + U.rnd(0, 8);
       const [win, lose] = sa >= sb ? [w.a, w.b] : [w.b, w.a];
       const L = G.civs[lose], Wn = G.civs[win];
@@ -160,7 +168,7 @@ const Diplo = {
     if (act === 'gift' && c.treasury >= 100) { c.treasury -= 100; this.addRel(mine, other, 12); UI.msg(`Presentes enviados a ${this.name(other)} (+12 relação).`, 'gold'); }
     if (act === 'ally' && c.treasury >= 200 && this.rel(mine, other) >= 40) { c.treasury -= 200; this.ally(mine, other); }
     if (act === 'peace' && c.treasury >= 300 && this.atWar(mine, other)) { c.treasury -= 300; G.civs[other].treasury += 300; this.makePeace(mine, other, `${G.name} pagou 300 moedas`); }
-    if (act === 'war' && !this.atWar(mine, other)) this.declareWar(mine, other, `ordem de ${G.name}`);
+    if (act === 'war' && !this.atWar(mine, other)) { this.declareWar(mine, other, `ordem de ${G.name}`); if (!G.warCall) War.summon(mine, other, true); }
   },
 };
 

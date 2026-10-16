@@ -1,7 +1,7 @@
 'use strict';
 // Mundo: geração procedural, colisão, recursos e desenho de terreno/construções.
 
-const T = { DEEP: 0, WATER: 1, SAND: 2, GRASS: 3, FOREST: 4, HILL: 5, MOUNT: 6, SNOW: 7, ROAD: 8, BRIDGE: 9, CFLOOR: 10, CWALL: 11 };
+const T = { DEEP: 0, WATER: 1, SAND: 2, GRASS: 3, FOREST: 4, HILL: 5, MOUNT: 6, SNOW: 7, ROAD: 8, BRIDGE: 9, CFLOOR: 10, CWALL: 11, WFLOOR: 12, SFLOOR: 13, IWALL: 14, VOID: 15 };
 const TINFO = [
   { name: 'Mar Profundo', walk: false, speed: 0,    c: '#1d4e89' },
   { name: 'Água Rasa',    walk: true,  speed: 0.45, c: '#3a7bc8' },
@@ -15,6 +15,10 @@ const TINFO = [
   { name: 'Ponte',        walk: true,  speed: 1.2,  c: '#8b5a2b' },
   { name: 'Chão de Caverna', walk: true, speed: 0.95, c: '#3d362e' },
   { name: 'Rocha da Caverna', walk: false, speed: 0, c: '#1c1815' },
+  { name: 'Assoalho', walk: true, speed: 1, c: '#8a5f38' },
+  { name: 'Piso de Pedra', walk: true, speed: 1, c: '#7d766c' },
+  { name: 'Parede', walk: false, speed: 0, c: '#2a1d14' },
+  { name: 'Escuro', walk: false, speed: 0, c: '#0b0806' },
 ];
 // cores da estação: mistura a cor base do terreno com o tom da estação
 function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
@@ -509,7 +513,7 @@ const World = {
     const g = new Float32Array(N).fill(Infinity);
     const from = new Int32Array(N).fill(-1);
     const closed = new Uint8Array(N);
-    const COST = [Infinity, 6, 1.5, 1, 2.2, 2.5, 25, 1.8, 0.4, 0.5, 1, Infinity];
+    const COST = [Infinity, 6, 1.5, 1, 2.2, 2.5, 25, 1.8, 0.4, 0.5, 1, Infinity, 1, 1, Infinity, Infinity];
     const s = this.idx(sx, sy), e = this.idx(ex, ey);
     const heap = new MinHeap();
     g[s] = 0; heap.push(s, 0);
@@ -557,6 +561,7 @@ const World = {
     const i = this.idx(tx, ty);
     const s = this.sgrid[i];
     if (s >= 0 && this.structs[s].blocks) return true;
+    if (this.solid && this.solid[i]) return true; // móveis dos lugares fechados
     if (sail) return !this.isWater(this.tiles[i]);
     if (!TINFO[this.tiles[i]].walk) return true;
     const o = this.obj[i];
@@ -734,6 +739,42 @@ const World = {
         if (this.tile(x, y + 1) === T.CFLOOR) { g.fillStyle = '#2e2822'; g.fillRect(px, py + 11, HALF, 5); g.fillStyle = '#4a4036'; g.fillRect(px, py + 11, HALF, 1); }
         break;
       case T.ROAD: dot(U.shade(base, -0.12), 4); dot(U.shade(base, 0.08), 3); break;
+      case T.WFLOOR: {
+        // tábuas corridas: quatro por bloco, com emendas desencontradas
+        const th = this.roomTheme === 'castle' ? '#7a4a2a' : base;
+        for (let k = 0; k < 4; k++) { g.fillStyle = U.shade(th, ((x * 7 + y * 3 + k * 5) % 5 - 2) * 0.035); g.fillRect(px, py + k * 4, HALF, 4); g.fillStyle = U.shade(th, -0.28); g.fillRect(px, py + k * 4 + 3, HALF, 1); g.fillRect(px + ((x * 5 + k * 7 + y) % 4) * 4 + 1, py + k * 4, 1, 3); }
+        dot(U.shade(th, 0.1), 2);
+        break;
+      }
+      case T.SFLOOR: {
+        // lajotas de pedra com rejunte (a catedral e o castelo têm lajotas mais claras)
+        const sb = this.roomTheme === 'castle' ? '#8e8a84' : this.roomTheme === 'chapel' ? '#a8a29a' : base;
+        for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) { g.fillStyle = U.shade(sb, (((x * 2 + i) * 13 + (y * 2 + j) * 7) % 7 - 3) * 0.03); g.fillRect(px + i * 8, py + j * 8, 8, 8); }
+        g.fillStyle = U.shade(sb, -0.3); g.fillRect(px, py + 7, HALF, 1); g.fillRect(px, py + 15, HALF, 1); g.fillRect(px + 7 + ((y & 1) ? 0 : 0), py, 1, HALF); g.fillRect(px + 15, py, 1, HALF);
+        if (this.roomTheme === 'chapel' && ((x + y) & 1)) { g.fillStyle = 'rgba(40,30,20,0.12)'; g.fillRect(px, py, HALF, HALF); }
+        break;
+      }
+      case T.IWALL: {
+        const below = this.tile(x, y + 1), face = below === T.WFLOOR || below === T.SFLOOR;
+        const stone = this.roomTheme === 'stone' || this.roomTheme === 'castle' || this.roomTheme === 'chapel';
+        if (face) {
+          // a parede do fundo vista de frente: reboco (ou pedra) em cima, lambri de madeira embaixo
+          const up = stone ? (this.roomTheme === 'chapel' ? '#d8d0bc' : '#8f8a80') : '#c9b48e';
+          g.fillStyle = up; g.fillRect(px, py, HALF, HALF);
+          if (stone) { g.fillStyle = U.shade(up, -0.18); g.fillRect(px, py + 4, HALF, 1); g.fillRect(px, py + 9, HALF, 1); g.fillRect(px + ((x & 1) ? 4 : 11), py, 1, 4); g.fillRect(px + ((x & 1) ? 11 : 4), py + 5, 1, 4); }
+          else { g.fillStyle = U.shade(up, -0.1); g.fillRect(px + (x % 3) * 5, py + 2, 1, 7); }
+          g.fillStyle = stone ? '#5d5a54' : '#6b4a2e'; g.fillRect(px, py + 10, HALF, 6); g.fillStyle = stone ? '#77736c' : '#8a6040'; g.fillRect(px, py + 10, HALF, 1); g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(px, py + 15, HALF, 1);
+        } else {
+          g.fillStyle = stone ? '#2e2a26' : '#2a1d14'; g.fillRect(px, py, HALF, HALF);
+          g.fillStyle = stone ? '#4a4540' : '#4a3424';
+          if (below === T.IWALL || below === T.VOID) g.fillRect(px, py + HALF - 2, HALF, 2);
+          const l = this.tile(x - 1, y), rr = this.tile(x + 1, y);
+          if (l === T.WFLOOR || l === T.SFLOOR) g.fillRect(px, py, 2, HALF);
+          if (rr === T.WFLOOR || rr === T.SFLOOR) g.fillRect(px + HALF - 2, py, 2, HALF);
+        }
+        break;
+      }
+      case T.VOID: break;
       case T.BRIDGE:
         g.fillStyle = U.shade(base, -0.15);
         for (let k = 0; k < HALF; k += 4) g.fillRect(px + k, py, 1, HALF);
@@ -1344,6 +1385,7 @@ const World = {
         flame(w / 2 - 14, h - 18, 0.4); flame(w / 2 + 14, h - 18, 0.4);
         break;
       }
+      default: if (typeof drawStructExtra === 'function') drawStructExtra(ctx, s, X, Y, time, { R, roof, house, flame, flag, shadow, w, h }); break;
       case 'arena': {
         R(2, 6, w - 4, h - 8, '#c9b07a');
         ctx.strokeStyle = '#7a5230'; ctx.lineWidth = 4; ctx.strokeRect(X + 4, Y + 8, w - 8, h - 12);

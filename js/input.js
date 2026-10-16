@@ -262,6 +262,8 @@ const Keys = {
     this._t = t; this._tk = JSON.stringify(G.settings.keymap || {});
     return t;
   },
+  // nome da tecla de uma ação, do jeito que o jogador configurou (ex.: 'Q')
+  label(a) { return this.name(this.get(a)); },
   map(code) { const t = this.table(); return code in t ? t[code] : code; },
   name(code) {
     if (!code) return '—';

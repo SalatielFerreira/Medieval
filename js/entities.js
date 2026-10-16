@@ -36,6 +36,8 @@ const PREY_FLEE = ['deer', 'fox', 'rabbit', 'goat'];
 // a quer atacar b?
 function hostile(a, b) {
   if (a.faction === 'pet' || b.faction === 'pet' || a.kind === 'caravan') return false;
+  // no campo de batalha: cada lado ataca o outro
+  if (a.battle && a.battle === b.battle) return a.civ !== b.civ && a.dmg > 0;
   if (a.faction === 'rebel' || b.faction === 'rebel') return Families.rebelHostile(a, b);
   // campeão da arena só luta com o jogador; máquinas de cerco não atacam ninguém
   if (a.faction === 'arena') return b === P;
@@ -172,7 +174,8 @@ class Creature {
       return;
     }
     if (this.kind === 'caravan') { this.anim += dt; this.hurt -= dt; Caravans.move(this, dt); return; }
-    if (this.faction === 'engine') { Sieges.engineUpdate(this, dt); return; }
+    if (this.kind === 'ally' && Places.room()) { this.anim += dt; this.moving = false; return; } // os capangas esperam do lado de fora
+    if (this.faction === 'engine') { if (this.battleCat) War.catUpdate(this, dt); else Sieges.engineUpdate(this, dt); return; }
     if (this.follow) { if (this.follow.dead) this.follow = null; else { this.home.x = this.follow.x - 24; this.home.y = this.follow.y + 14; } }
     // capangas: a ordem do grupo e a postura de cada um decidem de que distância eles atacam
     if ((this.kind === 'ally' || this.kind === 'sentry') && this.npc) {
@@ -190,7 +193,8 @@ class Creature {
     }
     this.atkCd -= dt; this.hurt -= dt; this.scanT -= dt; this.anim += dt; this.swing = Math.max(0, this.swing - dt);
     this.moving = false;
-    const sp = d.speed * World.speedAt(this.x, this.y);
+    const sp = d.speed * World.speedAt(this.x, this.y) * (this.spMul || 1);
+    if (this.placeNpc && this.kind === 'villager') { Places.npcUpdate(this, dt, sp); return; }
 
     if (PREY_FLEE.includes(this.kind)) {
       let th = null, td = 5 * TILE;
@@ -282,6 +286,8 @@ class Creature {
         break;
       case 'guard': {
         const col = Game.civColor(this.civ);
+        // cavaleiro montado (campo de batalha)
+        if (this.mounted) { drawHorse(ctx, x, y, this.dir, this.anim, this.moving, '#5a3a22', false); drawHuman(ctx, x - this.dir * 2, y - 17, { body: col, legs: '#3a3a40', helmet: '#c8ccd2', armor: '#aab0b8', weapon: '#cfd6dd', wlen: 24, shield: col, seated: true, aim: this.aim, swing: this.swing, dir: this.dir, moving: false, anim: this.anim, hurt }); break; }
         drawHuman(ctx, x, y, { body: col, legs: '#3a3a40', helmet: '#9aa0a8', armor: '#8d949c', weapon: '#cfd6dd', wlen: 20, shield: col, aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
         break;
       }
