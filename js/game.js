@@ -1316,6 +1316,8 @@ const Game = {
   spawnWild() {
     const far = 44 * TILE, A = this.anchor();
     for (const e of G.ents) {
+      // quem está dentro do mesmo lugar fechado que o herói (campeões, lutadores, guardas da sala) nunca some
+      if (G.place && U.dist(e.x, e.y, P.x, P.y) < 30 * TILE) continue;
       if (e.kind !== 'ally' && e.siegeOf < 0 && !e.placeNpc && U.dist(e.x, e.y, A.x, A.y) > far) {
         e.dead = true;
         if (e.npc) G.spawned.delete(e.npc.id);

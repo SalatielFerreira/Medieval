@@ -48,14 +48,28 @@ const Arena = {
     return null;
   },
   fighter(e) { return !!G.duel && (e === P || e === G.duel.ent); },
+  // a areia do coliseu (por dentro), em pixels
+  sandRect() {
+    const pl = G.place; if (!pl || pl.lay !== 'coliseum') return null;
+    return { x0: (pl.fx0 + 4) * TILE, x1: (pl.fx0 + 18) * TILE, y0: (pl.fy0 + 3) * TILE + 4, y1: (pl.fy0 + 11) * TILE + 6 };
+  },
+  inSand(r, x, y) { return x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1; },
   // impede entrar na arena quem não está lutando (quem já está dentro pode sair)
   keepsOut(e, x, y) {
+    const r = this.sandRect();
+    if (r) {
+      const now = this.inSand(r, e.x, e.y), next = this.inSand(r, x, y);
+      if (this.fighter(e) || e.faction === 'duelist') return now && !next && !!(G.duel || this.show); // lutando: não sai da areia
+      return next && !now;                                                                            // os outros não entram
+    }
     const a = this.zoneAt(x, y);
     if (!a || this.zoneAt(e.x, e.y) === a || this.fighter(e)) return false;
     return true;
   },
   // tira da arena quem não está lutando (e põe o herói na entrada quando a luta acaba)
   clear(s, keepPlayer) {
+    const r = this.sandRect();
+    if (r && !keepPlayer && this.inSand(r, P.x, P.y)) { P.x = (G.place.fx0 + 11.5) * TILE; P.y = (G.place.fy0 + 12.5) * TILE; }
     if (!s) return;
     const out = (e) => { const p = freeSpotNear((s.x + s.w / 2) * TILE, (s.y + s.h + 1.6) * TILE, 2.5 * TILE); e.x = p.x; e.y = p.y; };
     for (const e of G.ents) if (!e.dead && e !== (G.duel && G.duel.ent) && this.zoneAt(e.x, e.y) === s) out(e);
@@ -76,7 +90,7 @@ const Arena = {
     this.clear(this.arenaOf(ci), true); // a plateia sai da areia
     UI.close();
     UI.banner(`⚔️ ${e.duelName} (${t.name})`);
-    UI.msg(`Duelo na arena de ${CIV_DEFS[ci].short}! Derrote ${e.duelName}. Ninguém morre: quem cair primeiro perde.${bet ? ` Aposta: ${bet} 🪙 (paga ${t.odds}×).` : ''}`, 'gold');
+    UI.msg(`Duelo na arena de ${CIV_DEFS[ci].short}! A luta só acaba quando a vida de um dos dois zerar. Ninguém morre de verdade: quem cair perde e não leva o prêmio.${bet ? ` Aposta: ${bet} 🪙 (paga ${t.odds}×).` : ''}`, 'gold');
   },
   // o campeão foi derrotado
   win() {
@@ -109,12 +123,12 @@ const Arena = {
     if (!d) return;
     const c = this.center(d.ci);
     if (d.ent.dead && G.duel) { this.win(); return; }
-    if (U.dist(P.x, P.y, c.x, c.y) > 9 * TILE) this.lose('abandonou a arena');
+    if (!this.sandRect() && U.dist(P.x, P.y, c.x, c.y) > 9 * TILE) this.lose('abandonou a arena'); // no coliseu não dá para sair da areia no meio da luta
   },
   // o jogador leva um golpe do campeão: não morre na arena
   playerHit(d) {
     if (!G.duel) return false;
-    if (P.hp - d <= P.maxHp * 0.12) { P.hp = Math.max(1, P.hp - d); this.lose(); return true; }
+    if (P.hp - d <= 0) { P.hp = 0; this.lose('caiu na areia, sem forças'); return true; }
     return false;
   },
 

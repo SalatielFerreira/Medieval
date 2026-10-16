@@ -142,7 +142,12 @@ const LAYOUTS = {
         ['banner', 3, -1], ['banner', 7, -1], ['banner', 14, -1], ['banner', 18, -1], ['box', 9, 0, 4, 2],
         ['brazier', 4, 3, 1, 1, { light: 1 }], ['brazier', 17, 3, 1, 1, { light: 1 }], ['brazier', 4, 10, 1, 1, { light: 1 }], ['brazier', 17, 10, 1, 1, { light: 1 }],
         ['arenadesk', 1, 12, 3, 1, { act: 'arena' }], ['weaponrack', 18, 12, 3], ['barrel', 6, 12], ['barrel', 15, 12]],
-      center: [11, 7], seats: [[3, 11], [18, 11], [5, 12], [16, 12]] };
+      center: [11, 7], seats: [[3, 11], [18, 11], [5, 12], [16, 12]],
+      // camarote real (no meio da arquibancada de cima) e lugares da plateia
+      // na frente do camarote real e ao longo da beira da areia (à vista, sem pisar nela)
+      royal: [[10, 2], [11, 2], [9, 2], [12, 2]],
+      crowd: [[3, 2], [5, 2], [7, 2], [14, 2], [16, 2], [18, 2], [4, 2], [6, 2], [8, 2], [13, 2], [15, 2], [17, 2],
+        [3, 4], [18, 4], [3, 6], [18, 6], [3, 8], [18, 8], [3, 10], [18, 10]] };
   },
   harbor() {
     return { w: 16, h: 9, tiles: [[T.DEEP, 11, 0, 5, 9], [T.BRIDGE, 11, 3, 4, 2]], // a água do porto é funda: só se anda no cais
@@ -298,7 +303,22 @@ const Places = {
       return;
     }
     if (d.lay === 'coliseum') {
-      let j = 0; for (const p of pick(locals(), 4, 37)) put(take(p), L.seats[j++], { still: true, dir: j % 2 ? 1 : -1 });
+      // camarote: o rei, a rainha e os príncipes do reino (no seu reino, o seu cônjuge e os seus filhos)
+      const ci = src.owner, cv = G.civs[ci];
+      let royals = [];
+      if (cv && cv.ruler === 'player') royals = G.people.filter(p => p.alive && !p.capanga && (p.spouse === 'player' || p.kin === 'child') && p.age >= 4);
+      else {
+        const atCourt = p => p.alive && !p.capanga && p.home.type === 'castle' && p.home.civ === ci;
+        const ruler = G.people.find(p => atCourt(p) && p.rank === 'ruler');
+        royals = [ruler, ...G.people.filter(p => atCourt(p) && p.rank === 'consort'), ...G.people.filter(p => atCourt(p) && p.rank === 'heir'),
+          ...(ruler ? ruler.children.map(id => G.people[id]).filter(q => q && atCourt(q)) : [])].filter((p, k, a) => p && a.indexOf(p) === k);
+      }
+      royals.slice(0, L.royal.length).forEach((p, k) => put(take(p), L.royal[k], { still: true, dir: k % 2 ? -1 : 1 }));
+      // plateia: gente do reino nas arquibancadas, mais cheia de dia
+      const ofCiv = p => p.civ === ci || (p.home.type === 'village' && World.villages[p.home.idx] && World.villages[p.home.idx].civ === ci);
+      const crowd = G.people.filter(p => p.alive && People.isAdult(p) && !p.capanga && !p.kin && p.spouse !== 'player' && !People.isCourt(p) && !p.trip && ofCiv(p) && !used.has(p.id));
+      const n = Math.min(L.crowd.length, ph === 'day' ? 20 : 12);
+      let j = 0; for (const p of pick(crowd, n, 37)) { const sp = L.crowd[j++]; put(take(p), sp, { still: true, dir: sp[0] < 11 ? 1 : -1 }); }
       return;
     }
     if (d.lay === 'harbor') {
