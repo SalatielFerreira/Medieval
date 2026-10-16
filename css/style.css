@@ -3566,3 +3566,23 @@ body.small #panel .kpg { overflow: visible; }
 
 /* ícones desenhados das construções: do tamanho de um emoji */
 .rrow .ri .ii.bi { width: 1.25em; height: 1.25em; } .dt-ic .ii.bi { width: 1.3em; height: 1.3em; }
+
+/* ================================================================ cemitério */
+.cem-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.cem-stones { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin: 6px 0; }
+.cem-stone { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 6px 8px; border-radius: 40px 40px 6px 6px;
+  background: linear-gradient(180deg, #9a9c96, #6e706a); border: 1px solid #4a4c46; color: #2a2a26; box-shadow: inset 0 2px 0 rgba(255,255,255,.25), 0 3px 0 #3a2a1a; cursor: pointer; }
+.cem-stone b { font-size: 12px; color: #1e1e1a; }
+.cem-stone small { font-size: 10px; color: #2e2e2a; }
+.cem-stone .cem-cross { font-size: 15px; color: #3a3a34; }
+.cem-stone em { position: absolute; bottom: -6px; right: 6px; font-style: normal; font-size: 13px; }
+.cem-stone.hero { background: linear-gradient(180deg, #d8d2c2, #a8a292); }
+.cem-stone.on { outline: 2px solid #ffd54a; }
+.cem-detail { background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 12px; }
+.cem-big { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 18px 10px 12px; border-radius: 70px 70px 8px 8px;
+  background: linear-gradient(180deg, #a2a49e, #74766f); color: #1e1e1a; box-shadow: inset 0 2px 0 rgba(255,255,255,.25); }
+.cem-big.hero { background: linear-gradient(180deg, #dcd6c6, #aaa494); }
+.cem-big span { font-size: 22px; } .cem-big b { font-size: 16px; } .cem-big small { font-size: 12px; } .cem-big i { font-size: 12px; color: #3a3a32; }
+.cem-detail blockquote { margin: 10px 4px; font-style: italic; color: #e8dcc0; }
+.cem-life { margin: 6px 0 10px 18px; padding: 0; color: #d8c9a6; font-size: 13px; line-height: 1.5; }
+body.small .cem-layout { grid-template-columns: 1fr 1fr; }

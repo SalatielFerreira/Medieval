@@ -394,6 +394,7 @@ const People = {
   // ------------------------------------------------------------ morte, herança e o passar dos anos
   die(p, cause) {
     if (!p.alive) return;
+    if (Graves.isFamily(p)) Graves.add(p, cause); // a família ganha uma lápide no cemitério do reino
     p.alive = false; p.capanga = false; p.dating = false; p.engaged = false;
     if (p.job !== undefined && p.job !== null) { const s = World.structs[p.job]; if (s && s.workers) s.workers = s.workers.filter(id => id !== p.id); p.job = null; }
     G.spawned.delete(p.id);

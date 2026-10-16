@@ -757,6 +757,7 @@ const Realm = {
       base: { name, short, color: '#a8791a', roof: '#a8791a', flag: 'quarters', metal: '#f2c45a', division: 'chief', charge: '♜' } };
     this.list().push(r);
     this.build(r);
+    Graves.place(); // o reino novo ganha o seu cemitério
     G.civs[ci] = { id: ci, ruler: 'npc', rulerName: G.name, pop: 40 + People.residents(vi).length, treasury: 300, garrison: 6, tax: 0.1, happy: 65, relation: 100, atWar: false, rebel: 0, festival: 0,
       stock: { wheat: 40, wood: 30, stone: 20, iron_ore: 5 }, invest: { farms: 0, sawmill: 0, quarry: 0, mines: 0, housing: 0, walls: 0 }, founded: true };
     // diplomacia: os outros reinos olham o reino novo com desconfiança

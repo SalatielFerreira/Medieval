@@ -1245,6 +1245,40 @@ const World = {
         banner(84, 8);
         break;
       }
+      case 'cemetery': {
+        R(4, 6, w - 8, h - 10, 'rgba(30,50,25,0.28)');
+        // cipreste
+        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(X + w - 18, Y + 40, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
+        R(w - 20, 26, 4, 14, '#4a3420');
+        ctx.fillStyle = '#24402a'; ctx.beginPath(); ctx.ellipse(X + w - 18, Y + 14, 8, 20, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#2f5534'; ctx.beginPath(); ctx.ellipse(X + w - 20, Y + 10, 4, 13, 0, 0, Math.PI * 2); ctx.fill();
+        // lápides: as da família primeiro, depois as antigas
+        const fam = civ >= 0 ? Graves.inCiv(civ) : [], slots = [];
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) slots.push([18 + c * 26 + (r % 2) * 8, 24 + r * 30]);
+        const n = Math.min(slots.length, Math.max(6, fam.length + 4));
+        for (let k = 0; k < n; k++) {
+          const [gx, gy] = slots[k]; if (gx > w - 34 && gy < 50) continue;
+          const mine = k < fam.length, gr = mine ? fam[fam.length - 1 - k] : null, old = !mine;
+          ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(X + gx - 1, Y + gy + 16, 16, 3);
+          R(gx + 1, gy + 14, 12, 4, '#5a4632');                                 // terra do túmulo
+          const sc = gr && gr.kind === 'hero' ? '#c8c2b4' : old ? '#7e8078' : '#a8aaa4';
+          R(gx + 2, gy + 3, 10, 12, sc); ctx.fillStyle = sc; ctx.beginPath(); ctx.arc(X + gx + 7, Y + gy + 4, 5, Math.PI, 0); ctx.fill();
+          R(gx + 10, gy + 3, 2, 12, U.shade(sc, -0.2));
+          ctx.fillStyle = U.shade(sc, -0.35); ctx.fillRect(X + gx + 6, Y + gy + 3, 2, 7); ctx.fillRect(X + gx + 4, Y + gy + 5, 6, 2);
+          if (old) { ctx.fillStyle = '#5a7a3a'; ctx.fillRect(X + gx + 2, Y + gy + 12, 4, 2); ctx.fillRect(X + gx + 9, Y + gy + 9, 2, 3); }
+          if (gr && gr.kind === 'hero') { ctx.fillStyle = '#e8b923'; ctx.fillRect(X + gx + 4, Y + gy - 2, 6, 2); }
+          if (gr && gr.flowers !== undefined && G.day - gr.flowers < 3) { ctx.fillStyle = '#d0304a'; ctx.fillRect(X + gx + 3, Y + gy + 15, 2, 2); ctx.fillStyle = '#f0e040'; ctx.fillRect(X + gx + 8, Y + gy + 15, 2, 2); }
+        }
+        // cerca de ferro com portão no meio, embaixo
+        const post = (px, py) => { R(px, py - 8, 2, 10, '#2e2e34'); R(px - 1, py - 10, 4, 2, '#4a4a52'); };
+        for (let x = 2; x <= w - 4; x += 12) { post(x, 10); if (Math.abs(x + 1 - w / 2) > 12) post(x, h - 2); }
+        for (let y = 10; y <= h - 2; y += 12) { post(2, y); post(w - 4, y); }
+        R(2, 4, w - 4, 2, '#2e2e34'); R(2, h - 8, w / 2 - 14, 2, '#2e2e34'); R(w / 2 + 12, h - 8, w / 2 - 14, 2, '#2e2e34');
+        R(2, 4, 2, h - 6, '#2e2e34'); R(w - 4, 4, 2, h - 6, '#2e2e34');
+        ctx.strokeStyle = '#2e2e34'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X + w / 2, Y + h - 10, 12, Math.PI, 0); ctx.stroke();
+        R(w / 2 - 1, h - 26, 2, 6, '#2e2e34'); R(w / 2 - 3, h - 24, 6, 2, '#2e2e34');
+        break;
+      }
       case 'pcastle': case 'castle': {
         shadow();
         const stone = '#8b8d93', dark = '#5f6167';

@@ -223,24 +223,29 @@ const Season = {
     if (W.type === 'rain' || W.type === 'storm') G.rainedToday = true;
     const target = G.dungeon || W.type === 'clear' ? 0 : W.type === 'storm' ? 1 : 0.7;
     W.level += (target - W.level) * Math.min(1, dt * 0.5);
-    Sound.setRain(W.type === 'snow' ? W.level * 0.15 : W.level);
+    // no deserto não chove nem neva: quanto mais deserto em volta do herói, menos chuva (ela some aos poucos ao entrar)
+    let dsr = 0, tot = 0; const ptx = Math.floor(P.x / TILE), pty = Math.floor(P.y / TILE);
+    if (!G.place) for (let j = -3; j <= 3; j++) for (let i = -3; i <= 3; i++) { tot++; if (World.tile(ptx + i, pty + j) === T.DESERT) dsr++; }
+    const want = tot ? U.clamp(1 - (dsr / tot - 0.15) / 0.5, 0, 1) : 1;
+    W.local = W.local === undefined ? want : W.local + (want - W.local) * Math.min(1, dt * 1.2);
+    Sound.setRain((W.type === 'snow' ? W.level * 0.15 : W.level) * W.local);
   },
   drawWeather(ctx, cw, ch) {
     const W = G.weather;
-    if (!W || W.level < 0.03 || G.dungeon || Places.room()) return;
-    const t = G.realTime;
+    if (!W || W.level * (W.local === undefined ? 1 : W.local) < 0.03 || G.dungeon || Places.room()) return;
+    const t = G.realTime, lvl = W.level * (W.local === undefined ? 1 : W.local);
     ctx.save();
     if (W.type === 'snow') {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      for (let k = 0; k < 220 * W.level; k++) {
+      for (let k = 0; k < 220 * lvl; k++) {
         const x = (k * 97.3 + t * (18 + (k % 5) * 6) + Math.sin(t + k) * 12) % cw, y = (k * 61.7 + t * (40 + (k % 7) * 9)) % ch;
         ctx.fillRect(x, y, 2 + (k % 3 === 0), 2 + (k % 3 === 0));
       }
     } else {
-      ctx.fillStyle = `rgba(20,30,50,${0.18 * W.level})`; ctx.fillRect(0, 0, cw, ch);
+      ctx.fillStyle = `rgba(20,30,50,${0.18 * lvl})`; ctx.fillRect(0, 0, cw, ch);
       ctx.strokeStyle = 'rgba(180,200,230,0.45)'; ctx.lineWidth = 1;
       ctx.beginPath();
-      for (let k = 0; k < 260 * W.level; k++) {
+      for (let k = 0; k < 260 * lvl; k++) {
         const x = (k * 89.1 + t * 120) % cw, y = (k * 53.3 + t * 900) % ch;
         ctx.moveTo(x, y); ctx.lineTo(x - 4, y + 14);
       }

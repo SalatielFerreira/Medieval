@@ -74,6 +74,7 @@ const Progress = {
   },
   // o herói atual entra para a história da dinastia
   endHero(cause) {
+    Graves.addHero(cause); // o herói é enterrado no cemitério do reino
     G.dynasty = G.dynasty || [];
     G.dynasty.push({ name: G.name, sex: P.sex, age: P.age, day: G.day, level: P.level, cause, kingdoms: G.civs.filter(c => c.ruler === 'player').map(c => CIV_DEFS[c.id].short) });
   },

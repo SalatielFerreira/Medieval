@@ -2600,6 +2600,8 @@ const UI = {
       case 'anav': this.sel.atab = d.k; this.refresh(); return;
       case 'portsell': Ports.sell(+d.s, d.k, +d.n); break;
       case 'portbuy': Ports.buy(+d.s, d.k, +d.p); break;
+      case 'cemsel': this.sel.grave = +d.k; break;
+      case 'cemflower': Graves.flowers(+d.i); break;
       case 'abetset': this.sel.abet = Math.min(+d.n, P.gold, ARENA_MAX_BET); this.refresh(); return;
       case 'duel': Arena.startDuel(+d.c, +d.t, Math.min(this.sel.abet || 0, P.gold, ARENA_MAX_BET)); return;
       case 'tourney': Arena.enterTourney(+d.c); return;
