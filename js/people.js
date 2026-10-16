@@ -411,7 +411,8 @@ const People = {
     const shopRanks = ['merchant', 'smith', 'lumber', 'mason', 'innkeeper', 'hunter', 'ruler'];
     if (shopRanks.includes(p.rank)) {
       const heir = p.children.map(id => G.people[id]).filter(c => c && c.alive && c.age >= 14 && !c.capanga && !c.kin && c.spouse !== 'player' && (p.rank === 'ruler' || !this.isCourt(c))).sort((a, b) => b.age - a.age)[0];
-      if (heir) {
+      const usurped = p.rank === 'ruler' && p.civ >= 0 && G.civs[p.civ] && G.civs[p.civ].ruler === 'player'; // a coroa foi tomada
+      if (heir && !usurped) {
         heir.rank = p.rank; heir.home = p.home;
         if (known || p.rank === 'ruler') UI.msg(`${this.full(heir)} herdou o ofício de ${this.title(heir)}.`, 'gold');
       } else if (p.rank !== 'ruler') this.vacant(p, known);

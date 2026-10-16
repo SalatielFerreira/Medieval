@@ -1684,6 +1684,7 @@ const UI = {
     else if (p.capanga) acts.push(['guardmenu', '🛡️ Ficar de guarda ou esperar']);
     else if (People.canRecruit(p)) acts.push(['recruit', `🤝 Recrutar como capanga — ${People.recruitCost(p)} 🪙`]);
     if (adult && !p.kin && p.spouse !== 'player') acts.push(['insult', '😠 Insultar']);
+    if (adult && !p.kin && p.spouse !== 'player' && !p.capanga) acts.push(['attack', p.rank === 'ruler' ? '🗡️ Atacar o soberano' : '⚔️ Atacar']);
     { const fm = Families.of(p); if (adult && !p.kin && p.spouse !== 'player' && !p.capanga && Court.canDeal(fm)) {
       if (Court.isEnemy(fm)) acts.push(['fpeace', `🕊️ Pedir paz à Casa ${UI.esc(fm.surname)}`]);
       else { acts.push(Court.isAlly(fm) ? ['funally', '💔 Desfazer a aliança'] : ['fally', `🤝 Propor aliança — ${Court.ALLY_COST} 🪙`]); acts.push(['fenemy', `⚔️ Declarar a Casa ${UI.esc(fm.surname)} inimiga`]); } } }
@@ -1699,7 +1700,7 @@ const UI = {
     // ações em grupos (cada um com sua cor)
     const GROUP = { talk: 'conv', compliment: 'conv', giftmenu: 'conv', insult: 'conv', flirt: 'heart', date: 'heart', propose: 'heart', child: 'heart', breakup: 'heart',
       shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
-      fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other' };
+      fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other', attack: 'other' };
     const GN = { conv: '💬 Conversa', heart: '💕 Coração', work: '🤝 Trabalho e capangas', house: '🏛️ Casas', other: '✨ Outros' };
     const split = lab => { const m = lab.match(/^(\S+)\s+(.*)$/); return m ? [m[1], m[2]] : ['•', lab]; };
     const groups = {};
@@ -1816,6 +1817,14 @@ const UI = {
       }
       case 'cun': if (p.equip[d.k]) { Inv.add(p.equip[d.k], 1); p.equip[d.k] = null; Game.refreshCapanga(p); } this.showEquipC(p.id); return;
       case 'insult': r = People.insult(p); break;
+      case 'attack': {
+        const royal = ['ruler', 'consort', 'heir'].includes(p.rank) || People.isCourt(p);
+        Dialog.confirm({ icon: p.rank === 'ruler' ? '🗡️' : '⚔️', title: p.rank === 'ruler' ? 'Atentado contra o soberano' : 'Atacar',
+          text: p.rank === 'ruler' ? `Atacar ${People.full(p)}? Toda a guarda real vai cair sobre você ao mesmo tempo. Se o soberano morrer aqui no castelo, a coroa é sua — como usurpador.`
+            : `Atacar ${People.full(p)}? Ela vai revidar${royal ? ', e os guardas do reino vão defendê-la' : ''}.`, ok: 'Atacar', danger: true },
+          () => { this.close(); Game.provoke(p); });
+        return;
+      }
       case 'vchallenge': {
         const vi = Chiefdom.vilOf(p), v = World.villages[vi];
         if (!v) return;

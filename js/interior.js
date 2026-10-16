@@ -241,7 +241,7 @@ const Places = {
     }
     this.furn.push(Object.assign({ k: 'door', x: door.x, y: door.y, w: 1, h: 1, id: this.furn.length }, FURN.door));
     const cv = Game.canvas, zoom = U.clamp(Math.min((cv ? cv.width : 1280) / ((L.w + 3) * TILE), (cv ? cv.height : 720) / ((L.h + 5) * TILE)), 1, 2.6);
-    G.place = { kind: 'room', src, srcKey: src.okey, type: src.type, name: d.name(src), theme: d.theme, fx0, fy0, w: L.w, h: L.h, door, keep, zoom,
+    G.place = { kind: 'room', lay: d.lay, src, srcKey: src.okey, type: src.type, name: d.name(src), theme: d.theme, fx0, fy0, w: L.w, h: L.h, door, keep, zoom,
       back: { x: (src.x + src.w / 2) * TILE, y: (src.y + src.h + 0.9) * TILE }, since: G.realTime };
     // o herói entra pela porta
     P.x = (door.x + 0.5) * TILE; P.y = (door.y - 0.2) * TILE; P.dir = 1; P.sailing = false;
@@ -276,10 +276,19 @@ const Places = {
       const ci = src.owner, ruled = G.civs[ci] && G.civs[ci].ruler === 'player';
       const court = G.people.filter(p => p.alive && !p.capanga && (p.home.type === 'castle' && p.home.civ === ci || (p.council && Families.civOf(p) === ci)));
       const ruler = ruled ? null : court.find(p => p.rank === 'ruler');
-      if (ruler) put(take(ruler), L.keeper, { still: true });
+      // o soberano é bem defendido: muito mais vida e golpes pesados (um golpe de estado exige o melhor equipamento e todos os capangas)
+      if (ruler) { const k0 = put(take(ruler), L.keeper, { still: true }); if (k0) { k0.maxHp = k0.hp = 900; k0.dmg = 28; k0.royal = true; } }
       let k = 0;
       for (const p of court.filter(p => p !== ruler).sort((a, b) => (b.rank === 'consort') - (a.rank === 'consort') || (b.rank === 'heir') - (a.rank === 'heir')).slice(0, L.staff.length)) put(take(p), L.staff[k++], { leash: 0.6 });
-      for (const [x, y] of [[3, 9], [12, 9]]) { const [tx, ty] = at([x, y]); const g = Game.spawn('guard', (tx + 0.5) * TILE, (ty + 0.8) * TILE, { civ: ci, leash: 0.5, tag: 'room' }); g.placeNpc = true; }
+      // guarda real: de 4 a 8 soldados de elite, conforme a guarnição do reino (2 se o castelo é seu)
+      const spots = [[3, 9], [12, 9], [3, 5], [12, 5], [2, 2], [13, 2], [5, 9], [10, 9]];
+      const n = ruled ? 2 : Math.min(spots.length, 4 + Math.floor(((G.civs[ci] && G.civs[ci].garrison) || 0) / 4));
+      for (const [x, y] of spots.slice(0, n)) {
+        const [tx, ty] = at([x, y]); const g = Game.spawn('guard', (tx + 0.5) * TILE, (ty + 0.8) * TILE, { civ: ci, leash: 0.5, tag: 'room' }); g.placeNpc = true;
+        if (!ruled) { g.maxHp = g.hp = Math.round(g.maxHp * 2.2); g.dmg = Math.round(g.dmg * 1.6); g.royalGuard = true; }
+      }
+      // os capangas entram com você na sala do trono (nos outros lugares eles esperam do lado de fora)
+      let a = 0; for (const e of G.ents) if (e.kind === 'ally' && !e.dead) { const [tx, ty] = at([6 + (a % 4), 10 - Math.floor(a / 4)]); e.x = (tx + 0.5) * TILE; e.y = (ty + 0.8) * TILE; e.target = null; a++; }
       return;
     }
     if (d.lay === 'chapel') {
@@ -355,6 +364,7 @@ const Places = {
   // pessoas lá dentro: o dono fica no balcão olhando para você; os fregueses andam um pouco
   npcUpdate(e, dt, sp) {
     e.anim += dt; e.hurt -= dt; e.moving = false;
+    if (e.angry) return 'fight'; // quem foi atacado revida (lutando como lá fora)
     if (e.still) { e.dir = P.x < e.x ? -1 : 1; return; }
     e.wander(dt, sp * 0.6);
   },

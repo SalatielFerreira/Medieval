@@ -174,7 +174,7 @@ class Creature {
       return;
     }
     if (this.kind === 'caravan') { this.anim += dt; this.hurt -= dt; Caravans.move(this, dt); return; }
-    if ((this.kind === 'ally' && Places.room()) || (this.kind === 'dog' && G.place)) { this.anim += dt; this.moving = false; return; } // os capangas esperam do lado de fora
+    if ((this.kind === 'ally' && Places.room() && Places.room().lay !== 'throne') || (this.kind === 'dog' && G.place)) { this.anim += dt; this.moving = false; return; } // os capangas esperam do lado de fora
     if (this.faction === 'engine') { if (this.battleCat) War.catUpdate(this, dt); else Sieges.engineUpdate(this, dt); return; }
     if (this.follow) { if (this.follow.dead) this.follow = null; else { this.home.x = this.follow.x - 24; this.home.y = this.follow.y + 14; } }
     // capangas: a ordem do grupo e a postura de cada um decidem de que distância eles atacam
@@ -194,7 +194,7 @@ class Creature {
     this.atkCd -= dt; this.hurt -= dt; this.scanT -= dt; this.anim += dt; this.swing = Math.max(0, this.swing - dt);
     this.moving = false;
     const sp = d.speed * World.speedAt(this.x, this.y) * (this.spMul || 1);
-    if (this.placeNpc && this.kind === 'villager') { Places.npcUpdate(this, dt, sp); return; }
+    if (this.placeNpc && this.kind === 'villager' && Places.npcUpdate(this, dt, sp) !== 'fight') return;
 
     if (PREY_FLEE.includes(this.kind)) {
       let th = null, td = 5 * TILE;

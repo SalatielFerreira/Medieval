@@ -1172,6 +1172,8 @@ const Game = {
     if (e.kind === 'lord' && !e.battleKing) this.conquer(e.civ); // no campo de batalha o rei é capturado
     if (e.def.boss) Dungeon.onBossKill(e);
     if (byPlayer && e.def.gold) Sound.play('coin');
+    // regicídio na sala do trono: a coroa passa para você (antes da sucessão normal)
+    if (e.npc && e.npc.rank === 'ruler' && (byPlayer || (src && fac(src) === 'player')) && G.place && G.place.lay === 'throne' && G.place.src && G.place.src.owner === e.npc.civ) this.usurp(e.npc.civ, e.npc);
     if (e.npc) People.die(e.npc, byPlayer && !e.npc.capanga ? 'morto por você' : 'em combate');
     if (byPlayer) { Progress.add('kill_' + e.kind); if (e.def.boss) Progress.add('bosses'); }
     if (e.kind === 'caravan' && e.car && byPlayer) Caravans.loot(e.car, e);
@@ -1487,6 +1489,53 @@ const Game = {
     for (const e of G.ents) if (e.siegeOf === G.siege.civ) e.dead = true;
     G.siege = null;
     if (text) UI.msg(text, 'bad');
+  },
+  // atacar uma pessoa de propósito: ela revida (na rua ou lá dentro). Se for da corte ou da família real,
+  // os guardas do reino que estiverem por perto (e todos os da sala) atacam você também.
+  provoke(p) {
+    if (!p || !p.alive) return;
+    let e = G.spawned.get(p.id);
+    if (!e || e.dead) e = G.ents.find(o => !o.dead && o.npc === p) || null;
+    People.addAff(p, -40);
+    if (e) { e.angry = true; e.target = P; e.dmg = Math.max(e.dmg || 0, p.rank === 'ruler' ? 28 : 6); e.leash = Math.max(e.leash || 0, 12); }
+    const royal = ['ruler', 'consort', 'heir'].includes(p.rank) || People.isCourt(p);
+    if (royal) {
+      const ci = p.rank === 'ruler' || p.home.type === 'castle' ? (p.home.civ !== undefined ? p.home.civ : p.civ) : Families.civOf(p);
+      this.alarmGuards(ci, `🛡️ Os guardas de ${CIV_DEFS[ci] ? CIV_DEFS[ci].short : 'reino'} defendem ${People.full(p)}!`);
+      if (ci >= 0 && G.civs[ci] && G.civs[ci].ruler !== 'player') this.addRelation(ci, -20);
+    }
+    UI.msg(`⚔️ Você atacou ${People.full(p)}. ${p.rank === 'ruler' ? 'O soberano se ergue do trono!' : 'Ela vai revidar.'}`, 'bad');
+  },
+  alarmGuards(ci, msg) {
+    if (ci === undefined || ci < 0 || (G.civs[ci] && G.civs[ci].ruler === 'player')) return;
+    let n = 0;
+    for (const g of G.ents) {
+      if (g.dead || g.kind !== 'guard' || g.civ !== ci) continue;
+      if (!(g.placeNpc && G.place) && U.dist(g.x, g.y, P.x, P.y) > 18 * TILE) continue;
+      g.angry = true; g.target = P; g.leash = Math.max(g.leash || 0, 30); g.returning = false; n++;
+    }
+    for (const g of G.ents) if (!g.dead && g.npc && g.npc.rank === 'knight' && Families.civOf(g.npc) === ci && U.dist(g.x, g.y, P.x, P.y) < 18 * TILE) { g.angry = true; g.target = P; n++; }
+    if (n && msg) UI.msg(msg, 'bad');
+  },
+  // matou o soberano dentro do próprio castelo: a coroa é sua, como usurpador
+  usurp(ci, king) {
+    const c = G.civs[ci];
+    if (!c || c.ruler === 'player') return;
+    const old = c.rulerName;
+    this.becomeRuler(ci, `Você matou ${old} na sala do trono e tomou a coroa.`);
+    G.usurper = G.usurper || {}; G.usurper[ci] = G.day;
+    c.happy = Math.max(0, (c.happy || 50) - 25);
+    for (const o of G.civs) if (o.id !== ci && o.ruler !== 'player') this.addRelation(o.id, -15);
+    for (const f of Object.values(G.fams || {})) if (!f.player && Families.civOf && f.civ === ci) f.loyalty = Math.max(0, (f.loyalty || 50) - 20);
+    // a guarda passa a obedecer você
+    for (const g of G.ents) if (g.civ === ci && g.angry) { g.angry = false; g.target = null; }
+    for (const e of G.ents) if (e.npc && e.angry && (e.npc.home.type === 'castle' && e.npc.home.civ === ci)) { e.angry = false; e.target = null; }
+    // o herdeiro jura vingança
+    const heir = king && king.children.map(id => G.people[id]).find(q => q && q.alive && q.age >= 16 && !q.kin && q.spouse !== 'player');
+    if (heir) { heir.aff = Math.min(heir.aff, -45); People.addAff(heir, -20); }
+    UI.banner(`🗡️👑 Usurpador de ${CIV_DEFS[ci].short}!`);
+    Diplo.chronicle(`🗡️ ${G.name} ${G.surname} matou ${old} na sala do trono e usurpou a coroa de ${CIV_DEFS[ci].name}.`, true);
+    Progress.diary(`🗡️ Usurpou a coroa de ${CIV_DEFS[ci].name}, matando ${old}.`);
   },
   becomeRuler(ci, how) {
     const c = G.civs[ci];
