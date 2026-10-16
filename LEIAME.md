@@ -91,6 +91,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades: vilas até o nível 10 e fundação mais cara
 
+- **Inimigos declaram guerra:** se a relação com alguém cai a -50, a casa dele declara guerra à sua família: vira inimiga (desfaz aliança), contrata assassinos, os adultos dela atacam você quando o encontram e, todo mês, pode mandar mais assassinos. Acaba com o pedido de paz (sua casa precisa ser mais influente).
 - **Biomas e mapa maior (jogos novos):** a terra firme cresceu 20% e ganhou **tundra** (entre a neve e o campo: pinheiros, líquen e veios de âmbar), **estepe** (capim seco, acácias e arbustos), **deserto** (dunas, cactos, rochas de arenito, salinas e tamareiras nos oásis) e **pântanos** (brejos com lagoas, salgueiros, juncos, cogumelos e turfeiras). A passagem de um bioma para o outro é gradual: faixas de transição e cores que se misturam nas bordas.
 - **10 animais selvagens:** chegaram o **crocodilo** (pântanos, ataca), o **alce** (tundra e neve, revida) e o **camelo** (deserto e estepe, foge).
 - **Materiais novos:** figo-da-índia, tâmaras, cogumelo, arenito, sal, junco, turfa, líquen, âmbar, couro e dentes de crocodilo, galhada de alce e pelo de camelo. Receitas: carne salgada, sopa de cogumelos, carvão de turfa, corda e cesto de junco, pedra de arenito, tecido e manto de pelo de camelo, couraça de crocodilo, pomada de líquen e amuleto de âmbar.

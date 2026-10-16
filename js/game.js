@@ -576,6 +576,7 @@ const Game = {
       if (T_.regrow <= 0) { T_.regrow = 1; World.updateRegrow(1, P.x, P.y); }
     }
     if (!G.dungeon) this.updateSiege(dt);
+    Court.warTick(dt);
     WorldEvents.update(dt);
     Ranged.update(dt);
     Battles.update();

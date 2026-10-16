@@ -160,6 +160,7 @@ const Court = {
   },
   // um dia no conselho de cada reino do jogador
   dayTick() {
+    this.warMonth();
     G.plotsC = G.plotsC || [];
     for (const c of G.civs) {
       if (c.ruler !== 'player') continue;
@@ -339,11 +340,61 @@ const Court = {
     Progress.diary(`😠 Declarou a ${Families.name(f)} inimiga.`);
     return { text: 'Que seja! A partir de hoje, nossas casas são inimigas.', note: 'Os adultos dessa casa podem ser enfrentados até a morte. Peça paz para voltar ao normal.' };
   },
+  // um NPC com relação -50 ou pior declara guerra à sua família: a casa dele vira inimiga, contrata assassinos
+  // e os adultos dela atacam você quando o encontram. Sem casa, ele jura vingança sozinho.
+  npcWar(p) {
+    if (!p || !p.alive || p.age < 16 || p.kin || p.spouse === 'player' || p.capanga) return false;
+    const f = Families.of(p), pf = Families.ensurePlayer();
+    if (!f || f.player || f.id === pf.id || !Families.members(f).length) {
+      if (p.hostile) return false;
+      p.hostile = true;
+      UI.msg(`🗡️ ${People.full(p)} jurou vingança contra a sua família e vai atacar você onde o encontrar.`, 'bad', true);
+      Progress.diary(`🗡️ ${People.full(p)} jurou vingança contra a família.`);
+      return true;
+    }
+    if (this.isEnemy(f)) return false;
+    pf.allies = (pf.allies || []).filter(id => id !== f.id); f.allies = (f.allies || []).filter(id => id !== pf.id);
+    pf.enemies = [...new Set([...(pf.enemies || []), f.id])];
+    f.warOn = { by: p.id, day: G.day };
+    if (f.rival === pf.id) f.rival = null;
+    for (const m of Families.members(f)) if (m !== p && m.aff > -40) m.aff = Math.max(-100, m.aff - 20);
+    const killers = 1 + (Families.influence(f) > Families.influence(pf) ? 2 : 1);
+    G.assassins = (G.assassins || 0) + killers;
+    UI.banner(`⚔️ A ${Families.name(f)} declarou guerra à sua família!`);
+    UI.msg(`⚔️ ${People.full(p)} não suportou mais você: a ${Families.name(f)} declarou guerra à ${Families.name(pf)}. Os adultos dessa casa vão atacar você e assassinos já foram contratados. Para acabar, peça paz (sua casa precisa ser mais influente).`, 'bad', true);
+    Diplo.chronicle(`⚔️ A ${Families.name(f)} declarou guerra à ${Families.name(pf)}, por causa de ${People.full(p)}.`, true);
+    Progress.diary(`⚔️ A ${Families.name(f)} declarou guerra à família.`);
+    return true;
+  },
+  // casas em guerra contra você: os adultos atacam quando você chega perto, e todo mês podem mandar assassinos
+  warTick(dt) {
+    const pf = Families.ensurePlayer();
+    this.wt = (this.wt || 0) - dt; if (this.wt > 0) return; this.wt = 0.5;
+    if (!(pf.enemies || []).length || G.dungeon || G.place) return;
+    for (const e of G.ents) {
+      if (e.dead || !e.npc || e.angry || e.placeNpc) continue;
+      const p = e.npc, f = Families.of(p);
+      if (!f || !f.warOn || !this.enemyPerson(p) || p.age < 16 || p.age > 65) continue;
+      if (U.dist(e.x, e.y, P.x, P.y) < 6 * TILE) {
+        e.angry = true; e.target = P;
+        if (G.realTime - (this.warMsgT || 0) > 8) { this.warMsgT = G.realTime; UI.msg(`⚔️ ${People.full(p)}, da ${Families.name(f)}, parte para cima de você!`, 'bad'); }
+      }
+    }
+  },
+  warMonth() {
+    const pf = Families.ensurePlayer();
+    for (const id of pf.enemies || []) {
+      const f = Families.get(id);
+      if (!f || !f.warOn || !Families.members(f).length) continue;
+      if (Math.random() < 0.3) { G.assassins = (G.assassins || 0) + 1; if (Math.random() < 0.5) UI.msg(`🗡️ Dizem que a ${Families.name(f)} pagou mais um assassino para caçar você.`, 'bad'); }
+    }
+  },
   // fim da inimizade: ninguém daquela casa continua brigando com você
   endFeud(f) {
     const pf = Families.ensurePlayer();
     if (!(pf.enemies || []).includes(f.id)) return false;
     pf.enemies = pf.enemies.filter(id => id !== f.id);
+    f.warOn = null;
     for (const e of G.ents) if (e.npc && e.npc.fam === f.id && e.angry) { e.angry = false; e.target = null; }
     return true;
   },

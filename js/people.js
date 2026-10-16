@@ -257,6 +257,8 @@ const People = {
     p.aff = U.clamp(p.aff + n, -100, 100);
     if (p.aff <= -60 && TRAITS[p.trait].fights && p.age >= 16 && !p.kin && p.spouse !== 'player') p.hostile = true;
     if (p.aff > -30) p.hostile = false;
+    // chegou a -50: ele declara guerra à sua família (ou, sem casa, jura vingança)
+    if (n < 0 && p.aff <= -50 && p.aff - n > -50) Court.npcWar(p);
     const after = this.relation(p).text;
     if (before !== after) UI.msg(`${this.full(p)} agora é: ${after}.`, n > 0 ? 'gold' : 'bad');
   },
