@@ -34,8 +34,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // Versão 8: ilhas ainda maiores, em volta do continente com equilíbrio (uma por setor, com variação).
 // Versão 9: mais campo verde — a maior parte das colinas (o terreno marrom) vira campo; ficam só as colinas mais altas.
 // Versão 10: as 7 ilhas rodeiam a terra firme em espaços quase iguais (tamanhos continuam diferentes).
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626, 10: 0.7626 };
-const TERRAIN_V = 10, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 11: bem menos lagos no meio do continente (ficam os 3 maiores e os rios) e nenhuma colina: o mapa sem montanhas.
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626, 10: 0.7626, 11: 0.7626 };
+const TERRAIN_V = 11, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 const OBJ = [null,
   /* 1 */ { name: 'Carvalho',          tree: true, blocks: true,  tool: 'axe',  min: 0, hp: 6,  drops: { wood: [3, 5] },                     regrow: 240,  pc: '#3d7a2a' },
@@ -665,6 +666,7 @@ const World = {
     }
     this.mountStats.after = el.length - change.length;
     if ((this.terrainV || 0) >= 9) this.greenHills();
+    if ((this.terrainV || 0) >= 11) this.fewerLakes();
     this.chunks = new Map();
   },
   // versão 9: 80% das colinas (as mais baixas) viram campo verde; os minérios e as cavernas continuam onde estão
@@ -673,8 +675,56 @@ const World = {
     for (let i = 0; i < N; i++) if (this.tiles[i] === T.HILL) hills.push(this.elev[i]);
     if (!hills.length) return;
     hills.sort((a, b) => a - b);
-    const keep = hills[Math.floor(hills.length * 0.8)];
+    // versão 11: nenhuma colina fica (o mapa sem montanhas); os minérios e as pedras continuam no lugar
+    const keep = (this.terrainV || 0) >= 11 ? Infinity : hills[Math.floor(hills.length * 0.8)];
     for (let i = 0; i < N; i++) if (this.tiles[i] === T.HILL && this.elev[i] < keep) this.tiles[i] = T.GRASS;
+  },
+  // versão 11: os lagos do meio do continente viram campo (as bacias baixas, longe do mar). Ficam os 4 maiores e os
+  // rios; as pontes que sobravam sobre o leito seco viram estrada e a beira do que restou de água vira areia.
+  fewerLakes() {
+    const W = WORLD_W, H = WORLD_H, N = W * H, t = this.tiles;
+    const wet = k => k === T.WATER || k === T.DEEP || k === T.BRIDGE;
+    const nb = (c, f) => { const x = c % W, y = (c / W) | 0; for (const [dx, dy] of DIRS4) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) f(ny * W + nx); } };
+    // o mar aberto: o fundo do mar ligado à borda do mapa
+    const ocean = new Uint8Array(N), q = [];
+    for (let i = 0; i < N; i++) { const x = i % W, y = (i / W) | 0; if (t[i] === T.DEEP && (x === 0 || y === 0 || x === W - 1 || y === H - 1)) { ocean[i] = 1; q.push(i); } }
+    for (let h = 0; h < q.length; h++) nb(q[h], j => { if (!ocean[j] && t[j] === T.DEEP) { ocean[j] = 1; q.push(j); } });
+    // distância pela água rasa até o mar aberto (lagos ligados ao mar por um rio ficam longe)
+    const dist = new Int32Array(N).fill(-1), q2 = [];
+    for (let i = 0; i < N; i++) if (ocean[i]) { dist[i] = 0; q2.push(i); }
+    for (let h = 0; h < q2.length; h++) { const c = q2[h]; nb(c, j => { if (dist[j] < 0 && wet(t[j])) { dist[j] = dist[c] + 1; q2.push(j); } }); }
+    const inland = i => wet(t[i]) && !ocean[i] && (dist[i] < 0 || dist[i] > 8);
+    // lago = parte larga da água do continente (os rios, finos, continuam)
+    const lake = new Uint8Array(N);
+    for (let i = 0; i < N; i++) {
+      if (!inland(i)) continue;
+      const x = i % W, y = (i / W) | 0; let n = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && this.inb(x + dx, y + dy) && inland((y + dy) * W + x + dx)) n++;
+      if (n >= 5) lake[i] = 1;
+    }
+    for (let i = 0; i < N; i++) if (lake[i] === 1) nb(i, j => { if (!lake[j] && inland(j)) lake[j] = 2; }); // a beira do lago também
+    const comp = new Int32Array(N).fill(-1), lakes = [];
+    for (let i = 0; i < N; i++) {
+      if (comp[i] >= 0 || !lake[i]) continue;
+      const id = lakes.length, list = [i]; comp[i] = id;
+      for (let k = 0; k < list.length; k++) nb(list[k], j => { if (comp[j] < 0 && lake[j]) { comp[j] = id; list.push(j); } });
+      lakes.push(list);
+    }
+    lakes.sort((a, b) => b.length - a.length);
+    const dry = new Uint8Array(N);
+    for (const L of lakes.slice(3)) for (const i of L) if (this.sgrid[i] < 0) dry[i] = 1;
+    let n = 0;
+    for (let i = 0; i < N; i++) {
+      if (!dry[i]) continue;
+      const x = i % W, y = (i / W) | 0;
+      let snow = 0, land = 0;
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const k = this.tile(x + dx, y + dy); if (k === T.SNOW) snow++; else if (k === T.GRASS || k === T.FOREST || k === T.SAND || k === T.HILL) land++; }
+      t[i] = t[i] === T.BRIDGE ? T.ROAD : snow > land ? T.SNOW : (U.hash2(x, y, 5) < 0.35 ? T.FOREST : T.GRASS);
+      this.elev[i] = Math.max(this.elev[i], 0.4); this.obj[i] = 0; n++;
+    }
+    // margem de areia onde o campo novo encosta na água que ficou
+    for (let i = 0; i < N; i++) if (dry[i] && (t[i] === T.GRASS || t[i] === T.FOREST)) { const x = i % W, y = (i / W) | 0; if (DIRS4.some(([dx, dy]) => { const k = this.tile(x + dx, y + dy); return k === T.WATER || k === T.DEEP; })) t[i] = T.SAND; }
+    this.lakeStats = { lakes: lakes.length, kept: Math.min(3, lakes.length), dried: n };
   },
   // troca o terreno de um bloco (estradas) e redesenha o pedaço do mapa
   setTile(i, t) {

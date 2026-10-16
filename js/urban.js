@@ -193,6 +193,7 @@ const Urban = {
       const v = World.villages[vi];
       if (sqDist(cx, cy, v.x, v.y) > VILLAGE_R + 2) return `Precisa ficar dentro de ${v.name}`;
       if (a.kind === 'chief' && World.villages[a.vi] !== v) return 'Fora da sua vila';
+      if (def.king && a.kind === 'chief') return 'Só o rei pode erguer uma arena';
       return null;
     }
     // construções do jogador: fora da sua vila ou reino, longe das cidades dos outros

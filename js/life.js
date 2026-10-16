@@ -394,13 +394,16 @@ const Ports = {
     if ((G.terrain || 0) < 3 || this.list().length) return;
     for (let ci = 0; ci < Math.min(World.capitals.length, 7); ci++) {
       const cp = World.capitals[ci]; let best = null, bd = 1e9;
-      for (let y = cp.y - 34; y <= cp.y + 34; y++) for (let x = cp.x - 34; x <= cp.x + 34; x++) {
+      // terreno 11 (menos lagos): o reino sem costa perto procura o mar mais longe
+      for (const R of (G.terrain || 0) >= 11 ? [34, 64] : [34]) { if (best) break;
+      for (let y = cp.y - R; y <= cp.y + R; y++) for (let x = cp.x - R; x <= cp.x + R; x++) {
         if (!World.areaOk(x, y, 4, 3) || !World.areaFree(x, y, 4, 3)) continue;
         let land = true; for (let j = y; j < y + 3 && land; j++) for (let i = x; i < x + 4; i++) { const t = World.tiles[World.idx(i, j)]; if (!TINFO[t].walk || World.isWater(t) || t === T.ROAD) { land = false; break; } }
         if (!land) continue;
         let water = 0; for (let i = x - 1; i <= x + 4; i++) { if (World.inb(i, y + 3) && World.isWater(World.tiles[World.idx(i, y + 3)])) water++; }
         if (water < 4) continue;
         const d = U.dist(x, y, cp.x, cp.y); if (d < bd && d > 9) { bd = d; best = { x, y }; }
+      }
       }
       if (!best) continue;
       for (let j = best.y; j < best.y + 3; j++) for (let i = best.x; i < best.x + 4; i++) World.obj[World.idx(i, j)] = 0;

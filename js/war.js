@@ -58,7 +58,20 @@ const War = {
   power(a, extra) { return a.soldiers * (1 - a.archers / 100) * 1 + a.soldiers * a.archers / 100 * 0.9 + a.cav * 1.8 + a.cats * 3 + (a.king ? 4 : 0) + (extra || 0); },
   heroPower() { return 2 + P.level / 3 + Game.allies().length * 1.5; },
   // o conselho abre sozinho quando a convocação chega (e você não está ocupado); a do seu reino parte sozinha no prazo
+  // aviso de pontos de nível (abre a escolha sozinho quando não há luta por perto)
+  levelBadge() {
+    let el = document.getElementById('lvlpts');
+    const n = P.statPts || 0;
+    if (!n || G.state !== 'play') { if (el && el.classList) el.classList.add('hidden'); return; }
+    if (!el || !el.classList) { el = document.createElement('button'); el.id = 'lvlpts'; el.className = 'lvlpts'; el.addEventListener && el.addEventListener('click', () => UI.showLevelUp()); document.body.appendChild(el); }
+    el.classList.remove('hidden');
+    const t = `⭐ ${n} ${n === 1 ? 'ponto' : 'pontos'} de nível para distribuir`; if (el.textContent !== t) el.textContent = t;
+    const calm = !UI.isOpen() && !UI.modal && !G.duel && !G.siege && !this.isBattle() && !G.ents.some(e => !e.dead && e.target === P);
+    if (calm && (this.lvT || 0) < G.realTime && n > (this.lvSeen || 0)) { this.lvSeen = n; this.lvT = G.realTime + 2; UI.showLevelUp(); }
+    if (!n) this.lvSeen = 0;
+  },
   tick() {
+    this.levelBadge();
     const wc = G.warCall;
     if (!wc || G.state !== 'play' || P.dead) { this.badge(null); return; }
     if (G.place && G.place.kind === 'battle') { this.badge(null); return; }
@@ -175,6 +188,7 @@ const War = {
   update(dt) {
     const B = G.place;
     if (!B || B.kind !== 'battle') { this.tick(); return; }
+    this.levelBadge();
     B.t += dt;
     if (B.phase === 'intro' && B.t > 4) {
       B.phase = 'fight'; UI.banner('📯 À carga!'); Sound.play('horn');

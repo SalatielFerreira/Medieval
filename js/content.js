@@ -112,6 +112,7 @@ const Content = {
     return null;
   },
   monthTick() {
+    Succession.tick();
     for (const s of World.structs) {
       if (s.owner !== 'player' || s.removed) continue;
       const out = this.produce(s); if (!out) continue;
@@ -150,13 +151,13 @@ const Content = {
     if (s.type === 'vmarket') { UI.showShop('store', s.village, null); return true; }
     if (s.owner === 'player' || s.type === 'vfountain') switch (s.type) {
       case 'garden': case 'orchard': Biz.collect(s); return true;
-      case 'well_p': P.stamina = 100; UI.msg('💧 Água fresca do poço: energia cheia.'); Sound.play('splash'); return true;
+      case 'well_p': P.stamina = Game.maxSt(); UI.msg('💧 Água fresca do poço: energia cheia.'); Sound.play('splash'); return true;
       case 'fountain': case 'vfountain':
         if (P.gold < 1) { UI.msg('Você não tem nem uma moeda.'); return true; }
         P.gold -= 1; Sound.play('coin');
         if (Math.random() < 0.35) { Farm.addBuff('blessed'); UI.msg('⛲ A moeda brilhou no fundo do chafariz... você se sente abençoado!', 'gold'); } else UI.msg('⛲ Você fez um pedido e jogou uma moeda.');
         return true;
-      case 'bench': P.stamina = Math.min(100, P.stamina + 50); UI.msg('🪑 Você se senta um pouco e recupera o fôlego.'); return true;
+      case 'bench': P.stamina = Math.min(Game.maxSt(), P.stamina + 50); UI.msg('🪑 Você se senta um pouco e recupera o fôlego.'); return true;
       case 'training': this.train(); return true;
       case 'watchtower': this.watch(); return true;
       case 'smokehouse': UI.showCrafting('defumador'); return true;
@@ -203,6 +204,7 @@ Object.assign(CIVIC, {
   vfountain: { name: 'Chafariz',  icon: '⛲', w: 2, h: 2, cost: { stone: 40, iron_bar: 2 }, desc: 'Enfeita a praça: a vila prospera mais rápido.', prosper: 3 },
   vstatue:   { name: 'Estátua',   icon: '🗿', w: 1, h: 1, cost: { stone: 50 },              desc: 'Uma estátua em honra ao soberano.', prosper: 2 },
   vlamp:     { name: 'Lampião',   icon: '🏮', w: 1, h: 1, cost: { iron_bar: 1, wood: 2 },   desc: 'Ilumina as ruas à noite.' },
+  arena:     { name: 'Arena',    icon: '🏟️', w: 4, h: 3, cost: { stone: 120, wood: 60, iron_bar: 6 }, desc: 'Só o rei: um coliseu para duelos, justas, torneios e apostas, com o povo nas arquibancadas.', king: true, prosper: 3 },
   vmarket:   { name: 'Feira',     icon: '🎪', w: 3, h: 2, cost: { wood: 30, cloth: 6 },     desc: 'Barracas de feira na praça: a vila prospera e o comércio cresce.', prosper: 4 },
 });
 
@@ -359,3 +361,117 @@ function drawStructExtra(ctx, s, X, Y, time, H) {
     }
   }
 }
+
+// ====================================================================== empreendimentos das outras famílias: incendiar ou tomar
+// Incendiar destrói o empreendimento; tomar à força faz dele um empreendimento seu. As duas coisas tornam a família
+// sua inimiga (os adultos dela podem enfrentar você) e irritam o reino dono da terra. Sendo rei das terras, você pode
+// confiscar: é legal, mas a família perde muita lealdade.
+const FAMILY_SEIZE = { fmill: 'biz_mill', fshop: 'biz_shop', fforge: 'biz_smithy', ffarm: 'biz_farm', fvine: 'biz_winery' };
+const FamilyCrime = {
+  info(s) {
+    const f = Families.get(s.fam), d = FAMILY_BIZ[s.type], ci = typeof s.owner === 'number' ? s.owner : -1;
+    return { f, d, ci, king: ci >= 0 && G.civs[ci] && G.civs[ci].ruler === 'player' };
+  },
+  near(s) { return U.dist(P.x / TILE, P.y / TILE, s.x + s.w / 2, s.y + s.h / 2) < 5; },
+  // tira o empreendimento do registro da família (para não voltar ao carregar o jogo)
+  unrecord(s) {
+    const f = Families.get(s.fam);
+    if (f) { f.biz = (f.biz || []).filter(b => !(b.type === s.type && b.x === s.x && b.y === s.y)); f.wealth = Math.max(0, (f.wealth || 0) - 150); }
+    World.removeStruct(s);
+  },
+  // as consequências do crime
+  outrage(f, ci, king, what) {
+    if (!king) {
+      if (f && !Court.isEnemy(f)) Court.declareEnemy(f);
+      if (ci >= 0 && G.civs[ci] && G.civs[ci].ruler !== 'player') { Game.addRelation(ci, -15); UI.msg(`⚖️ ${CIV_DEFS[ci].short} soube do crime: −15 de relação.`, 'bad'); }
+      Court.addFame(-3);
+    } else if (f) {
+      f.loyalty = Math.max(0, (f.loyalty || 50) - 40);
+      for (const p of Families.members(f)) People.addAff(p, -30);
+      if (f.loyalty < 15 && Math.random() < 0.5 && !Families.activeRevoltOf(f)) Families.startRevolt(f);
+    }
+    Diplo.chronicle(`${what} ${f ? `da ${Families.name(f)}` : ''}.`, true);
+  },
+  burn(sid) {
+    const s = World.structs[sid]; if (!s || s.removed || !FAMILY_BIZ[s.type]) return;
+    if (!this.near(s)) { UI.msg('Chegue perto do empreendimento.', 'bad'); return; }
+    const { f, d, ci, king } = this.info(s);
+    const cx = (s.x + s.w / 2) * TILE, cy = (s.y + s.h / 2) * TILE;
+    this.unrecord(s);
+    for (let k = 0; k < 4; k++) Game.burst(cx + U.rnd(-30, 30), cy + U.rnd(-20, 20), k % 2 ? '#ff7b1c' : '#5a5a5a', 16);
+    Sound.play('roar', { vol: 0.3 });
+    UI.close(); UI.banner(`🔥 ${d.name} em chamas!`);
+    UI.msg(`🔥 Você incendiou ${d.name.toLowerCase() === 'quinta' ? 'a' : 'o'} ${d.name} ${f ? 'da ' + Families.name(f) : ''}.`, 'bad');
+    this.outrage(f, ci, king, `🔥 ${G.name} incendiou ${d.name.toLowerCase() === 'quinta' ? 'a' : 'o'} ${d.name}`);
+    Progress.diary(`🔥 Incendiou um empreendimento${f ? ' da ' + Families.name(f) : ''}.`);
+  },
+  seize(sid) {
+    const s = World.structs[sid]; if (!s || s.removed || !FAMILY_BIZ[s.type]) return;
+    if (!this.near(s)) { UI.msg('Chegue perto do empreendimento.', 'bad'); return; }
+    const { f, d, ci, king } = this.info(s);
+    let type = FAMILY_SEIZE[s.type];
+    const b = BUILDINGS[type];
+    // o vinhedo vira vinícola se couber; se não, quinta comercial
+    if (b.w > s.w || b.h > s.h) { const okx = [...Array(b.w)].every((_, i) => [...Array(b.h)].every((__, j) => (i < s.w && j < s.h) || (World.areaOk(s.x + i, s.y + j, 1, 1) && World.areaFree(s.x + i, s.y + j, 1, 1)))); if (!okx) type = 'biz_farm'; }
+    const x = s.x, y = s.y, B = BUILDINGS[type];
+    this.unrecord(s);
+    const ns = World.addStruct(type, x, y, B.w, B.h, 'player', { built: true });
+    Sound.play('coin'); UI.close();
+    UI.banner(`${king ? '👑 Confiscado' : '🗝️ Tomado'}: ${B.name}`);
+    UI.msg(`${king ? '👑 Por ordem real, ' : '🗝️ À força, '}${d.name.toLowerCase() === 'quinta' ? 'a' : 'o'} ${d.name} ${f ? 'da ' + Families.name(f) : ''} agora é ${/(a|gem)$/i.test(B.name.split(' ')[0]) ? 'sua' : 'seu'}: ${B.name}. Contrate funcionários para ele produzir.`, 'gold');
+    this.outrage(f, ci, king, king ? `👑 ${G.name} confiscou um empreendimento` : `🗝️ ${G.name} tomou à força um empreendimento`);
+    Progress.diary(`${king ? '👑 Confiscou' : '🗝️ Tomou à força'} um empreendimento${f ? ' da ' + Families.name(f) : ''}.`);
+    return ns;
+  },
+};
+
+// ====================================================================== sucessão do trono
+// Quando o rei morre, o filho mais velho herda o reino e os outros seguem como príncipes. Se o herdeiro tiver menos de
+// 16 anos e a mãe (ou o pai) estiver viva, ela governa como rainha regente; quando ele faz 16, assume o trono e ela
+// vira rainha-mãe (consorte do reino).
+const Succession = {
+  pass(realms, chosen, eldest, spouse) {
+    const playerIsKing = eldest === chosen;
+    const age = p => p === chosen ? P.age : p.age;
+    G.regency = G.regency || [];
+    let note = '';
+    for (const ci of realms) {
+      const c = G.civs[ci];
+      if (age(eldest) < 16 && spouse) {
+        // regência: a mãe (ou o pai) governa até o herdeiro fazer 16
+        this.seat(c, spouse, 'ruler');
+        G.regency.push({ ci, regent: spouse.id, heir: playerIsKing ? 'player' : eldest.id });
+        note = `${spouse.name} governa como ${spouse.sex === 'f' ? 'rainha regente' : 'rei regente'} até ${playerIsKing ? 'você' : eldest.name} fazer 16 anos.`;
+      } else if (!playerIsKing) {
+        this.seat(c, eldest, 'ruler');
+        note = `${eldest.name}, ${eldest.sex === 'f' ? 'a filha' : 'o filho'} mais velho, assumiu o trono. Você é ${chosen.sex === 'f' ? 'princesa' : 'príncipe'}.`;
+      }
+      if (spouse && c.ruler === 'player') spouse.rank = 'consort';
+    }
+    if (!playerIsKing || (age(eldest) < 16 && spouse)) {
+      for (const ci of realms) Diplo.chronicle(`👑 ${G.civs[ci].rulerName} assume ${CIV_DEFS[ci].name} após a morte do soberano.`, true);
+    }
+    if (eldest && !playerIsKing && eldest.alive) { eldest.kin = 'sibling'; }
+    return note;
+  },
+  // põe uma pessoa no trono (governo da IA)
+  seat(c, p, rank) {
+    c.ruler = 'npc'; c.rulerId = p.id; p.rank = rank; p.home = { type: 'castle', civ: c.id }; p.civ = c.id;
+    c.rulerName = `${p.sex === 'f' ? 'Rainha' : 'Rei'} ${p.name}`;
+    const e = G.spawned.get(p.id); if (e) { e.dead = true; G.spawned.delete(p.id); }
+  },
+  // todo mês: o herdeiro fez 16 anos? então assume e a regente vira rainha-mãe
+  tick() {
+    for (const r of (G.regency || []).slice()) {
+      const c = G.civs[r.ci], regent = People.get(r.regent);
+      const heir = r.heir === 'player' ? null : People.get(r.heir);
+      const hAge = r.heir === 'player' ? P.age : heir && heir.alive ? heir.age : 99;
+      if (hAge < 16 && regent && regent.alive && c.rulerId === r.regent) continue;
+      G.regency = G.regency.filter(x => x !== r);
+      if (c.rulerId !== r.regent) continue; // o reino mudou de mãos no meio do caminho
+      if (regent && regent.alive) { regent.rank = 'consort'; }
+      if (r.heir === 'player') Game.becomeRuler(r.ci, `Você completou 16 anos e assumiu o trono${regent && regent.alive ? `; ${regent.name} agora é ${regent.sex === 'f' ? 'rainha-mãe' : 'rei-pai'}` : ''}.`);
+      else if (heir && heir.alive) { this.seat(c, heir, 'ruler'); if (regent && regent.alive) regent.rank = 'consort'; Diplo.chronicle(`👑 ${heir.name} completou 16 anos e assumiu ${CIV_DEFS[r.ci].name}.`, true); }
+    }
+  },
+};

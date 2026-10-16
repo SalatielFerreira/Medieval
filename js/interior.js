@@ -61,6 +61,8 @@ const ROOM_TYPES = {
   house:      { lay: 'home',    theme: 'wood',   name: () => 'Sua Casa' },
   manor:      { lay: 'home',    theme: 'wood',   big: true, name: () => 'Seu Casarão' },
   ptavern:    { lay: 'tavern',  theme: 'wood',   mine: true, name: () => 'Sua Taverna' },
+  arena:      { lay: 'coliseum', theme: 'castle', name: s => `Arena de ${CIV_DEFS[s.owner] ? CIV_DEFS[s.owner].short : ''}` },
+  port:       { lay: 'harbor',  theme: 'wood',   name: s => `Porto de ${CIV_DEFS[s.owner] ? CIV_DEFS[s.owner].short : ''}` },
 };
 // os empreendimentos do jogador (menos os que ficam ao ar livre) também têm o lado de dentro
 const BIZ_ROOMS = { biz_mill: 'mill', biz_lumber: 'lumber', biz_quarry: 'quarry', biz_mine: 'mine', biz_smithy: 'smithy', biz_shop: 'shop' };
@@ -133,6 +135,21 @@ const LAYOUTS = {
       ['pillar', 2, 2], ['pillar', 13, 2], ['pillar', 2, 6], ['pillar', 13, 6], ['brazier', 5, 1, 1, 1, { light: 1 }], ['brazier', 10, 1, 1, 1, { light: 1 }],
       ['longtable', 0, 8, 1, 3], ['longtable', 15, 8, 1, 3], ['plant', 0, 0], ['plant', 15, 0], ['armor', 4, 0], ['armor', 11, 0]],
       keeper: [7.5, 1.3], staff: [[6, 2], [9.5, 2], [4, 4], [11, 4], [4, 8], [11, 8]], wander: [[5, 6], [10, 6]] };
+  },
+  coliseum() {
+    return { w: 22, h: 14, tiles: [[T.SAND, 4, 3, 14, 8]],
+      items: [['stands', 0, 0, 22, 2, { rows: 2 }], ['stands', 0, 2, 3, 9, { side: 1 }], ['stands', 19, 2, 3, 9, { side: 1 }],
+        ['banner', 3, -1], ['banner', 7, -1], ['banner', 14, -1], ['banner', 18, -1], ['box', 9, 0, 4, 2],
+        ['brazier', 4, 3, 1, 1, { light: 1 }], ['brazier', 17, 3, 1, 1, { light: 1 }], ['brazier', 4, 10, 1, 1, { light: 1 }], ['brazier', 17, 10, 1, 1, { light: 1 }],
+        ['arenadesk', 1, 12, 3, 1, { act: 'arena' }], ['weaponrack', 18, 12, 3], ['barrel', 6, 12], ['barrel', 15, 12]],
+      center: [11, 7], seats: [[3, 11], [18, 11], [5, 12], [16, 12]] };
+  },
+  harbor() {
+    return { w: 16, h: 9, tiles: [[T.WATER, 11, 0, 5, 9], [T.BRIDGE, 11, 3, 4, 2]],
+      items: [['counter', 3, 3, 4, 1, { act: 'port' }], ['nets', 0, -1, 2], ['nets', 6, -1, 2], ['window', 3, -1], ['lamp', 9, -1], ['lamp', 2, -1],
+        ['barrel', 0, 0], ['barrel', 1, 0], ['crate', 0, 1], ['crate', 8, 0], ['crate', 9, 0], ['sacks', 9, 1], ['fishrack', 0, 6, 3], ['barrel', 9, 7], ['crate', 9, 8],
+        ['anchor', 7, 6], ['rowboat', 13, 5, 2, 2, { act: 'sail' }], ['bollard', 10, 2], ['bollard', 10, 6]],
+      keeper: [5, 2], wander: [[5, 6], [8, 4]] };
   },
   home(o) {
     const big = o.big;
@@ -209,7 +226,8 @@ const Places = {
     const floor = d.theme === 'wood' ? T.WFLOOR : T.SFLOOR;
     for (let y = fy0 - 2; y <= fy0 + L.h; y++) for (let x = fx0 - 1; x <= fx0 + L.w; x++) this.setT(x, y, T.IWALL);
     for (let y = fy0; y < fy0 + L.h; y++) for (let x = fx0; x < fx0 + L.w; x++) this.setT(x, y, floor);
-    const door = { x: fx0 + (L.w >> 1), y: fy0 + L.h };
+    for (const [tt, x, y, w, h] of L.tiles || []) for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) this.setT(fx0 + x + i, fy0 + y + j, tt);
+    const door = { x: fx0 + ((L.doorX !== undefined ? L.doorX : L.w >> 1) | 0), y: fy0 + L.h };
     this.setT(door.x, door.y, floor);
     World.chunks.clear();
     // móveis
@@ -268,6 +286,14 @@ const Places = {
       const priest = G.people.find(p => p.alive && p.rank === 'priest' && !p.capanga && (vi !== undefined ? p.home.type === 'village' && p.home.idx === vi : Families.civOf(p) === src.owner));
       if (priest) put(take(priest), L.keeper, { still: true });
       let k = 0; for (const p of pick(locals(), ph === 'day' ? 2 : 1, 41)) put(take(p), L.seats[k++], { still: true, dir: -1 });
+      return;
+    }
+    if (d.lay === 'coliseum') {
+      let j = 0; for (const p of pick(locals(), 4, 37)) put(take(p), L.seats[j++], { still: true, dir: j % 2 ? 1 : -1 });
+      return;
+    }
+    if (d.lay === 'harbor') {
+      put(take(Ports.keeper(src)), L.keeper, { still: true });
       return;
     }
     if (d.lay === 'home') {
@@ -356,6 +382,9 @@ const Places = {
       case 'rest': return 'Cama — salvar e dormir';
       case 'exit': return 'Porta — sair';
       case 'study': return 'Mesa de estudos — estudar';
+      case 'port': return 'Balcão do porto — vender pescados e comprar equipamento';
+      case 'arena': return 'Banca da arena — lutar, justas, torneio e apostas';
+      case 'sail': return Inv.count('boat') > 0 ? 'Barco — sair navegando pelo cais' : 'Barco — você precisa de um Barco a Remo';
       case 'pray': return 'Altar — rezar';
     }
     if (f.act && f.act.startsWith('craft:')) return 'Lareira — cozinhar';
@@ -373,11 +402,30 @@ const Places = {
       case 'throne': if (G.civs[s.owner].ruler === 'player') UI.showKingdom(s.owner); else UI.showCastle(s.owner); return;
       case 'rest': UI.showRest(s.id); return;
       case 'exit': this.exit(); return;
+      case 'port': UI.showPort(s.id); return;
+      case 'arena': UI.showArena(s.owner); return;
+      case 'sail': this.sailOut(s); return;
     }
     if (Content.act(f.act)) return;
     if (f.act && f.act.startsWith('craft:')) UI.showCrafting(f.act.slice(6));
   },
   // janelas só clareiam de dia
+  // sair do porto de barco: aparece navegando na água em frente ao cais
+  sailOut(s) {
+    if (Inv.count('boat') <= 0) { UI.msg('🛶 Você precisa de um Barco a Remo (o mestre do porto vende).', 'bad'); return; }
+    let best = null, bd = 1e9;
+    for (let y = s.y + s.h; y < s.y + s.h + 10; y++) for (let x = s.x - 4; x < s.x + s.w + 4; x++) {
+      if (!World.inb(x, y)) continue;
+      const t = World.tile(x, y);
+      if (!World.isWater(t) || t === T.BRIDGE || World.blocked(x, y, true)) continue;
+      const d = U.dist(x, y, s.x + s.w / 2, s.y + s.h + 2); if (d < bd) { bd = d; best = { x, y }; }
+    }
+    this.exit(true);
+    if (!best) { UI.msg('A água em frente ao porto está bloqueada: você saiu pela porta.', 'bad'); return; }
+    P.sailing = true; P.fishing = null; P.mounted = false; P.x = (best.x + 0.5) * TILE; P.y = (best.y + 0.8) * TILE;
+    UI.msg('🛶 Você saiu do porto navegando! Aperte Interagir perto da margem para desembarcar.', 'gold');
+    Sound.play('splash');
+  },
   lights() { if (!this.room()) return []; const day = Routine.phase() === 'day'; return this.lightList.filter(L => !L.day || day); },
   draw(ctx, f, X, Y, time) { drawFurn(ctx, f, X, Y, time); },
 };
@@ -392,7 +440,7 @@ const FURN = {
   banner: {}, throne: { block: true }, pillar: { block: true }, brazier: { block: true, light: 1, lr: 140, lcol: '#ff9a40' }, longtable: { block: true }, armor: { block: true },
   bed: { block: true }, hearth: { block: true, light: 1, lr: 160 }, chestf: { block: true }, bookshelf: {}, plant: { block: true }, board: {}, bench: { block: true },
   coal: { block: true }, grind: { block: true }, beam: { block: true }, minehole: { block: true }, millstone: { block: true }, flour: { block: true }, oven: { block: true, light: 1, lr: 110, lcol: '#ff8a3a' },
-  desk: { block: true }, door: { act: 'exit', flat: true },
+  desk: { block: true }, door: { act: 'exit', flat: true }, stands: { block: true }, box: { block: true }, arenadesk: { block: true }, anchor: { block: true }, rowboat: { flat: true }, bollard: { block: true },
   tent: { block: true }, flagpole: { block: true }, campfire2: { block: true },
 };
 
@@ -491,6 +539,39 @@ function drawFurn(ctx, f, X, Y, time) {
     case 'flagpole': { R(14, -40, 3, 68, '#5a3a1e'); if (f.civ !== undefined && G.civs[f.civ]) Heraldry.drawFlag(ctx, X + 17, Y - 40, 20, 13, f.civ, time); sh(8, 26, 16, 4); break; }
     case 'campfire2': { ell(16, 26, 12, 4, 'rgba(0,0,0,0.25)'); for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2; R(14 + Math.cos(a) * 10, 22 + Math.sin(a) * 4, 4, 3, '#7d7d7d'); } R(8, 22, 16, 3, '#5a3618'); fl(16, 24, 1); break; }
     default: if (typeof FURN_EXTRA !== 'undefined' && FURN_EXTRA[f.k]) FURN_EXTRA[f.k](ctx, f, X, Y, time, { R, sh, ell, fl }); break;
+    case 'stands': {
+      const busy = !!G.duel || !!Arena.show, side = !!f.side;
+      R(0, side ? 0 : -14, w, h + (side ? 0 : 14), '#8f8a80');
+      const step = side ? 0 : 1;
+      for (let r = 0; r < (side ? f.w : 3); r++) { if (side) R(r * TILE, 0, 2, h, '#6f6a62'); else R(0, -14 + r * 15, w, 2, '#6f6a62'); }
+      const cols = ['#c84a4a', '#4a7ac8', '#d8b84a', '#5aa85a', '#efe6d2', '#8a5ac8', '#d8883a', '#6a4a2a'], skin = ['#f0c896', '#c98e5e', '#a86e44', '#e3b07e'];
+      const n = side ? f.w * f.h * 2 : f.w * 6;
+      for (let k = 0; k < n; k++) {
+        const hsh = U.hash2(f.id, k, 3);
+        if (hsh < 0.12) continue; // lugar vazio
+        let px, py;
+        if (side) { px = 6 + (k % (f.w * 2)) * 14; py = 6 + Math.floor(k / (f.w * 2)) * 15; }
+        else { px = 5 + (k % (f.w * 2)) * 16; py = -10 + Math.floor(k / (f.w * 2)) * 15; }
+        if (px > w - 4 || py > h - 6) continue;
+        const jump = busy ? Math.abs(Math.sin(time * (6 + hsh * 6) + k)) * 4 : Math.abs(Math.sin(time * 1.5 + k)) * 0.8;
+        R(px - 4, py + 4 - jump, 9, 8, cols[(k * 7 + f.id) % cols.length]); R(px - 3, py - 3 - jump, 7, 7, skin[k % skin.length]);
+        if (busy && hsh > 0.75) { R(px - 6, py - 7 - jump, 2, 5, skin[k % skin.length]); R(px + 4, py - 7 - jump, 2, 5, skin[k % skin.length]); } // braços para cima
+      }
+      void step; break;
+    }
+    case 'box': { R(0, -18, w, h + 16, '#8e1f2a'); R(0, -18, w, 4, '#d8a84a'); R(4, h - 6, w - 8, 4, '#d8a84a'); for (let k = 0; k < 4; k++) { R(10 + k * 28, -6, 10, 12, ['#ffd54a', '#c8d0d8', '#e8c8a8', '#ffd54a'][k]); R(12 + k * 28, -12, 6, 6, '#f0c896'); } if (G.place && typeof G.place.src.owner === 'number') Heraldry.drawArms(ctx, X + w / 2, Y + h - 12, 14, G.place.src.owner); break; }
+    case 'arenadesk': { sh(0, h - 2, w, 6); R(0, 4, w, h - 4, '#8a5a30'); R(0, 4, w, 5, '#a8743e'); R(8, -4, 18, 9, '#efe6d2'); R(10, -2, 14, 1, '#3a3a3a'); R(10, 1, 10, 1, '#3a3a3a'); R(w - 22, -2, 12, 7, '#ffd54a'); break; }
+    case 'anchor': { sh(4, 26, 24, 5); ctx.strokeStyle = '#5a5a62'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X + 16, Y + 4); ctx.lineTo(X + 16, Y + 26); ctx.stroke(); ctx.beginPath(); ctx.arc(X + 16, Y + 18, 10, 0.2, Math.PI - 0.2); ctx.stroke(); R(10, 6, 12, 3, '#5a5a62'); ell(16, 3, 3, 3, '#5a5a62'); break; }
+    case 'bollard': { sh(8, 26, 16, 4); R(11, 10, 10, 18, '#5a3a1e'); R(9, 8, 14, 4, '#7a5230'); ctx.strokeStyle = '#c8b88a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X + 21, Y + 16); ctx.lineTo(X + 34, Y + 22); ctx.stroke(); break; }
+    case 'rowboat': {
+      const bob = Math.sin(time * 2) * 1.5;
+      ell(w / 2, h / 2 + 8 + bob, w / 2 - 4, h / 2 - 12, 'rgba(0,0,0,0.25)');
+      ctx.fillStyle = '#7a4a22'; ctx.beginPath(); ctx.ellipse(X + w / 2, Y + h / 2 + bob, w / 2 - 6, h / 2 - 14, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#a06a35'; ctx.beginPath(); ctx.ellipse(X + w / 2, Y + h / 2 - 2 + bob, w / 2 - 10, h / 2 - 18, 0, 0, Math.PI * 2); ctx.fill();
+      R(w / 2 - 14, h / 2 - 4 + bob, 28, 3, '#5a3a1e'); R(8, h / 2 + bob, 24, 2, '#c8a878'); R(w - 30, h / 2 - 6 + bob, 22, 2, '#c8a878');
+      if (Inv.count('boat') > 0) { ctx.fillStyle = 'rgba(255,230,150,0.9)'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('⛵', X + w / 2, Y + 4 + bob); ctx.textAlign = 'left'; }
+      break;
+    }
     case 'door': { R(4, -2, 24, 6, '#3a2410'); R(6, 2, 20, 28, 'rgba(255,220,150,0.18)'); ctx.fillStyle = 'rgba(255,230,170,0.85)'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('▼', X + 16, Y + 22); ctx.textAlign = 'left'; break; }
   }
 }

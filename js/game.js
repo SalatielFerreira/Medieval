@@ -210,7 +210,7 @@ const Game = {
 
   resetPlayer(x, y) {
     Object.assign(P, {
-      x, y, r: 10, hp: 100, maxHp: 100, stamina: 100, hunger: 100, gold: 20, level: 1, xp: 0,
+      x, y, r: 10, hp: 100, maxHp: 100, stamina: 100, hunger: 100, maxSt: 100, maxHu: 100, statPts: 0, gold: 20, level: 1, xp: 0,
       inv: {}, equip: { weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null }, bag: [],
       quick: [null, null], sailing: false, fishing: null, sex: 'm', age: 25, hairBase: '#5a3a1a', skin: '#f0c896',
       aim: 0, dir: 1, atkCd: 0, swing: 0, hurt: 0, moving: false, anim: 0, dead: false, toolAnim: null,
@@ -238,7 +238,7 @@ const Game = {
     if (!ok) throw new Error('Falha ao gerar o mundo');
     this.initCivs();
     G.family = { spouse: null, tryChild: false, dueDay: 0 };
-    G.spawned = new Map(); G.storage = {}; G.dungeons = {}; G.dungeon = null; G.place = null; G.warCall = null; G.warRest = {}; G.trial = null; G.weather = null;
+    G.spawned = new Map(); G.storage = {}; G.dungeons = {}; G.dungeon = null; G.place = null; G.warCall = null; G.warRest = {}; G.trial = null; G.regency = []; G.weather = null;
     Diplo.init();
     People.generate();
     G.diff = opts.diff || 'normal';
@@ -269,7 +269,7 @@ const Game = {
   snapshot() {
     return {
       v: 5, slot: G.slot, savedAt: Date.now(), seed: World.seed, terrain: G.terrain || TERRAIN_V, ping: G.ping, name: G.name, surname: G.surname, time: G.time, day: G.day, spawn: G.spawn,
-      player: { x: G.place ? G.place.back.x : P.x, y: G.place ? G.place.back.y : P.y, hp: P.hp, maxHp: P.maxHp, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
+      player: { x: G.place ? G.place.back.x : P.x, y: G.place ? G.place.back.y : P.y, hp: P.hp, maxHp: P.maxHp, maxSt: P.maxSt || 100, maxHu: P.maxHu || 100, statPts: P.statPts || 0, stamina: P.stamina, hunger: P.hunger, gold: P.gold, level: P.level, xp: P.xp, inv: P.inv, equip: P.equip,
         quick: P.quick, sex: P.sex, age: P.age, hairBase: P.hairBase, skin: P.skin, horse: P.horse || null, cart: !!P.cart, bagLvl: P.bagLvl || 1, invOrder: P.invOrder || [], bag: P.bag || [], stacks: P.stacks || {}, stackSeq: P.stackSeq || 0, style: P.style || null, seed: P.seed || null, water: P.water || 0, digMode: P.digMode || 'dig' },
       plots: G.plots, order: G.order, battles: G.battles, stats: G.stats, ach: G.ach, diary: G.diary, dynasty: G.dynasty, diff: G.diff,
       vlife: World.villages.map(v => ({ prosper: v.prosper, level: v.level, ruin: v.ruin, lord: v.lord || null })),
@@ -278,7 +278,7 @@ const Game = {
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, titles: Court.holdings(), titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
       warCall: G.warCall ? Object.assign({}, G.warCall, { shown: false, deadline: null }) : null, warRest: G.warRest || {},
-      trial: G.trial || null, studyDay: G.studyDay, prayOrDay: G.prayOrDay,
+      trial: G.trial || null, studyDay: G.studyDay, prayOrDay: G.prayOrDay, regency: G.regency || [],
       shrines: G.shrines, pilgrim: G.pilgrim, prayDay: G.prayDay, pcaravans: (G.caravans || []).filter(c => c.owner === 'player' && !c.done), civs: G.civs, storage: G.storage, dungeons: G.dungeons, diplo: G.diplo,
       vciv: World.villages.map(v => v.civ),
       built: World.structs.filter(s => s.built && !s.removed).map(s => ({ type: s.type, x: s.x, y: s.y, animals: s.animals, goods: s.goods, stock: s.stock, till: s.till, workers: s.workers, autosell: s.autosell, earn: s.earn, shelf: s.shelf, oldId: s.id })),
@@ -301,6 +301,7 @@ const Game = {
     return o;
   },
   save(at, quiet) {
+    if (P.dead) return false; // depois da morte não se salva mais (o jogo foi apagado)
     if (G.dungeon) { UI.msg('Não é possível salvar dentro de uma caverna.', 'bad'); return false; }
     if (War.isBattle()) { if (!quiet) UI.msg('Não dá para salvar no meio da batalha.', 'bad'); return false; }
     if (at) G.spawn = { x: (at.x + at.w / 2) * TILE, y: (at.y + at.h + 0.9) * TILE };
@@ -364,7 +365,7 @@ const Game = {
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
     G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.npcRoadFrom = s.npcRoadFrom || null; G.roadCut = s.roadCut || {}; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
-    G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; if (G.place) Places.exit(true); G.place = null; G.warCall = s.warCall || null; G.warRest = s.warRest || {}; G.trial = s.trial || null; G.studyDay = s.studyDay; G.prayOrDay = s.prayOrDay; G.diplo = s.diplo || null; G.weather = null;
+    G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; if (G.place) Places.exit(true); G.place = null; G.warCall = s.warCall || null; G.warRest = s.warRest || {}; G.trial = s.trial || null; G.studyDay = s.studyDay; G.prayOrDay = s.prayOrDay; G.regency = s.regency || []; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
     Borders.restore(); // fronteiras ampliadas e vilas anexadas
@@ -454,13 +455,25 @@ const Game = {
     if (Farm.has('wisdom')) n = Math.ceil(n * 1.3);
     P.xp += n;
     while (P.xp >= this.xpNext()) {
-      P.xp -= this.xpNext(); P.level++; P.maxHp += 10; P.hp = P.maxHp;
+      P.xp -= this.xpNext(); P.level++; P.hp = P.maxHp; P.statPts = (P.statPts || 0) + 1;
       Sound.play('levelup');
       UI.banner('⭐ Nível ' + P.level + '!');
-      UI.msg(`Você subiu para o nível ${P.level}! Vida máxima +10, dano +1.5.`, 'gold', true);
+      UI.msg(`Você subiu para o nível ${P.level}! Dano +1.5 e um ponto para escolher: +10 de vida, de energia ou de resistência à fome.`, 'gold', true);
     }
   },
   allies() { return G.ents.filter(e => e.kind === 'ally' && !e.dead); },
+  // energia e barriga máximas (sobem com os pontos de nível)
+  maxSt() { return P.maxSt || 100; },
+  maxHu() { return P.maxHu || 100; },
+  // gasta um ponto de nível: vida, energia ou resistência à fome
+  spendPoint(k) {
+    if (!(P.statPts > 0)) return;
+    P.statPts--;
+    if (k === 'hp') { P.maxHp += 10; P.hp = P.maxHp; UI.msg('❤️ Vida máxima +10.', 'gold'); }
+    else if (k === 'st') { P.maxSt = this.maxSt() + 10; P.stamina = P.maxSt; UI.msg('⚡ Energia máxima +10.', 'gold'); }
+    else { P.maxHu = this.maxHu() + 10; P.hunger = Math.min(P.maxHu, P.hunger + 10); UI.msg('🍗 Resistência à fome +10: a barriga ficou maior.', 'gold'); }
+    Sound.play('levelup');
+  },
   followerCap() {
     return 10 + Court.capBonus() + Content.capBonus(); // torres de vigia: +2 cada (até +4)
   },
@@ -653,7 +666,7 @@ const Game = {
     }
     if (heavy && P.moving && G.realTime - (this.heavyMsg || 0) > 15) { this.heavyMsg = G.realTime; UI.msg(`Você está sobrecarregado (${Store.weight()}/${Store.capacity()}). Guarde itens num baú ou compre um cavalo.`, 'bad'); }
     if (run) P.stamina = Math.max(0, P.stamina - 20 * dt);
-    else if (!P.blocking) P.stamina = Math.min(100, P.stamina + 14 * dt * (Farm.has('vigor') ? 2 : 1));
+    else if (!P.blocking) P.stamina = Math.min(this.maxSt(), P.stamina + 14 * dt * (Farm.has('vigor') ? 2 : 1));
 
     // no inverno a fome aperta, a menos que você esteja bem agasalhado
     const cold = Season.winter() && !G.dungeon && !['wolf_cloak', 'dragon_mail'].includes(P.equip.torso);
@@ -892,7 +905,7 @@ const Game = {
       case 'coop': case 'pen': case 'beehive': UI.showAnimals(s.id); break;
       case 'ptavern': UI.showPTavern(s.id); break;
       case 'port': UI.showPort(s.id); break;
-      case 'fmill': case 'fshop': case 'fforge': case 'ffarm': case 'fvine': UI.showFamily(s.fam); break;
+      case 'fmill': case 'fshop': case 'fforge': case 'ffarm': case 'fvine': UI.showFamilyBiz(s.id); break;
       case 'chapel': case 'cathedral': UI.showChapel(s.id); break;
       case 'shrine': Faith.visitShrine(s); break;
       case 'arena': UI.showArena(s.owner); break;
@@ -932,7 +945,7 @@ const Game = {
     const it = ITEMS[k];
     if ((!it.food && !it.heal) || Inv.count(k) <= 0) return;
     Inv.add(k, -1);
-    P.hunger = Math.min(100, P.hunger + (it.food || 0));
+    P.hunger = Math.min(this.maxHu(), P.hunger + (it.food || 0));
     P.hp = Math.min(P.maxHp, P.hp + (it.heal || 0));
     this.addText(P.x, P.y - 44, it.food ? `+${it.food} 🍎` : `+${it.heal} ❤`, '#9be37a');
     if (it.buff) { Farm.addBuff(it.buff); if (['beer', 'mead', 'wine'].includes(k)) Progress.add('drinks'); }
@@ -1190,7 +1203,7 @@ const Game = {
       if (G.place) Places.exit(true);
       if (G.dungeon) Dungeon.exit(true);
       const lost = Math.floor(P.gold * 0.25);
-      P.gold -= lost; P.x = G.spawn.x; P.y = G.spawn.y; P.hp = P.maxHp; P.hunger = Math.max(P.hunger, 50); P.stamina = 100;
+      P.gold -= lost; P.x = G.spawn.x; P.y = G.spawn.y; P.hp = P.maxHp; P.hunger = Math.max(P.hunger, 50); P.stamina = this.maxSt();
       P.sailing = false; P.fishing = null; P.mounted = false;
       if (G.siege) this.endSiege('O cerco fracassou.');
       for (const e of G.ents) if (e.kind !== 'ally' && U.dist(e.x, e.y, P.x, P.y) < 12 * TILE && e.def.dmg > 0 && hostile(e, P)) e.dead = true;
@@ -1200,6 +1213,8 @@ const Game = {
     }
     P.dead = true; P.hp = 0; P.sailing = false; P.fishing = null;
     if (G.siege) this.endSiege(null);
+    // a morte é para valer: o jogo salvo deste herói é apagado
+    try { if (G.slot) Saves.remove(G.slot); Resume.clear(); } catch (e) { /* sem armazenamento */ }
     G.mouse.down = false; G.keys = {};
     UI.close();
     G.paused = true;
@@ -1215,7 +1230,16 @@ const Game = {
     P.mounted = false;
     const c = People.get(id);
     const oldName = G.name;
-    const years = Math.max(0, 16 - c.age);
+    // o ouro é dividido em partes iguais entre todos os filhos vivos
+    const kids = this.heirs(), share = Math.floor(P.gold / Math.max(1, kids.length));
+    for (const k of kids) if (k !== c) { k.purse = (k.purse || 0) + share; People.addAff(k, 5); }
+    P.gold = share;
+    // o trono fica com o filho mais velho; os outros seguem como príncipes
+    const realms = G.civs.filter(x => x.ruler === 'player').map(x => x.id);
+    const eldest = kids.slice().sort((a, b) => b.age - a.age)[0];
+    const spouse = G.family.spouse !== null ? People.get(G.family.spouse) : null;
+    // criança pequena não sai em aventura: o tempo passa até o herdeiro escolhido ter 14 anos
+    const years = Math.max(0, 14 - c.age);
     if (years) { People.ageAll(years); G.day += years * 30; } // cada ano de vida dura um mês do calendário
     for (const p of G.people) {
       if (p === c) continue;
@@ -1232,14 +1256,15 @@ const Game = {
     Progress.diary(`👑 ${c.name} assumiu o legado de ${oldName}.`);
     const lvl = Math.max(1, Math.floor(P.level / 2)) + (c.prof === 'scholar' ? 4 : 0);
     Object.assign(P, { sex: c.sex, age: c.age, hairBase: c.hair, skin: c.skin, dead: false, level: lvl, xp: 0, maxHp: 100 + (lvl - 1) * 10 });
-    P.hp = P.maxHp; P.hunger = 80; P.stamina = 100; P.x = G.spawn.x; P.y = G.spawn.y;
+    P.hp = P.maxHp; P.hunger = 80; P.stamina = this.maxSt(); P.x = G.spawn.x; P.y = G.spawn.y; P.statPts = 0;
     for (const civ of G.civs) if (civ.ruler === 'player') civ.rulerName = G.name;
+    const throne = realms.length ? Succession.pass(realms, c, eldest, spouse && spouse.alive ? spouse : null) : '';
     for (const a of this.allies()) { const sp = freeSpotNear(P.x, P.y, 50); a.x = sp.x; a.y = sp.y; a.target = null; }
     G.ents = G.ents.filter(e => e.kind === 'ally' || U.dist(e.x, e.y, P.x, P.y) > 14 * TILE || !hostile(e, P));
     UI.hideGameOver();
     G.paused = false;
     UI.banner(`👑 ${c.name} continua o legado de ${oldName}`);
-    UI.msg(years ? `⏳ ${years} anos se passaram. ${c.name}, agora com ${c.age} anos, herdou tudo de ${oldName}.` : `${c.name} herdou tudo de ${oldName}: ouro, itens, construções e reinos.`, 'gold', true);
+    UI.msg(`${years ? `⏳ ${years} anos se passaram. ` : ''}${c.name}${years ? `, agora com ${c.age} anos,` : ''} herdou de ${oldName}: ${kids.length > 1 ? `${share} 🪙 (o ouro foi dividido entre ${kids.length} filhos)` : 'o ouro'}, itens e construções.${throne ? ' ' + throne : ''}`, 'gold', true);
     this.save(null);
   },
   birth(name, sex) {
@@ -1463,7 +1488,7 @@ const Game = {
     Heraldry.apply();
     if (G.siege && G.siege.civ === ci) { for (const e of G.ents) if (e.siegeOf === ci) e.dead = true; G.siege = null; }
     UI.banner(`👑 ${G.name}, soberano de ${CIV_DEFS[ci].short}!`);
-    UI.msg(`${how} Você agora governa ${CIV_DEFS[ci].name}! Aperte K para administrar o reino.`, 'gold', true);
+    UI.msg(`${how} Você agora governa ${CIV_DEFS[ci].name}! Abra o Portfólio (tecla ${Keys.label('kingdom')}) para administrar o reino.`, 'gold', true);
   },
   conquer(ci) {
     const c = G.civs[ci];
@@ -1636,7 +1661,7 @@ const Game = {
   // mensagens de rotina durante o resumo vão para o Diário; fora dele aparecem normalmente
   note(text) { if (this.ledger) this.ledger.push(text); else UI.msg(text); },
   sleep(s) {
-    P.hp = P.maxHp; P.stamina = 100; P.hunger = Math.max(0, P.hunger - 20);
+    P.hp = P.maxHp; P.stamina = this.maxSt(); P.hunger = Math.max(0, P.hunger - 20);
     const night = this.isNight();
     World.updateRegrow(night ? NIGHT_LEN - G.time : DAY_LEN - G.time + NIGHT_LEN, P.x, P.y); // o tempo pulado também conta para as plantas crescerem
     G.time = NIGHT_LEN;

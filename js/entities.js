@@ -74,7 +74,7 @@ function hostile(a, b) {
 
 // O jogador pode golpear esta criatura?
 function canHit(e) {
-  if (e.faction === 'pet') return false;
+  if (e.faction === 'pet' || e.faction === 'duelist') return false;
   if (e.faction === 'arena') return true;
   if (e.faction === 'engine') return e.side === 'enemy';
   if (e.faction === 'rebel') return true;
@@ -264,7 +264,7 @@ class Creature {
       case 'caravan': drawCaravan(ctx, x, y, this.dir, this.anim, this.moving, this.car && this.car.owner === 'player' ? PLAYER_COLOR : Game.civColor(this.civ), hurt); break;
       case 'ram_e': case 'catapult_e': drawEngine(ctx, x, y, this.kind, this.dir, this.anim, this.moving, hurt, this.swing, this.side); break;
       case 'champion':
-        drawHuman(ctx, x, y, { scale: 1.12, body: '#7a1f2a', legs: '#2a2420', hair: '#2a1a12', armor: '#c8a040', helmet: '#d8b860', weapon: '#d8d8e0', wlen: 20, shield: '#8a1a1a',
+        drawHuman(ctx, x, y, { scale: 1.12, body: this.body || '#7a1f2a', legs: '#2a2420', hair: '#2a1a12', armor: '#c8a040', helmet: '#d8b860', weapon: '#d8d8e0', wlen: 20, shield: '#8a1a1a',
           aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
         break;
       case 'spider_queen': drawSpider(ctx, x, y, 2.1, this.anim, hurt, '#4a1f5a'); break;

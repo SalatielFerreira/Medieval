@@ -59,6 +59,7 @@ const UI = {
       if (b.dataset.go === 'heir') Game.continueAs(+b.dataset.id);
       else if (b.dataset.go === 'load') { this.hideGameOver(); this.loading('Carregando sua jornada...', async prog => { if (!(await Game.load(G.slot, prog))) { Dialog.alert({ icon: '📜', title: 'Sem jogo salvo', text: 'Não há jogo salvo neste espaço.' }, () => this.showGameOver(this.goCause)); } }); }
       else if (b.dataset.go === 'menu') { this.hideGameOver(); Game.toMenu(); }
+      else if (b.dataset.go === 'new') { this.hideGameOver(); Game.toMenu(); Menu.createCard(); }
     });
     document.getElementById('birth').addEventListener('click', e => {
       if (!e.target.closest('[data-birth]')) return;
@@ -280,7 +281,7 @@ const UI = {
       el.querySelector('span').textContent = Math.ceil(Math.max(0, v)) + ' / ' + max;
       el.classList.toggle('low', v / max < 0.25);
     };
-    setBar('hpBar', P.hp, P.maxHp); setBar('stBar', P.stamina, 100); setBar('huBar', P.hunger, 100);
+    setBar('hpBar', P.hp, P.maxHp); setBar('stBar', P.stamina, Game.maxSt()); setBar('huBar', P.hunger, Game.maxHu());
     txt('hudName', G.name + (G.surname ? ' ' + G.surname : ''));
     txt('hudLvl', P.level);
     const title = Game.playerTitle();
@@ -1368,6 +1369,29 @@ const UI = {
   },
 
 
+  // ------------------------------------------------------------ pontos de nível
+  showLevelUp() {
+    if (!(P.statPts > 0)) { this.close(); return; }
+    const opt = (k, ic, t, now, d) => `<button class="lv-opt" data-act="lvpt" data-k="${k}"><span>${ic}</span><b>${t}</b><small>${now}</small><i>${d}</i></button>`;
+    const body = `<p class="lv-intro">Você tem <b>${P.statPts}</b> ${P.statPts === 1 ? 'ponto' : 'pontos'} para distribuir. Cada um vale +10.</p>
+      <div class="lv-grid">${opt('hp', '❤️', 'Vida', `${P.maxHp} → ${P.maxHp + 10}`, 'Aguenta mais golpes. A vida enche agora.')}
+        ${opt('st', '⚡', 'Energia', `${Game.maxSt()} → ${Game.maxSt() + 10}`, 'Corre, golpeia, esquiva e bloqueia por mais tempo.')}
+        ${opt('hu', '🍗', 'Resistência à fome', `${Game.maxHu()} → ${Game.maxHu() + 10}`, 'Barriga maior: a fome demora mais para chegar.')}</div>`;
+    this.open('⭐ Pontos de nível', body, 'showLevelUp', [], `Nível ${P.level}`);
+  },
+
+  // ------------------------------------------------------------ empreendimento de outra família: visitar, incendiar ou tomar
+  showFamilyBiz(sid) {
+    const s = World.structs[sid]; if (!s || s.removed) return;
+    const { f, d, ci, king } = FamilyCrime.info(s), seizeTo = BUILDINGS[FAMILY_SEIZE[s.type]];
+    const body = `<div class="fb-head"><span>${d.icon}</span><div><b>${d.name}${f ? ' da ' + this.esc(Families.name(f)) : ''}</b><small>Rende ${d.income} 🪙 por mês para a família${f ? ` · lealdade ${Math.round(f.loyalty || 0)}` : ''}${f && Court.isEnemy(f) ? ' · <b class="bad">sua inimiga</b>' : ''}</small></div></div>
+      <div class="act-row">${f ? `<button data-act="famview" data-f="${f.id}">🏛️ Ver a família</button>` : ''}</div>
+      <div class="card fb-crime"><div class="sec">🗡️ Ações contra a família</div>
+        <div class="cr-act"><span class="cr-ic">🔥</span><span class="cr-t"><b>Incendiar</b><small>Destrói o empreendimento. A família vira sua inimiga${ci >= 0 && !king ? ` e ${CIV_DEFS[ci].short} fica ofendido (−15)` : ''}.</small></span><button data-act="fbburn" data-s="${sid}">Incendiar</button></div>
+        <div class="cr-act"><span class="cr-ic">${king ? '👑' : '🗝️'}</span><span class="cr-t"><b>${king ? 'Confiscar (ordem real)' : 'Tomar à força'}</b><small>Vira o seu ${seizeTo.name}. ${king ? 'A família perde 40 de lealdade e pode se revoltar.' : 'A família vira sua inimiga e o reino se ofende.'}</small></span><button class="primary" data-act="fbseize" data-s="${sid}">${king ? 'Confiscar' : 'Tomar'}</button></div></div>`;
+    this.open(`${d.icon} ${d.name}`, body, 'showFamilyBiz', [sid], f ? Families.name(f) : '');
+  },
+
   // ------------------------------------------------------------ guerra: conselho (montar o exército) e relatório
   showWarCouncil() {
     const wc = G.warCall;
@@ -1835,9 +1859,10 @@ const UI = {
       <div class="go-skull">☠</div><h1>FIM DE JOGO</h1>
       <p class="go-cause"><b>${UI.esc(G.name)}</b> morreu ${UI.esc(cause)} aos ${P.age} anos, em ${Calendar.full(G.day)}.</p>
       ${heirs.length ? '<h3>Continue a sua linhagem</h3><div class="go-heirs">' + heirs.map(h => `<button data-go="heir" data-id="${h.id}">
-          <canvas data-pid="${h.id}" width="56" height="56"></canvas><span><b>${UI.esc(h.name)}</b><small>${h.sex === 'm' ? 'Filho' : 'Filha'} · ${h.age} anos${h.age < 16 ? ` (assume aos 16)` : ''}</small></span></button>`).join('') + '</div>'
+          <canvas data-pid="${h.id}" width="56" height="56"></canvas><span><b>${UI.esc(h.name)}</b><small>${h.sex === 'm' ? 'Filho' : 'Filha'} · ${h.age} anos${h.age < 14 ? ' (começa aos 14)' : ''}${G.civs.some(c => c.ruler === 'player') && h === Game.heirs().slice().sort((a, b) => b.age - a.age)[0] ? ' · 👑 herda o trono' : G.civs.some(c => c.ruler === 'player') ? ' · príncipe' + (h.sex === 'f' ? 'sa' : '') : ''}</small></span></button>`).join('') + '</div>'
         : '<p class="muted2">Você não deixou herdeiros. Case-se e tenha filhos para continuar sua linhagem numa próxima vez.</p>'}
-      <div class="go-btns"><button data-go="load">📜 Carregar último jogo salvo</button><button data-go="menu">🏰 Voltar ao menu</button></div></div>`;
+      <p class="muted2">A morte é para valer: o jogo salvo de ${UI.esc(G.name)} foi apagado.</p>
+      <div class="go-btns"><button data-go="new">⚔️ Começar um novo jogo</button></div></div>`;
     el.classList.remove('hidden');
     for (const cv of el.querySelectorAll('canvas[data-pid]')) this.drawPersonPortrait(cv, People.get(+cv.dataset.pid), 1.9);
   },
@@ -2582,6 +2607,9 @@ const UI = {
       case 'bizfire2': { Biz.fire(People.get(+d.id)); this.showBiz(+d.s); return; }
       case 'bizcollect': Biz.collect(World.structs[+d.s]); break;
       case 'bizshopopen': this.showBizShop(+d.s); return;
+      case 'lvpt': Game.spendPoint(d.k); if (P.statPts > 0) this.showLevelUp(); else this.close(); return;
+      case 'fbburn': { const sid = +d.s; Dialog.confirm({ icon: '🔥', title: 'Incendiar', text: 'Incendiar o empreendimento desta família? Ela vai virar sua inimiga.', ok: 'Incendiar', danger: true }, () => FamilyCrime.burn(sid)); return; }
+      case 'fbseize': { const sid = +d.s; Dialog.confirm({ icon: '🗝️', title: 'Tomar o empreendimento', text: 'Tomar este empreendimento para você? A família não vai perdoar.', ok: 'Tomar', danger: true }, () => FamilyCrime.seize(sid)); return; }
       case 'wcfg': { const wc = G.warCall; if (!wc) break; if (d.k === 'knights' || d.k === 'capangas') wc.cfg[d.k] = !wc.cfg[d.k]; else wc.cfg[d.k] = Math.max(0, (wc.cfg[d.k] || 0) + (+d.d)); War.clampCfg(wc); break; }
       case 'wform': if (G.warCall) G.warCall.cfg.form = d.k; break;
       case 'wgo': War.start(); return;

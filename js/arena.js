@@ -28,7 +28,12 @@ const Arena = {
     return null;
   },
   arenaOf(ci) { return World.capitals[ci].arena; },
-  center(ci) { const s = this.arenaOf(ci); return { x: (s.x + s.w / 2) * TILE, y: (s.y + s.h / 2 + 0.5) * TILE }; },
+  // dentro do coliseu, o centro da areia é o lugar da luta
+  inColiseum(ci) { return !!(G.place && G.place.kind === 'room' && G.place.type === 'arena' && G.place.src.owner === ci); },
+  center(ci) {
+    if (this.inColiseum(ci)) return { x: (G.place.fx0 + 11) * TILE, y: (G.place.fy0 + 7.4) * TILE };
+    const s = this.arenaOf(ci); return { x: (s.x + s.w / 2) * TILE, y: (s.y + s.h / 2 + 0.5) * TILE };
+  },
   fighterName(ci, tier) { return `${U.pick(NAMES_M.concat(NAMES_F))} ${U.pick(EPITHETS)}`; },
 
   // ------------------------------------------------------------ duelo na arena (não é mortal)
@@ -99,6 +104,7 @@ const Arena = {
     this.clear(ar);
   },
   update() {
+    this.watchUpdate(1 / 60);
     const d = G.duel;
     if (!d) return;
     const c = this.center(d.ci);
@@ -158,6 +164,7 @@ const Arena = {
   bet(ci, side, amount) {
     const card = this.fightCard(ci);
     if (card.done || amount <= 0 || amount > P.gold) return;
+    if (this.inColiseum(ci) && !this.show && !G.duel) { P.gold -= amount; card.done = true; this.watch(ci, card, side, amount); return; }
     P.gold -= amount; card.done = true;
     const f = card[side], other = card[side === 'a' ? 'b' : 'a'];
     const winA = Math.random() < card.a.pow / (card.a.pow + card.b.pow);
@@ -168,6 +175,35 @@ const Arena = {
       UI.refresh();
     }, 1200);
     UI.msg(`A luta começou: ${card.a.name} × ${card.b.name}...`);
+  },
+
+  // a luta em que você apostou acontece na areia, com a plateia vibrando
+  watch(ci, card, side, amount) {
+    const c = this.center(ci), id = 9000 + (G.day % 900);
+    const mk = (f, dx, col) => {
+      const e = Game.spawn('champion', c.x + dx, c.y, { leash: 5 });
+      e.faction = 'duelist'; e.battle = id; e.civ = dx < 0 ? 100 : 101; e.body = col; e.duelName = f.name; e.name = f.name; e.aggroOv = 20; e.siegeOf = 999; e.leash = 5 * TILE;
+      e.hp = e.maxHp = 120 + f.pow * 2; e.dmg = Math.round(6 + f.pow / 10);
+      return e;
+    };
+    const a = mk(card.a, -60, '#2a4a8a'), b = mk(card.b, 60, '#8e1f2a');
+    this.show = { ci, a, b, side, amount, card, t: 0 };
+    UI.close();
+    UI.banner(`🏟️ ${card.a.name} × ${card.b.name}`);
+    UI.msg(`Você apostou ${amount} 🪙 em ${card[side].name}. A plateia grita!`, 'gold');
+    Sound.play('roar', { vol: 0.4 });
+  },
+  watchUpdate(dt) {
+    const w = this.show; if (!w) return;
+    w.t += dt;
+    if (!this.inColiseum(w.ci)) { for (const e of [w.a, w.b]) e.dead = true; this.show = null; P.gold += w.amount; UI.msg('Você saiu da arena: a aposta foi devolvida.'); return; }
+    if (!w.a.dead && !w.b.dead && w.t < 60) return;
+    const winA = w.b.dead || (!w.a.dead && w.a.hp / w.a.maxHp >= w.b.hp / w.b.maxHp), winner = winA ? w.card.a : w.card.b, f = w.card[w.side];
+    for (const e of [w.a, w.b]) e.dead = true;
+    this.show = null;
+    if (winner === f) { const g = Math.round(w.amount * f.odds); P.gold += g; UI.banner(`🎉 ${f.name} venceu!`); UI.msg(`🎉 ${f.name} venceu! Você ganhou ${g} 🪙.`, 'gold'); Sound.play('coin'); }
+    else { UI.banner(`😩 ${winner.name} venceu`); UI.msg(`😩 ${winner.name} venceu. Você perdeu ${w.amount} 🪙.`, 'bad'); }
+    Sound.play('roar', { vol: 0.3 });
   },
 
   // ------------------------------------------------------------ justa a cavalo (minijogo de pontaria)
