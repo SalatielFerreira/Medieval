@@ -378,7 +378,7 @@ const Game = {
     Towns.init(); Towns.applyAll();
     G.homes = s.homes || {}; G.npcHouses = s.npcHouses || []; G.npcHouseSeq = s.npcHouseSeq || 0;
     Homes.restore();
-    Ports.place(); Graves.place(); Urban.restore(); Ports.ensureKeepers(); Shops.ensure(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
+    Ports.place(); Graves.place(); Urban.restore(); Towns.settle(); Ports.ensureKeepers(); Shops.ensure(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
     Towns.syncOwners(); // construções de cada vila com as cores do reino dela
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);

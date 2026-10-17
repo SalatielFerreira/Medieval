@@ -120,7 +120,7 @@ const Homes = {
     if (s) { s.type = 'vhouse'; s.blocks = true; s.progress = 1; }
     this.touch();
     const v = World.villages[e.vi];
-    if (v) { Towns.show(v); if (U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 40) Game.note(`🏠 Uma casa nova ficou pronta em ${v.name}.`); }
+    if (v) { Towns.show(v); Towns.settle(); if (U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 40) Game.note(`🏠 Uma casa nova ficou pronta em ${v.name}.`); }
   },
   // jogo salvo: recria as casas construídas pelos moradores
   restore() { for (const e of this.B()) this.make(e); },

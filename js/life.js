@@ -56,6 +56,40 @@ const Towns = {
     houses.forEach((s, k) => { s.ruined = k < v.ruin; });
   },
   applyAll() { World.villages.forEach((v, i) => { this.build(v, i); this.show(v); }); this.syncOwners(); },
+  // os moradores só constroem em lugar vazio: obra de NPC que ficou em cima de outra (a sua, ou uma mudada de lugar)
+  // muda para um lugar livre perto da vila — ou é desfeita, se não houver lugar
+  settle() {
+    if (G.dungeon) return 0;
+    const N = WORLD_W * WORLD_H, occ = new Int32Array(N).fill(-1), E = Urban.E();
+    const rank = s => s.built || s.owner === 'player' ? 0 : s.added || (E.moved && E.moved[s.okey]) ? 1
+      : s.npcBuilt || s.fam !== undefined || s.growth !== undefined ? 3 : 2;
+    const vis = World.structs.filter(s => s && !s.removed && !s.hidden && s.w && s.h).map(s => [rank(s), s]).sort((a, b) => a[0] - b[0] || a[1].id - b[1].id);
+    const hits = s => { for (let j = s.y; j < s.y + s.h; j++) for (let i = s.x; i < s.x + s.w; i++) { if (!World.inb(i, j)) continue; const o = occ[World.idx(i, j)]; if (o >= 0 && o !== s.id) return true; } return false; };
+    const paint = s => { for (let j = s.y; j < s.y + s.h; j++) for (let i = s.x; i < s.x + s.w; i++) if (World.inb(i, j)) { const k = World.idx(i, j); occ[k] = s.id; World.sgrid[k] = s.id; } };
+    let fixed = 0;
+    for (const [r, s] of vis) {
+      if (r < 3 || !hits(s)) { paint(s); continue; }
+      fixed++;
+      const spot = s.type === 'vwall' ? null : this.freeSpot(s, occ);
+      if (spot) { Urban.relocate(s, spot.x, spot.y); paint(s); }
+      else { Urban.record('remove', s, s.x, s.y); World.removeStruct(s); }
+    }
+    if (fixed) { for (const [, s] of vis) if (!s.removed) paint(s); World.chunks.clear(); }
+    return fixed;
+  },
+  freeSpot(s, occ) {
+    const vi = s.village !== undefined ? s.village : s.fam !== undefined && Families.get(s.fam) ? Families.get(s.fam).seat : -1;
+    const v = World.villages[vi] || { x: s.x, y: s.y };
+    const free = (x, y, w, h) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) { if (!World.inb(i, j)) return false; const k = World.idx(i, j); if (occ[k] >= 0 || World.blocker(k)) return false; } return true; };
+    for (let r = 5; r <= 30; r++) for (let k = 0; k < 28 + r; k++) {
+      const a = k / (28 + r) * Math.PI * 2 + s.id * 0.7 + r * 0.37;
+      const x = Math.round(v.x + Math.cos(a) * r) - 1, y = Math.round(v.y + Math.sin(a) * r * 0.8) - 1;
+      if (!World.areaOk(x - 1, y - 1, s.w + 2, s.h + 2) || !free(x - 1, y - 1, s.w + 2, s.h + 2) || this.onRoad(x, y, s.w, s.h)) continue;
+      if (U.dist(x + s.w / 2, y + s.h / 2, P.x / TILE, P.y / TILE) < 3) continue;
+      return { x, y };
+    }
+    return null;
+  },
   // as construções de cada vila pertencem ao reino da vila (ex.: a vila livre que virou o seu reino)
   syncOwners() {
     for (const s of World.structs) {
@@ -82,9 +116,11 @@ const Towns = {
       v.level = lvl;
       this.show(v);
     });
+    this.settle(); // casas que surgem com o nível novo não ficam em cima das suas obras
     this.syncOwners();
     VillageWorks.monthTick(); // obras das vilas: aluguéis, recursos, prosperidade e famílias novas
     NpcRoads.tick(); // moradores abrem caminhos até as casas e lojas
+    NpcRoads.upgradeTick(); // e evoluem as estradas da vila, um nível por vez
     Faith.monthTick();
     People.purseTick(); // as lojas rendem para os próprios donos
     Ports.monthTick();
@@ -368,6 +404,43 @@ const NpcRoads = {
     for (const i of p) G.npcRoads.push(i);
     return true;
   },
+  // por mês: as vilas (e os castelos) dos NPCs evoluem as próprias estradas, um nível por vez, até o nível que a vila sustenta
+  // (vila 1–2: cascalho · 3–4: pedra · 5–6: calçada · 7+: Estrada Real; castelos chegam à real). As vilas em que você é o chefe ficam com você.
+  upgradeTick(per = 8) {
+    if (G.dungeon) return 0;
+    if (!World.roadLv || World.roadLv.length !== WORLD_W * WORLD_H) World.roadLv = new Uint8Array(WORLD_W * WORLD_H);
+    const E = Urban.E(); E.rlv = E.rlv || {};
+    let total = 0;
+    const work = (cx, cy, R, max, pay) => {
+      const cand = [];
+      for (let y = cy - R; y <= cy + R; y++) for (let x = cx - R; x <= cx + R; x++) {
+        if (!World.inb(x, y) || sqDist(x, y, cx, cy) > R) continue;
+        const i = World.idx(x, y); if (World.tiles[i] !== T.ROAD) continue;
+        const cur = World.roadLv[i] || 1; if (cur >= max) continue;
+        cand.push([cur, U.dist(x, y, cx, cy), i]);
+      }
+      cand.sort((a, b) => a[0] - b[0] || a[1] - b[1]); // primeiro as mais simples e as do centro
+      let n = 0;
+      for (const [cur, , i] of cand) {
+        if (n >= per || !pay(cur + 1)) break;
+        World.roadLv[i] = cur + 1; E.rlv[i] = cur + 1; World.setTile(i, T.ROAD); n++;
+      }
+      return n;
+    };
+    World.villages.forEach(v => {
+      if (v.lord === 'player' || v.removed) return;
+      const lv = v.level || 1, max = Math.min(5, 1 + Math.floor((lv + 1) / 2)), c = G.civs[v.civ];
+      // vila livre paga com a própria prosperidade; vila de um reino, com o tesouro do rei (no seu reino, a vila paga sozinha e não tira do seu tesouro)
+      const pay = L => { if (v.free || !c || c.ruler === 'player') return true; const p = 4 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; };
+      total += work(v.x, v.y, VILLAGE_R, max, pay);
+    });
+    World.capitals.forEach((cp, ci) => {
+      const c = G.civs[ci]; if (!c || c.ruler === 'player' || c.dead) return;
+      total += work(cp.x, cp.y, 12, 5, L => { const p = 4 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; });
+    });
+    if (total) World.chunks.clear();
+    return total;
+  },
   // por mês: cada vila liga até n construções (as que não acharam caminho tentam de novo daqui a um ano)
   tick(n = 2) {
     if (G.dungeon) return;
@@ -392,6 +465,9 @@ const NpcRoads = {
     const cut = this.cut();
     if (G.npcRoads) G.npcRoads = G.npcRoads.filter(i => !cut[i]);
     for (const i of G.npcRoads || []) if (World.sgrid[i] < 0 && !this.isRoad(i)) World.carveRoad([i]);
+    // os níveis das estradas abertas pelos moradores (elas só voltam agora, depois das obras)
+    const E = Urban.E();
+    if (World.roadLv) for (const k in E.rlv || {}) if (World.tiles[+k] === T.ROAD) World.roadLv[+k] = E.rlv[k];
     this.adopt();
   },
 };
