@@ -340,6 +340,7 @@ const Places = {
       }
       royals = royals.filter(p => !away(p));
       royals.slice(0, L.royal.length).forEach((p, k) => put(take(p), L.royal[k], { still: true, dir: k % 2 ? -1 : 1 }));
+      put(take(Shops.keeper(src)), [2, 13], { still: true }); // o mestre da arena, na mesa de inscrição
       // plateia: gente do reino nas arquibancadas, mais cheia de dia
       const ofCiv = p => p.civ === ci || (p.home.type === 'village' && World.villages[p.home.idx] && World.villages[p.home.idx].civ === ci);
       const crowd = G.people.filter(p => p.alive && People.isAdult(p) && !p.capanga && !p.kin && p.spouse !== 'player' && !People.isCourt(p) && !p.trip && ofCiv(p) && !used.has(p.id) && !away(p));
@@ -347,7 +348,7 @@ const Places = {
       let j = 0; for (const p of pick(crowd, n, 37)) { const sp = L.crowd[j++]; put(take(p), sp, { still: true, dir: sp[0] < 11 ? 1 : -1 }); }
       return;
     }
-    if (d.lay === 'graveyard') return; // só o silêncio (e você)
+    if (d.lay === 'graveyard') { put(take(Shops.keeper(src)), L.keeper, { still: true }); return; } // o coveiro (e o silêncio)
     if (d.lay === 'harbor') {
       put(take(Ports.keeper(src)), L.keeper, { still: true });
       return;

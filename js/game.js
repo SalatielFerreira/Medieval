@@ -904,6 +904,10 @@ const Game = {
     const s = this.nearestInteract();
     // lojas, taverna, capela, castelo, suas casas e empreendimentos: entra-se neles
     if (s && Places.enterable(s) && Places.enterRoom(s)) return;
+    this.useStruct(s);
+  },
+  // o que o prédio faz quando se clica nele (também usado lá dentro, no móvel principal)
+  useStruct(s) {
     if (s && Content.interact(s)) return; // horta, pomar, poço, chafariz, treino, torre e oficinas novas
     if (s && BIZ_TYPES[s.type] && s.owner === 'player' && s.type !== 'ptavern' && !['biz_farm', 'biz_mill', 'biz_lumber', 'biz_quarry', 'biz_mine', 'biz_smithy', 'biz_shop'].includes(s.type)) { UI.showBiz(s.id); return; }
     if (!s) {

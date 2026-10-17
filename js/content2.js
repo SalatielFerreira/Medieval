@@ -77,7 +77,7 @@ const Content2 = {
       case 'archery': this.archery(); return true;
       case 'big_chest': case 'cellar': UI.showChest(s.id); return true;
       case 'kennel': { const d = this.dog(); UI.msg(d ? `🐕 Seu cão está com ${Math.round(d.hp)} de vida e segue você por onde for.` : '🐕 Um filhote está crescendo no canil: no mês que vem ele estará pronto.'); return true; }
-      case 'archer_tower': UI.msg('🏹 Os arqueiros vigiam: atiram em qualquer inimigo a até 9 passos.'); return true;
+      case 'archer_tower': { const k = Shops.keeper(s); UI.msg(k ? `🏹 ${k.name} ${k.surname}, ${People.title(k).toLowerCase()} da torre, vigia lá de cima: atira em qualquer inimigo a até 9 passos.` : '🏹 A torre está sem arqueiro.'); return true; }
       case 'armory': UI.msg('⚔️ O arsenal equipa seus capangas: +3 de dano e +2 de defesa.'); return true;
     }
     return false;
@@ -107,6 +107,7 @@ const Content2 = {
     if (this.t <= 0) {
       this.t = 0.4;
       for (const s of this.mine('archer_tower')) {
+        if (!Shops.keeper(s)) continue; // quem atira é o arqueiro responsável, lá em cima
         if (U.dist(s.x, s.y, P.x / TILE, P.y / TILE) > 40) continue;
         s.shotT = (s.shotT || 0) - 0.4; if (s.shotT > 0) continue;
         const cx = (s.x + s.w / 2) * TILE, cy = (s.y + s.h / 2) * TILE;
@@ -115,6 +116,7 @@ const Content2 = {
         if (!best) continue;
         const a = Math.atan2(best.y - 14 - (cy - 8), best.x - cx), src = { x: cx + Math.cos(a) * 44, y: cy + 8 + Math.sin(a) * 44, faction: 'player', dmg: 14, civ: -1 };
         Ranged.fire(src, a, 14, 'arrow'); Sound.play('bow', { vol: 0.5 }); s.shotT = 1.6;
+        (this.towerAim = this.towerAim || {})[s.id] = { a, dir: Math.cos(a) < 0 ? -1 : 1, until: G.realTime + 0.8 };
       }
     }
     if (this.spikeT <= 0) {
@@ -265,7 +267,6 @@ Content2.monthTick = function () {
         ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(X + 4, Y + h - 6, w - 8, 8);
         R(8, -20, w - 16, h + 14, '#8f8a80'); for (let k = -16; k < h - 4; k += 7) R(8, k, w - 16, 1, '#6f6a62'); R(w / 2 - 5, h - 16, 10, 14, '#3a2410');
         R(4, -30, w - 8, 12, '#a5a7ad'); for (let k = 4; k < w - 4; k += 8) R(k, -36, 5, 7, '#a5a7ad'); R(w / 2 - 3, -8, 6, 8, '#2a2a3a');
-        const lean = Math.sin(time * 2) * 2; R(w / 2 - 3 + lean, -44, 6, 10, '#2a4a8a'); R(w / 2 - 2 + lean, -49, 5, 5, '#f0c896'); ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X + w / 2 + 6 + lean, Y - 40, 6, -1.2, 1.2); ctx.stroke();
         flag(w - 10, -36, PLAYER_COLOR);
         break;
       }
