@@ -879,9 +879,18 @@ const Game = {
     }
     return best;
   },
+  // o soldado da guarda ganha (ou recupera) uma pessoa: os soldados de cada reino são sempre os mesmos
+  soldierFor(e) {
+    if (e.npc || e.kind !== 'guard' || e.civ === undefined || e.civ < 0 || !G.civs[e.civ]) return null;
+    let p = G.people.find(q => q.alive && q.rank === 'soldier' && q.soldierOf === e.civ && !q.capanga && !(G.spawned.get(q.id) && !G.spawned.get(q.id).dead));
+    if (!p) { p = People.create({ rank: 'soldier', civ: e.civ, home: { type: 'castle', civ: e.civ }, age: U.rint(19, 42), sex: Math.random() < 0.82 ? 'm' : 'f' }); p.soldierOf = e.civ; p.met = false; }
+    e.npc = p; G.spawned.set(p.id, e);
+    return p;
+  },
   nearestNpc() {
     let best = null, bd = 1.9 * TILE;
     for (const e of G.ents) {
+      if (!e.dead && !e.npc && e.kind === 'guard' && !e.angry && !hostile(e, P) && U.dist(e.x, e.y, P.x, P.y) < bd) this.soldierFor(e);
       if (e.dead || e.sleeping || !e.npc || e.npc.hostile) continue;
       const d = U.dist(e.x, e.y, P.x, P.y);
       if (d < bd) { bd = d; best = e; }

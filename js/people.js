@@ -32,6 +32,7 @@ const RANKS = {
   innkeeper: { m: 'Taverneiro', f: 'Taverneira', shop: 'tavern', order: 5 },
   hunter:    { m: 'Caçador', f: 'Caçadora', shop: 'hunter', order: 6 },
   mercenary: { m: 'Mercenário', f: 'Mercenária', fighter: true, order: 6 },
+  soldier:   { m: 'Soldado', f: 'Soldada', fighter: true, order: 6 },
   peasant:   { m: 'Camponês', f: 'Camponesa', order: 7 },
   priest:    { m: 'Padre', f: 'Madre', order: 6 },
   sailor:    { m: 'Marinheiro', f: 'Marinheira', order: 6 },
@@ -43,7 +44,7 @@ const RANKS = {
 const RANK_LOOK = {
   ruler: '#7a1f2a', consort: '#6a2a6a', heir: '#2a4a8a', knight: '#8d949c', merchant: '#6d7f4a', smith: '#4a3a30',
   lumber: '#6a4a26', mason: '#7a7468', innkeeper: '#8a5a3a', hunter: '#4a5a2a', mercenary: '#5a4a3a', peasant: '#8a6d4a',
-  wanderer: '#5a6a7a', beggar: '#6b5a45', child: '#a07a50', sailor: '#2a4a6a', priest: '#2a2a34',
+  wanderer: '#5a6a7a', beggar: '#6b5a45', child: '#a07a50', sailor: '#2a4a6a', priest: '#2a2a34', soldier: '#8d949c',
 };
 
 const TRAITS = {
@@ -360,6 +361,27 @@ const People = {
     p.capanga = true; p.oldHome = p.home;
     Game.spawnCapanga(p);
     return { text: TRAITS[p.trait].fights ? 'Finalmente uma aventura! Vamos!' : 'Está certo, vou com você.', note: `${this.full(p)} agora é seu capanga. Equipe-${p.sex === "m" ? "o" : "a"} pela conversa.` };
+  },
+  bribeCost(p) { return p.rank === 'knight' ? 600 : 180; },
+  canBribe(p) { return this.isAdult(p) && (p.rank === 'soldier' || p.rank === 'knight') && !p.capanga && p.spouse !== 'player' && !p.kin; },
+  bribe(p) {
+    const need = p.trait === 'leal' ? 70 : 40, cost = this.bribeCost(p);
+    if (p.aff < need) return { text: p.trait === 'leal' ? 'Eu jurei lealdade ao meu rei. Nem pense nisso.' : 'Trair o meu reino? Mal te conheço.', note: `Precisa de amizade ${need}+ (${p.trait === 'leal' ? 'é leal ao reino' : 'confiança'}).` };
+    if (Game.allies().length >= Game.followerCap()) return { text: 'Você já tem gente demais te seguindo.', note: 'Limite de seguidores atingido (construa casas e quartéis).' };
+    if (P.gold < cost) return { text: `Por ${cost} moedas eu largo esta farda.`, note: 'Ouro insuficiente.' };
+    P.gold -= cost;
+    const ci = p.home && p.home.civ !== undefined ? p.home.civ : p.civ;
+    // o guarda some do posto (a guarnição perde um soldado) e vira seu capanga
+    for (const e of G.ents) if (e.npc === p) e.dead = true;
+    G.spawned.delete(p.id);
+    if (ci >= 0 && G.civs[ci] && p.rank === 'soldier') G.civs[ci].garrison = Math.max(0, G.civs[ci].garrison - 1);
+    p.turncoat = ci; p.capanga = true; p.oldHome = { type: 'wild' }; p.home = { type: 'wild' };
+    if (!p.equip.weapon) p.equip.weapon = p.rank === 'knight' ? 'steel_sword' : 'iron_sword';
+    if (!p.equip.torso) p.equip.torso = p.rank === 'knight' ? 'chainmail' : 'leather_jerkin';
+    p.clvl = Math.max(p.clvl || 1, p.rank === 'knight' ? 4 : 2);
+    Game.spawnCapanga(p);
+    if (ci >= 0 && G.civs[ci] && G.civs[ci].ruler !== 'player') Game.addRelation(ci, -5);
+    return { text: TRAITS[p.trait].fights ? 'O ouro fala mais alto. De agora em diante, luto por você — contra quem for.' : 'Está bem... Vou com você. Que o rei nunca saiba.', note: `${this.full(p)} largou ${CIV_DEFS[ci] ? CIV_DEFS[ci].short : 'o reino'} e agora é seu capanga. Ele luta até contra o próprio reino.` };
   },
   dismiss(p) {
     p.capanga = false; p.post = null; p.home = p.oldHome || p.home;

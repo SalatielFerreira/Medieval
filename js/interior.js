@@ -281,7 +281,7 @@ const Places = {
     const wanderers = (n, salt) => { let k = 0; for (const p of pick(locals(), n, salt)) put(take(p), L.wander[k++ % L.wander.length], { leash: 2.2 }); };
     if (d.lay === 'throne') {
       const ci = src.owner, ruled = G.civs[ci] && G.civs[ci].ruler === 'player';
-      const court = G.people.filter(p => p.alive && !p.capanga && (p.home.type === 'castle' && p.home.civ === ci || (p.council && Families.civOf(p) === ci)));
+      const court = G.people.filter(p => p.alive && !p.capanga && p.rank !== 'soldier' && (p.home.type === 'castle' && p.home.civ === ci || (p.council && Families.civOf(p) === ci)));
       const ruler = ruled ? null : court.find(p => p.rank === 'ruler');
       // o soberano é bem defendido: muito mais vida e golpes pesados (um golpe de estado exige o melhor equipamento e todos os capangas)
       if (ruler) { const k0 = put(take(ruler), L.keeper, { still: true }); if (k0) { k0.maxHp = k0.hp = 900; k0.dmg = 28; k0.royal = true; } }

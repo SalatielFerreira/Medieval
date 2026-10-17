@@ -1680,6 +1680,7 @@ const UI = {
     if (p.job !== undefined && p.job !== null) acts.push(['bizfire', '📤 Demitir do empreendimento']);
     else if (Biz.can(p) === true && Biz.list().length) acts.push(['hiremenu', '💼 Contratar para trabalhar']);
     if (p.capanga) { const sk = STANCES[p.stance] || STANCES.normal; acts.push(['equipc', '🛡️ Equipar e treinar'], ['stance', `${sk.icon} Postura: ${sk.name}`], ['dismiss', '🏠 Dispensar']); }
+    if (People.canBribe(p)) acts.push(['bribe', `💰 Subornar para lutar ao seu lado — ${People.bribeCost(p)} 🪙`]);
     if (p.capanga && p.post) acts.push(['unguard', '👣 Voltar a me seguir']);
     else if (p.capanga) acts.push(['guardmenu', '🛡️ Ficar de guarda ou esperar']);
     else if (People.canRecruit(p)) acts.push(['recruit', `🤝 Recrutar como capanga — ${People.recruitCost(p)} 🪙`]);
@@ -1700,7 +1701,7 @@ const UI = {
     // ações em grupos (cada um com sua cor)
     const GROUP = { talk: 'conv', compliment: 'conv', giftmenu: 'conv', insult: 'conv', flirt: 'heart', date: 'heart', propose: 'heart', child: 'heart', breakup: 'heart',
       shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
-      fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other', attack: 'other' };
+      fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other', attack: 'other', bribe: 'work' };
     const GN = { conv: '💬 Conversa', heart: '💕 Coração', work: '🤝 Trabalho e capangas', house: '🏛️ Casas', other: '✨ Outros' };
     const split = lab => { const m = lab.match(/^(\S+)\s+(.*)$/); return m ? [m[1], m[2]] : ['•', lab]; };
     const groups = {};
@@ -1801,6 +1802,7 @@ const UI = {
       case 'portnpc': { const s = Ports.portOf(p); if (s) this.showPort(s.id); return; }
       case 'shopnpc': this.showShop(RANKS[p.rank].shop, p.home.type === 'village' ? p.home.idx : -1, p.id); return;
       case 'recruit': r = People.recruit(p); break;
+      case 'bribe': r = People.bribe(p); break;
       case 'dismiss': r = People.dismiss(p); break;
       case 'stance': { const ks = Object.keys(STANCES), k = ks[(ks.indexOf(p.stance || 'normal') + 1) % ks.length]; People.setStance(p, k); r = { text: { aggressive: 'Vou pra cima deles!', normal: 'Do jeito de sempre, chefe.', defensive: 'Fico de olho e protejo você.' }[k], note: `Postura: ${STANCES[k].icon} ${STANCES[k].name} — ${STANCES[k].desc}.` }; break; }
       case 'setstance': People.setStance(p, d.k); this.showEquipC(p.id); return;

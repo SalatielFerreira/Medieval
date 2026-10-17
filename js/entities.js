@@ -293,7 +293,7 @@ class Creature {
         const col = Game.civColor(this.civ);
         // cavaleiro montado (campo de batalha)
         if (this.mounted) { drawHorse(ctx, x, y, this.dir, this.anim, this.moving, '#5a3a22', false); drawHuman(ctx, x - this.dir * 2, y - 17, { body: col, legs: '#3a3a40', helmet: '#c8ccd2', armor: '#aab0b8', weapon: '#cfd6dd', wlen: 24, shield: col, seated: true, aim: this.aim, swing: this.swing, dir: this.dir, moving: false, anim: this.anim, hurt }); break; }
-        drawHuman(ctx, x, y, { body: col, legs: '#3a3a40', helmet: '#9aa0a8', armor: '#8d949c', weapon: '#cfd6dd', wlen: 20, shield: col, aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
+        drawHuman(ctx, x, y, { body: col, legs: '#3a3a40', helmet: '#9aa0a8', armor: '#8d949c', weapon: '#cfd6dd', wlen: 20, shield: col, skin: this.npc ? this.npc.skin : undefined, fem: this.npc && this.npc.sex === 'f', aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
         break;
       }
       case 'lord': {
