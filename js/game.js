@@ -1145,6 +1145,8 @@ const Game = {
       moveEnt(target, Math.cos(a) * 8, Math.sin(a) * 8);
       if (target.kind === 'boar') target.provoked = true;
       if (target.npc && (src === P || fac(src) === 'player') && Court.enemyPerson(target.npc)) target.angry = true; // inimigo golpeado revida
+      // golpe em alguém da família real ou da corte: os soldados do reino atacam na hora (na rua ou lá dentro)
+      if (target.npc && (src === P || fac(src) === 'player') && !target.npc.capanga) { const rc = this.royalCiv(target.npc); if (rc >= 0) this.defendRoyal(rc, target.npc); }
       if (target.def.dmg > 0 && hostile(target, src)) target.target = src;
     }
     if (src === P && target.kind === 'rebel') { const r = Families.revolt(target.revolt); if (r && !r.side && G.civs[r.civ].ruler !== 'player') Families.joinRevolt(r, 'crown'); }
@@ -1547,6 +1549,31 @@ const Game = {
     }
     for (const g of G.ents) if (!g.dead && g.npc && g.npc.rank === 'knight' && Families.civOf(g.npc) === ci && U.dist(g.x, g.y, P.x, P.y) < 18 * TILE) { g.angry = true; g.target = P; n++; }
     if (n && msg) UI.msg(msg, 'bad');
+    return n;
+  },
+  // reino de quem é da família real ou da corte (-1 se não for)
+  royalCiv(p) {
+    if (!p || (!['ruler', 'consort', 'heir'].includes(p.rank) && !People.isCourt(p))) return -1;
+    const ci = p.home && p.home.type === 'castle' && p.home.civ !== undefined ? p.home.civ : Families.civOf(p);
+    return ci >= 0 && G.civs[ci] && G.civs[ci].ruler !== 'player' ? ci : -1;
+  },
+  // os soldados defendem a família real: os que estão perto atacam; se não houver nenhum, chegam reforços
+  defendRoyal(ci, p) {
+    if (War.isBattle()) return;
+    G.royalAlarm = G.royalAlarm || {};
+    const first = G.realTime - (G.royalAlarm[ci] || -99) > 25;
+    G.royalAlarm[ci] = G.realTime;
+    const n = this.alarmGuards(ci, first ? `🛡️ Os soldados de ${CIV_DEFS[ci].short} defendem ${People.full(p)}!` : null);
+    if (n || !first) return;
+    const k = Math.max(2, Math.min(4, G.civs[ci].garrison || 2));
+    for (let j = 0; j < k; j++) {
+      let sp;
+      if (G.place) sp = { x: (G.place.door.x + 0.5) * TILE + (j - k / 2) * 18, y: (G.place.door.y - 0.6) * TILE };
+      else { const a = Math.random() * Math.PI * 2; sp = freeSpotNear(P.x + Math.cos(a) * 6 * TILE, P.y + Math.sin(a) * 5 * TILE, 3 * TILE); }
+      const g = this.spawn('guard', sp.x, sp.y, { civ: ci, leash: 30, tag: 'royalguard' });
+      g.placeNpc = !!G.place; g.angry = true; g.target = P; g.aggroOv = 30;
+    }
+    UI.msg(`🛡️ Soldados de ${CIV_DEFS[ci].short} chegam correndo para defender ${People.full(p)}!`, 'bad');
   },
   // matou o soberano dentro do próprio castelo: a coroa é sua, como usurpador
   usurp(ci, king) {
