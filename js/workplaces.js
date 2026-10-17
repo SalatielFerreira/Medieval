@@ -113,12 +113,9 @@ Shops.ensure = function () {
     // empreendimento de família: alguém da própria família
     if (s.fam !== undefined && Families.get(s.fam)) q = Families.members(Families.get(s.fam)).find(m => free(m) && m.age >= 18 && ['peasant', 'wanderer', rank].includes(m.rank) && !Families.isChief(m)) || null;
     if (!q) q = G.people.find(p => free(p) && p.rank === rank && p.home.type === 'village' && p.home.idx === vi) || null;
-    // nas vilas que você comanda, você escolhe quem cuida das lojas e obras (Portfólio → Vilas e guardas)
-    const youPick = !mine && People.canAppoint(vi) && G.day > 1;
+    // todo prédio sempre tem alguém cuidando: um morador sem emprego assume (ou chega alguém de fora)
     if (!q) {
-      const cands = People.shopCandidates(vi, rank).filter(free);
-      if (youPick && cands.length) continue;
-      q = cands[0] || null;
+      q = People.shopCandidates(vi, rank).filter(free)[0] || null;
       // ninguém disponível na vila: chega alguém de fora para o serviço
       if (!q && v) { q = People.create({ rank, civ: v.civ, home: { type: 'village', idx: vi }, age: U.rint(20, 45), sex: RANKS[rank].fighter && Math.random() < 0.8 ? 'm' : undefined }); q.met = false; }
       if (q) q.rank = rank;
@@ -158,6 +155,16 @@ People.openVacancies = function () {
 
 // ------------------------------------------------------------------ entrar
 {
+  // todo prédio com interior mostra "entrar" ao chegar perto (as obras das vilas não tinham ação nenhuma)
+  const il0 = Game.interactLabel.bind(Game);
+  Game.interactLabel = function (s) {
+    const l = il0(s); if (l) return l;
+    const d = !s.removed && !s.hidden && Places.def(s);
+    return d ? `${d.name(s)} — entrar` : l;
+  };
+  // ao entrar, se o lugar ficou sem ninguém (o responsável morreu ou se mudou), alguém assume na hora
+  const er0 = Places.enterRoom.bind(Places);
+  Places.enterRoom = function (src) { if (Shops.isShop(src) && !Shops.keeper(src)) Shops.ensure(); return er0(src); };
   const def0 = Places.def.bind(Places);
   Places.def = function (s) { return def0(s) || Work.def(s); };
   const fl0 = Places.furnLabel.bind(Places);
@@ -303,5 +310,78 @@ Object.assign(FURN_EXTRA, {
     const { R } = H, w = f.w * TILE;
     R(w / 2 - 12, -18, 3, 50, '#6b4423'); R(w / 2 + 9, -18, 3, 50, '#6b4423'); for (let y = -14; y < 30; y += 7) R(w / 2 - 10, y, 20, 2, '#8b5f38');
     R(w / 2 - 14, -22, 28, 4, '#3a2a1e');
+  },
+});
+
+// ------------------------------------------------------------------ negociar com o responsável
+// cada estabelecimento vende o que é dele, e quem negocia é sempre o responsável (no balcão ou na conversa)
+{
+  const has = list => list.filter(k => ITEMS[k]);
+  const NEW_SHOPS = {
+    bakery:  ['🍞', 'Padaria', 'baker', ['bread', 'flour', 'wheat', 'egg', 'milk', 'honey', 'cheese', 'honey_cake', 'meat_pie', 'apple_pie', 'cake']],
+    mill:    ['🌾', 'Moinho', 'miller', ['flour', 'wheat', 'barley', 'wheat_seed', 'barley_seed', 'sacks']],
+    inn:     ['🛏️', 'Estalagem', 'innkeeper', ['beer', 'mead', 'wine', 'bread', 'cooked_meat', 'cooked_fish', 'stew', 'cheese']],
+    school:  ['📚', 'Escola', 'teacher', ['parchment', 'book', 'candle', 'ink']],
+    bath:    ['🛁', 'Casa de Banhos', 'bather', ['herbal_salve', 'herb', 'cloth', 'soap', 'candle']],
+    tower:   ['🗼', 'Torre de Vigia', 'watchman', ['arrow', 'bow', 'torch', 'rope', 'leather']],
+    weaver:  ['🧵', 'Tecelagem', 'weaver', ['cloth', 'wool_cloth', 'rope', 'fiber', 'wool', 'linen_hood', 'linen_tunic', 'linen_pants', 'wool_hat', 'tapestry', 'silk_cloth']],
+    brewer:  ['🍺', 'Cervejaria', 'brewer', ['beer', 'mead', 'wine', 'barley', 'honey', 'barley_seed']],
+    trade:   ['🐫', 'Entreposto', 'trader', ['spices', 'silk_cloth', 'wine', 'salt', 'iron_bar', 'cloth', 'honey', 'amber', 'camel_hair', 'gem']],
+    stable:  ['🐴', 'Estrebaria', 'groom', ['rope', 'leather', 'wheat', 'apple', 'carrot', 'barley']],
+    mine:    ['⛏️', 'Mina', 'miner', ['coal', 'iron_ore', 'copper_ore', 'tin_ore', 'silver_ore', 'gold_ore', 'stone']],
+    sawmill: ['🪚', 'Serraria', 'sawyer', ['wood', 'hardwood', 'plank', 'beam', 'resin']],
+    granary: ['🌽', 'Celeiro', 'granger', ['wheat', 'barley', 'flour', 'carrot', 'cabbage', 'apple', 'wheat_seed', 'barley_seed', 'carrot_seed', 'cabbage_seed']],
+    clinic:  ['🌿', 'Casa de Curas', 'healer', ['herb', 'herbal_salve', 'healing_potion', 'bandage', 'honey']],
+  };
+  for (const [k, [icon, name, rank, list]] of Object.entries(NEW_SHOPS)) {
+    const sells = has(list);
+    SHOPS[k] = { name, icon, rank, sells, buys: it => !!it && sells.includes(it.key) };
+    if (RANKS[rank] && !RANKS[rank].shop) RANKS[rank].shop = k;
+    if (!People.PURSE[rank]) People.PURSE[rank] = [180, 520];
+  }
+  // prédio → loja (a estalagem negocia como estalagem; os empreendimentos das famílias, como armazém, moinho e ferreiro)
+  const WORK_SHOP = { vbakery: 'bakery', vmill: 'mill', fmill: 'mill', vinn: 'inn', vschool: 'school', vbath: 'bath', vtower: 'tower', vweaver: 'weaver',
+    vbrewery: 'brewer', vtrade: 'trade', vstable: 'stable', vmine: 'mine', vsawmill: 'sawmill', vgranary: 'granary', vclinic: 'clinic', fshop: 'store', fforge: 'smith' };
+  Work.shopOf = s => (s && WORK_SHOP[s.type]) || null;
+  const use1 = Places.use.bind(Places);
+  Places.use = function (f) {
+    const s = G.place && G.place.src, sk = f.act === 'work' && Work.shopOf(s);
+    if (sk) { const k = Shops.keeper(s); if (k) { UI.showShop(sk, Work.vi(s), k.id); return; } }
+    return use1(f);
+  };
+  const fl1 = Places.furnLabel.bind(Places);
+  Places.furnLabel = function (f) {
+    const s = G.place && G.place.src, sk = f.act === 'work' && Work.shopOf(s);
+    if (sk) { const k = Shops.keeper(s); return k ? `Balcão — negociar com ${k.name} (${People.title(k)})` : 'Balcão — ninguém cuidando agora'; }
+    return fl1(f);
+  };
+}
+
+// ------------------------------------------------------------------ galinheiro e canil também têm o lado de dentro
+Object.assign(RANKS, { keeperA: { m: 'Tratador', f: 'Tratadora', order: 6 } });
+RANK_LOOK.keeperA = '#7a6a3a';
+Object.assign(WORKPLACES, { coop: ['keeperA', 'coop', 'wood', 'player', true], kennel: ['keeperA', 'kennel', 'wood', 'player', true] });
+SHOP_KEEPER.coop = SHOP_KEEPER.kennel = 'keeperA';
+Object.assign(LAYOUTS, {
+  coop(o) {
+    return { w: 10, h: 7, items: [['nest', 0, 0], ['nest', 1, 0], ['nest', 2, 0], ['nest', 7, 0], ['nest', 8, 0], ['nest', 9, 0], ['hay', 4, 0, 2, 1], ['window', 3, -1], ['lamp', 6, -1],
+      ['sacks', 0, 6], ['barrel', 9, 6], ['crate', 9, 4], ['counter', 3, 3, 2, 1, { act: 'work' }], ...ORIG(o, 6, 5)], keeper: [4, 2], wander: [[2, 4], [7, 3]] };
+  },
+  kennel(o) {
+    return { w: 10, h: 7, items: [['dogbed', 0, 0, 2, 1], ['dogbed', 8, 0, 2, 1], ['hay', 4, 0, 2, 1], ['toolrack', 3, -1, 2], ['window', 7, -1], ['lamp', 1, -1],
+      ['barrel', 0, 6], ['crate', 9, 6], ['counter', 4, 3, 2, 1, { act: 'work' }], ...ORIG(o, 7, 4)], keeper: [5, 2], wander: [[2, 4], [7, 3]] };
+  },
+});
+Object.assign(FURN, { nest: { block: true }, dogbed: { block: true } });
+Object.assign(FURN_EXTRA, {
+  nest(ctx, f, X, Y, t, H) {
+    const { R, ell, sh } = H; sh(2, 24, 28, 6); R(2, 14, 28, 14, '#8b5f38'); ell(16, 16, 12, 4, '#d8c070');
+    const b = Math.sin(t * 3 + f.id) * 0.8, c = f.id % 3 ? '#f4ead8' : '#b8703a';
+    ell(16, 11 + b, 8, 6, c); ell(22, 6 + b, 3.6, 3.4, c); R(23, 2 + b, 3, 2, '#d8302a'); R(25, 6 + b, 3, 1.6, '#e0a526'); R(22, 5 + b, 1, 1, '#1a120a');
+  },
+  dogbed(ctx, f, X, Y, t, H) {
+    const { R, ell, sh } = H, w = f.w * TILE; sh(2, 24, w - 4, 6); ell(w / 2, 20, w / 2 - 3, 8, '#7a3a2a'); ell(w / 2, 19, w / 2 - 7, 5, '#a85a3a');
+    const br = Math.sin(t * 2 + f.id) * 0.6, c = ['#8a6a4a', '#3a2a1e', '#c8b8a0'][f.id % 3];
+    ell(w / 2 - 2, 15 + br, 11, 5, c); ell(w / 2 + 9, 13, 5, 4, c); ell(w / 2 + 12, 15, 2.6, 2, c); R(w / 2 + 7, 9, 2, 4, c); R(w / 2 + 13, 14, 1, 1, '#1a120a'); ell(w / 2 - 13, 16, 4, 1.6, c, 0.4);
   },
 });
