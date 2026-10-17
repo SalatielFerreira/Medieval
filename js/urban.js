@@ -17,7 +17,7 @@ const CIVIC = {
   tavern: { name: 'Taverna',   icon: '🍺', w: 3, h: 2, cost: { wood: 35, stone: 15 },              desc: 'Mercenários, cavalos, comida e boatos.', slot: 'tavern' },
   chapel: { name: 'Capela',    icon: '⛪', w: 2, h: 2, cost: { stone: 30, wood: 15 },              desc: 'Igreja da vila, com padre.', slot: 'chapel' },
   well:   { name: 'Poço',      icon: '🪣', w: 1, h: 1, cost: { stone: 12 },                        desc: 'Poço de água para a praça.' },
-  vwall:  { name: 'Muralha',   icon: '🧱', w: 1, h: 1, cost: { stone: 1 },                         desc: 'Trecho de muralha de pedra.' },
+  vwall:  { name: 'Muralha',   icon: '🧱', w: 1, h: 1, cost: { stone: 1 }, chief: true,            desc: 'Trecho de muralha de pedra. Só o chefe da vila ergue a muralha dela.' },
   field:  { name: 'Plantação', icon: '🌾', w: 3, h: 2, cost: { wood: 8 },                          desc: 'Campo de trigo da vila.' },
   port:   { name: 'Porto',     icon: '⚓', w: 4, h: 3, cost: { wood: 80, stone: 40 },              desc: 'Cais na beira da água (com a água logo abaixo dele): o mestre do porto compra peixes, polvos, tubarões e baleias.', coast: true },
 };
@@ -226,6 +226,7 @@ const Urban = {
       if (sqDist(cx, cy, v.x, v.y) > VILLAGE_R + 2) return `Precisa ficar dentro de ${v.name}`;
       if (a.kind === 'chief' && World.villages[a.vi] !== v) return 'Fora da sua vila';
       if (def.king && a.kind === 'chief') return 'Só o rei pode erguer uma arena';
+      if (def.chief && !s && v.lord !== 'player') return `Só o chefe de ${v.name} pode erguer a muralha`; // nem o rei: a muralha é do chefe da vila
       return null;
     }
     // construções do jogador: fora da sua vila ou reino, longe das cidades dos outros
@@ -466,6 +467,8 @@ const Urban = {
     if (k === 'u:demolish') return { name: 'Demolir', icon: '💥', sub: 'reforma', can: true, btn: '💥 Escolher a construção',
       desc: 'Derruba uma construção e devolve metade do material. As suas podem ser demolidas em qualquer lugar; imóveis das vilas só pelo chefe ou pelo rei.' };
     const d = CIVIC[k.slice(2)];
+    if (d.chief) return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · só o chefe da vila`, can: Inv.has(d.cost) && this.myVillages().length > 0, btn: '📍 Construir na vila',
+      desc: d.desc + (this.myVillages().length ? ' Fica dentro de uma vila em que você é o chefe.' : ' Você não é chefe de nenhuma vila: só o chefe pode erguer a muralha (nem o rei).') };
     return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · imóvel da vila`, can: Inv.has(d.cost), btn: '📍 Construir na vila',
       desc: d.desc + ' Fica dentro de uma vila sua (chefe) ou de qualquer vila do seu reino (rei).' };
   },
