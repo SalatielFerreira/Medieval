@@ -99,15 +99,26 @@ const Urban = {
     Sound.play('chop', { vol: 0.4 });
     return true;
   },
-  // evoluir um bloco de estrada até o nível lv (paga só o material do nível escolhido)
-  upgradeRoad(tx, ty, lv, quiet) {
-    if (G.dungeon || !World.inb(tx, ty)) return false;
+  // evoluir um bloco de estrada para o nível lv — sempre um nível por vez (terra → cascalho → pedra → calçada → real)
+  upgradeErr(tx, ty, lv) {
+    if (G.dungeon || !World.inb(tx, ty)) return 'Fora do mapa';
     const i = World.idx(tx, ty), t = World.tiles[i], L = ROAD_LV[lv];
     const cur = World.roadLv ? World.roadLv[i] || 1 : 1;
-    const err = t === T.BRIDGE ? 'Pontes não mudam de nível' : t !== T.ROAD ? 'Primeiro abra a estrada (de terra, grátis)' : cur >= lv ? `Já é ${ROAD_LV[cur].name.toLowerCase()} ou melhor`
-      : World.blocker(i) ? 'Há uma construção aqui' : U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10 ? 'Longe demais'
-      : this.foreignTown(tx, ty) ? `Só o chefe da vila ou o rei pode mexer nas estradas de ${this.foreignTown(tx, ty)}` : !Inv.has(L.cost) ? `Faltam materiais: ${Object.entries(L.cost).map(([k, n]) => n + ' ' + ITEMS[k].name).join(', ')} por bloco` : null;
-    if (err) { if (!quiet || !/^Já é|^Primeiro/.test(err)) this.warn(err); return false; }
+    if (t === T.BRIDGE) return 'Pontes não mudam de nível';
+    if (t !== T.ROAD) return 'Primeiro abra a estrada (de terra, grátis)';
+    if (cur >= lv) return `Já é ${ROAD_LV[cur].name.toLowerCase()}`;
+    if (lv > cur + 1) return `Primeiro faça ${ROAD_LV[cur + 1].name.toLowerCase()} (é ${ROAD_LV[cur].name.toLowerCase()})`;
+    if (World.blocker(i)) return 'Há uma construção aqui';
+    if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
+    const town = this.foreignTown(tx, ty);
+    if (town) return `Só o chefe da vila ou o rei pode mexer nas estradas de ${town}`;
+    if (!Inv.has(L.cost)) return `Faltam materiais: ${Object.entries(L.cost).map(([k, n]) => n + ' ' + ITEMS[k].name).join(', ')} por bloco`;
+    return null;
+  },
+  upgradeRoad(tx, ty, lv, quiet) {
+    const err = this.upgradeErr(tx, ty, lv);
+    if (err) { if (!quiet || !/^Já é|^Primeiro|^Fora/.test(err)) this.warn(err); return false; }
+    const i = World.idx(tx, ty), L = ROAD_LV[lv];
     Inv.pay(L.cost);
     if (!World.roadLv || World.roadLv.length !== WORLD_W * WORLD_H) World.roadLv = new Uint8Array(WORLD_W * WORLD_H);
     World.roadLv[i] = lv; this.E().rlv[i] = lv;
@@ -411,8 +422,8 @@ const Urban = {
       ctx.strokeStyle = 'rgba(255,213,74,0.55)'; ctx.lineWidth = 2; ctx.setLineDash([10, 8]);
       ctx.strokeRect((v.x - VILLAGE_R) * TILE - cx, (v.y - VILLAGE_R) * TILE - cy, (VILLAGE_R * 2 + 1) * TILE, (VILLAGE_R * 2 + 1) * TILE); ctx.setLineDash([]);
     }
-    if (m === 'road' || m === 'u:unroad') {
-      const err = m === 'road' ? this.roadErr(t.x, t.y) : this.unroadErr(t.x, t.y);
+    if (m === 'road' || m === 'u:unroad' || /^u:road\d$/.test(m)) {
+      const err = m === 'road' ? this.roadErr(t.x, t.y) : m === 'u:unroad' ? this.unroadErr(t.x, t.y) : this.upgradeErr(t.x, t.y, +m.slice(6));
       box(t.x, t.y, 1, 1, !err);
       if (err) note(t.x, t.y, err);
       return;
@@ -445,7 +456,7 @@ const Urban = {
     if (/^u:road\d$/.test(k)) {
       const lv = +k.slice(6), L = ROAD_LV[lv];
       return { name: `${L.name} (nível ${lv})`, icon: L.icon, cost: L.cost, sub: `+${Math.round((L.speed - 1) * 100)}% de velocidade · custo por bloco`, can: Inv.has(L.cost), btn: `${L.icon} Evoluir estradas`,
-        desc: `Evolui as estradas para ${L.name.toLowerCase()}: quem anda por ela (você, os moradores e os animais) vai ${Math.round((L.speed - 1) * 100)}% mais rápido que no campo (a de terra dá +25%). Clique e arraste sobre estradas já abertas; cada bloco gasta o material mostrado. Dá para pular níveis: você paga só o material do nível escolhido.` };
+        desc: `Evolui as estradas para ${L.name.toLowerCase()}: quem anda por ela (você, os moradores e os animais) vai ${Math.round((L.speed - 1) * 100)}% mais rápido que no campo (a de terra dá +25%). Clique e arraste sobre estradas já abertas; cada bloco gasta o material mostrado. Sobe um nível por vez: só vira ${L.name.toLowerCase()} a estrada que já é ${ROAD_LV[lv - 1].name.toLowerCase()}.` };
     }
     if (k === 'u:unroad') return { name: 'Remover estrada', icon: '⛏️', sub: 'reforma', can: true, btn: '⛏️ Remover estradas',
       desc: 'Remove qualquer estrada ou ponte, inclusive as que já vêm no mapa (o terreno volta a ser campo, floresta ou rio). Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode remover.' };
