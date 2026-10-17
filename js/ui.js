@@ -2074,10 +2074,10 @@ const UI = {
   // ------------------------------------------------------------ batalha em campo aberto
   showBattle(b) {
     const side = (c, opp) => `<div class="card"><div class="sec" style="color:${Game.civColor(c)}">${Diplo.name(c)}</div>
-      <p class="dt-desc">${b.size[c]} soldados · relação com você: <b>${G.civs[c].ruler === 'player' ? 'seu reino' : Math.round(G.civs[c].relation)}</b></p>
+      <p class="dt-desc">${(a => `${a.soldiers} soldados${a.cav ? ` · ${a.cav} cavaleiros` : ''}${a.cats ? ` · ${a.cats} catapultas` : ''}`)(War.armyOf(c))} · relação com você: <b>${G.civs[c].ruler === 'player' ? 'seu reino' : Math.round(G.civs[c].relation)}</b></p>
       <div class="act-row"><button class="primary" data-act="batjoin" data-b="${b.id}" data-side="${c}">⚔️ Lutar por ${CIV_DEFS[c].short}</button></div>
-      <small class="muted">Se vencer: ouro, experiência e +15 de relação. ${Diplo.name(opp)} perde 20 de relação com você.</small></div>`;
-    this.open('⚔️ Batalha em campo aberto', `<p>Os exércitos de <b>${Diplo.name(b.a)}</b> e <b>${Diplo.name(b.b)}</b> estão prestes a se enfrentar aqui perto!</p>
+      <small class="muted">Você vai com esse exército para o campo de batalha. Se vencer: ouro, experiência e +25 de relação. ${Diplo.name(opp)} perde 30 de relação com você.</small></div>`;
+    this.open('⚔️ Batalha em campo aberto', `<p>Os exércitos de <b>${Diplo.name(b.a)}</b> e <b>${Diplo.name(b.b)}</b> estão prestes a se enfrentar! Escolha um lado e marche com ele para o campo de batalha — cada rei leva o exército que quiser.</p>
       <div class="kgrid two">${side(b.a, b.b)}${side(b.b, b.a)}</div>
       <p class="muted">Seus capangas lutam com você. Use <b>T</b> para mudar a ordem (seguir, atacar, aguardar), clique com o botão direito para <b>bloquear</b>, <b>Z</b> para esquivar, segure o clique para bater sem parar e segure <b>V</b> para um <b>golpe forte</b>.</p>
       <div class="act-row"><button data-act="batjoin" data-b="${b.id}" data-side="none">Ficar de fora</button></div>`, 'showBattle', [b], 'Escolha um lado ou fique neutro');

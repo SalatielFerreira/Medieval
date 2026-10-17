@@ -51,9 +51,11 @@ const War = {
   // o que cada rei leva: o seu lado pela configuração; o rei inimigo leva quase tudo (guarda uma reserva se for grande)
   armyOf(ci, cfg) {
     const c = G.civs[ci];
-    if (cfg) return { soldiers: Math.min(cfg.soldiers, c.garrison, WAR_MAX), archers: cfg.archers, cats: cfg.cats, cav: cfg.knights ? Math.min(6, this.knightsOf(ci)) : 0, king: true };
-    const g = c.garrison, take = g > 8 ? Math.round(g * 0.75) : g;
-    return { soldiers: Math.min(WAR_MAX, take), archers: 30, cats: Math.min(3, Math.floor(c.treasury / 400)), cav: Math.min(6, this.knightsOf(ci)), king: true, all: take >= g };
+    // uma parte da tropa vai montada (cavaleiros), somada aos cavaleiros nobres do reino
+    const horse = n => Math.min(8, Math.floor(n * 0.12));
+    if (cfg) { const n = Math.min(cfg.soldiers, c.garrison, WAR_MAX), h = horse(n); return { soldiers: n - h, archers: cfg.archers, cats: cfg.cats, cav: (cfg.knights ? Math.min(6, this.knightsOf(ci)) : 0) + h, king: true }; }
+    const g = c.garrison, take = g > 8 ? Math.round(g * 0.75) : g, n = Math.min(WAR_MAX, take), h = horse(n);
+    return { soldiers: n - h, archers: 30, cats: Math.min(3, Math.floor(c.treasury / 400)), cav: Math.min(6, this.knightsOf(ci)) + h, king: true, all: take >= g };
   },
   power(a, extra) { return a.soldiers * (1 - a.archers / 100) * 1 + a.soldiers * a.archers / 100 * 0.9 + a.cav * 1.8 + a.cats * 3 + (a.king ? 4 : 0) + (extra || 0); },
   heroPower() { return 2 + P.level / 3 + Game.allies().length * 1.5; },
@@ -175,7 +177,13 @@ const War = {
     const ar = Math.round(a.soldiers * a.archers / 100), inf = a.soldiers - ar;
     const col = (n, x, gap) => { const rows = Math.min(10, Math.max(1, n)); for (let k = 0; k < n; k++) { const c = Math.floor(k / rows), r = k % rows; out.push([x - dir * c * 1.3, cy + (r - (Math.min(rows, n - c * rows) - 1) / 2) * gap]); } };
     let out = [];
-    col(inf, x0, 1.25); for (const [x, y] of out) spawn('guard', x, y, { mult: 1.05 });
+    col(inf, x0, 1.25);
+    const nS = Math.round(inf * 0.35), nL = Math.round(inf * 0.3);
+    out.forEach(([x, y], k) => {
+      const e = spawn('guard', x, y, { mult: 1.05 });
+      if (k < nS) { e.unit = 'shield'; e.maxHp = e.hp = Math.round(e.maxHp * 1.45); e.dmg = Math.round(e.dmg * 0.85); e.spMul = 0.9; e.name = 'Escudeiro de ' + CIV_DEFS[ci].short; }
+      else if (k < nS + nL) { e.unit = 'spear'; e.reach = 16; e.dmg = Math.round(e.dmg * 1.1); e.name = 'Lanceiro de ' + CIV_DEFS[ci].short; }
+    });
     out = []; col(ar, x0 - dir * 4.5, 1.35); for (const [x, y] of out) spawn('guard', x, y, { archer: true });
     for (let k = 0; k < a.cav; k++) { const e = spawn('guard', x0 + dir * 1, cy + (k % 2 ? 1 : -1) * (8 + Math.floor(k / 2) * 1.6), { mult: 1.6 }); e.mounted = true; e.spMul = 1.55; e.noGarrison = true; e.name = 'Cavaleiro de ' + CIV_DEFS[ci].short; }
     for (let k = 0; k < a.cats; k++) { const e = spawn('catapult_e', x0 - dir * 9, cy + (k - (a.cats - 1) / 2) * 4); e.side = sideTag; e.cd = 3 + k; e.battleCat = true; e.noGarrison = true; }

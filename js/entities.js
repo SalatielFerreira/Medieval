@@ -220,11 +220,11 @@ class Creature {
     if (this.target) {
       const t = this.target;
       const dd = U.dist(this.x, this.y, t.x, t.y);
-      const reach = this.r + (t.r || 10) + 10;
+      const reach = this.r + (t.r || 10) + 10 + (this.reach || 0); // a lança alcança mais longe
       if (this.archer && dd > 2.5 * TILE && dd < 8 * TILE) {
         if (this.atkCd <= 0) { this.atkCd = 1.8; this.swing = 0.25; Ranged.fire(this, Math.atan2(t.y - 14 - (this.y - 16), t.x - this.x), this.dmg * 0.8, 'arrow'); Sound.play('bow', { vol: 0.6 }); }
       } else if (dd > reach) this.moveToward(t.x, t.y, sp * 1.1, dt);
-      else if (this.atkCd <= 0) { this.atkCd = 1.1; this.swing = 0.25; Game.damage(t, this.dmg, this); }
+      else if (this.atkCd <= 0) { this.atkCd = 1.1; this.swing = 0.25; Game.damage(t, this.unit === 'spear' && t.mounted ? this.dmg * 2 : this.dmg, this); } // lanceiro derruba cavaleiro
       this.dir = t.x < this.x ? -1 : 1;
       this.aim = Math.atan2(t.y - this.y, t.x - this.x);
       if (this.kind === 'ally') {
@@ -293,7 +293,17 @@ class Creature {
         const col = Game.civColor(this.civ);
         // cavaleiro montado (campo de batalha)
         if (this.mounted) { drawHorse(ctx, x, y, this.dir, this.anim, this.moving, '#5a3a22', false); drawHuman(ctx, x - this.dir * 2, y - 17, { body: col, legs: '#3a3a40', helmet: '#c8ccd2', armor: '#aab0b8', weapon: '#cfd6dd', wlen: 24, shield: col, seated: true, aim: this.aim, swing: this.swing, dir: this.dir, moving: false, anim: this.anim, hurt }); break; }
-        drawHuman(ctx, x, y, { body: col, legs: '#3a3a40', helmet: '#9aa0a8', armor: '#8d949c', weapon: '#cfd6dd', wlen: 20, shield: col, skin: this.npc ? this.npc.skin : undefined, fem: this.npc && this.npc.sex === 'f', aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
+        const u = this.unit, base = { body: col, legs: '#3a3a40', helmet: '#9aa0a8', armor: '#8d949c', weapon: '#cfd6dd', wlen: 20, shield: col, skin: this.npc ? this.npc.skin : undefined, fem: this.npc && this.npc.sex === 'f', aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt };
+        // lanceiro: lança comprida, sem escudo; escudeiro: escudo grande à frente do corpo
+        if (u === 'spear') Object.assign(base, { weapon: '#b8bcc4', wlen: 36, shield: undefined, helmet: '#7a8088' });
+        if (u === 'shield') Object.assign(base, { wlen: 14, helmet: '#b8bcc4', armor: '#a8aeb6' });
+        drawHuman(ctx, x, y, base);
+        if (u === 'shield') {
+          const sx = x + this.dir * 8 - 6, sy = y - 27;
+          ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(sx - 1, sy - 1, 13, 23);
+          ctx.fillStyle = col; ctx.fillRect(sx, sy, 11, 21); ctx.fillStyle = U.shade(col, 0.25); ctx.fillRect(sx + 1, sy + 1, 9, 2);
+          ctx.fillStyle = '#d8b860'; ctx.fillRect(sx + 4, sy + 7, 3, 7); ctx.fillRect(sx + 2, sy + 9, 7, 3);
+        }
         break;
       }
       case 'lord': {
@@ -304,7 +314,12 @@ class Creature {
         break;
       }
       case 'villager': case 'ally': case 'sentry': {
-        if (this.npc) {
+        if (this.npc && this.npc.horse && this.kind === 'villager' && !G.place && !this.still && !this.sleeping) {
+          if (!this._hs) { this._hs = 1; this.spMul = (this.spMul || 1) * 1.35; }
+          const lk = People.look(this.npc);
+          drawHorse(ctx, x, y, this.dir, this.anim, this.moving, this.npc.horse, false);
+          drawHuman(ctx, x - this.dir * 2, y - 17, Object.assign(lk, { seated: true, aim: this.aim, swing: this.swing, dir: this.dir, moving: false, anim: this.anim, hurt }));
+        } else if (this.npc) {
           const lk = People.look(this.npc);
           if (this.npc.capanga && !this.npc.equip.torso) lk.body = PLAYER_COLOR;
           // civis trabalhando: machado, picareta ou as mãos, e a carga nas costas

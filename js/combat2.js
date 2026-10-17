@@ -121,7 +121,7 @@ const Battles = {
           }
         }
         UI.banner(`⚔️ Batalha: ${Diplo.name(b.a)} × ${Diplo.name(b.b)}`);
-        if (!b.side && !G.civs.some(c => c.ruler === 'player' && (c.id === b.a || c.id === b.b))) setTimeout(() => { if (!UI.isOpen()) UI.showBattle(b); }, 200);
+        if (!b.side && !G.civs.some(c => c.ruler === 'player' && (c.id === b.a || c.id === b.b))) setTimeout(() => { if (!UI.isOpen() && !b.done && !G.place) UI.showBattle(b); }, 200);
         else if (G.civs[b.a].ruler === 'player' || G.civs[b.b].ruler === 'player') b.side = G.civs[b.a].ruler === 'player' ? b.a : b.b;
       }
       if (!b.started) continue;
@@ -131,7 +131,18 @@ const Battles = {
       if (na === 0 || nb === 0) this.resolve(b, na > 0 ? b.a : b.b);
     }
   },
+  // escolher um lado: você marcha com esse exército para o campo de batalha (uma tela só para a luta), e cada rei
+  // leva os soldados, arqueiros, cavaleiros e catapultas que quiser; a batalha daqui do mapa sai do mapa
   join(b, side) {
+    const foe = side === b.a ? b.b : b.a;
+    if (!G.warCall && !G.place && Places.area()) {
+      b.side = side; b.done = true; b.field = true;
+      for (const e of G.ents) if (e.tag && e.tag.startsWith(`bat${b.id}_`)) e.dead = true;
+      G.warCall = { side, enemy: foe, own: false, day: G.day, shown: true, deadline: null, cfg: War.defaults(side, false), reward: U.rint(160, 320) };
+      UI.msg(`⚔️ Você marcha com o exército de ${Diplo.name(side)} para o campo de batalha contra ${Diplo.name(foe)}.`, 'gold', true);
+      War.start();
+      return;
+    }
     b.side = side;
     const enemy = side === b.a ? b.b : b.a;
     b.prevWar = G.civs[enemy].atWar;

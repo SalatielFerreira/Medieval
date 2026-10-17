@@ -10,7 +10,8 @@ const Faith = {
       const cp = World.capitals[c];
       if (!cp.cathedral) cp.cathedral = Arena.place('cathedral', cp.x, cp.y, 3, 3, c, 9, 16, c * 1.7 + Math.PI);
     }
-    if (!World.shrines) this.placeShrines();
+    // mundo novo (ou carregado sem recarregar a página): os santuários do mundo anterior não valem mais
+    if (!World.shrines || !World.shrines.every(s => World.structs[s.id] === s)) this.placeShrines();
   },
   chapelFor(v, vi) {
     const s = Arena.place('chapel', v.x, v.y, 2, 2, v.civ, 5, 11, vi * 0.9 + 2);

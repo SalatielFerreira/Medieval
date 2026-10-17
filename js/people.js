@@ -451,6 +451,12 @@ const People = {
   },
   purseTick() {
     for (const p of G.people) {
+      // morador com folga na bolsa (ou nobre) compra um cavalo: 300 🪙
+      if (p.alive && !p.horse && !p.capanga && p.age >= 16 && Math.random() < 0.25) {
+        const noble = ['ruler', 'consort', 'heir', 'knight'].includes(p.rank) || (Families.get(p.fam) && Families.get(p.fam).noble);
+        const purse = this.PURSE[p.rank] ? this.purse(p) : 0;
+        if (noble || purse >= 700) { if (!noble) p.purse -= 300; p.horse = U.pick(['#5a3a22', '#3a2a1e', '#8a6a4a', '#c8b8a0', '#2a2422', '#a0522d']); if (p.met || p.aff >= 10) UI.msg(`🐎 ${this.full(p)} comprou um cavalo.`); }
+      }
       if (!p.alive || !this.PURSE[p.rank]) continue;
       const r = this.PURSE[p.rank], cur = this.purse(p);
       if (cur < r[1]) p.purse = Math.min(r[1], cur + Math.round(r[0] * U.rnd(0.08, 0.16)));

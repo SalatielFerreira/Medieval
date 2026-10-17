@@ -146,16 +146,51 @@ function drawHorse(ctx, x, y, dir, anim, moving, col, cart) {
     ctx.strokeStyle = '#3a2410'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(-40, -8, 7, 0, Math.PI * 2); ctx.stroke();
     ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-40 + Math.cos(r) * 7, -8 + Math.sin(r) * 7); ctx.lineTo(-40 - Math.cos(r) * 7, -8 - Math.sin(r) * 7); ctx.stroke();
   }
-  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, 18, 4.5, 0, 0, Math.PI * 2); ctx.fill();
-  const st = moving ? Math.sin(anim * 16) * 3 : 0, dark = U.shade(col, -0.18);
-  ctx.fillStyle = dark;
-  ctx.fillRect(-12, -14, 3, 14 - st); ctx.fillRect(-7, -14, 3, 14 + st); ctx.fillRect(6, -14, 3, 14 - st); ctx.fillRect(11, -14, 3, 14 + st);
-  ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, -18, 16, 8, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(10, -22); ctx.lineTo(16, -34); ctx.lineTo(22, -34); ctx.lineTo(24, -28); ctx.lineTo(16, -18); ctx.fill();
-  ctx.fillRect(18, -36, 8, 6);
-  ctx.fillStyle = '#2a1a10'; ctx.fillRect(22, -34, 2, 2);
-  ctx.fillStyle = U.shade(col, -0.3); ctx.fillRect(12, -36, 3, 12); ctx.fillRect(-18, -22, 3, 10);
-  ctx.fillStyle = '#7a1f2a'; ctx.fillRect(-6, -27, 12, 4);
+  // cavalo no mesmo estilo dos outros animais: patas com joelho e casco, peito e garupa, crina, cauda solta, cabeça longa
+  ell(ctx, 0, 0, 19, 4.6, 'rgba(0,0,0,0.28)');
+  const dark = shd(col, -0.2), mane = shd(col, -0.45), light = shd(col, 0.14), hoof = '#2a2018';
+  const leg = 15, by = -leg - 6, top = by - 6, lw = 3.2;
+  const sw = k => moving ? Math.sin(anim * 15 + k) * 0.5 : 0;
+  const pata = (lx, ph, far) => {
+    const a = sw(ph), kx = lx + Math.sin(a) * leg * 0.45, ky = by + 3 + leg * 0.5;
+    const fx = kx + Math.sin(a * 1.25) * leg * 0.42, fy = -Math.max(0, Math.sin(anim * 15 + ph)) * (moving ? 2 : 0);
+    const c = far ? shd(dark, -0.1) : col;
+    limb2(ctx, lx, by + 1, kx, ky, fx, fy - 1.2, lw, c);
+    if (!far) ell(ctx, kx, ky, lw * 0.6, lw * 0.5, shd(c, -0.06));
+    rr(ctx, fx - lw * 0.6, fy - 2.4, lw * 1.25, 2.4, 0.5, hoof);
+    ell(ctx, fx, fy - 3.2, lw * 0.55, 0.9, shd(c, 0.25)); // meia clara acima do casco
+  };
+  pata(-10, Math.PI, true); pata(9, 0, true);
+  // cauda comprida (balança andando)
+  const tw = moving ? Math.sin(anim * 9) * 0.25 : Math.sin(anim * 2.5) * 0.12;
+  ctx.save(); ctx.translate(-15, top + 3); ctx.rotate(0.9 + tw);
+  ell(ctx, 0, 6, 2.6, 7.5, mane, 0.15); ell(ctx, 1.2, 11, 2, 5, shd(mane, 0.1), 0.25); ctx.restore();
+  // corpo: barriga, garupa e peito
+  ell(ctx, 0, by, 15, 6.4, col);
+  ell(ctx, -9, by - 0.6, 6.6, 7, col);
+  ell(ctx, 9.5, by - 0.2, 6.6, 7.2, col);
+  ell(ctx, 0.5, by + 3.4, 11, 2.6, dark);
+  ell(ctx, -1, top + 1.6, 12, 1.8, 'rgba(0,0,0,0.12)');
+  ell(ctx, 2, top + 0.8, 8, 1.1, light);
+  pata(-7.5, 0, false); pata(11.5, Math.PI, false);
+  // pescoço erguido e cabeça
+  const nod = moving ? Math.sin(anim * 15) * 0.6 : Math.sin(anim * 2) * 0.3;
+  const nx = 11, ny = top + 3, hx = 19, hy = top - 9 + nod;
+  limb(ctx, nx, ny + 2, hx - 1, hy + 1, 7.5, col);
+  limb(ctx, nx + 2, ny + 4, hx + 0.5, hy + 3, 3.2, light);
+  ell(ctx, hx, hy, 4, 3.4, col, 0.25);
+  ell(ctx, hx + 4.4, hy + 2.6, 3.2, 2.4, col, 0.55);       // focinho comprido
+  ell(ctx, hx + 6.2, hy + 3.8, 1.9, 1.6, shd(col, -0.12), 0.5);
+  ell(ctx, hx + 6.8, hy + 3.4, 0.6, 0.5, '#1a120a');           // narina
+  ell(ctx, hx + 0.8, hy - 0.8, 1, 0.95, '#1a120a'); ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(hx + 1, hy - 1.5, 0.5, 0.5);
+  poly(ctx, [hx - 2.2, hy - 2, hx - 1.4, hy - 7, hx + 0.2, hy - 2.6], col); poly(ctx, [hx - 1.8, hy - 2.4, hx - 1.4, hy - 5.6, hx - 0.6, hy - 2.6], dark); // orelha
+  // crina descendo pelo pescoço e topete
+  for (let k = 0; k <= 5; k++) { const t = k / 5, mx = hx - 2.6 + (nx - 1 - (hx - 2.6)) * t, my = hy - 2 + (ny - 1 - (hy - 2)) * t; ell(ctx, mx - 1, my + 0.6, 2.2, 2.6, mane, -0.6); }
+  ell(ctx, hx + 0.8, hy - 3.2, 1.6, 1.1, mane, 0.3);
+  // rédea, sela e manta
+  ctx.strokeStyle = '#3a2410'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(hx + 4.6, hy + 3.4); ctx.lineTo(hx - 1.4, hy + 1.2); ctx.lineTo(4, top + 1); ctx.stroke();
+  rr(ctx, -6, top - 0.6, 12, 5.4, 1.4, '#7a1f2a'); rr(ctx, -6, top + 3.6, 12, 1.2, 0.4, '#d8b860');
+  rr(ctx, -4, top - 2.4, 8, 3, 1.4, '#5a3a1e'); rr(ctx, -4.6, top - 3.2, 2.2, 2, 0.8, '#6b4423');
   ctx.restore();
 }
 
