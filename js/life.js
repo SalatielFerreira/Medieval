@@ -83,6 +83,7 @@ const Towns = {
       this.show(v);
     });
     this.syncOwners();
+    VillageWorks.monthTick(); // obras das vilas: aluguéis, recursos, prosperidade e famílias novas
     NpcRoads.tick(); // moradores abrem caminhos até as casas e lojas
     Faith.monthTick();
     People.purseTick(); // as lojas rendem para os próprios donos

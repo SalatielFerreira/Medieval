@@ -159,3 +159,10 @@ World.biomeSprites = function (S, sn) {
     g.fillStyle = snow ? '#ffffff' : '#88a048'; for (const [x, y] of [[5, 8], [10, 6], [16, 7], [19, 9]]) g.fillRect(x, y, 2, 1);
   }, 24, 32)];
 };
+
+// areia: sai da pá em praias e desertos; aterrar com ela deixa chão de areia
+ITEMS.sand = { name: 'Areia', icon: '🟨', cat: 'Recursos', price: 1, key: 'sand' };
+WEIGHT_OVERRIDE.sand = 1;
+ART_SHAPES.sandpile = (m, d, l) => `<path d="M3 26 Q7 15 16 13 Q25 14 29 26 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M8 21 Q13 18 18 20 M14 24 Q19 21 24 23" stroke="${l}" stroke-width="1.2" fill="none"/><circle cx="11" cy="24" r="0.9" fill="${d}"/><circle cx="21" cy="18" r="0.9" fill="${d}"/>`;
+MAT.sandy = ['#e0c07c', '#a8884a', '#f6e4b0'];
+ART_ITEMS.sand = ['sandpile', 'sandy'];

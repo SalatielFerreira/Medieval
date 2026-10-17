@@ -216,8 +216,8 @@ const Touch = {
     {
       const b = el.querySelector('[data-tc="dig"]'), on = !!Dig.held() || this.editing, mode = Dig.mode();
       b.classList.toggle('hidden', !on);
-      if (on && b.dataset.k !== mode) { b.dataset.k = mode; b.innerHTML = `<span class="tc-it">${UI.ii(mode === 'fill' ? 'dirt' : 'stone_shovel')}</span><small>${mode === 'fill' ? 'Aterrar' : 'Cavar'}</small>`; }
-      b.classList.toggle('on', on && mode === 'fill');
+      if (on && b.dataset.k !== mode) { b.dataset.k = mode; b.innerHTML = `<span class="tc-it">${UI.ii(mode === 'fill' ? 'dirt' : mode === 'fillsand' ? 'sand' : 'stone_shovel')}</span><small>${mode === 'fill' ? 'Terra' : mode === 'fillsand' ? 'Areia' : 'Cavar'}</small>`; }
+      b.classList.toggle('on', on && mode !== 'dig');
     }
     for (const q of [0, 1]) {
       const b = el.querySelector(`[data-tc="q${q}"]`), k = P.quick[q], it = k && ITEMS[k], n = k ? Inv.count(k) : 0;

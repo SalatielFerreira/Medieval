@@ -212,7 +212,7 @@ const Families = {
     const res = People.residents(f.seat).length;
     return res >= this.vcap(World.villages[f.seat]) - 4 || f.wealth >= 1100;
   },
-  vcap(v) { return 18 + (v.level || 1) * 6; },
+  vcap(v) { return 18 + (v.level || 1) * 6 + (typeof VillageWorks !== 'undefined' ? VillageWorks.capOf(World.villages.indexOf(v)) : 0); },
   // procura um lugar livre dentro do território
   site(civ, nx, ny) {
     for (let tries = 0; tries < 2500; tries++) {
