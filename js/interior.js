@@ -517,7 +517,7 @@ const FURN = {
   banner: {}, throne: { block: true }, pillar: { block: true }, brazier: { block: true, light: 1, lr: 140, lcol: '#ff9a40' }, longtable: { block: true }, armor: { block: true },
   bed: { block: true }, hearth: { block: true, light: 1, lr: 160 }, chestf: { block: true }, bookshelf: {}, plant: { block: true }, board: {}, bench: { block: true },
   coal: { block: true }, grind: { block: true }, beam: { block: true }, minehole: { block: true }, millstone: { block: true }, flour: { block: true }, oven: { block: true, light: 1, lr: 110, lcol: '#ff8a3a' },
-  desk: { block: true }, door: { act: 'exit', flat: true }, stands: { block: true, flat: true }, grave: { block: true }, oldgrave: { block: true }, mausoleum: { block: true }, cypress: { block: true }, lantern: { block: true, light: 1, lr: 120, lcol: '#ffd27a' }, angel: { block: true }, cembook: { block: true }, flowerbed: { flat: true }, box: { block: true, flat: true }, pillar: { block: true }, portcullis: { block: true }, emblem: { flat: true }, foodstall: { block: true }, arenadesk: { block: true }, anchor: { block: true }, rowboat: { flat: true }, bollard: { block: true },
+  desk: { block: true }, door: { act: 'exit', flat: true }, stands: { flat: true }, grave: { block: true }, oldgrave: { block: true }, mausoleum: { block: true }, cypress: { block: true }, lantern: { block: true, light: 1, lr: 120, lcol: '#ffd27a' }, angel: { block: true }, cembook: { block: true }, flowerbed: { flat: true }, box: { block: true, flat: true }, pillar: { block: true }, portcullis: { block: true }, emblem: { flat: true }, foodstall: { block: true }, arenadesk: { block: true }, anchor: { block: true }, rowboat: { flat: true }, bollard: { block: true },
   tent: { block: true }, flagpole: { block: true }, campfire2: { block: true },
 };
 
@@ -617,26 +617,36 @@ function drawFurn(ctx, f, X, Y, time) {
     case 'campfire2': { ell(16, 26, 12, 4, 'rgba(0,0,0,0.25)'); for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2; R(14 + Math.cos(a) * 10, 22 + Math.sin(a) * 4, 4, 3, '#7d7d7d'); } R(8, 22, 16, 3, '#5a3618'); fl(16, 24, 1); break; }
     default: if (typeof FURN_EXTRA !== 'undefined' && FURN_EXTRA[f.k]) FURN_EXTRA[f.k](ctx, f, X, Y, time, { R, sh, ell, fl }); break;
     case 'stands': {
-      const busy = !!G.duel || !!Arena.show, side = !!f.side;
+      const side = !!f.side;
       R(0, side ? 0 : -14, w, h + (side ? 0 : 14), '#8f8a80');
-      const step = side ? 0 : 1;
-      for (let r = 0; r < (side ? f.w : 3); r++) { if (side) R(r * TILE, 0, 2, h, '#6f6a62'); else R(0, -14 + r * 15, w, 2, '#6f6a62'); }
-      const cols = ['#c84a4a', '#4a7ac8', '#d8b84a', '#5aa85a', '#efe6d2', '#8a5ac8', '#d8883a', '#6a4a2a'], skin = ['#f0c896', '#c98e5e', '#a86e44', '#e3b07e'];
-      const n = side ? f.w * f.h * 2 : f.w * 6;
-      for (let k = 0; k < n; k++) {
-        const hsh = U.hash2(f.id, k, 3);
-        if (hsh < 0.5) continue; // lugar vazio (a plateia de verdade senta nas arquibancadas)
-        let px, py;
-        if (side) { px = 6 + (k % (f.w * 2)) * 14; py = 6 + Math.floor(k / (f.w * 2)) * 15; }
-        else { px = 5 + (k % (f.w * 2)) * 16; py = -10 + Math.floor(k / (f.w * 2)) * 15; }
-        if (px > w - 4 || py > h - 6) continue;
-        const jump = busy ? Math.abs(Math.sin(time * (6 + hsh * 6) + k)) * 4 : Math.abs(Math.sin(time * 1.5 + k)) * 0.8;
-        R(px - 4, py + 4 - jump, 9, 8, cols[(k * 7 + f.id) % cols.length]); R(px - 3, py - 3 - jump, 7, 7, skin[k % skin.length]);
-        if (busy && hsh > 0.75) { R(px - 6, py - 7 - jump, 2, 5, skin[k % skin.length]); R(px + 4, py - 7 - jump, 2, 5, skin[k % skin.length]); } // braços para cima
+      if (side) {
+        // degraus em pé (colunas), cada um com um banco comprido de madeira
+        for (let c = 0; c < f.w; c++) {
+          const x = c * TILE, shade = c % 2 ? '#99948a' : '#8a857b';
+          R(x, 0, TILE, h, shade); R(x, 0, 3, h, '#a8a296'); R(x + TILE - 3, 0, 3, h, '#6f6a62');
+          R(x + 10, 0, 12, h, '#8a5a30'); R(x + 10, 0, 3, h, '#a8743e'); R(x + 20, 0, 2, h, '#5a3a1e');
+          for (let y = 8; y < h; y += TILE) R(x + 9, y, 14, 2, '#5a3a1e');
+        }
+      } else {
+        // fileiras deitadas (de cima para baixo), cada uma com um banco
+        const rows = Math.round((h + 14) / 15);
+        for (let r = 0; r < rows; r++) {
+          const y = -14 + r * 15;
+          R(0, y, w, 15, r % 2 ? '#99948a' : '#8a857b'); R(0, y, w, 2, '#a8a296'); R(0, y + 13, w, 2, '#6f6a62');
+          R(0, y + 5, w, 5, '#8a5a30'); R(0, y + 5, w, 1, '#a8743e'); R(0, y + 9, w, 1, '#5a3a1e');
+          for (let x = 14; x < w; x += TILE) R(x, y + 10, 3, 3, '#5a3a1e');
+        }
       }
-      void step; break;
+      break;
     }
-    case 'box': { R(0, -18, w, h + 16, '#8e1f2a'); R(0, -18, w, 4, '#d8a84a'); R(4, h - 6, w - 8, 4, '#d8a84a'); for (let k = 0; k < 4; k++) { R(10 + k * 28, -6, 10, 12, ['#ffd54a', '#c8d0d8', '#e8c8a8', '#ffd54a'][k]); R(12 + k * 28, -12, 6, 6, '#f0c896'); } if (G.place && typeof G.place.src.owner === 'number') Heraldry.drawArms(ctx, X + w / 2, Y + h - 12, 14, G.place.src.owner); break; }
+    case 'box': {
+      R(0, -18, w, h + 16, '#6e1822'); R(0, -18, w, 4, '#d8a84a'); R(0, -14, w, 10, '#8e1f2a');
+      for (let k = 0; k < 8; k++) R(k * (w / 8), -4, w / 8 - 2, 5, k % 2 ? '#d8a84a' : '#8e1f2a');
+      for (let k = 0; k < 4; k++) { const cx = 14 + k * 28; R(cx, 22, 14, 18, '#5a2a1a'); R(cx, 18, 14, 6, '#c8a040'); R(cx + 2, 26, 10, 8, '#a8202a'); }
+      R(4, h - 6, w - 8, 4, '#d8a84a');
+      if (G.place && typeof G.place.src.owner === 'number') Heraldry.drawArms(ctx, X + w / 2, Y - 8, 12, G.place.src.owner);
+      break;
+    }
     case 'grave': {
       sh(3, 24, 26, 6); R(6, 22, 20, 6, '#5a4632'); R(8, 20, 16, 3, '#6a5440');
       ctx.fillStyle = '#a8aaa4'; ctx.beginPath(); ctx.moveTo(X + 7, Y + 22); ctx.lineTo(X + 7, Y + 4); ctx.arc(X + 16, Y + 4, 9, Math.PI, 0); ctx.lineTo(X + 25, Y + 22); ctx.fill();
