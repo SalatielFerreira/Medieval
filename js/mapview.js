@@ -296,7 +296,7 @@ const MapView = {
     for (const s of World.shrines || []) out.push({ kind: 'shrine', x: s.x + 1, y: s.y + 1, name: s.sname, sub: G.shrines && G.shrines[s.shrine] ? 'Visitado' : 'Peregrinação', color: '#e8e0ff' });
     for (const s of World.camps) if (!s.cleared) out.push({ kind: 'camp', x: s.x + 1.5, y: s.y + 1.5, name: 'Acampamento de Bandidos', sub: 'Perigo', color: '#e04848' });
     for (const s of World.structs) {
-      if (s.owner !== 'player' || !['cabin', 'house', 'forge', 'barracks', 'farm'].includes(s.type)) continue;
+      if (s.owner !== 'player' || s.removed || s.hidden || !['cabin', 'house', 'forge', 'barracks', 'farm'].includes(s.type)) continue;
       out.push({ kind: 'mine', x: s.x + s.w / 2, y: s.y + s.h / 2, name: (s === World.startCabin ? 'Sua Cabana' : BUILDINGS[s.type].name), sub: 'Sua construção', color: PLAYER_COLOR });
     }
     return out;
@@ -444,7 +444,7 @@ const MapView = {
     }
     // construções do jogador
     for (const s of World.structs) {
-      if (s.owner !== 'player') continue;
+      if (s.owner !== 'player' || s.removed || s.hidden) continue; // demolida: some do mapa
       const w = Math.max(5, s.w * z), h = Math.max(5, s.h * z);
       g.fillStyle = '#000'; g.fillRect(X(s.x + s.w / 2) - w / 2 - 1.5, Y(s.y + s.h / 2) - h / 2 - 1.5, w + 3, h + 3);
       g.fillStyle = PLAYER_COLOR; g.fillRect(X(s.x + s.w / 2) - w / 2, Y(s.y + s.h / 2) - h / 2, w, h);

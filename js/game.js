@@ -2106,7 +2106,7 @@ const Game = {
     ctx.fillStyle = '#fff';
     for (const v of World.villages) ctx.fillRect(x0 + v.x * k - 1, y0 + v.y * k - 1, 2, 2);
     ctx.fillStyle = '#ffd54a';
-    for (const s of World.structs) if (s.owner === 'player') ctx.fillRect(x0 + s.x * k - 1, y0 + s.y * k - 1, 3, 3);
+    for (const s of World.structs) if (s.owner === 'player' && !s.removed && !s.hidden) ctx.fillRect(x0 + s.x * k - 1, y0 + s.y * k - 1, 3, 3);
     ctx.fillStyle = '#ff4040';
     for (const c of World.camps) if (!c.cleared) ctx.fillRect(x0 + (c.x + 1) * k - 1, y0 + (c.y + 1) * k - 1, 3, 3);
     ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
