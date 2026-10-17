@@ -138,7 +138,7 @@ const UI = {
   },
   toggle(fn) {
     if (this.cur && this.cur.fn === fn) { this.close(); return; }
-    if (this.cur) this.close();
+    // trocar de janela não apaga o caminho: o botão Voltar leva para a anterior
     G.placing = null; Urban.stop();
     this[fn]();
   },
@@ -180,17 +180,19 @@ const UI = {
     // histórico: ao abrir outra janela a partir desta, guarda esta para o botão "Voltar"
     this.hist = this.hist || [];
     const prim = a => (a || []).filter(x => x === null || typeof x !== 'object').join('|');
-    if (this.cur && !this.navBack && this.cur.fn !== 'showMap' && (this.cur.fn !== fn || prim(this.cur.args) !== prim(args))) {
-      this.hist.push({ fn: this.cur.fn, args: this.cur.args, title: this.curTitle });
+    if (this.cur && !this.navBack && (this.cur.fn !== fn || prim(this.cur.args) !== prim(args))) {
+      this.hist.push({ fn: this.cur.fn, args: this.cur.args, title: this.cur.fn === 'showMap' ? 'Mapa' : this.curTitle });
       if (this.hist.length > 20) this.hist.shift();
     }
+    if (MapView.isOpen) MapView.hide(); // a janela abre por cima do mapa (e Voltar leva de volta a ele)
     this.cur = { fn, args: args || [] };
     this.curTitle = String(title).replace(/^[^\p{L}\p{N}]+/u, '');
     const clean = String(title).replace(/^[^\p{L}\p{N}]+/u, '');
     const ic = PANEL_ICONS[fn] || 'star';
     this.panel.className = WIDE_PANELS.includes(fn) ? 'wide' : '';
-    const back = this.hist.length ? this.hist[this.hist.length - 1] : null;
-    this.panel.innerHTML = `<div class="ph">${back ? `<button class="ph-back" data-act="wback" title="Voltar para ${this.esc(back.title || 'a janela anterior')}">◀<small>${this.esc((back.title || 'Voltar').slice(0, 18))}</small></button>` : ''}<div class="ph-ic">${icon(ic)}</div><div class="ph-t"><h2>${clean}</h2>${sub ? `<small>${sub}</small>` : ''}</div>
+    // Voltar sempre aparece: para a janela de antes ou, se não houver, para o jogo
+    const back = this.hist.length ? this.hist[this.hist.length - 1] : { title: 'Jogo' };
+    this.panel.innerHTML = `<div class="ph"><button class="ph-back" data-act="wback" title="Voltar para ${this.esc(back.title === 'Jogo' ? 'o jogo' : back.title || 'a janela anterior')}">◀<small>${this.esc((back.title || 'Voltar').slice(0, 18))}</small></button><div class="ph-ic">${icon(ic)}</div><div class="ph-t"><h2>${clean}</h2>${sub ? `<small>${sub}</small>` : ''}</div>
       ${this.winNavHtml(fn)}<button class="x" data-act="close" title="Fechar (Esc)">${icon('x')}</button></div><div class="pb">${body}</div>`;
     this.panel.classList.remove('hidden');
     if (this.down && this.down.size) { this.tapLock = true; clearTimeout(this.tapLockT); }
@@ -210,7 +212,6 @@ const UI = {
     const i = MAIN_WINDOWS.findIndex(w => this.cur && w[0] === this.cur.fn);
     if (i < 0) return;
     const n = MAIN_WINDOWS.length, fn = MAIN_WINDOWS[(i + d + n) % n][0];
-    this.close();
     G.placing = null; Urban.stop();
     this[fn]();
     Sound.play('ui');
