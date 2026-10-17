@@ -226,8 +226,10 @@ const Urban = {
   relocate(s, nx, ny, quiet) {
     const ox = s.x, oy = s.y;
     for (let j = oy; j < oy + s.h; j++) for (let i = ox; i < ox + s.w; i++) { const k = World.idx(i, j); if (World.sgrid[k] === s.id) World.sgrid[k] = -1; }
+    World.structTouch({ x: ox, y: oy, w: s.w, h: s.h }); // o lugar antigo fica vazio no mapa
     s.x = nx; s.y = ny;
     for (let j = ny; j < ny + s.h; j++) for (let i = nx; i < nx + s.w; i++) { const k = World.idx(i, j); World.sgrid[k] = s.id; World.obj[k] = 0; }
+    World.structTouch(s);
     // o conteúdo do baú (e da casa) vai junto
     const ok = ox + ',' + oy, nk = nx + ',' + ny;
     if (G.storage && G.storage[ok]) { G.storage[nk] = G.storage[ok]; delete G.storage[ok]; }

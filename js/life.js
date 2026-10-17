@@ -46,7 +46,9 @@ const Towns = {
   show(v) {
     for (const s of [...v.extra.houses, ...v.extra.walls, ...(v.extra.well ? [v.extra.well] : [])]) {
       if (s.removed) continue; // demolida pelo chefe ou pelo rei
+      const was = s.hidden;
       s.hidden = v.level < s.growth;
+      if (was !== s.hidden) World.structTouch(s); // a casa nova (ou a que sumiu) aparece no mapa
       s.blocks = !s.hidden;
       s.owner = v.civ;
     }

@@ -514,6 +514,7 @@ const World = {
     s.hidden = true; s.blocks = false; s.removed = true;
     for (let j = s.y; j < s.y + s.h; j++) for (let i = s.x; i < s.x + s.w; i++) { const k = this.idx(i, j); if (this.sgrid[k] === s.id) this.sgrid[k] = -1; }
     this.chunks.clear();
+    this.structTouch(s);
   },
   addStruct(type, x, y, w, h, owner, extra) {
     const info = BUILDINGS[type] && owner === 'player' ? BUILDINGS[type] : CIV_STRUCTS[type];
@@ -524,6 +525,7 @@ const World = {
       const k = this.idx(i, j);
       this.sgrid[k] = s.id; this.obj[k] = 0;
     }
+    if (this.mini && this.structTouch) this.structTouch(s);
     return s;
   },
 
@@ -569,7 +571,20 @@ const World = {
       const t = this.tiles[i];
       this.tiles[i] = (t === T.WATER || t === T.BRIDGE) ? T.BRIDGE : T.ROAD;
       this.obj[i] = 0;
+      if (this.mini && this.touchTile) this.touchTile(i);
     }
+  },
+  // um bloco mudou: redesenha o pedaço do chão e o ponto do mapa
+  touchTile(i) {
+    const x = i % WORLD_W, y = (i / WORLD_W) | 0;
+    if (this.chunks) for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) this.chunks.delete(Math.floor((x + dx) / CH) + ',' + Math.floor((y + dy) / CH));
+    this.miniPixel(i);
+    if (typeof MapView !== 'undefined' && MapView.chunkCache) MapView.chunkCache.delete(Math.floor(x / CH) + ',' + Math.floor(y / CH));
+  },
+  // uma construção apareceu, sumiu ou mudou de lugar: o mapa mostra na hora
+  structTouch(s) {
+    if (!this.mini || !s) return;
+    for (let j = s.y; j < s.y + s.h; j++) for (let i = s.x; i < s.x + s.w; i++) if (this.inb(i, j)) this.miniPixel(this.idx(i, j));
   },
 
   // ---------------------------------------------------------------- consultas
@@ -639,6 +654,11 @@ const World = {
     this.mini = c;
   },
   miniColor(i) {
+    const sid = this.sgrid ? this.sgrid[i] : -1, st = sid >= 0 && this.structs[sid];
+    if (st && !st.hidden && !st.removed && st.type !== 'cave_exit') {
+      const o = st.owner, col = o === 'player' ? '#d8a840' : typeof o === 'number' && CIV_DEFS[o] ? (st.type === 'castle' ? (G.civs && G.civs[o] ? Game.civColor(o) : CIV_DEFS[o].color) : CIV_DEFS[o].roof) : st.type === 'camp' ? '#6a5034' : st.type === 'cave' ? '#3a3430' : '#8a7a60';
+      const [r, gg, b] = U.hexRgb(col); return [r, gg, b];
+    }
     let [r, gg, b] = U.hexRgb(TINFO[this.tiles[i]].c);
     if (this.obj[i] && OBJ[this.obj[i]].tree) { r *= 0.75; gg *= 0.8; b *= 0.75; }
     const t = this.terr[i];

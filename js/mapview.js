@@ -401,9 +401,10 @@ const MapView = {
       // construções das vilas e acampamentos vistos de cima
       for (const st of World.structs) {
         // só construções de reinos (santuários e outras sem dono ficam de fora) e visíveis
-        if (st.owner === 'player' || st.type === 'castle' || st.hidden || st.removed || !CIV_DEFS[st.owner]) continue;
-        const col = st.type === 'field' ? '#c9a24a' : st.type === 'camp' ? '#6a5034'
-          : st.type === 'store' ? Game.civColor(st.owner) : U.shade(CIV_DEFS[st.owner].roof, 0.05);
+        if (st.type === 'castle' || st.type === 'cave_exit' || st.hidden || st.removed) continue;
+        const civ = typeof st.owner === 'number' && CIV_DEFS[st.owner] ? st.owner : -1;
+        const col = st.type === 'field' || st.type === 'farm' ? '#c9a24a' : st.type === 'camp' ? '#6a5034' : st.type === 'cave' ? '#3a3430' : st.type === 'cemetery' ? '#7a8a6a'
+          : st.owner === 'player' ? '#d8a840' : civ < 0 ? '#8a7a60' : st.type === 'store' ? Game.civColor(civ) : U.shade(CIV_DEFS[civ].roof, 0.05);
         g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(X(st.x) + 1, Y(st.y) + 2, st.w * z - 2, st.h * z - 2);
         g.fillStyle = col; g.fillRect(X(st.x) + 1, Y(st.y) + 1, st.w * z - 2, st.h * z - 2);
       }
