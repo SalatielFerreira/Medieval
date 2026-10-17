@@ -509,6 +509,23 @@ const World = {
     }
     return null;
   },
+  // construção que ocupa este bloco de verdade (as escondidas — lugares que a vila reserva para crescer — e as demolidas não contam)
+  blocker(i) {
+    const id = this.sgrid[i]; if (id < 0) return null;
+    const s = this.structs[id];
+    return s && !s.hidden && !s.removed ? s : null;
+  },
+  // libera um bloco ocupado por uma construção escondida (ela é descartada de vez, e isso fica no jogo salvo)
+  freeHidden(i) {
+    const id = this.sgrid[i]; if (id < 0) return;
+    const s = this.structs[id];
+    if (!s) { this.sgrid[i] = -1; return; }
+    if (s.removed) { this.sgrid[i] = -1; return; }
+    if (!s.hidden) return;
+    if (typeof Urban !== 'undefined' && s.owner !== 'player') Urban.record('remove', s, s.x, s.y);
+    this.removeStruct(s);
+  },
+  freeArea(x, y, w, h) { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (this.inb(i, j)) this.freeHidden(this.idx(i, j)); },
   // tira uma construção do mapa (o número dela continua reservado)
   removeStruct(s) {
     s.hidden = true; s.blocks = false; s.removed = true;

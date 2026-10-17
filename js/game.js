@@ -436,7 +436,7 @@ const Game = {
     if (!World.inb(fx, fy)) return false;
     const i = World.idx(fx, fy);
     if (type === 'shovel') return !Dig.plan(fx, fy).err;
-    if (type === 'hoe') return !!Farm.plots()[i] || (Farm.tillable(World.tiles[i]) && !World.obj[i] && World.sgrid[i] < 0);
+    if (type === 'hoe') return !!Farm.plots()[i] || (Farm.tillable(World.tiles[i]) && !World.obj[i] && !World.blocker(i));
     if (type === 'rod' || type === 'water') return !!this.findNearTile((x, y) => World.isWater(World.tile(x, y))) || (type === 'water' && !!Farm.plots()[i]);
     return false;
   },
@@ -1090,7 +1090,7 @@ const Game = {
       if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido';
       if (t === T.ROAD) return 'Não construa sobre a estrada';
       if (World.obj[i]) return 'Remova árvores/rochas primeiro';
-      if (World.sgrid[i] >= 0) return 'Já há uma construção aqui';
+      if (World.blocker(i)) return 'Já há uma construção aqui';
     }
     const cx = (tx + b.w / 2) * TILE, cy = (ty + b.h / 2) * TILE;
     if (U.dist(cx, cy, P.x, P.y) > 8 * TILE) return 'Longe demais';
@@ -1109,6 +1109,7 @@ const Game = {
     if (!Inv.has(b.cost)) { UI.msg('Recursos insuficientes para ' + b.name + '.', 'bad'); G.placing = null; return; }
     Inv.pay(b.cost);
     if (k === 'pcastle') { P.gold -= REALM_GOLD; G.placing = null; Realm.found(tx, ty); return; }
+    World.freeArea(tx, ty, b.w, b.h); // lugares reservados (escondidos) pela vila dão lugar à sua obra
     World.addStruct(k, tx, ty, b.w, b.h, 'player', { built: true });
     Content.onBuild(k);
     this.burst((tx + b.w / 2) * TILE, (ty + b.h / 2) * TILE, '#c9a978', 20);

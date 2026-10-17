@@ -72,7 +72,7 @@ const Urban = {
     if (!World.inb(tx, ty)) return 'Fora do mapa';
     const i = World.idx(tx, ty), t = World.tiles[i];
     if (t === T.ROAD || t === T.BRIDGE) return 'Já tem estrada aqui';
-    if (World.sgrid[i] >= 0) return 'Há uma construção aqui';
+    if (World.blocker(i)) return 'Há uma construção aqui';
     const k = this.roadKind(t);
     if (k === null) return 'Não dá para abrir estrada aqui';
     if (World.obj[i]) return 'Remova a árvore ou a rocha primeiro';
@@ -87,6 +87,7 @@ const Urban = {
     const err = this.roadErr(tx, ty);
     if (err) { if (!quiet || err !== 'Já tem estrada aqui') this.warn(err); return false; }
     const i = World.idx(tx, ty), orig = World.tiles[i], k = this.roadKind(orig);
+    World.freeHidden(i);
 
     World.setTile(i, k);
     World.regrow = World.regrow.filter(r => r.i !== i);
@@ -104,7 +105,7 @@ const Urban = {
     const i = World.idx(tx, ty), t = World.tiles[i], L = ROAD_LV[lv];
     const cur = World.roadLv ? World.roadLv[i] || 1 : 1;
     const err = t === T.BRIDGE ? 'Pontes não mudam de nível' : t !== T.ROAD ? 'Primeiro abra a estrada (de terra, grátis)' : cur >= lv ? `Já é ${ROAD_LV[cur].name.toLowerCase()} ou melhor`
-      : World.sgrid[i] >= 0 ? 'Há uma construção aqui' : U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10 ? 'Longe demais'
+      : World.blocker(i) ? 'Há uma construção aqui' : U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10 ? 'Longe demais'
       : this.foreignTown(tx, ty) ? `Só o chefe da vila ou o rei pode mexer nas estradas de ${this.foreignTown(tx, ty)}` : !Inv.has(L.cost) ? `Faltam materiais: ${Object.entries(L.cost).map(([k, n]) => n + ' ' + ITEMS[k].name).join(', ')} por bloco` : null;
     if (err) { if (!quiet || !/^Já é|^Primeiro/.test(err)) this.warn(err); return false; }
     Inv.pay(L.cost);
@@ -120,7 +121,7 @@ const Urban = {
     if (G.dungeon || !World.inb(tx, ty)) return 'Fora do mapa';
     const i = World.idx(tx, ty), t = World.tiles[i];
     if (t !== T.ROAD && t !== T.BRIDGE) return 'Não há estrada aqui';
-    if (World.sgrid[i] >= 0) return 'Há uma construção em cima';
+    if (World.blocker(i)) return 'Há uma construção em cima';
     if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
     // fora das vilas e castelos dos outros, qualquer estrada (até as do mapa) pode ser removida
     const town = this.E().mine[i] === undefined ? this.foreignTown(tx, ty) : null;
@@ -181,7 +182,7 @@ const Urban = {
       if (!World.inb(x, y)) return 'Fora do mapa';
       const i = World.idx(x, y), t = World.tiles[i];
       if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido (água ou montanha)';
-      if (World.sgrid[i] >= 0 && World.sgrid[i] !== s.id) return 'Já há uma construção aqui';
+      { const b = World.blocker(i); if (b && b.id !== s.id) return 'Já há uma construção aqui'; }
     }
     const dx = tx + 3, dy = ty + 7;
     if (!World.inb(dx, dy) || World.isWater(World.tile(dx, dy)) || !TINFO[World.tile(dx, dy)].walk || (World.sgrid[World.idx(dx, dy)] >= 0 && World.sgrid[World.idx(dx, dy)] !== s.id)) return 'A frente do portão precisa ficar livre';
@@ -200,7 +201,7 @@ const Urban = {
       if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido';
       if (t === T.ROAD) return 'Não construa sobre a estrada';
       if (World.obj[i]) return 'Remova árvores/rochas primeiro';
-      if (World.sgrid[i] >= 0 && (!s || World.sgrid[i] !== s.id)) return 'Já há uma construção aqui';
+      { const b = World.blocker(i); if (b && (!s || b.id !== s.id)) return 'Já há uma construção aqui'; }
     }
     if (def.coast || def.type === 'port') { const e = coastErr(tx, ty, def.w, def.h); if (e) return e; }
     if (def.blocks !== false && P.x + P.r > tx * TILE && P.x - P.r < (tx + def.w) * TILE && P.y > ty * TILE && P.y - P.r < (ty + def.h) * TILE) return 'Você está no caminho';
@@ -228,6 +229,7 @@ const Urban = {
     for (let j = oy; j < oy + s.h; j++) for (let i = ox; i < ox + s.w; i++) { const k = World.idx(i, j); if (World.sgrid[k] === s.id) World.sgrid[k] = -1; }
     World.structTouch({ x: ox, y: oy, w: s.w, h: s.h }); // o lugar antigo fica vazio no mapa
     s.x = nx; s.y = ny;
+    for (let j = ny; j < ny + s.h; j++) for (let i = nx; i < nx + s.w; i++) { const k = World.idx(i, j); if (World.sgrid[k] !== s.id) World.freeHidden(k); }
     for (let j = ny; j < ny + s.h; j++) for (let i = nx; i < nx + s.w; i++) { const k = World.idx(i, j); World.sgrid[k] = s.id; World.obj[k] = 0; }
     World.structTouch(s);
     // o conteúdo do baú (e da casa) vai junto
@@ -278,6 +280,7 @@ const Urban = {
   // cria um imóvel de vila (também usado ao carregar o jogo)
   addCivic(type, tx, ty, vi, quiet) {
     const d = CIVIC[type], v = World.villages[vi];
+    if (!quiet) World.freeArea(tx, ty, d.w, d.h);
     const s = World.addStruct(type, tx, ty, d.w, d.h, v ? v.civ : 0, { village: vi, added: true });
     // loja, taverna ou capela nova assume o lugar da que não existe mais
     if (d.slot && v && (!v[d.slot] || v[d.slot].removed)) v[d.slot] = s;
@@ -694,7 +697,7 @@ const Dig = {
     const i = World.idx(tx, ty), t = World.tiles[i], fill = this.filling();
     if (t === T.ROAD || t === T.BRIDGE) return { err: 'Remova a estrada primeiro' };
     if (t === T.MOUNT || t === T.CWALL || t === T.CFLOOR) return { err: 'A pá não vence esta rocha' };
-    if (World.sgrid[i] >= 0) return { err: 'Há uma construção aqui' };
+    if (World.blocker(i)) return { err: 'Há uma construção aqui' };
     if (World.obj[i]) return { err: 'Remova árvores/rochas primeiro' };
     if (Farm.plots()[i]) return { err: 'Aqui há uma plantação' };
     const town = Urban.foreignTown(tx, ty);
@@ -763,6 +766,7 @@ const Dig = {
   },
   // muda o terreno e guarda a mudança no jogo salvo
   set(i, t) {
+    World.freeHidden(i);
     World.setTile(i, t);
     World.regrow = World.regrow.filter(r => r.i !== i);
     const E = Urban.E();
