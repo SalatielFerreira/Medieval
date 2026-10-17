@@ -136,18 +136,28 @@ const LAYOUTS = {
       ['longtable', 0, 8, 1, 3], ['longtable', 15, 8, 1, 3], ['plant', 0, 0], ['plant', 15, 0], ['armor', 4, 0], ['armor', 11, 0]],
       keeper: [7.5, 1.3], staff: [[6, 2], [9.5, 2], [4, 4], [11, 4], [4, 8], [11, 8]], wander: [[5, 6], [10, 6]] };
   },
+  // coliseu: arquibancadas em degraus nos três lados (a plateia senta nelas), camarote real no alto,
+  // areia com o brasão do reino no meio, colunas e braseiros nos cantos, portão de ferro dos lutadores
+  // e, na entrada, a mesa de inscrição, o suporte de armas e barracas de comida e bebida
   coliseum() {
-    return { w: 22, h: 14, tiles: [[T.SAND, 4, 3, 14, 8]],
-      items: [['stands', 0, 0, 22, 2, { rows: 2 }], ['stands', 0, 2, 3, 9, { side: 1 }], ['stands', 19, 2, 3, 9, { side: 1 }],
-        ['banner', 3, -1], ['banner', 7, -1], ['banner', 14, -1], ['banner', 18, -1], ['box', 9, 0, 4, 2],
-        ['brazier', 4, 3, 1, 1, { light: 1 }], ['brazier', 17, 3, 1, 1, { light: 1 }], ['brazier', 4, 10, 1, 1, { light: 1 }], ['brazier', 17, 10, 1, 1, { light: 1 }],
-        ['arenadesk', 1, 12, 3, 1, { act: 'arena' }], ['weaponrack', 18, 12, 3], ['barrel', 6, 12], ['barrel', 15, 12]],
-      center: [11, 7], seats: [[3, 11], [18, 11], [5, 12], [16, 12]],
-      // camarote real (no meio da arquibancada de cima) e lugares da plateia
-      // na frente do camarote real e ao longo da beira da areia (à vista, sem pisar nela)
-      royal: [[10, 2], [11, 2], [9, 2], [12, 2]],
-      crowd: [[3, 2], [5, 2], [7, 2], [14, 2], [16, 2], [18, 2], [4, 2], [6, 2], [8, 2], [13, 2], [15, 2], [17, 2],
-        [3, 4], [18, 4], [3, 6], [18, 6], [3, 8], [18, 8], [3, 10], [18, 10]] };
+    // lugares intercalados (alto, esquerda, direita...) para a plateia se espalhar pelos três lados
+    const top = [], left = [], right = [];
+    for (const y of [2, 1]) for (const x of [1, 3, 5, 7, 9, 16, 18, 20, 22, 24]) top.push([x + (y === 1 ? 1 : 0), y]);
+    for (const y of [4, 6, 8, 10, 12, 5, 9, 11]) { left.push([y % 2 ? 1 : 2, y]); right.push([y % 2 ? 24 : 23, y]); }
+    const crowd = [];
+    for (let k = 0; crowd.length < top.length + left.length + right.length; k++) for (const list of [top, left, right, top]) if (list[k] && !crowd.includes(list[k])) crowd.push(list[k]);
+    return { w: 26, h: 17, tiles: [[T.SAND, 5, 4, 16, 9]],
+      items: [['stands', 0, 0, 11, 3, { rows: 3 }], ['stands', 15, 0, 11, 3, { rows: 3 }], ['box', 11, 0, 4, 3],
+        ['stands', 0, 3, 4, 10, { side: 1 }], ['stands', 22, 3, 4, 10, { side: 1 }],
+        ['banner', 2, -1], ['banner', 6, -1], ['banner', 9, -1], ['banner', 16, -1], ['banner', 19, -1], ['banner', 23, -1],
+        ['pillar', 4, 3], ['pillar', 21, 3], ['pillar', 4, 12], ['pillar', 21, 12],
+        ['brazier', 5, 4, 1, 1, { light: 1 }], ['brazier', 20, 4, 1, 1, { light: 1 }], ['brazier', 5, 12, 1, 1, { light: 1 }], ['brazier', 20, 12, 1, 1, { light: 1 }],
+        ['emblem', 11, 6, 4, 4], ['portcullis', 21, 7, 1, 3],
+        ['arenadesk', 1, 14, 3, 1, { act: 'arena' }], ['foodstall', 7, 14, 3, 1], ['foodstall', 16, 14, 3, 1, { drink: 1 }],
+        ['weaponrack', 22, 14, 3], ['barrel', 5, 15], ['barrel', 20, 15], ['plant', 0, 16], ['plant', 25, 16]],
+      center: [13, 8], seats: [[4, 14], [21, 14], [6, 16], [19, 16]],
+      // camarote real (dentro do camarote, à vista) e lugares da plateia, sentados nas arquibancadas
+      royal: [[12, 2], [13, 2], [11, 2], [14, 2]], crowd };
   },
   harbor() {
     return { w: 16, h: 9, tiles: [[T.DEEP, 11, 0, 5, 9], [T.BRIDGE, 11, 3, 4, 2]], // a água do porto é funda: só se anda no cais
@@ -320,7 +330,7 @@ const Places = {
       // plateia: gente do reino nas arquibancadas, mais cheia de dia
       const ofCiv = p => p.civ === ci || (p.home.type === 'village' && World.villages[p.home.idx] && World.villages[p.home.idx].civ === ci);
       const crowd = G.people.filter(p => p.alive && People.isAdult(p) && !p.capanga && !p.kin && p.spouse !== 'player' && !People.isCourt(p) && !p.trip && ofCiv(p) && !used.has(p.id) && !away(p));
-      const n = Math.min(L.crowd.length, ph === 'day' ? 20 : 12);
+      const n = Math.min(L.crowd.length, ph === 'day' ? 28 : 16);
       let j = 0; for (const p of pick(crowd, n, 37)) { const sp = L.crowd[j++]; put(take(p), sp, { still: true, dir: sp[0] < 11 ? 1 : -1 }); }
       return;
     }
@@ -483,7 +493,7 @@ const FURN = {
   banner: {}, throne: { block: true }, pillar: { block: true }, brazier: { block: true, light: 1, lr: 140, lcol: '#ff9a40' }, longtable: { block: true }, armor: { block: true },
   bed: { block: true }, hearth: { block: true, light: 1, lr: 160 }, chestf: { block: true }, bookshelf: {}, plant: { block: true }, board: {}, bench: { block: true },
   coal: { block: true }, grind: { block: true }, beam: { block: true }, minehole: { block: true }, millstone: { block: true }, flour: { block: true }, oven: { block: true, light: 1, lr: 110, lcol: '#ff8a3a' },
-  desk: { block: true }, door: { act: 'exit', flat: true }, stands: { block: true }, box: { block: true }, arenadesk: { block: true }, anchor: { block: true }, rowboat: { flat: true }, bollard: { block: true },
+  desk: { block: true }, door: { act: 'exit', flat: true }, stands: { block: true, flat: true }, box: { block: true, flat: true }, pillar: { block: true }, portcullis: { block: true }, emblem: { flat: true }, foodstall: { block: true }, arenadesk: { block: true }, anchor: { block: true }, rowboat: { flat: true }, bollard: { block: true },
   tent: { block: true }, flagpole: { block: true }, campfire2: { block: true },
 };
 
@@ -591,7 +601,7 @@ function drawFurn(ctx, f, X, Y, time) {
       const n = side ? f.w * f.h * 2 : f.w * 6;
       for (let k = 0; k < n; k++) {
         const hsh = U.hash2(f.id, k, 3);
-        if (hsh < 0.12) continue; // lugar vazio
+        if (hsh < 0.5) continue; // lugar vazio (a plateia de verdade senta nas arquibancadas)
         let px, py;
         if (side) { px = 6 + (k % (f.w * 2)) * 14; py = 6 + Math.floor(k / (f.w * 2)) * 15; }
         else { px = 5 + (k % (f.w * 2)) * 16; py = -10 + Math.floor(k / (f.w * 2)) * 15; }
@@ -603,6 +613,29 @@ function drawFurn(ctx, f, X, Y, time) {
       void step; break;
     }
     case 'box': { R(0, -18, w, h + 16, '#8e1f2a'); R(0, -18, w, 4, '#d8a84a'); R(4, h - 6, w - 8, 4, '#d8a84a'); for (let k = 0; k < 4; k++) { R(10 + k * 28, -6, 10, 12, ['#ffd54a', '#c8d0d8', '#e8c8a8', '#ffd54a'][k]); R(12 + k * 28, -12, 6, 6, '#f0c896'); } if (G.place && typeof G.place.src.owner === 'number') Heraldry.drawArms(ctx, X + w / 2, Y + h - 12, 14, G.place.src.owner); break; }
+    case 'pillar': { sh(4, 26, 26, 6); R(6, -26, 20, 54, '#a8a296'); R(6, -26, 5, 54, '#c8c2b4'); R(21, -26, 5, 54, '#857f74'); R(2, -32, 28, 8, '#b8b2a6'); R(2, 22, 28, 8, '#8f897e'); R(2, -32, 28, 2, '#d8d2c4'); break; }
+    case 'portcullis': {
+      R(-4, -4, w + 8, h + 8, '#6e6a62'); R(0, 0, w, h, '#1a1612');
+      ctx.fillStyle = '#4a4a52'; for (let x = 3; x < w; x += 7) ctx.fillRect(Math.round(X + x), Math.round(Y), 2, h); for (let y = 6; y < h; y += 10) ctx.fillRect(Math.round(X), Math.round(Y + y), w, 2);
+      ctx.fillStyle = '#7a7a84'; for (let x = 3; x < w; x += 7) ctx.fillRect(Math.round(X + x), Math.round(Y + h - 4), 2, 4); break;
+    }
+    case 'emblem': {
+      const owner = G.place && typeof G.place.src.owner === 'number' ? G.place.src.owner : -1;
+      ell(w / 2, h / 2, w / 2 - 2, h / 2 - 2, 'rgba(120,80,40,0.16)'); ell(w / 2, h / 2, w / 2 - 10, h / 2 - 10, 'rgba(255,240,200,0.12)');
+      ctx.strokeStyle = 'rgba(110,70,30,0.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(X + w / 2, Y + h / 2, w / 2 - 6, h / 2 - 6, 0, 0, Math.PI * 2); ctx.stroke();
+      for (let k = 0; k < 8; k++) { const an = k / 8 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(X + w / 2 + Math.cos(an) * 22, Y + h / 2 + Math.sin(an) * 22); ctx.lineTo(X + w / 2 + Math.cos(an) * (w / 2 - 8), Y + h / 2 + Math.sin(an) * (h / 2 - 8)); ctx.stroke(); }
+      if (owner >= 0) { ctx.globalAlpha = 0.55; Heraldry.drawArms(ctx, X + w / 2, Y + h / 2 + 4, 26, owner); ctx.globalAlpha = 1; }
+      break;
+    }
+    case 'foodstall': {
+      sh(0, h - 2, w, 6); R(2, 6, w - 4, h - 6, '#7a4a26'); R(2, 6, w - 4, 4, '#9a6a3a');
+      const col = f.drink ? '#3a6ab0' : '#b0303a';
+      for (let k = 0; k < 6; k++) R(k * (w / 6), -18, Math.ceil(w / 6), 10, k % 2 ? '#efe6d2' : col);
+      R(2, -8, 3, 16, '#5a3a1e'); R(w - 5, -8, 3, 16, '#5a3a1e');
+      if (f.drink) for (let k = 0; k < 4; k++) { R(10 + k * 18, -2, 10, 9, '#8a5a30'); R(10 + k * 18, 1, 10, 2, '#5a3a1e'); }
+      else for (let k = 0; k < 5; k++) ell(12 + k * 16, 2, 6, 4, ['#c8883a', '#e2b23a', '#b0503a', '#d8a868', '#c8883a'][k]);
+      break;
+    }
     case 'arenadesk': { sh(0, h - 2, w, 6); R(0, 4, w, h - 4, '#8a5a30'); R(0, 4, w, 5, '#a8743e'); R(8, -4, 18, 9, '#efe6d2'); R(10, -2, 14, 1, '#3a3a3a'); R(10, 1, 10, 1, '#3a3a3a'); R(w - 22, -2, 12, 7, '#ffd54a'); break; }
     case 'anchor': { sh(4, 26, 24, 5); ctx.strokeStyle = '#5a5a62'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X + 16, Y + 4); ctx.lineTo(X + 16, Y + 26); ctx.stroke(); ctx.beginPath(); ctx.arc(X + 16, Y + 18, 10, 0.2, Math.PI - 0.2); ctx.stroke(); R(10, 6, 12, 3, '#5a5a62'); ell(16, 3, 3, 3, '#5a5a62'); break; }
     case 'bollard': { sh(8, 26, 16, 4); R(11, 10, 10, 18, '#5a3a1e'); R(9, 8, 14, 4, '#7a5230'); ctx.strokeStyle = '#c8b88a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X + 21, Y + 16); ctx.lineTo(X + 34, Y + 22); ctx.stroke(); break; }

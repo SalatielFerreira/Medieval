@@ -31,7 +31,7 @@ const Arena = {
   // dentro do coliseu, o centro da areia é o lugar da luta
   inColiseum(ci) { return !!(G.place && G.place.kind === 'room' && G.place.type === 'arena' && G.place.src.owner === ci); },
   center(ci) {
-    if (this.inColiseum(ci)) return { x: (G.place.fx0 + 11) * TILE, y: (G.place.fy0 + 7.4) * TILE };
+    if (this.inColiseum(ci)) return { x: (G.place.fx0 + 13) * TILE, y: (G.place.fy0 + 8.6) * TILE };
     const s = this.arenaOf(ci); return { x: (s.x + s.w / 2) * TILE, y: (s.y + s.h / 2 + 0.5) * TILE };
   },
   fighterName(ci, tier) { return `${U.pick(NAMES_M.concat(NAMES_F))} ${U.pick(EPITHETS)}`; },
@@ -51,7 +51,7 @@ const Arena = {
   // a areia do coliseu (por dentro), em pixels
   sandRect() {
     const pl = G.place; if (!pl || pl.lay !== 'coliseum') return null;
-    return { x0: (pl.fx0 + 4) * TILE, x1: (pl.fx0 + 18) * TILE, y0: (pl.fy0 + 3) * TILE + 4, y1: (pl.fy0 + 11) * TILE + 6 };
+    return { x0: (pl.fx0 + 5) * TILE, x1: (pl.fx0 + 21) * TILE, y0: (pl.fy0 + 4) * TILE + 4, y1: (pl.fy0 + 13) * TILE + 6 };
   },
   inSand(r, x, y) { return x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1; },
   // impede entrar na arena quem não está lutando (quem já está dentro pode sair)
@@ -69,7 +69,7 @@ const Arena = {
   // tira da arena quem não está lutando (e põe o herói na entrada quando a luta acaba)
   clear(s, keepPlayer) {
     const r = this.sandRect();
-    if (r && !keepPlayer && this.inSand(r, P.x, P.y)) { P.x = (G.place.fx0 + 11.5) * TILE; P.y = (G.place.fy0 + 12.5) * TILE; }
+    if (r && !keepPlayer && this.inSand(r, P.x, P.y)) { P.x = (G.place.fx0 + 13.5) * TILE; P.y = (G.place.fy0 + 14.6) * TILE; }
     if (!s) return;
     const out = (e) => { const p = freeSpotNear((s.x + s.w / 2) * TILE, (s.y + s.h + 1.6) * TILE, 2.5 * TILE); e.x = p.x; e.y = p.y; };
     for (const e of G.ents) if (!e.dead && e !== (G.duel && G.duel.ent) && this.zoneAt(e.x, e.y) === s) out(e);
