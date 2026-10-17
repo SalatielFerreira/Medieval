@@ -890,7 +890,7 @@ const Game = {
   nearestNpc() {
     let best = null, bd = 1.9 * TILE;
     for (const e of G.ents) {
-      if (!e.dead && !e.npc && e.kind === 'guard' && !e.angry && !hostile(e, P) && U.dist(e.x, e.y, P.x, P.y) < bd) this.soldierFor(e);
+      if (!e.dead && !e.npc && e.kind === 'guard' && !e.battle && !e.angry && !hostile(e, P) && U.dist(e.x, e.y, P.x, P.y) < bd) this.soldierFor(e);
       if (e.dead || e.sleeping || !e.npc || e.npc.hostile) continue;
       const d = U.dist(e.x, e.y, P.x, P.y);
       if (d < bd) { bd = d; best = e; }

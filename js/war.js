@@ -185,8 +185,45 @@ const War = {
   units(ci) { return G.ents.filter(e => !e.dead && e.battle === (G.place && G.place.id) && e.wside === ci); },
   isBattle() { return !!(G.place && G.place.kind === 'battle'); },
   // a cada quadro: começo da carga, catapultas, fim da batalha
+  // botão de rendição (só aparece no campo de batalha)
+  surrenderBtn() {
+    let b = document.getElementById('surrenderBtn');
+    if (!b) {
+      b = document.createElement('button'); b.id = 'surrenderBtn'; b.className = 'hidden'; b.innerHTML = '🏳️ <span>Render-se</span>';
+      b.addEventListener('click', e => { e.stopPropagation(); this.askSurrender(); });
+      document.body.appendChild(b);
+    }
+    return b;
+  },
+  askSurrender() {
+    const B = G.place; if (!B || B.kind !== 'battle' || B.done) return;
+    const own = B.own && G.civs[B.side] && G.civs[B.side].ruler === 'player';
+    Dialog.confirm({ icon: '🏳️', title: 'Render-se', danger: true, ok: 'Render-se',
+      text: own ? `Render-se a ${Diplo.name(B.enemy)}? Você sai vivo, mas ${CIV_DEFS[B.side].name} passa para o adversário (um governador da casa dele assume o trono) e metade do tesouro vai para ele. A guerra acaba.`
+        : `Render-se e deixar o campo? A batalha está perdida: ${G.civs[B.side] ? G.civs[B.side].rulerName : 'o reino'} não vai gostar e a sua fama diminui, mas você sai vivo.` },
+      () => this.surrender());
+  },
+  surrender() {
+    const B = G.place; if (!B || B.kind !== 'battle' || B.done) return;
+    B.surrendered = true;
+    this.finish(false);
+  },
+  // o reino rendido passa para o vencedor: um governador da casa dele assume o trono
+  cede(side, enemy, rep) {
+    const c = G.civs[side], att = G.civs[enemy];
+    const gov = People.create({ rank: 'ruler', civ: side, home: { type: 'castle', civ: side }, age: U.rint(30, 50), aff: -40, surname: (Families.of(People.get(att.rulerId)) || {}).surname });
+    Heraldry.apply(); c.ruler = 'npc'; c.rulerId = gov.id; c.rulerName = People.title(gov) + ' ' + gov.name; c.relation = -30; c.happy = Math.max(20, c.happy - 15); c.overlord = enemy;
+    const tribute = Math.round(c.treasury * 0.5); c.treasury -= tribute; att.treasury += tribute;
+    if (Diplo.atWar(side, enemy)) Diplo.makePeace(side, enemy, `${CIV_DEFS[side].short} se rendeu`);
+    if (G.mainRealm === side) G.mainRealm = null;
+    rep.lines.push(`👑 ${CIV_DEFS[side].name} passou para ${Diplo.name(enemy)}: ${c.rulerName} governa agora em nome de ${att.rulerName}.`, `💰 ${tribute} 🪙 do tesouro foram entregues ao vencedor.`, '🕊️ A guerra acabou. Você está vivo, mas sem essa coroa.');
+    UI.banner(`🏳️ ${CIV_DEFS[side].short} se rendeu`);
+    Diplo.chronicle(`🏳️ ${G.name} ${G.surname} se rendeu no campo de batalha e entregou ${CIV_DEFS[side].name} a ${Diplo.name(enemy)}.`, true);
+    Progress.diary(`🏳️ Rendeu-se a ${Diplo.name(enemy)} e perdeu ${CIV_DEFS[side].name}.`);
+  },
   update(dt) {
     const B = G.place;
+    { const sb = this.surrenderBtn(); sb.classList.toggle('hidden', !B || B.kind !== 'battle' || !!B.done || !!P.dead); }
     if (!B || B.kind !== 'battle') { this.tick(); return; }
     this.levelBadge();
     B.t += dt;
@@ -279,6 +316,13 @@ const War = {
       Diplo.chronicle(`🏆 ${CIV_DEFS[side].short} venceu ${CIV_DEFS[enemy].short} numa grande batalha${B.own ? ` comandada por ${G.name}` : ` com a ajuda de ${G.name}`}.`, true);
       Progress.diary(`⚔️ Venceu a batalha contra ${CIV_DEFS[enemy].short} (${lostFoe} inimigos caídos, ${lostMine} perdas).`);
     } else {
+      if (B.surrendered) {
+        rep.lines.push('🏳️ Você se rendeu e deixou o campo de batalha com vida.');
+        if (B.own && myC.ruler === 'player') this.cede(side, enemy, rep);
+        else { Game.addRelation(side, -10); Court.addFame(-5); rep.lines.push(`😞 ${G.civs[side].rulerName} esperava mais de você (−10 relação, −5 de fama).`); }
+        Diplo.chronicle(`💀 ${CIV_DEFS[enemy].short} venceu ${CIV_DEFS[side].short} numa grande batalha.`, true);
+        this.leave(); UI.showWarReport(rep); return;
+      }
       rep.lines.push(rep.knocked ? '🩸 Você foi ferido e carregado para longe do campo.' : '🩸 O seu exército foi destruído.');
       if (B.own) {
         const toll = Math.round(myC.treasury * 0.3); myC.treasury -= toll; foC.treasury += toll; rep.lines.push(`💰 O inimigo levou ${toll} 🪙 do tesouro.`);
@@ -297,6 +341,7 @@ const War = {
   // volta para onde você estava antes da marcha
   leave() {
     const B = G.place; if (!B || B.kind !== 'battle') return;
+    { const sb = document.getElementById('surrenderBtn'); if (sb) sb.classList.add('hidden'); }
     for (const e of G.ents) if (e.battle === B.id) e.dead = true;
     G.ents = G.ents.filter(e => !e.dead);
     Sieges.boulders = Sieges.boulders.filter(b => !b.war);
