@@ -63,6 +63,7 @@ const ROOM_TYPES = {
   ptavern:    { lay: 'tavern',  theme: 'wood',   mine: true, name: () => 'Sua Taverna' },
   arena:      { lay: 'coliseum', theme: 'castle', name: s => `Arena de ${CIV_DEFS[s.owner] ? CIV_DEFS[s.owner].short : ''}` },
   port:       { lay: 'harbor',  theme: 'wood',   name: s => `Porto de ${CIV_DEFS[s.owner] ? CIV_DEFS[s.owner].short : ''}` },
+  cemetery:   { lay: 'graveyard', theme: 'stone', name: s => `Cemitério de ${CIV_DEFS[s.owner] ? CIV_DEFS[s.owner].short : ''}` },
 };
 // os empreendimentos do jogador (menos os que ficam ao ar livre) também têm o lado de dentro
 const BIZ_ROOMS = { biz_mill: 'mill', biz_lumber: 'lumber', biz_quarry: 'quarry', biz_mine: 'mine', biz_smithy: 'smithy', biz_shop: 'shop' };
@@ -159,6 +160,18 @@ const LAYOUTS = {
       // camarote real (dentro do camarote, à vista) e lugares da plateia, sentados nas arquibancadas
       royal: [[12, 2], [13, 2], [11, 2], [14, 2]], crowd };
   },
+  // cemitério: gramado com caminho de terra, mausoléu dos heróis no alto, lápides da família (uma por parente
+  // enterrado no reino, com o nome) e túmulos antigos completando as fileiras, ciprestes, lanternas, anjo,
+  // canteiros, bancos e o livro do cemitério na entrada
+  graveyard(o) {
+    const ci = o.src ? o.src.owner : 0, all = Graves.inCiv(ci), fam = all.filter(g => g.kind !== 'hero').sort((a, b) => b.day - a.day);
+    const slots = []; for (const y of [4, 7, 10]) for (const x of [2, 4, 6, 12, 14, 16]) slots.push([x, y]);
+    const items = [['mausoleum', 7, 0, 5, 3, { act: 'mausoleum' }], ['cypress', 1, 0], ['cypress', 17, 0], ['cypress', 0, 6], ['cypress', 18, 6], ['cypress', 0, 10], ['cypress', 18, 10],
+      ['lantern', 8, 4, 1, 1, { light: 1 }], ['lantern', 10, 4, 1, 1, { light: 1 }], ['lantern', 8, 10, 1, 1, { light: 1 }], ['lantern', 10, 10, 1, 1, { light: 1 }],
+      ['angel', 9, 7], ['cembook', 8, 12, 1, 1, { act: 'cembook' }], ['bench', 1, 12, 2], ['bench', 16, 12, 2], ['flowerbed', 4, 12, 3, 1], ['flowerbed', 12, 12, 3, 1]];
+    slots.forEach(([x, y], k) => { const g = fam[k]; items.push(g ? ['grave', x, y, 1, 1, { act: 'grave', gi: Graves.list().indexOf(g), gname: g.name.split(' ')[0], hero: false }] : ['oldgrave', x, y, 1, 1, { tilt: (k * 7) % 3 }]); });
+    return { w: 19, h: 13, tiles: [[T.GRASS, 0, 0, 19, 13], [T.ROAD, 9, 3, 1, 10]], items, keeper: [9, 11], wander: [[5, 9], [13, 9]] };
+  },
   harbor() {
     return { w: 16, h: 9, tiles: [[T.DEEP, 11, 0, 5, 9], [T.BRIDGE, 11, 3, 4, 2]], // a água do porto é funda: só se anda no cais
       items: [['counter', 3, 3, 4, 1, { act: 'port' }], ['nets', 0, -1, 2], ['nets', 6, -1, 2], ['window', 3, -1], ['lamp', 9, -1], ['lamp', 2, -1],
@@ -232,7 +245,7 @@ const Places = {
     if (ROOM_SHUT.includes(src.type) && Routine.phase() === 'night') { UI.msg(`🌙 ${d.name(src)} está fechada. Volte de manhã.`, 'bad'); return true; }
     if (P.fishing) P.fishing = null;
     if (P.mounted) { P.mounted = false; P.hx = P.x - 26; P.hy = P.y + 4; }
-    const L = LAYOUTS[d.lay](Object.assign({}, d, { mine: !!d.mine }));
+    const L = LAYOUTS[d.lay](Object.assign({}, d, { mine: !!d.mine, src }));
     const cxz = Z.x + (Z.w >> 1), cyz = Z.y + (Z.h >> 1);
     const fx0 = cxz - (L.w >> 1), fy0 = cyz - (L.h >> 1);
     const keep = this.carve(fx0 - 16, fy0 - 13, L.w + 32, L.h + 27);
@@ -334,6 +347,7 @@ const Places = {
       let j = 0; for (const p of pick(crowd, n, 37)) { const sp = L.crowd[j++]; put(take(p), sp, { still: true, dir: sp[0] < 11 ? 1 : -1 }); }
       return;
     }
+    if (d.lay === 'graveyard') return; // só o silêncio (e você)
     if (d.lay === 'harbor') {
       put(take(Ports.keeper(src)), L.keeper, { still: true });
       return;
@@ -436,6 +450,9 @@ const Places = {
       case 'exit': return 'Porta — sair';
       case 'study': return 'Mesa de estudos — estudar';
       case 'port': return 'Balcão do porto — vender pescados e comprar equipamento';
+      case 'grave': return `🪦 Lápide de ${f.gname || 'um parente'} — ler`;
+      case 'mausoleum': return '🏛️ Mausoléu dos heróis da dinastia';
+      case 'cembook': return '📖 Livro do cemitério — todas as lápides da família';
       case 'arena': return 'Banca da arena — lutar, justas, torneio e apostas';
       case 'sail': return Inv.count('boat') > 0 ? 'Barco — sair navegando pelo cais' : 'Barco — você precisa de um Barco a Remo';
       case 'pray': return 'Altar — rezar';
@@ -457,6 +474,13 @@ const Places = {
       case 'exit': this.exit(); return;
       case 'port': UI.showPort(s.id); return;
       case 'arena': UI.showArena(s.owner); return;
+      case 'grave': case 'mausoleum': case 'cembook': {
+        const all = Graves.inCiv(s.owner).slice().sort((a, b) => b.day - a.day);
+        let k = 0;
+        if (f.act === 'grave') k = Math.max(0, all.indexOf(Graves.list()[f.gi]));
+        if (f.act === 'mausoleum') { k = all.findIndex(g => g.kind === 'hero'); if (k < 0) { UI.msg('🏛️ O mausoléu guarda os heróis da sua dinastia. Ainda não há nenhum descansando aqui.'); return; } }
+        UI.sel.grave = k; UI.showCemetery(s.owner); return;
+      }
       case 'sail': this.sailOut(s); return;
     }
     if (Content.act(f.act)) return;
@@ -493,7 +517,7 @@ const FURN = {
   banner: {}, throne: { block: true }, pillar: { block: true }, brazier: { block: true, light: 1, lr: 140, lcol: '#ff9a40' }, longtable: { block: true }, armor: { block: true },
   bed: { block: true }, hearth: { block: true, light: 1, lr: 160 }, chestf: { block: true }, bookshelf: {}, plant: { block: true }, board: {}, bench: { block: true },
   coal: { block: true }, grind: { block: true }, beam: { block: true }, minehole: { block: true }, millstone: { block: true }, flour: { block: true }, oven: { block: true, light: 1, lr: 110, lcol: '#ff8a3a' },
-  desk: { block: true }, door: { act: 'exit', flat: true }, stands: { block: true, flat: true }, box: { block: true, flat: true }, pillar: { block: true }, portcullis: { block: true }, emblem: { flat: true }, foodstall: { block: true }, arenadesk: { block: true }, anchor: { block: true }, rowboat: { flat: true }, bollard: { block: true },
+  desk: { block: true }, door: { act: 'exit', flat: true }, stands: { block: true, flat: true }, grave: { block: true }, oldgrave: { block: true }, mausoleum: { block: true }, cypress: { block: true }, lantern: { block: true, light: 1, lr: 120, lcol: '#ffd27a' }, angel: { block: true }, cembook: { block: true }, flowerbed: { flat: true }, box: { block: true, flat: true }, pillar: { block: true }, portcullis: { block: true }, emblem: { flat: true }, foodstall: { block: true }, arenadesk: { block: true }, anchor: { block: true }, rowboat: { flat: true }, bollard: { block: true },
   tent: { block: true }, flagpole: { block: true }, campfire2: { block: true },
 };
 
@@ -613,6 +637,47 @@ function drawFurn(ctx, f, X, Y, time) {
       void step; break;
     }
     case 'box': { R(0, -18, w, h + 16, '#8e1f2a'); R(0, -18, w, 4, '#d8a84a'); R(4, h - 6, w - 8, 4, '#d8a84a'); for (let k = 0; k < 4; k++) { R(10 + k * 28, -6, 10, 12, ['#ffd54a', '#c8d0d8', '#e8c8a8', '#ffd54a'][k]); R(12 + k * 28, -12, 6, 6, '#f0c896'); } if (G.place && typeof G.place.src.owner === 'number') Heraldry.drawArms(ctx, X + w / 2, Y + h - 12, 14, G.place.src.owner); break; }
+    case 'grave': {
+      sh(3, 24, 26, 6); R(6, 22, 20, 6, '#5a4632'); R(8, 20, 16, 3, '#6a5440');
+      ctx.fillStyle = '#a8aaa4'; ctx.beginPath(); ctx.moveTo(X + 7, Y + 22); ctx.lineTo(X + 7, Y + 4); ctx.arc(X + 16, Y + 4, 9, Math.PI, 0); ctx.lineTo(X + 25, Y + 22); ctx.fill();
+      R(21, 2, 4, 20, '#8a8c86'); R(7, 3, 2, 19, '#c4c6c0');
+      R(14, 2, 4, 9, '#6e706a'); R(11, 4, 10, 3, '#6e706a');
+      if (f.gname) { ctx.fillStyle = '#3a3a34'; ctx.font = 'bold 6px serif'; ctx.textAlign = 'center'; ctx.fillText(f.gname.slice(0, 8), X + 16, Y + 18); ctx.textAlign = 'left'; }
+      const gr = Graves.list()[f.gi]; if (gr && gr.flowers !== undefined && G.day - gr.flowers < 3) { R(9, 23, 3, 3, '#d0304a'); R(14, 24, 3, 3, '#f0e040'); R(19, 23, 3, 3, '#e86aa0'); }
+      break;
+    }
+    case 'oldgrave': {
+      sh(4, 24, 24, 5); R(7, 22, 18, 5, '#4a3e2e');
+      ctx.save(); ctx.translate(X + 16, Y + 22); ctx.rotate((f.tilt - 1) * 0.12);
+      ctx.fillStyle = '#7e8078'; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-8, -14); ctx.arc(0, -14, 8, Math.PI, 0); ctx.lineTo(8, 0); ctx.fill();
+      ctx.fillStyle = '#5a7a3a'; ctx.fillRect(-8, -4, 6, 4); ctx.fillRect(3, -12, 4, 3); ctx.fillStyle = '#4a4c46'; ctx.fillRect(-2, -18, 1, 8); ctx.fillRect(0, -12, 3, 1);
+      ctx.restore(); break;
+    }
+    case 'mausoleum': {
+      sh(0, h - 4, w, 8);
+      R(8, 30, w - 16, h - 30, '#9a958c'); R(8, 30, w - 16, 4, '#b8b2a6');
+      ctx.fillStyle = '#7e786e'; ctx.beginPath(); ctx.moveTo(X + 2, Y + 32); ctx.lineTo(X + w / 2, Y + 4); ctx.lineTo(X + w - 2, Y + 32); ctx.fill();
+      ctx.fillStyle = '#a8a296'; ctx.beginPath(); ctx.moveTo(X + 14, Y + 28); ctx.lineTo(X + w / 2, Y + 12); ctx.lineTo(X + w - 14, Y + 28); ctx.fill();
+      for (const cx of [16, 40, w - 46, w - 22]) { R(cx, 34, 6, h - 40, '#c8c2b4'); R(cx - 2, 34, 10, 3, '#d8d2c4'); }
+      R(w / 2 - 12, 48, 24, h - 54, '#2a2420'); R(w / 2 - 12, 48, 24, 3, '#4a4038'); R(w / 2 - 1, 52, 2, h - 58, '#4a4038');
+      ctx.fillStyle = '#e8b923'; ctx.fillRect(X + w / 2 - 8, Y + 18, 16, 4); for (const dx of [-8, -1, 6]) ctx.fillRect(X + w / 2 + dx, Y + 13, 2, 5);
+      break;
+    }
+    case 'cypress': { sh(4, 26, 24, 6); R(14, 18, 4, 12, '#4a3420'); ell(16, 6, 8, 20, '#22402a'); ell(14, 2, 4, 14, '#2f5534'); ell(18, 10, 3, 9, '#1a3420'); break; }
+    case 'lantern': { R(14, -10, 4, 38, '#2e2e34'); R(10, -18, 12, 10, '#3a3a40'); R(12, -16, 8, 6, 'rgba(255,214,120,0.95)'); R(9, -20, 14, 3, '#2e2e34'); break; }
+    case 'angel': {
+      sh(4, 26, 24, 6); R(8, 20, 16, 8, '#8f897e'); R(6, 24, 20, 4, '#a8a296');
+      ctx.fillStyle = '#c8c2b4'; ctx.beginPath(); ctx.moveTo(X + 16, Y - 6); ctx.lineTo(X + 4, Y + 4); ctx.lineTo(X + 10, Y + 12); ctx.fill(); ctx.beginPath(); ctx.moveTo(X + 16, Y - 6); ctx.lineTo(X + 28, Y + 4); ctx.lineTo(X + 22, Y + 12); ctx.fill();
+      R(12, -2, 8, 22, '#d8d2c4'); ell(16, -6, 4, 4, '#e0dace'); ctx.strokeStyle = '#e8c860'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(X + 16, Y - 12, 4, 1.5, 0, 0, Math.PI * 2); ctx.stroke();
+      break;
+    }
+    case 'cembook': { sh(4, 26, 24, 5); R(13, 12, 6, 16, '#5a3a1e'); R(6, 6, 20, 8, '#7a4a26'); R(8, 4, 8, 6, '#efe6d2'); R(16, 4, 8, 6, '#e6dcc4'); R(15, 4, 2, 6, '#8a6a4a'); break; }
+    case 'flowerbed': {
+      R(0, 6, w, h - 8, '#4a3626'); R(0, 6, w, 2, '#5e4632');
+      const cols = ['#d0304a', '#f0e040', '#e86aa0', '#ffffff', '#8a6ad8'];
+      for (let k = 0; k < f.w * 5; k++) { const x = 3 + (k * 37) % (w - 6), y = 9 + (k * 13) % (h - 14); R(x, y + 2, 1, 4, '#3a7a2a'); R(x - 1, y, 3, 3, cols[k % cols.length]); }
+      break;
+    }
     case 'pillar': { sh(4, 26, 26, 6); R(6, -26, 20, 54, '#a8a296'); R(6, -26, 5, 54, '#c8c2b4'); R(21, -26, 5, 54, '#857f74'); R(2, -32, 28, 8, '#b8b2a6'); R(2, 22, 28, 8, '#8f897e'); R(2, -32, 28, 2, '#d8d2c4'); break; }
     case 'portcullis': {
       R(-4, -4, w + 8, h + 8, '#6e6a62'); R(0, 0, w, h, '#1a1612');
