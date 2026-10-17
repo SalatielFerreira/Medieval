@@ -385,3 +385,46 @@ Object.assign(FURN_EXTRA, {
     ell(w / 2 - 2, 15 + br, 11, 5, c); ell(w / 2 + 9, 13, 5, 4, c); ell(w / 2 + 12, 15, 2.6, 2, c); R(w / 2 + 7, 9, 2, 4, c); R(w / 2 + 13, 14, 1, 1, '#1a120a'); ell(w / 2 - 13, 16, 4, 1.6, c, 0.4);
   },
 });
+
+// ------------------------------------------------------------------ quem trabalha: sempre camponeses
+// funcionários dos seus empreendimentos e responsáveis dos prédios saem do povo: camponeses adultos, nunca gente da
+// corte, de família real ou nobre, padres ou soldados
+People.royalKin = function (p) {
+  const f = Families.of(p); if (!f) return false;
+  if (f.noble) return true;
+  return G.people.some(m => m.alive && m.fam === f.id && (NOBLE_RANKS.includes(m.rank) || (m.home && m.home.type === 'castle')));
+};
+People.commoner = function (p) { return !!p && p.alive && p.rank === 'peasant' && People.isAdult(p) && !People.isCourt(p) && !People.royalKin(p) && !p.council; };
+{
+  const can0 = Biz.can.bind(Biz);
+  Biz.can = function (p) {
+    const r = can0(p); if (r !== true) return r;
+    if (p.rank !== 'peasant') return 'Só camponeses trabalham nos empreendimentos.';
+    if (People.royalKin(p)) return 'Sou de família nobre: não trabalho por salário.';
+    return true;
+  };
+  const sc0 = People.shopCandidates.bind(People);
+  People.shopCandidates = function (vi, rank) { return sc0(vi, rank).filter(q => People.commoner(q)); };
+  // o primeiro funcionário vem sozinho (sem adiantamento): o camponês livre mais perto
+  Biz.autoHire = function (quiet) {
+    let n = 0;
+    for (const s of this.list()) {
+      if (s.removed || this.workerCount(s) > 0) continue;
+      const c = this.candidates(s)[0];
+      const p = c && c.p;
+      if (!p) continue;
+      s.workers = (s.workers || []).filter(id => G.people[id] && G.people[id].alive && G.people[id].job === s.id);
+      s.workers.push(p.id); p.job = s.id; p.met = true;
+      const e = G.spawned.get(p.id); if (e) { e.dead = true; G.spawned.delete(p.id); }
+      if (!quiet) UI.msg(`💼 ${People.full(p)} foi contratad${p.sex === 'f' ? 'a' : 'o'} para o seu ${this.name(s)} (${this.wage(p, s)} 🪙 por mês).`, 'gold');
+      n++;
+    }
+    return n;
+  };
+  const bd0 = Biz.dayTick.bind(Biz);
+  Biz.dayTick = function (...a) { const r = bd0(...a); this.autoHire(); return r; };
+  const pb1 = Game.placeBuilding.bind(Game);
+  Game.placeBuilding = function (...a) { const n = World.structs.length, r = pb1(...a); if (World.structs.slice(n).some(s => BIZ_TYPES[s.type] && s.owner === 'player')) Biz.autoHire(); return r; };
+  const er1 = Places.enterRoom.bind(Places);
+  Places.enterRoom = function (src) { if (src && src.owner === 'player' && BIZ_TYPES[src.type] && !Biz.workerCount(src)) Biz.autoHire(); return er1(src); };
+}
