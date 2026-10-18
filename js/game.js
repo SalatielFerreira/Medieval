@@ -1535,7 +1535,7 @@ const Game = {
     let e = G.spawned.get(p.id);
     if (!e || e.dead) e = G.ents.find(o => !o.dead && o.npc === p) || null;
     People.addAff(p, -40);
-    if (e) { e.angry = true; e.target = P; e.dmg = Math.max(e.dmg || 0, p.rank === 'ruler' ? 28 : 6); e.leash = Math.max(e.leash || 0, 12); }
+    if (e) { e.angry = true; e.target = P; e.returning = false; e.dmg = Math.max(e.dmg || 0, p.rank === 'ruler' ? 28 : 6); e.leash = Math.max(e.leash || 0, 12 * TILE); }
     const royal = ['ruler', 'consort', 'heir'].includes(p.rank) || People.isCourt(p);
     if (royal) {
       const ci = p.rank === 'ruler' || p.home.type === 'castle' ? (p.home.civ !== undefined ? p.home.civ : p.civ) : Families.civOf(p);
@@ -1550,9 +1550,9 @@ const Game = {
     for (const g of G.ents) {
       if (g.dead || g.kind !== 'guard' || g.civ !== ci) continue;
       if (!(g.placeNpc && G.place) && U.dist(g.x, g.y, P.x, P.y) > 18 * TILE) continue;
-      g.angry = true; g.target = P; g.leash = Math.max(g.leash || 0, 30); g.returning = false; n++;
+      g.angry = true; g.target = P; g.leash = Math.max(g.leash || 0, 30 * TILE); g.returning = false; g.aggroOv = Math.max(g.aggroOv || 0, 30); g.atkCd = Math.min(g.atkCd || 0, 0.3); n++;
     }
-    for (const g of G.ents) if (!g.dead && g.npc && g.npc.rank === 'knight' && Families.civOf(g.npc) === ci && U.dist(g.x, g.y, P.x, P.y) < 18 * TILE) { g.angry = true; g.target = P; n++; }
+    for (const g of G.ents) if (!g.dead && g.npc && g.npc.rank === 'knight' && Families.civOf(g.npc) === ci && U.dist(g.x, g.y, P.x, P.y) < 18 * TILE) { g.angry = true; g.target = P; g.returning = false; g.leash = Math.max(g.leash || 0, 30 * TILE); n++; }
     if (n && msg) UI.msg(msg, 'bad');
     return n;
   },

@@ -305,13 +305,13 @@ const Places = {
     if (d.lay === 'throne') {
       const ci = src.owner, ruled = G.civs[ci] && G.civs[ci].ruler === 'player';
       const court = G.people.filter(p => p.alive && !p.capanga && p.rank !== 'soldier' && (p.home.type === 'castle' && p.home.civ === ci || (p.council && Families.civOf(p) === ci)));
-      const ruler = ruled ? null : court.find(p => p.rank === 'ruler');
+      const ruler = ruled ? null : (court.find(p => p.id === G.civs[ci].rulerId) || court.find(p => p.rank === 'ruler')); // o soberano de agora
       // o soberano é bem defendido: muito mais vida e golpes pesados (um golpe de estado exige o melhor equipamento e todos os capangas)
       if (ruler) { const k0 = put(take(ruler), L.keeper, { still: true }); if (k0) { k0.maxHp = k0.hp = 900; k0.dmg = 28; k0.royal = true; } }
       let k = 0;
       for (const p of court.filter(p => p !== ruler).sort((a, b) => (b.rank === 'consort') - (a.rank === 'consort') || (b.rank === 'heir') - (a.rank === 'heir')).slice(0, L.staff.length)) put(take(p), L.staff[k++], { leash: 0.6 });
       // guarda real: de 4 a 8 soldados de elite, conforme a guarnição do reino (2 se o castelo é seu)
-      const spots = [[3, 9], [12, 9], [3, 5], [12, 5], [2, 2], [13, 2], [5, 9], [10, 9]];
+      const spots = [[3, 9], [12, 9], [3, 5], [12, 5], [3, 3], [12, 3], [5, 9], [10, 9]]; // fora das colunas
       const n = ruled ? 2 : Math.min(spots.length, 4 + Math.floor(((G.civs[ci] && G.civs[ci].garrison) || 0) / 4));
       for (const [x, y] of spots.slice(0, n)) {
         const [tx, ty] = at([x, y]); const g = Game.spawn('guard', (tx + 0.5) * TILE, (ty + 0.8) * TILE, { civ: ci, leash: 0.5, tag: 'room' }); g.placeNpc = true;
