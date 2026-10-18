@@ -2718,7 +2718,7 @@ const HELP_HTML = `
 <li>Cace cervos e javalis para obter <b>carne</b> e <b>couro</b>. Asse a carne na fogueira.</li>
 <li>Equipe <b>Elmo, Gibão, Calções e Botas</b>: cada peça soma defesa.</li>
 <li>Cada vila tem <b>Armazém, Madeireira, Pedreira e Ferreiro</b>, cada um vendendo e comprando o seu tipo de mercadoria. <b>Caçadores</b> andam pelos arredores vendendo peles, ossos, chifres e presas.</li>
-<li>Chegue perto de qualquer pessoa e aperte <b>E</b> (ou clique no balão 💬) para conversar: elogie, dê presentes (cada um tem um favorito), paquere, recrute <b>capangas</b> e equipe-os com armas e armaduras.</li>
+<li>Clique em qualquer pessoa perto de você (ou no balão 💬) para conversar — a tecla <b>E</b> é só para interagir com as coisas: elogie, dê presentes (cada um tem um favorito), paquere, recrute <b>capangas</b> e equipe-os com armas e armaduras.</li>
 <li>Com amizade e romance altos, peça em namoro; com um <b>Anel de Prata</b>, peça em casamento. Casados, durmam em casa para ter filhos.</li>
 <li>Com um <b>arco</b> equipado, clique para atirar flechas (ou segure Espaço para mirar no inimigo mais próximo).</li>
 <li>Explore as <b>cavernas</b> nas montanhas e ilhas: monstros, minérios raros, baús de tesouro e chefes com itens lendários.</li>

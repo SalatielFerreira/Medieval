@@ -442,7 +442,7 @@ const Game = {
   },
   // há alguém ou algo para interagir aqui perto?
   canInteract() {
-    if (this.nearestNpc() || this.nearestInteract()) return true;
+    if (this.nearestInteract() || (G.place && Places.nearFurn())) return true;
     if (G.ents.some(c => c.kind === 'caravan' && !c.dead && !c.hostileToPlayer && U.dist(c.x, c.y, P.x, P.y) < 2.4 * TILE)) return true;
     return !!this.boatAction();
   },
@@ -621,10 +621,10 @@ const Game = {
     }
     if (T_.hud <= 0) {
       T_.hud = 0.12;
-      const npc = this.nearestNpc();
-      const fu = npc ? null : Places.nearFurn();
-      const s = npc || fu || G.place ? null : this.nearestInteract();
-      const boat = s || npc || fu || G.place ? null : this.boatAction();
+      const npc = null; // pessoas: clique nelas (o aviso do E é só para as coisas)
+      const fu = Places.nearFurn();
+      const s = fu || G.place ? null : this.nearestInteract();
+      const boat = s || fu || G.place ? null : this.boatAction();
       UI.prompt(Urban.mode ? Urban.prompt() : G.placing ? `Posicionando <b>${BUILDINGS[G.placing].name}</b> — clique para construir · botão direito/Esc cancela`
         : P.fishing ? (P.fishing.state === 'bite' ? '<b>❗ O peixe mordeu! Clique ou aperte Espaço AGORA!</b>' : '🎣 Pescando... espere o peixe morder (andar recolhe a linha)')
         : npc ? `${npc.npc.name} - Interagir` : fu ? Places.furnLabel(fu) : s ? `${this.interactName(s)} - ${Places.enterable(s) ? 'Entrar' : 'Interagir'}` : boat ? 'Barco - Interagir' : null);
@@ -898,8 +898,6 @@ const Game = {
     return best;
   },
   interact() {
-    const n = this.nearestNpc();
-    if (n) { UI.showTalk(n.npc.id); return; }
     if (G.place) { const f = Places.nearFurn(); if (f) Places.use(f); return; }
     const s = this.nearestInteract();
     // lojas, taverna, capela, castelo, suas casas e empreendimentos: entra-se neles

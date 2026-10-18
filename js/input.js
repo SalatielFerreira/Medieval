@@ -242,7 +242,7 @@ const Touch = {
 const KEY_ACTIONS = [
   ['up', 'Andar para cima', 'KeyW'], ['down', 'Andar para baixo', 'KeyS'], ['left', 'Andar para a esquerda', 'KeyA'], ['right', 'Andar para a direita', 'KeyD'],
   ['run', 'Correr', 'ShiftLeft'], ['attack', 'Atacar e coletar', 'Space'], ['heavy', 'Golpe forte (segure e solte)', 'KeyV'], ['block', 'Bloquear com o escudo', 'KeyX'],
-  ['dodge', 'Esquivar', 'KeyZ'], ['interact', 'Conversar e interagir', 'KeyE'], ['eat', 'Comer a melhor comida', 'KeyF'], ['tool', 'Trocar a ferramenta', 'KeyQ'], ['dig', 'Pá: cavar ou aterrar', 'KeyY'],
+  ['dodge', 'Esquivar', 'KeyZ'], ['interact', 'Interagir com as coisas (portas, baús, prédios)', 'KeyE'], ['eat', 'Comer a melhor comida', 'KeyF'], ['tool', 'Trocar a ferramenta', 'KeyQ'], ['dig', 'Pá: cavar ou aterrar', 'KeyY'],
   ['ride', 'Montar no cavalo', 'KeyR'], ['orders', 'Ordens aos capangas', 'KeyT'], ['siege', 'Aríete ou catapulta (cerco)', 'KeyG'],
   ['quick1', 'Usar o bolso 1', 'Digit1'], ['quick2', 'Usar o bolso 2', 'Digit2'],
   ['inventory', 'Mochila', 'KeyI'], ['craft', 'Criar', 'KeyC'], ['build', 'Construir', 'KeyB'], ['kingdom', 'Portfólio', 'KeyK'], ['map', 'Mapa', 'KeyM'], ['diary', 'Diário', 'KeyJ'],
