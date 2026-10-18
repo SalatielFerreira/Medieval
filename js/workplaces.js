@@ -428,3 +428,24 @@ People.commoner = function (p) { return !!p && p.alive && p.rank === 'peasant' &
   const er1 = Places.enterRoom.bind(Places);
   Places.enterRoom = function (src) { if (src && src.owner === 'player' && BIZ_TYPES[src.type] && !Biz.workerCount(src)) Biz.autoHire(); return er1(src); };
 }
+
+// ------------------------------------------------------------------ mais ofícios que negociam (carpinteira, oleiro, defumador, adegueiro, armeiro)
+{
+  const has = list => list.filter(k => ITEMS[k]);
+  const MORE = {
+    carpentry: ['🪚', 'Carpintaria', 'carpenter', ['plank', 'beam', 'nails', 'wood', 'hardwood', 'resin', 'rope']],
+    pottery:   ['🏺', 'Olaria', 'potter', ['clay_pot', 'brick', 'clay', 'sand']],
+    smokery:   ['🥓', 'Defumadouro', 'smoker', ['smoked_meat', 'smoked_fish', 'sausage', 'meat', 'salt']],
+    cellarshop:['🍷', 'Adega', 'vintner', ['wine', 'aged_wine', 'beer', 'mead']],
+  };
+  for (const [k, [icon, name, rank, list]] of Object.entries(MORE)) {
+    const sells = has(list);
+    SHOPS[k] = { name, icon, rank, sells, buys: it => !!it && sells.includes(it.key) };
+    if (RANKS[rank]) RANKS[rank].shop = k;
+    if (!People.PURSE[rank]) People.PURSE[rank] = [180, 520];
+  }
+  RANKS.armorer.shop = 'smith'; if (!People.PURSE.armorer) People.PURSE.armorer = [250, 700];
+  const PLAYER_SHOP = { carpentry: 'carpentry', kiln: 'pottery', smokehouse: 'smokery', cellar: 'cellarshop', armory: 'smith' };
+  const so0 = Work.shopOf;
+  Work.shopOf = s => so0(s) || (s && s.owner === 'player' && PLAYER_SHOP[s.type]) || null;
+}

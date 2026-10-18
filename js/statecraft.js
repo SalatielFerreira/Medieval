@@ -147,3 +147,27 @@ const Abdicate = {
   const sv0 = Game.save.bind(Game);
   Game.save = function (...a) { for (const e of Envoy.list()) e.now = true; Envoy.update(); return sv0(...a); };
 }
+
+// ------------------------------------------------------------------ romance com qualquer pessoa solteira do sexo oposto
+// donos de loja, andarilhos, reis, rainhas, cavaleiros... todos, menos quem já é casado (e os seus parentes).
+// Quem tem um cargo (soberano, corte, padre, soldado, dono de loja, porto) casa com você mas continua no posto.
+{
+  People.canRomance = function (p) {
+    return !!p && p.alive && this.isAdult(p) && P.age >= 16 && !p.kin && p.rank !== 'child' && p.sex !== P.sex && (p.spouse === null || p.spouse === undefined || p.spouse === 'player');
+  };
+  const pr0 = People.propose.bind(People);
+  People.propose = function (p) {
+    if (!p) return pr0(p);
+    const noble = NOBLE_RANKS.includes(p.rank) || People.isCourt(p);
+    const keep = noble || ['priest', 'soldier', 'knight'].includes(p.rank) || !!p.shop || !!p.port;
+    const was = { home: p.home, rank: p.rank, fam: p.fam, surname: p.surname, maiden: p.maiden };
+    const r = pr0(p);
+    if (r && p.spouse === 'player' && keep) {
+      p.home = was.home; p.rank = was.rank;
+      if (noble) { p.fam = was.fam; p.surname = was.surname; p.maiden = was.maiden; } // a casa real continua a dela
+      r.text = 'SIM! Mil vezes sim! Mas não posso abandonar os meus deveres: continuo no meu posto, e você será sempre bem-vindo.';
+      r.note = `${People.full(p)} agora é seu cônjuge (e continua como ${People.title(p)}).`;
+    }
+    return r;
+  };
+}
