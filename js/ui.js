@@ -1103,9 +1103,9 @@ const UI = {
           <span class="pbar"><i style="left:50%;width:${Math.abs(r) / 2}%;${r < 0 ? 'transform:translateX(-100%);background:#c0392b' : 'background:#5fd35f'}"></i><em></em></span>
           <span class="rlab">${r} ${war ? '<span class="badge">GUERRA</span>' : al ? '<span class="tag">ALIADO</span>' : ''}</span>
           <span class="act-row">${o.ruler === 'player' ? '<small class="muted">seu reino</small>' : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="gift" ${c.treasury >= 100 ? '' : 'disabled'} title="Presentes: +12 de relação">🎁 100</button>
-            ${war ? `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="peace">📜 Mensageiro de paz</button>`
+            ${war ? `<button class="danger" data-act="wbattle" data-c="${ci}" data-o="${o.id}">⚔️ Partir para a batalha</button><button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="peace">📜 Mensageiro de paz</button>`
               : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="ally" ${!al && r >= 40 && c.treasury >= 200 ? '' : 'disabled'} title="Exige relação 40+">🤝 Aliança 200</button>
-                 <button class="danger" data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="war">⚔️ Guerra</button>`}`}</span></div>`;
+                 <button class="danger" data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="war">📜 Mensageiro de guerra</button>`}`}</span></div>`;
       }).join('') + '</div>';
     } else if (S.ksub === 'brasao' && Heraldry.lead(ci) !== ci) {
       const L = Heraldry.lead(ci);
@@ -1936,7 +1936,7 @@ const UI = {
     if (!c.atWar) {
       h += `<button data-act="tribute" data-c="${ci}" ${P.gold >= 100 ? '' : 'disabled'}>🎁 Oferecer tributo — 100 🪙 (+8 relação)</button>
         <button data-act="claim" data-c="${ci}" ${canClaim ? '' : 'disabled'}>📜 Reivindicar o trono pela diplomacia — ${need.gold} 🪙 (exige relação ${need.rel}+)</button>
-        <button class="danger" data-act="war" data-c="${ci}">⚔️ Declarar guerra e sitiar o castelo</button>`;
+        <button class="danger" data-act="war" data-c="${ci}">📜 Mensageiro de guerra (declaração ou ultimato)</button>`;
     } else {
       h += `<button data-act="peace" data-c="${ci}">📜 Mensageiro de paz</button>`;
       if (!G.siege) h += `<button class="danger" data-act="siege" data-c="${ci}">⚔️ Iniciar o cerco</button>`;

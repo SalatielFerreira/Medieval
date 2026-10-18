@@ -10,7 +10,7 @@ const FORMATIONS = {
   defensiva: { name: 'Defensiva',        icon: '🛡️', desc: 'Espera o inimigo chegar perto; os arqueiros atiram primeiro. Mais vida.', aggro: 13, hp: 1.15 },
 };
 const WAR_CAT_COST = 150;   // cada catapulta montada pelo tesouro
-const WAR_MAX = 40;         // soldados de cada lado no campo (o resto fica de reserva)
+const WAR_MAX = 60;         // soldados de cada lado no campo (o resto fica de reserva)
 
 const War = {
   // ---------------------------------------------------------------- convocação
@@ -104,8 +104,26 @@ const War = {
   },
 
   // ---------------------------------------------------------------- o campo de batalha
+  // pedaço de mar aberto bem grande, só para as batalhas (cai para um menor se o mundo não tiver tanto mar livre)
+  zone() {
+    const W = WORLD_W, H = WORLD_H, m = 12;
+    const bad = new Int32Array((W + 1) * (H + 1));
+    for (let y = 0; y < H; y++) { let row = 0; for (let x = 0; x < W; x++) { const i = y * W + x; if (World.tiles[i] !== T.DEEP || World.sgrid[i] >= 0) row++; bad[(y + 1) * (W + 1) + x + 1] = bad[y * (W + 1) + x + 1] + row; } }
+    const sum = (x, y, ww, hh) => bad[(y + hh) * (W + 1) + x + ww] - bad[y * (W + 1) + x + ww] - bad[(y + hh) * (W + 1) + x] + bad[y * (W + 1) + x];
+    let best = null;
+    for (const [ww, hh] of [[196, 126], [170, 110], [150, 100], [132, 96]]) {
+      for (let y = m; y + hh + m < H && !best; y += 4) for (let x = m; x + ww + m < W; x += 4) {
+        if (sum(x, y, ww, hh)) continue;
+        if (World.islands.some(is => x < is.x + is.r + 4 && x + ww > is.x - is.r - 4 && y < is.y + is.r + 4 && y + hh > is.y - is.r - 4)) continue;
+        best = { x, y, w: ww, h: hh }; break;
+      }
+      if (best) break;
+    }
+    // (refeito a cada batalha: o mar livre pode mudar)
+    return best;
+  },
   start() {
-    const wc = G.warCall, Z = Places.area();
+    const wc = G.warCall, Z = this.zone() || Places.area();
     if (!wc) return;
     UI.close();
     if (!Z) { this.simulate(wc); return; } // mundo sem mar em volta: a batalha é decidida no conselho
@@ -121,7 +139,7 @@ const War = {
     if (Routine.phase() !== 'day') G.time = NIGHT_LEN + (8 - 6) / 15 * DAYLIGHT_LEN; // a marcha leva a noite: a luta começa de manhã
     P.mounted = false; P.sailing = false; P.fishing = null;
     // o terreno: campo aberto cercado de mata
-    const FW = Math.min(100, Z.w - 24), FH = Math.min(62, Z.h - 24);
+    const FW = Math.min(172, Z.w - 24), FH = Math.min(102, Z.h - 24); // campo bem grande
     const fx0 = Z.x + ((Z.w - FW) >> 1), fy0 = Z.y + ((Z.h - FH) >> 1);
     const keep = Places.carve(Z.x, Z.y, Z.w, Z.h);
     const rng = U.mulberry32((G.day * 977 + side * 31 + enemy) >>> 0);
@@ -148,13 +166,13 @@ const War = {
         if (f.block) for (let i = 0; i < f.w; i++) World.solid[World.idx(f.x + i, f.y)] = 1;
       }
     };
-    camp(fx0 + 4, 1, side); camp(fx0 + FW - 6, -1, enemy);
+    camp(fx0 + Math.round(FW * 0.38) - 22, 1, side); camp(fx0 + Math.round(FW * 0.62) + 20, -1, enemy);
     // os exércitos
     const cy = fy0 + FH / 2, f = FORMATIONS[cfg.form] || FORMATIONS.linha;
-    this.deploy(side, mine, fx0 + FW * 0.3, cy, 1, wc.own ? f : FORMATIONS.linha, 'player', !wc.own);
-    this.deploy(enemy, foe, fx0 + FW * 0.7, cy, -1, FORMATIONS.linha, 'enemy', true);
+    this.deploy(side, mine, fx0 + FW * 0.38, cy, 1, wc.own ? f : FORMATIONS.linha, 'player', !wc.own);
+    this.deploy(enemy, foe, fx0 + FW * 0.62, cy, -1, FORMATIONS.linha, 'enemy', true);
     // o herói: se o reino é seu, você é o rei e fica no centro do seu exército
-    P.x = (fx0 + FW * 0.3 - 7) * TILE; P.y = cy * TILE; P.dir = 1; P.hp = Math.max(P.hp, P.maxHp * 0.6);
+    P.x = (fx0 + FW * 0.38 - 7) * TILE; P.y = cy * TILE; P.dir = 1; P.hp = Math.max(P.hp, P.maxHp * 0.6);
     if (cfg.capangas) for (const a of Game.allies()) { const s = freeSpotNear(P.x + 30, P.y, 60); a.x = s.x; a.y = s.y; a.target = null; }
     if (!cfg.capangas) for (const a of Game.allies()) { a.benched = true; a.sleeping = true; }
     if (!wc.own) G.place.prevWar = G.civs[enemy].atWar;
