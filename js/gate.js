@@ -127,7 +127,7 @@ const Gate = {
     let got = d.toll, line = `🐫 Caravana de ${CIV_DEFS[c.from].short} passou${d.toll ? ` e pagou ${d.toll} 🪙` : ''}.`;
     if (d.toll > tol) { line += ' (reclamou do preço)'; Game.addRelation(c.from, -1); }
     else v.prosper = Math.min(PROSPER_MAX, v.prosper + 0.25); // comércio que passa aquece a vila
-    if (d.search && Math.random() < 0.15) { const f = U.rint(40, 90); got += f; line += ` Na revista, contrabando apreendido: multa de ${f} 🪙.`; }
+    if (d.search && Shops.keeper(s) && Math.random() < 0.15) { const f = U.rint(40, 90); got += f; line += ` Na revista, contrabando apreendido: multa de ${f} 🪙.`; }
     d.cars++;
     if (mine && got) { P.gold += got; d.earned += got; d.month += got; }
     this.log(s, line);
@@ -146,7 +146,7 @@ const Gate = {
       // revista: ladrões barrados e contrabando de viajantes
       if (d.search && k && Math.random() < 0.3) { const f = U.rint(20, 50); got += f; parts.push(`🦹 O porteiro barrou um ladrão de fora (multa de ${f} 🪙).`); if (typeof Rumors !== 'undefined') Rumors.atV(s.village, `O porteiro de ${v.name} barrou um ladrão na entrada da vila.`); }
       // o salário do porteiro (pago pelo chefe)
-      if (mine && k) { const wage = 5; got -= wage; parts.push(`💰 Salário d${k.sex === 'f' ? 'a porteira' : 'o porteiro'}: ${wage} 🪙.`); }
+      if (mine && k) { const wage = Gate.WAGE || 5; got -= wage; parts.push(`🪖 Soldo d${k.sex === 'f' ? 'a porteira' : 'o porteiro'}: ${wage} 🪙.`); }
       if (mine) { P.gold = Math.max(0, P.gold + got); d.earned += Math.max(0, got); }
       for (const t of parts) this.log(s, t);
       d.lastMonth = d.month + got; d.month = 0; d.cars = 0;
@@ -414,4 +414,97 @@ Object.assign(Gate, {
   };
   const pr0 = Urban.prompt.bind(Urban);
   Urban.prompt = function () { if (this.mode === 'c:vwall') return '🧱 <b>Muralha</b> — clique e arraste · 1 pedra por trecho · só o chefe da vila · botão direito/Esc encerra'; return pr0(); };
+}
+
+// ------------------------------------------------------------------ demolir e mudar de lugar qualquer muralha sua
+// O chefe demole e muda de lugar as muralhas e os portões da vila dele, dentro e fora dela; os seus muros de pedra e de
+// madeira valem em qualquer lugar. No modo Demolir, um clique num trecho de muro derruba na hora e arrastar derruba vários.
+{
+  const chiefOf = s => { const v = World.villages[s.village]; return !!v && v.lord === 'player'; };
+  const mv0 = Urban.movable.bind(Urban);
+  Urban.movable = function (s) { if (s && (s.type === 'vwall' || s.type === 'vgate') && chiefOf(s)) return null; return mv0(s); };
+  const pe2 = Urban.placeErr.bind(Urban);
+  Urban.placeErr = function (def, tx, ty, s, civic) {
+    if (s && s.type === 'vwall' && chiefOf(s)) { const b = World.blocker(World.idx(tx, ty)); if (b && b !== s) return 'Já há uma construção aqui'; return b === s ? null : Gate.wallErr(tx, ty); }
+    if (s && s.type === 'vgate' && chiefOf(s)) { const b = World.blocker(World.idx(tx, ty)); if (b && b !== s) return 'Já há uma construção aqui'; return Gate.placeErr(tx, ty); }
+    return pe2(def, tx, ty, s, civic);
+  };
+  const rl1 = Urban.relocate.bind(Urban);
+  Urban.relocate = function (s, nx, ny, quiet) { const r = rl1(s, nx, ny, quiet); if (s.type === 'vgate') { delete s._axis; Gate.apply(s); } return r; };
+  // demolir muros: na hora e arrastando
+  const knock = s => { if (!Gate.wallPiece(s) || Urban.movable(s)) return false; Urban.doDemolish(s); return true; };
+  const ck1 = Urban.click.bind(Urban);
+  Urban.click = function () {
+    if (this.mode === 'u:demolish') { const t = this.mouseTile(), s = this.structAt(t.x, t.y); if (Gate.wallPiece(s) && !this.movable(s)) { knock(s); this.drag = true; this.last = t; return; } }
+    return ck1();
+  };
+  const up1 = Urban.update.bind(Urban);
+  Urban.update = function () {
+    if (this.mode === 'u:demolish' && this.drag) {
+      const t = this.mouseTile(), from = this.last || t;
+      if (!this.last || t.x !== this.last.x || t.y !== this.last.y) {
+        const n = Math.max(Math.abs(t.x - from.x), Math.abs(t.y - from.y));
+        for (let k = 1; k <= n; k++) { const x = Math.round(from.x + (t.x - from.x) * k / n), y = Math.round(from.y + (t.y - from.y) * k / n); knock(this.structAt(x, y)); }
+        this.last = t;
+      }
+      return;
+    }
+    return up1();
+  };
+  const pr1 = Urban.prompt.bind(Urban);
+  Urban.prompt = function () { if (this.mode === 'u:demolish') return '💥 <b>Demolir</b> — clique numa construção · muros: clique ou arraste para derrubar na hora · botão direito/Esc encerra'; return pr1(); };
+}
+
+// ------------------------------------------------------------------ o porteiro é um soldado contratado pelo chefe
+// Ninguém assume o portão sozinho: o chefe escolhe um morador e o contrata como soldado porteiro (alistamento de
+// 40 🪙 e soldo de 8 🪙 por mês). Ele recebe elmo, cota de malha e espada. Sem porteiro, o portão não revista, não
+// prende procurados e não segura os saques.
+{
+  Shops.noAuto = new Set(['vgate']);
+  RANKS.gatekeeper.m = 'Soldado Porteiro'; RANKS.gatekeeper.f = 'Soldada Porteira';
+  const HIRE = 40, WAGE = 8;
+  Gate.HIRE = HIRE; Gate.WAGE = WAGE;
+  const op0 = People.openVacancies.bind(People);
+  People.openVacancies = function () { return op0().filter(o => !(World.structs[o.sid] && World.structs[o.sid].type === 'vgate')); };
+  Gate.candidates = function (s) {
+    return People.residents(s.village).filter(p => People.commoner(p) && !p.shop && !p.job && !p.capanga && p.age >= 18 && p.age <= 50)
+      .sort((a, b) => (b.str || 0) - (a.str || 0) || b.aff - a.aff).slice(0, 5);
+  };
+  Gate.hire = function (s, p) {
+    if (!this.mine(s) || Shops.keeper(s) || !p || !People.commoner(p)) return;
+    if (P.gold < HIRE) { UI.msg(`O alistamento custa ${HIRE} 🪙.`, 'bad'); return; }
+    P.gold -= HIRE; p.rank = 'gatekeeper'; p.shop = s.okey; p.met = true;
+    p.equip = Object.assign({}, p.equip || {}, ITEMS.iron_helm ? { head: 'iron_helm' } : {}, ITEMS.chainmail ? { torso: 'chainmail' } : {}, ITEMS.iron_sword ? { weapon: 'iron_sword' } : {});
+    const e = G.spawned.get(p.id); if (e) { e.dead = true; G.spawned.delete(p.id); }
+    this.log(s, `🪖 ${People.full(p)} foi contratad${p.sex === 'f' ? 'a' : 'o'} como ${RANKS.gatekeeper[p.sex].toLowerCase()} (${HIRE} 🪙 de alistamento, ${WAGE} 🪙 por mês).`);
+    UI.msg(`🪖 ${People.full(p)} agora guarda o portão de ${this.village(s).name}.`, 'gold'); Sound.play('coin');
+  };
+  Gate.fire = function (s) {
+    const k = Shops.keeper(s); if (!k || !this.mine(s)) return;
+    k.shop = null; k.rank = 'peasant'; k.equip = Object.assign({}, k.equip || {}, { head: null, torso: null, weapon: null });
+    const e = G.spawned.get(k.id); if (e) { e.dead = true; G.spawned.delete(k.id); }
+    People.addAff(k, -5);
+    this.log(s, `${People.full(k)} foi dispensad${k.sex === 'f' ? 'a' : 'o'} do portão.`);
+  };
+  // a janela do portão: contratar ou dispensar o porteiro
+  const open0 = Gate.open.bind(Gate);
+  Gate.open = function (sid) {
+    open0(sid);
+    const s = World.structs[sid], pb = UI.panel && UI.panel.querySelector('.pb'); if (!s || !pb || !this.mine(s)) return;
+    const k = Shops.keeper(s), div = document.createElement('div'); div.className = 'card'; div.style.marginTop = '10px';
+    if (k) div.innerHTML = `<div class="sec">🪖 ${People.title(k)}: ${UI.esc(People.full(k))}</div><p class="dt-desc">Soldo de ${WAGE} 🪙 por mês, pago por você. Fica de guarda no portão, abre para quem pede passagem, revista as cargas e prende os procurados.</p><div class="act-row"><button data-act="gate" data-s="${s.id}" data-k="fire" data-v="1">Dispensar</button></div>`;
+    else {
+      const c = this.candidates(s);
+      div.innerHTML = `<div class="sec">🪖 Contratar um soldado porteiro</div><p class="dt-desc">Sem porteiro, o portão não revista, não prende procurados e não segura os saques. Alistamento de ${HIRE} 🪙 e soldo de ${WAGE} 🪙 por mês; o contratado recebe elmo, cota de malha e espada.</p>
+        ${c.length ? `<div class="act-row">${c.map(p => `<button data-act="gate" data-s="${s.id}" data-k="hire" data-v="${p.id}" ${P.gold >= HIRE ? '' : 'disabled'}>${UI.esc(People.full(p))} · ${p.age} anos${p.str ? ` · força ${p.str}` : ''}</button>`).join('')}</div>` : '<p class="muted">Ninguém disponível na vila agora (só camponeses adultos, sem emprego).</p>'}`;
+    }
+    pb.insertBefore(div, pb.children[1] || null);
+  };
+  const act1 = Gate.act.bind(Gate);
+  Gate.act = function (dd) {
+    const s = World.structs[+dd.s]; if (!s) return;
+    if (dd.k === 'hire') { this.hire(s, G.people[+dd.v]); this.open(s.id); return; }
+    if (dd.k === 'fire') { this.fire(s); this.open(s.id); return; }
+    return act1(dd);
+  };
 }
