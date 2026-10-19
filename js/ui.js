@@ -410,6 +410,41 @@ const UI = {
     const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
     drawHuman(g, 60, 158, Object.assign(playerLook(), { scale: 3.3, dir: 1, moving: false, swing: 0, rod: false }));
   },
+  // espelho de casa: muda o visual do herói (penteado, barba, cor do cabelo, túnica e calça)
+  showMirror() {
+    P.style = P.style || {};
+    const lk = playerLook(), fem = P.sex === 'f';
+    const cols = { tunic: ['#3d6b8f', '#8f3d5e', '#4a7a3a', '#8e1f2a', '#6a4a8a', '#c08a2a', '#2a2a32', '#e8e0d0', '#2a5a6a', '#a0522d'], pants: ['#4a3a2a', '#3a3a40', '#2a3a5a', '#5a4a3a', '#1e1e22', '#6a5a40'] };
+    const hairCols = Object.entries(HAIR_COLORS).concat([['branco', '#e8e4dc']]);
+    const cur = { hair: lk.hairStyle, beard: lk.beardStyle };
+    const name = (L, k) => (L.find(x => x[0] === k) || L[0])[1];
+    const row = (k, label, val) => `<div class="mir-row"><span>${label}</span><div class="picker"><button data-act="mircyc" data-k="${k}" data-d="-1">‹</button><b>${val}</b><button data-act="mircyc" data-k="${k}" data-d="1">›</button></div></div>`;
+    const sw = (c) => `<i class="mir-sw" style="background:${c}"></i>`;
+    const hcName = (hairCols.find(x => x[1] === P.hairBase) || ['personalizada'])[0];
+    const body = `<div class="mirror"><canvas id="mirDoll" width="150" height="200"></canvas><div class="mir-opts">
+      ${row('hair', '💇 Penteado', name(HAIR_STYLES, cur.hair))}
+      ${fem ? '' : row('beard', '🧔 Barba', name(BEARD_STYLES, cur.beard))}
+      ${row('hcol', '🎨 Cor do cabelo', sw(P.hairBase || '#4a2a12') + ' ' + hcName)}
+      ${row('tunic', '👕 Túnica / vestido', sw(P.style.tunic || lk.body))}
+      ${row('pants', '👖 Calça', sw(P.style.pants || '#4a3a2a'))}
+      <small class="muted">Roupas e armaduras equipadas aparecem por cima destas cores.</small></div></div>`;
+    this.open('Espelho', body, 'showMirror', [], 'Mude o seu visual');
+    const cv = document.getElementById('mirDoll'); if (!cv) return;
+    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+    drawHuman(g, 75, 188, Object.assign(playerLook(), { scale: 4, dir: 1, moving: false, swing: 0, rod: false, weapon: null, shield: null }));
+    this.mirCols = cols; this.mirHair = hairCols;
+  },
+  mirrorCycle(k, d) {
+    P.style = P.style || {};
+    const step = (L, v) => L[(L.indexOf(v) + d + L.length) % L.length] ?? L[0];
+    const lk = playerLook();
+    if (k === 'hair') P.style.hair = step(HAIR_STYLES.map(x => x[0]), lk.hairStyle);
+    if (k === 'beard') P.style.beard = step(BEARD_STYLES.map(x => x[0]), lk.beardStyle);
+    if (k === 'hcol') P.hairBase = step(this.mirHair.map(x => x[1]), P.hairBase);
+    if (k === 'tunic') P.style.tunic = step(this.mirCols.tunic, P.style.tunic || lk.body);
+    if (k === 'pants') P.style.pants = step(this.mirCols.pants, P.style.pants || '#4a3a2a');
+    this.portraitKey = ''; this.showMirror();
+  },
   // itens na ordem escolhida pelo jogador (arrastando); os novos vão para o fim, por categoria
   invKeys(order) {
     const byCat = (a, b) => order.indexOf(ITEMS[a].cat) - order.indexOf(ITEMS[b].cat) || ITEMS[a].name.localeCompare(ITEMS[b].name);
@@ -1551,6 +1586,7 @@ const UI = {
       <div class="rest-acts">
         ${s.tenant !== undefined && s.tenant !== null ? '' : act('main', `data-act="sleep" data-s="${sid}"`, '🛏️', 'Dormir até o amanhecer', `${hurt ? 'Recupera toda a vida · ' : ''}salva no espaço ${G.slot}`)}
         ${s.tenant !== undefined && s.tenant !== null ? '' : act('', `data-act="chest" data-s="${sid}"`, '📦', `Baú da ${place}`, stored ? `${stored} itens · ${kinds} tipos guardados` : 'Vazio · guarde o que pesa')}
+        ${s.tenant !== undefined && s.tenant !== null ? '' : act('', 'data-act="mirror"', '🪞', 'Espelho', 'Mudar penteado, barba, cor do cabelo e da roupa')}
       </div>${Rent.html(s)}</div>`;
     this.open(cabin ? 'Cabana' : s.type === 'manor' ? 'Casarão' : 'Casa', body, 'showRest', [sid], 'Seu lar: descanse e guarde itens');
   },
@@ -2638,6 +2674,8 @@ const UI = {
       case 'rentin': Rent.rentTo(+d.s, +d.f); break;
       case 'rentout': Rent.evict(+d.s); break;
       case 'steal': Lifesim.steal(d.t, +d.v, +d.o); return;
+      case 'mirror': this.showMirror(); return;
+      case 'mircyc': this.mirrorCycle(d.k, +d.d); return;
       case 'lvpt': Game.spendPoint(d.k); if (P.statPts > 0) this.showLevelUp(); else this.close(); return;
       case 'fbburn': { const sid = +d.s; Dialog.confirm({ icon: '🔥', title: 'Incendiar', text: 'Incendiar o empreendimento desta família? Ela vai virar sua inimiga.', ok: 'Incendiar', danger: true }, () => FamilyCrime.burn(sid)); return; }
       case 'fbseize': { const sid = +d.s; Dialog.confirm({ icon: '🗝️', title: 'Tomar o empreendimento', text: 'Tomar este empreendimento para você? A família não vai perdoar.', ok: 'Tomar', danger: true }, () => FamilyCrime.seize(sid)); return; }

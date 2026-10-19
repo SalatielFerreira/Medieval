@@ -18,7 +18,7 @@ const SURNAMES = ['Ferreira', 'Monteiro', 'Pereira', 'Carvalho', 'Moura', 'Lobo'
   'Paiva', 'Pedrosa', 'Peixoto', 'Pestana', 'Prado', 'Quaresma', 'Queirós', 'Rebelo', 'Reis', 'Resende', 'Sampaio', 'Sarmento',
   'Seixas', 'Siqueira', 'Soares', 'Tavares', 'Torres', 'Vaz', 'Veloso', 'Viana', 'Vieira', 'Xavier', 'Bulhão', 'Cordeiro', 'Espinosa',
   'Fagundes', 'Lusarte', 'Mascarenhas', 'Ormonde', 'Portela', 'Sardinha', 'Toscano', 'Valadares', 'Zarco'];
-const HAIR_COLORS = { castanho: '#5a3a1a', preto: '#1e1a18', loiro: '#d9b25a', ruivo: '#b0482a' };
+const HAIR_COLORS = { castanho: '#5a3a1a', preto: '#1e1a18', loiro: '#d9b25a', ruivo: '#b0482a', 'castanho claro': '#8a6038', acaju: '#6e2418', 'loiro claro': '#ecd9a0', 'preto-azulado': '#1c2230' };
 
 const RANKS = {
   ruler:     { m: 'Rei', f: 'Rainha', noble: true, order: 1 },
@@ -103,8 +103,8 @@ const People = {
       dating: false, engaged: false, capanga: false, hostile: false, kin: o.kin || null,
       talkDay: -1, complDay: -1, flirtDay: -1, gifts: 0, giftDay: -1, met: false,
       equip: { weapon: null, head: null, torso: null, legs: null, feet: null },
-      hairStyle: o.hairStyle || U.pick(sex === 'm' ? ['short', 'short', 'bald', 'curly', 'long', 'mohawk', 'ponytail'] : ['long', 'long', 'braids', 'bun', 'ponytail', 'curly', 'short']),
-      beardStyle: o.beardStyle || (sex === 'm' ? U.pick(['none', 'short', 'full', 'mustache', 'goatee', 'long']) : 'none'),
+      hairStyle: o.hairStyle || (o.rank === 'priest' && sex === 'm' && Math.random() < 0.6 ? 'monk' : null) || U.pick(sex === 'm' ? ['short', 'short', 'sidepart', 'bald', 'curly', 'long', 'shoulder', 'tied', 'spiky', 'undercut', 'topknot', 'afro', 'dreads', 'mohawk', 'ponytail'] : ['long', 'wavy', 'wavy', 'shoulder', 'bob', 'pixie', 'braids', 'crownbraid', 'pigtails', 'tied', 'bun', 'ponytail', 'curly', 'afro', 'sidepart']),
+      beardStyle: o.beardStyle || (sex === 'm' ? U.pick(['none', 'stubble', 'short', 'full', 'mustache', 'goatee', 'long', 'forked', 'braided', 'handlebar', 'vandyke', 'chinstrap', 'mutton']) : 'none'),
     };
     G.people.push(p);
     return p;

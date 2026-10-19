@@ -89,7 +89,16 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
-## Novidades: vida real para você e para os NPCs, heróis dos reinos
+## Novidades: visual das pessoas
+
+- **22 penteados:** curto, longo, longo ondulado, médio, chanel, joãozinho, repartido de lado, rabo de cavalo, rabo baixo, maria-chiquinha, tranças, trança coroa, coque, coque no alto, cacheado, black power, dreadlocks, espetado, raspado dos lados, moicano, tonsura de monge e careca.
+- **13 barbas:** sem barba, por fazer, curta, cheia, longa, bifurcada, trançada, bigode, bigode guidão, cavanhaque, pera, contorno e costeletas.
+- **Mais cores de cabelo:** castanho claro, acaju, loiro claro e preto-azulado.
+- **Visual feminino caprichado:** corpete com cintura e busto, vestido longo e rodado que balança ao andar, faixa com laço, ombro bufante, cílios, sombra, lábios, brincos e flores no cabelo.
+- **Espelho:** em casa, mude penteado, barba, cor do cabelo e cores da roupa a qualquer momento.
+- Os moradores nascem com todos esses estilos, e alguns padres usam tonsura.
+
+## Novidades anteriores: vida real para você e para os NPCs, heróis dos reinos
 
 - **Gravidez de verdade:** dura 9 meses, a barriga aparece aos poucos, e o parto tem risco. Uma parteira (moradora mais velha da vila, contratada na conversa por 40 🪙) e um enxoval (vendido no armazém) deixam o parto bem mais seguro. Às vezes nascem gêmeos.
 - **Funerais e luto:** quem morre ganha cortejo até a capela e túmulo com nome. A família fica de luto, mais triste e trabalhando menos. Comparecer ao enterro aumenta a amizade.

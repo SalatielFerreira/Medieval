@@ -3617,3 +3617,12 @@ body.small #surrenderBtn { top: calc(8px + env(safe-area-inset-top)); padding: 0
 .hero-bar i { display: block; height: 100%; background: linear-gradient(90deg, #b8860b, #ffd76a); }
 .hero-fame { text-align: center; font-weight: 700; color: #ffd76a; display: flex; flex-direction: column; }
 .hero-fame small { font-weight: 400; opacity: .7; font-size: 10px; }
+
+/* espelho (casa → mudar o visual) */
+.mirror { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.mirror canvas { background: radial-gradient(circle at 50% 40%, rgba(255, 220, 160, .14), rgba(0, 0, 0, .25)); border: 1px solid rgba(214, 174, 96, .3); border-radius: 12px; }
+.mir-opts { display: flex; flex-direction: column; gap: 8px; min-width: 260px; flex: 1; }
+.mir-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mir-row .picker { display: flex; align-items: center; gap: 6px; }
+.mir-row .picker b { min-width: 140px; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.mir-sw { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .4); }

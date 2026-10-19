@@ -6,8 +6,11 @@ const MENU_FILL_MQ = '(max-width: 1100px) and (max-height: 700px) and (orientati
 // computador: altura comum das janelas do menu (inicial, novo jogo e jogos salvos)
 const MENU_DESK_MQ = '(min-width: 1101px)', MENU_DESK_H = 520;
 const SKIN_TONES = ['#f5d3ae', '#f0c896', '#d9a676', '#b07a4c', '#7a4e2e'];
-const HAIR_STYLES = [['short', 'Curto'], ['long', 'Longo'], ['ponytail', 'Rabo de cavalo'], ['braids', 'Tranças'], ['curly', 'Cacheado'], ['bun', 'Coque'], ['mohawk', 'Moicano'], ['bald', 'Careca']];
-const BEARD_STYLES = [['none', 'Sem barba'], ['short', 'Curta'], ['full', 'Cheia'], ['mustache', 'Bigode'], ['goatee', 'Cavanhaque'], ['long', 'Longa']];
+const HAIR_STYLES = [['short', 'Curto'], ['long', 'Longo'], ['wavy', 'Longo ondulado'], ['shoulder', 'Médio'], ['bob', 'Chanel'], ['pixie', 'Joãozinho'], ['sidepart', 'Repartido de lado'],
+  ['ponytail', 'Rabo de cavalo'], ['tied', 'Rabo baixo'], ['pigtails', 'Maria-chiquinha'], ['braids', 'Tranças'], ['crownbraid', 'Trança coroa'], ['bun', 'Coque'], ['topknot', 'Coque no alto'],
+  ['curly', 'Cacheado'], ['afro', 'Black power'], ['dreads', 'Dreadlocks'], ['spiky', 'Espetado'], ['undercut', 'Raspado dos lados'], ['mohawk', 'Moicano'], ['monk', 'Tonsura de monge'], ['bald', 'Careca']];
+const BEARD_STYLES = [['none', 'Sem barba'], ['stubble', 'Por fazer'], ['short', 'Curta'], ['full', 'Cheia'], ['long', 'Longa'], ['forked', 'Bifurcada'], ['braided', 'Trançada'],
+  ['mustache', 'Bigode'], ['handlebar', 'Bigode guidão'], ['goatee', 'Cavanhaque'], ['vandyke', 'Pera'], ['chinstrap', 'Contorno'], ['mutton', 'Costeletas']];
 const TUNIC_COLORS = ['#3d6b8f', '#8f3d5e', '#4a7a3a', '#8e1f2a', '#6a4a8a', '#a8791a', '#5a5a62', '#2a4a6a', '#e0d4b8', '#c8642a'];
 const PANTS_COLORS = ['#4a3a2a', '#2a2a30', '#3a4a2a', '#5a2a2a', '#6b5a45', '#2a3a5a', '#8a7a5a', '#4a2a4a', '#2a4a4a', '#a89880'];
 
