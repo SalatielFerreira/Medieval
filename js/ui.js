@@ -762,7 +762,7 @@ const UI = {
     const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .ar-bet, .ar-tier, .ar-vs, .ar-tour') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
     const deepList = (el, tiles) => lists(el, tiles).sort((x, y) => y.children.length - x.children.length)[0] || null;
     if (!small) {
-      const on = (nav.startsWith('d:') && nav !== 'd:rank') || nav.startsWith('s:') || nav.startsWith('c:') || nav.startsWith('a:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
+      const on = (nav.startsWith('d:') && nav !== 'd:rank' && nav !== 'd:heroes') || nav.startsWith('s:') || nav.startsWith('c:') || nav.startsWith('a:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
       body.classList.toggle('kfit', on); box.classList.toggle('kdesk', on);
       if (on) box.dataset.nav = nav;
       return;
@@ -1549,9 +1549,9 @@ const UI = {
         <div class="rh-t"><small class="rh-time">🕯️ ${hh} · ${Calendar.full(G.day)}</small><b>${cabin ? 'Sua Cabana' : s.type === 'manor' ? 'Seu Casarão' : 'Sua Casa'}</b><small>${line}</small>
           <div class="rh-chips">${chip('❤️', Math.round(P.hp) + '/' + P.maxHp, hurt ? 'bad' : '')}${chip('🍎', Math.round(P.hunger))}${chip('⚡', Math.round(P.stamina))}</div></div></div>
       <div class="rest-acts">
-        ${act('main', `data-act="sleep" data-s="${sid}"`, '🛏️', 'Dormir até o amanhecer', `${hurt ? 'Recupera toda a vida · ' : ''}salva no espaço ${G.slot}`)}
-        ${act('', `data-act="chest" data-s="${sid}"`, '📦', `Baú da ${place}`, stored ? `${stored} itens · ${kinds} tipos guardados` : 'Vazio · guarde o que pesa')}
-      </div></div>`;
+        ${s.tenant !== undefined && s.tenant !== null ? '' : act('main', `data-act="sleep" data-s="${sid}"`, '🛏️', 'Dormir até o amanhecer', `${hurt ? 'Recupera toda a vida · ' : ''}salva no espaço ${G.slot}`)}
+        ${s.tenant !== undefined && s.tenant !== null ? '' : act('', `data-act="chest" data-s="${sid}"`, '📦', `Baú da ${place}`, stored ? `${stored} itens · ${kinds} tipos guardados` : 'Vazio · guarde o que pesa')}
+      </div>${Rent.html(s)}</div>`;
     this.open(cabin ? 'Cabana' : s.type === 'manor' ? 'Casarão' : 'Casa', body, 'showRest', [sid], 'Seu lar: descanse e guarde itens');
   },
 
@@ -1622,7 +1622,7 @@ const UI = {
       <div><b>${UI.esc(People.full(owner))}</b> · ${People.title(owner)} · <span style="color:${rel.col}">${rel.text}</span><br>
       <small>Bolsa d${owner.sex === 'f' ? 'a' : 'o'} ${RANKS[owner.rank][owner.sex].toLowerCase()}: ${People.purse(owner)} 🪙 · Seu ouro: ${P.gold} 🪙 · ${disc > 0 ? `Desconto de amizade: ${disc}%` : disc < 0 ? `Preços ${-disc}% mais caros (não gosta de você)` : 'Seja amigo do dono para ganhar desconto'}</small></div>
       <button data-act="tk" data-op="open" data-id="${owner.id}">💬 Conversar</button></div>
-      <h3>À venda</h3><table class="trade"><tr><th>Item</th><th>Você tem</th><th>Estoque</th><th>Preço</th><th></th></tr>`;
+      ${Lifesim.shopExtra(civ, owner, type, vi)}<h3>À venda</h3><table class="trade"><tr><th>Item</th><th>Você tem</th><th>Estoque</th><th>Preço</th><th></th></tr>`;
     for (const k of sh.sells) {
       const it = ITEMS[k], pr = Game.priceFor(civ, k, owner);
       const raw = c.stock[k] !== undefined;
@@ -1694,6 +1694,7 @@ const UI = {
     if (p.port && Ports.portOf(p)) acts.push(['portnpc', '⚓ Negócios do porto']);
     { const vi = Chiefdom.vilOf(p); if (vi >= 0 && G.civs[World.villages[vi].civ].ruler !== 'player') acts.push(['vchallenge', '⚔️ Desafiar pela chefia da vila']); }
     if (p.kin === 'child' && p.age >= 12) acts.push(['profmenu', p.prof ? `${PROFESSIONS[p.prof].icon} Mudar profissão` : '🎓 Escolher profissão']);
+    Lifesim.acts(p, acts);
     const st = p.capanga ? People.capangaStats(p) : null;
     // a conversa recente com esta pessoa (o que você fez e o que ela respondeu)
     if (!this.tkLog || this.tkLog.id !== p.id) this.tkLog = { id: p.id, lines: [] };
@@ -1701,7 +1702,7 @@ const UI = {
     const said = this.tkLog.lines.length ? this.tkLog.lines.slice(-3) : [{ who: 'npc', text }];
     // ações em grupos (cada um com sua cor)
     const GROUP = { talk: 'conv', compliment: 'conv', giftmenu: 'conv', insult: 'conv', flirt: 'heart', date: 'heart', propose: 'heart', child: 'heart', breakup: 'heart',
-      shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
+      gossip: 'conv', loanask: 'work', midwife: 'heart', shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
       fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other', attack: 'other', bribe: 'work' };
     const GN = { conv: '💬 Conversa', heart: '💕 Coração', work: '🤝 Trabalho e capangas', house: '🏛️ Casas', other: '✨ Outros' };
     const split = lab => { const m = lab.match(/^(\S+)\s+(.*)$/); return m ? [m[1], m[2]] : ['•', lab]; };
@@ -1713,7 +1714,7 @@ const UI = {
     const chips = [
       fam ? `<span class="famchip" data-act="famview" data-f="${p.fam}" style="border-color:${fam.color}">🏛️ ${UI.esc(Families.name(fam))}</span>` : '',
       Families.isChief(p) ? `<span class="tag">Chefe de ${UI.esc(World.villages.find(v => v.chief === p.id).name)}</span>` : '',
-      `<span>🎭 ${t.name}</span>`, likes ? `<span>❤️ Gosta de ${UI.ii(p.fav)} ${ITEMS[p.fav].name}</span>` : '',
+      ...Lifesim.chips(p), `<span>🎭 ${t.name}</span>`, likes ? `<span>❤️ Gosta de ${UI.ii(p.fav)} ${ITEMS[p.fav].name}</span>` : '',
       p.job !== undefined && p.job !== null && World.structs[p.job] ? `<span>💼 Trabalha no seu ${UI.esc(BUILDINGS[World.structs[p.job].type].name)}</span>` : '',
       p.capanga ? `<span>⭐ Nível ${p.clvl || 1} · ${STANCES[p.stance] ? STANCES[p.stance].icon + ' ' + STANCES[p.stance].name : '⚖️ Equilibrado'}</span>` : '',
       st ? `<span>⚔️ ${st.dmg} · 🛡️ ${st.def}</span>` : '',
@@ -1796,6 +1797,7 @@ const UI = {
       case 'fpeace': r = Court.peace(Families.of(p)); break;
       case 'propose': r = People.propose(p); break;
       case 'breakup': Dialog.confirm({ icon: '💔', title: 'Terminar', text: `Terminar o relacionamento com ${p.name}?`, ok: 'Terminar', danger: true }, () => this.showTalk(p.id, People.breakUp(p))); return;
+      case 'gossip': case 'loanask': case 'midwife': { const lr = Lifesim.talkAct(p, d.op); if (lr === 'shown') return; r = lr; break; }
       case 'child':
         if (!G.family.dueDay) { G.family.tryChild = true; r = { text: 'Sim... vamos aumentar a nossa família! ❤', note: 'Durmam em casa (Cabana, Casa ou Casarão) para tentar ter um filho.' }; }
         else r = { text: 'Falta pouco para o bebê chegar!', note: '' };
@@ -1934,6 +1936,7 @@ const UI = {
         <div>🤝 Relação: ${this.relBar(c)}</div><div>${c.atWar ? '<span class="bad">⚔️ EM GUERRA com você</span>' : '🕊️ Em paz'}</div>
       </div><div class="btns col">`;
     if (!c.atWar) {
+      h += `<button data-act="loans" data-k="crown" data-c="${ci}" data-p="">💰 Empréstimo da coroa</button>`;
       h += `<button data-act="tribute" data-c="${ci}" ${P.gold >= 100 ? '' : 'disabled'}>🎁 Oferecer tributo — 100 🪙 (+8 relação)</button>
         <button data-act="claim" data-c="${ci}" ${canClaim ? '' : 'disabled'}>📜 Reivindicar o trono pela diplomacia — ${need.gold} 🪙 (exige relação ${need.rel}+)</button>
         <button class="danger" data-act="war" data-c="${ci}">📜 Mensageiro de guerra (declaração ou ultimato)</button>`;
@@ -2090,9 +2093,9 @@ const UI = {
   // cada seção do diário em quadros (o paginador arruma: páginas nas telas pequenas, grade no computador)
   showDiaryM() {
     const S = this.sel, st = G.stats || {};
-    const tab = ['ach', 'stats', 'rank', 'dyn', 'contas', 'log'].includes(S.dtab) ? S.dtab : 'ach';
+    const tab = ['ach', 'stats', 'rank', 'heroes', 'dyn', 'contas', 'log'].includes(S.dtab) ? S.dtab : 'ach';
     const got = ACHIEVEMENTS.filter(a => G.ach[a.id]);
-    const groups = [['', [['ach', '🏆', 'Conquistas', got.length], ['stats', '📊', 'Estatísticas'], ['rank', '🏅', 'Ranking'], ['dyn', '🌳', 'Dinastia'], ['contas', '📒', 'Contas'], ['log', '📜', 'Diário']]]];
+    const groups = [['', [['ach', '🏆', 'Conquistas', got.length], ['stats', '📊', 'Estatísticas'], ['rank', '🏅', 'Ranking'], ['heroes', '⚔️', 'Heróis'], ['dyn', '🌳', 'Dinastia'], ['contas', '📒', 'Contas'], ['log', '📜', 'Diário']]]];
     const tile = (ic, label, val, hue) => `<div class="dy-st" style="--hue:${hue}"><span class="dy-ic">${ic}</span><b>${val || 0}</b><small>${label}</small></div>`;
     let page = '';
     if (tab === 'ach') {
@@ -2142,6 +2145,8 @@ const UI = {
           ['💪', 'Força', you.str, 'str'], ['🧠', 'Inteligência', you.int, 'int'], ['⭐', 'Nível', you.level, 'level']].map(([ic, l, v, k]) =>
           `<div class="rk-chip"><span class="rk-ci">${ic}</span><span><b>${v}</b><small>${l} · ${Ranking.place(rows, k)}º</small></span></div>`).join('')}</div></div>
           <div class="rk-grid">${cards}</div>`;
+    } else if (tab === 'heroes') {
+      page = Heroes.page();
     } else if (tab === 'contas') {
       const L = G.ledger || [], last = L.slice(0, 12).reverse(), max = Math.max(1, ...last.map(e => Math.abs(e.gold)));
       const inG = L.reduce((a, e) => a + Math.max(0, e.gold), 0), outG = L.reduce((a, e) => a + Math.min(0, e.gold), 0);
@@ -2622,6 +2627,17 @@ const UI = {
       case 'bizfire2': { Biz.fire(People.get(+d.id)); this.showBiz(+d.s); return; }
       case 'bizcollect': Biz.collect(World.structs[+d.s]); break;
       case 'bizshopopen': this.showBizShop(+d.s); return;
+      case 'loans': this.showLoans(d.k, +d.c, d.p === '' || d.p === undefined ? undefined : +d.p); return;
+      case 'loantake': Loans.take(d.k, +d.c, d.p === '' ? undefined : +d.p, +d.n); break;
+      case 'loanpay': Loans.pay(+d.i, false); break;
+      case 'loanpayall': Loans.pay(+d.i, true); break;
+      case 'arrestpay': Crime.pay(+d.c); this.close(); return;
+      case 'arrestjail': Crime.prison(+d.c); return;
+      case 'arrestlabor': Crime.labor(+d.c); return;
+      case 'arrestresist': Crime.resist(+d.c); return;
+      case 'rentin': Rent.rentTo(+d.s, +d.f); break;
+      case 'rentout': Rent.evict(+d.s); break;
+      case 'steal': Lifesim.steal(d.t, +d.v, +d.o); return;
       case 'lvpt': Game.spendPoint(d.k); if (P.statPts > 0) this.showLevelUp(); else this.close(); return;
       case 'fbburn': { const sid = +d.s; Dialog.confirm({ icon: '🔥', title: 'Incendiar', text: 'Incendiar o empreendimento desta família? Ela vai virar sua inimiga.', ok: 'Incendiar', danger: true }, () => FamilyCrime.burn(sid)); return; }
       case 'fbseize': { const sid = +d.s; Dialog.confirm({ icon: '🗝️', title: 'Tomar o empreendimento', text: 'Tomar este empreendimento para você? A família não vai perdoar.', ok: 'Tomar', danger: true }, () => FamilyCrime.seize(sid)); return; }

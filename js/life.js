@@ -486,7 +486,7 @@ const Ports = {
     for (let ci = 0; ci < Math.min(World.capitals.length, 7); ci++) {
       const cp = World.capitals[ci]; let best = null, bd = 1e9;
       // terreno 11 (menos lagos): o reino sem costa perto procura o mar mais longe
-      for (const R of (G.terrain || 0) >= 11 ? [34, 64] : [34]) { if (best) break;
+      for (const R of (G.terrain || 0) >= 13 ? [34, 64, 100] : (G.terrain || 0) >= 11 ? [34, 64] : [34]) { if (best) break;
       for (let y = cp.y - R; y <= cp.y + R; y++) for (let x = cp.x - R; x <= cp.x + R; x++) {
         if (!World.areaOk(x, y, 4, 3) || !World.areaFree(x, y, 4, 3)) continue;
         let land = true; for (let j = y; j < y + 3 && land; j++) for (let i = x; i < x + 4; i++) { const t = World.tiles[World.idx(i, j)]; if (!TINFO[t].walk || World.isWater(t) || t === T.ROAD) { land = false; break; } }

@@ -530,14 +530,7 @@ const People = {
       }
       // morte natural
       if (p.age > 58 && Math.random() < (p.age - 58) * 0.025) { this.die(p, 'de velhice'); continue; }
-      // casais têm filhos
-      if (p.spouse !== null && p.spouse !== 'player' && p.sex === 'f' && p.age >= 18 && p.age <= 42 && Math.random() < 0.4 * Families.birthFactor(p)) {
-        const s = G.people[p.spouse];
-        if (s && s.alive) {
-          const c = this.child(p, s, { rank: p.rank === 'ruler' || s.rank === 'ruler' || p.rank === 'consort' ? 'heir' : 'child' });
-          if (c.rank === 'heir') c.age = 0;
-        }
-      }
+      // os filhos dos casais nascem depois de nove meses de gravidez (lifesim.js → Birth)
     }
     G.lastBirths = G.births || {}; G.births = {};
     Families.yearTick();

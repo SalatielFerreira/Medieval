@@ -643,3 +643,6 @@ Object.assign(BUILDINGS, {
   biz_dairy:     { name: 'Laticínio',      w: 3, h: 2, blocks: true,  cost: { wood: 30, stone: 10, clay_pot: 4 },         desc: 'Empreendimento: até 3 queijeiros. Produz leite e queijo.' },
 });
 CREATURES.dog = { name: 'Cão de Guarda', hp: 90, dmg: 9, speed: 120, r: 10, faction: 'player', xp: 0, aggro: 7 };
+
+// enxoval do bebê (vendido no armazém): deixa o parto mais seguro
+ITEMS.layette = { name: 'Enxoval', icon: '🧺', cat: 'Diversos', price: 30 };

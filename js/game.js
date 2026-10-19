@@ -171,7 +171,7 @@ const Game = {
       if (G.placing) { this.placeBuilding(); return; }
       // clicar numa pessoa abre a conversa com ela
       const h = G.hoverNpc;
-      if (h && !h.dead && U.dist(h.x, h.y, P.x, P.y) < 4.5 * TILE) { UI.showTalk(h.npc.id); return; }
+      if (h && !h.dead && h.npc && U.dist(h.x, h.y, P.x, P.y) < 4.5 * TILE) { UI.showTalk(h.npc.id); return; }
       const car = G.ents.find(c => c.kind === 'caravan' && !c.dead && U.dist(c.x, c.y - 14, G.mouse.wx, G.mouse.wy) < 30 && U.dist(c.x, c.y, P.x, P.y) < 4 * TILE);
       if (car && !car.hostileToPlayer) { UI.showCaravan(car); return; }
       G.mouse.down = true;
@@ -238,7 +238,7 @@ const Game = {
     if (!ok) throw new Error('Falha ao gerar o mundo');
     this.initCivs();
     G.family = { spouse: null, tryChild: false, dueDay: 0 };
-    G.spawned = new Map(); G.storage = {}; G.dungeons = {}; G.dungeon = null; G.place = null; G.warCall = null; G.warRest = {}; G.trial = null; G.regency = []; G.weather = null;
+    G.spawned = new Map(); G.storage = {}; G.dungeons = {}; G.dungeon = null; G.place = null; G.warCall = null; G.warRest = {}; G.trial = null; G.regency = []; G.rumors = []; G.heroFallen = []; G.loans = []; G.wanted = {}; G.funerals = []; G.weather = null;
     Diplo.init();
     People.generate();
     G.diff = opts.diff || 'normal';
@@ -278,6 +278,7 @@ const Game = {
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
       title: G.title, titles: Court.holdings(), titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
       warCall: G.warCall ? Object.assign({}, G.warCall, { shown: false, deadline: null }) : null, warRest: G.warRest || {},
+      rumors: G.rumors || [], heroFallen: G.heroFallen || [], funerals: [], loans: G.loans || [], wanted: G.wanted || {},
       trial: G.trial || null, studyDay: G.studyDay, prayOrDay: G.prayOrDay, regency: G.regency || [],
       shrines: G.shrines, pilgrim: G.pilgrim, prayDay: G.prayDay, pcaravans: (G.caravans || []).filter(c => c.owner === 'player' && !c.done), civs: G.civs, storage: G.storage, dungeons: G.dungeons, diplo: G.diplo,
       vciv: World.villages.map(v => v.civ),
@@ -365,7 +366,7 @@ const Game = {
     G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
     G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.npcRoadFrom = s.npcRoadFrom || null; G.roadCut = s.roadCut || {}; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.graves = s.graves || []; G.calStart = s.calStart === undefined ? CAL_START : s.calStart; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
-    G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; if (G.place) Places.exit(true); G.place = null; G.warCall = s.warCall || null; G.warRest = s.warRest || {}; G.trial = s.trial || null; G.studyDay = s.studyDay; G.prayOrDay = s.prayOrDay; G.regency = s.regency || []; G.diplo = s.diplo || null; G.weather = null;
+    G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; if (G.place) Places.exit(true); G.place = null; G.warCall = s.warCall || null; G.warRest = s.warRest || {}; G.trial = s.trial || null; G.rumors = s.rumors || []; G.heroFallen = s.heroFallen || []; G.loans = s.loans || []; G.wanted = s.wanted || {}; G.funerals = []; G.studyDay = s.studyDay; G.prayOrDay = s.prayOrDay; G.regency = s.regency || []; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
     Borders.restore(); // fronteiras ampliadas e vilas anexadas
@@ -582,7 +583,7 @@ const Game = {
     Battles.update();
     Caravans.update(dt);
     Families.update(dt); Chiefdom.update(dt); Urban.update();
-    Sieges.update(dt); Arena.update(); Places.update(dt); Content2.update(dt);
+    Sieges.update(dt); Arena.update(); Places.update(dt); Content2.update(dt); Lifesim.update(dt);
     this.progT = (this.progT || 0) - dt;
     if (this.progT <= 0) {
       this.progT = 2;
@@ -886,6 +887,14 @@ const Game = {
     if (!p) { p = People.create({ rank: 'soldier', civ: e.civ, home: { type: 'castle', civ: e.civ }, age: U.rint(19, 42), sex: Math.random() < 0.82 ? 'm' : 'f' }); p.soldierOf = e.civ; p.met = false; }
     e.npc = p; G.spawned.set(p.id, e);
     return p;
+  },
+  // dá para conversar com esta criatura? (pessoas, guardas e soldados; só não quem está lutando contra você agora,
+  // as tropas no campo de batalha e os duelistas da arena)
+  talkable(e) {
+    if (!e || e.dead || e.sleeping || e.battle || e.faction === 'duelist' || e.faction === 'arena' || e.faction === 'engine') return false;
+    if (!e.npc && e.kind !== 'guard') return false;
+    if ((e.npc && e.npc.hostile) || hostile(e, P)) return false; // inimigo: o clique ataca
+    return true;
   },
   nearestNpc() {
     let best = null, bd = 1.9 * TILE;
@@ -1428,7 +1437,7 @@ const Game = {
       });
       // cada morador tem a sua casa (mendigos dormem na praça); de dia fica no trabalho ou perto de casa
       for (const p of People.residents(vi)) {
-        if (G.spawned.has(p.id) || p.port || p.trip) continue; // o marinheiro aparece no porto; quem está viajando, na vila que visita
+        if (G.spawned.has(p.id) || p.port || p.trip || p.jail > G.day) continue; // presos não andam pela vila // o marinheiro aparece no porto; quem está viajando, na vila que visita
         const h = Homes.houseOf(p); // a casa da família (pode ainda não ter: aí fica pela praça)
         const work = Shops.workOf(p) || (p.rank === 'priest' ? v.chapel : null);
         let e;
@@ -1736,7 +1745,7 @@ const Game = {
     Arena.dayTick(); Progress.dayTick(); Guards.dayTick(); Homes.dayTick(true);
     G.econT = (G.econT || 0) + 1;
     if (G.econT >= ECON_DAYS) { G.econT = 0; this.econTick(); }
-    if (G.family.dueDay && G.day >= G.family.dueDay) { G.family.dueDay = 0; setTimeout(() => UI.showBirth(), 50); }
+    if (G.family.dueDay && G.day >= G.family.dueDay) Birth.playerDue(); // o parto (parteira e enxoval ajudam)
     const cd = Calendar.of(G.day);
     UI.banner(`📅 ${MONTHS[cd.month][0]} do ano ${cd.year}`);
   },
@@ -1762,7 +1771,7 @@ const Game = {
     Market.dayTick(); Court.dayTick(); Court.rivalTick(); Court.stipendTick(); RoyalCourt.tick();
     if (!G.dungeon) Sieges.dayTick();
     Farm.dayTick(!!G.rainedToday); G.rainedToday = false;
-    Farm.produce(); Farm.tavernTick(); Content.monthTick();
+    Farm.produce(); Farm.tavernTick(); Content.monthTick(); Lifesim.monthTick();
     if (!G.dungeon) { Towns.dayTick(); Caravans.dayTick(); Battles.dayTick(); }
     Progress.econTick();
     // resumo: uma linha só, com o saldo de ouro e o que entrou na mochila; os detalhes ficam no Diário
@@ -1787,7 +1796,7 @@ const Game = {
     const f = G.family, sp = f.spouse !== null ? People.get(f.spouse) : null;
     if (sp && sp.alive && f.tryChild && !f.dueDay) {
       f.tryChild = false;
-      if (Math.random() < 0.65) { f.dueDay = G.day + 2 * ECON_DAYS + 1; UI.msg(`💕 Uma criança está a caminho! Ela chegará em ${daysText(2 * ECON_DAYS)}.`, 'gold', true); }
+      if (Math.random() < 0.65) Birth.startPlayer(); // nove meses de gravidez
       else UI.msg('Nenhum bebê desta vez... conversem e tentem de novo.');
     }
     if (!night) this.onNewDay();
@@ -1907,10 +1916,12 @@ const Game = {
     G.hoverNpc = null;
     { let bd = 22;
       for (const e of G.ents) {
-        if (e.dead || e.sleeping || !e.npc || e.npc.hostile) continue;
+        if (!this.talkable(e)) continue;
         const d = U.dist(e.x, e.y - 16, G.mouse.wx, G.mouse.wy);
         if (d < bd) { bd = d; G.hoverNpc = e; }
       }
+      // soldado sem nome ainda: ganha nome e família na hora em que você aponta para ele
+      if (G.hoverNpc && !G.hoverNpc.npc) { this.soldierFor(G.hoverNpc); if (!G.hoverNpc.npc) G.hoverNpc = null; }
       const h = G.hoverNpc;
       if (h) { ctx.strokeStyle = 'rgba(255,213,74,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(h.x - cx, h.y - cy, 13, 5, 0, 0, Math.PI * 2); ctx.stroke(); } }
     if (P.charging && P.charge > 0.1) {
@@ -2122,7 +2133,7 @@ const Game = {
       ctx.fillStyle = '#ffd54a'; ctx.strokeStyle = '#3a2606'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(gx, gy - 5); ctx.lineTo(gx + 4, gy); ctx.lineTo(gx, gy + 5); ctx.lineTo(gx - 4, gy); ctx.closePath(); ctx.fill(); ctx.stroke();
     }
-    const pr = (G.realTime * 1.5) % 1;
+    const pr = (((G.realTime * 1.5) % 1) + 1) % 1;
     ctx.strokeStyle = `rgba(140,210,255,${1 - pr})`; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(px, py, 3 + pr * 7, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1b4f8a'; ctx.lineWidth = 1.5;

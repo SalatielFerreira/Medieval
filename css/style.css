@@ -3594,3 +3594,26 @@ body.small .cem-layout { grid-template-columns: 1fr 1fr; }
 #surrenderBtn:hover { background: #fff; }
 #surrenderBtn.hidden { display: none; }
 body.small #surrenderBtn { top: calc(8px + env(safe-area-inset-top)); padding: 0 14px; min-height: var(--tap, 40px); font-size: 13px; }
+
+/* vida real: escassez, aluguel, prisão */
+.scar-note { margin: 6px 0; padding: 7px 10px; border-radius: 8px; background: rgba(160, 60, 20, .25); border: 1px solid rgba(255, 140, 60, .4); color: #ffd0a0; font-size: 12px; }
+.steal-row { justify-content: flex-end; margin: 4px 0 8px; } .steal-row button { font-size: 12px; padding: 4px 10px; opacity: .85; }
+.rent-card { margin-top: 10px; }
+.arrest p { margin: 6px 0; } .arrest .act-row button { text-align: left; }
+
+/* heróis dos reinos (Diário → Heróis) */
+.hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 10px; align-items: start; }
+.hero-grid > .hero-card { display: flex !important; flex-direction: column !important; gap: 2px; min-width: 0; }
+.hero-card > .sec { display: flex; justify-content: space-between; text-align: left; }
+.hero-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px; border-radius: 8px; cursor: pointer; }
+.hero-row:hover { background: rgba(255, 215, 120, .08); }
+.hero-row.dead { cursor: default; opacity: .75; }
+.hero-medal { font-size: 22px; line-height: 1; }
+.hero-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hero-main em { color: #f0c860; font-style: italic; }
+.hero-main small { opacity: .8; }
+.hero-deed span { opacity: .6; font-size: 10px; }
+.hero-bar { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; margin: 3px 0; }
+.hero-bar i { display: block; height: 100%; background: linear-gradient(90deg, #b8860b, #ffd76a); }
+.hero-fame { text-align: center; font-weight: 700; color: #ffd76a; display: flex; flex-direction: column; }
+.hero-fame small { font-weight: 400; opacity: .7; font-size: 10px; }

@@ -89,7 +89,23 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
-## Novidades: vilas até o nível 10 e fundação mais cara
+## Novidades: vida real para você e para os NPCs, heróis dos reinos
+
+- **Gravidez de verdade:** dura 9 meses, a barriga aparece aos poucos, e o parto tem risco. Uma parteira (moradora mais velha da vila, contratada na conversa por 40 🪙) e um enxoval (vendido no armazém) deixam o parto bem mais seguro. Às vezes nascem gêmeos.
+- **Funerais e luto:** quem morre ganha cortejo até a capela e túmulo com nome. A família fica de luto, mais triste e trabalhando menos. Comparecer ao enterro aumenta a amizade.
+- **Testamento e herança dos NPCs:** a bolsa do falecido é dividida entre os filhos. Às vezes os irmãos brigam pela herança; no seu reino, a disputa chega ao tribunal.
+- **Emoções e memória:** as pessoas lembram do presente, da ajuda, da ofensa ou do roubo, e o humor (alegria, raiva, tristeza, inveja) muda o que elas dizem.
+- **Boatos:** notícias correm de vila em vila (nascimentos, mortes, crimes, feitos dos heróis). Pergunte as novidades na conversa ou na taverna.
+- **Carreiras:** crianças sonham com uma profissão e vão à escola de manhã. Aos 12 anos viram aprendizes, depois oficiais e mestres. Os velhos se aposentam e o melhor aprendiz assume a oficina.
+- **Empréstimos e dívidas:** peça dinheiro ao tesouro do reino (castelo) ou a um comerciante. Parcelas mensais; atrasar traz cobradores e, depois, a lei. Os NPCs também se endividam e podem perder a loja.
+- **Crime com consequência:** se alguém vê o crime, o reino passa a procurar você. O guarda dá voz de prisão: pagar a multa, cumprir pena, trabalho forçado ou resistir (e os guardas atacam). Ladrões roubam casas à noite, inclusive as suas (cão de guarda, lampião e arca reforçada ajudam).
+- **Aluguel:** alugue as suas casas para famílias da vila e receba todo mês. Quem não paga é despejado; quem junta dinheiro compra casa própria.
+- **Escassez:** secas no verão, falta de trigo e guerras encarecem comida e ferro. Na fome o povo faz fila no armazém e, revoltado, saqueia.
+- **Conversar com todos:** guardas e soldados agora podem ser clicados para conversar, como qualquer pessoa (só não quem está lutando contra você).
+- **Mapa (jogos novos):** Valáquia fica agora no norte, entre Winterfel e Olympus; o leste, onde ela ficava, virou terra selvagem. Jogos salvos antigos mantêm o mapa deles.
+- **Heróis dos reinos:** cada reino tem 3 guerreiros famosos com apelido ("o Bravo", "Mão de Ferro"...), fama, vitórias e uma lista de feitos. Eles lutam nas guerras, duelam com heróis inimigos e aparecem montados no campo de batalha. Quando caem, viram lendas, com crônica e lápide. Os velhos penduram a espada. Veja todos em **Diário → Heróis** e converse com eles.
+
+## Novidades anteriores: vilas até o nível 10 e fundação mais cara
 
 - **Atacar pessoas e golpe de estado:** na conversa, "⚔️ Atacar" faz a pessoa revidar (na rua ou dentro dos prédios) e derruba a amizade. Atacar alguém da corte ou da família real chama os guardas do reino que estiverem por perto. Na sala do trono, "🗡️ Atacar o soberano" coloca toda a guarda real (4 a 8 soldados de elite, conforme a guarnição) contra você ao mesmo tempo, e o soberano é muito forte (900 de vida, golpes pesados). Seus capangas entram com você na sala do trono. Se o soberano morrer ali, você toma a coroa como **usurpador**: o povo fica infeliz, os outros reinos desconfiam, os nobres perdem lealdade e o herdeiro jura vingança. Sem o melhor equipamento e o máximo de capangas, é morte certa.
 - **Inimigos declaram guerra:** se a relação com alguém cai a -50, a casa dele declara guerra à sua família: vira inimiga (desfaz aliança), contrata assassinos, os adultos dela atacam você quando o encontram e, todo mês, pode mandar mais assassinos. Acaba com o pedido de paz (sua casa precisa ser mais influente).
@@ -319,6 +335,8 @@ js/interior.js    lado de dentro das construções e um dono por loja
 js/war.js         guerras de verdade: conselho de guerra e campo de batalha
 js/content.js     empreendimentos, construções e obras novas
 js/content2.js    mais construções (oficinas, criações, defesa, canil)
+js/lifesim.js     vida real: gravidez, luto, boatos, carreiras, dívidas, crime, aluguel e escassez
+js/heroes.js      heróis dos reinos (fama, feitos, batalhas e lendas)
 js/icons2.js      ícones desenhados de todos os outros itens
 js/bicons.js      ícones desenhados das construções, obras e estradas
 js/ambience.js    efeitos de ambiente (luz, fumaça, água, nuvens)

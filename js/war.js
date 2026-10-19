@@ -268,6 +268,7 @@ const War = {
           if (e.dead || e.battle !== B.id || e.target || e.faction === 'engine') continue;
           const foes = this.units(e.wside === B.side ? B.enemy : B.side);
           const t = foes.length ? foes.reduce((b, o) => U.dist(o.x, o.y, e.x, e.y) < U.dist(b.x, b.y, e.x, e.y) ? o : b) : (e.wside !== B.side ? P : null);
+          if (t === P) { e.target = P; e.aggroOv = 999; e.leash = 999; continue; } // o seu exército acabou: os que sobraram vêm atrás de você
           if (t) { const a = Math.atan2(t.y - e.y, t.x - e.x); e.home = { x: e.x + Math.cos(a) * 3 * TILE, y: e.y + Math.sin(a) * 3 * TILE }; e.wx = e.home.x; e.wy = e.home.y; e.wt = 0.7; }
         }
       }

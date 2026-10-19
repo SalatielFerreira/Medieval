@@ -122,3 +122,5 @@ Object.assign(ART_ITEMS, {
   arrow: ['arrows', 'stone'], iron_arrow: ['arrows', 'iron'], fishing_rod: ['rod', 'oak'], watering_can: ['can', 'iron'], boat: ['boat', 'oak'],
   ram: ['ram', 'oak'], catapult: ['catapult', 'oak'], old_boot: ['oldboot', 'leather'],
 });
+
+ART_ITEMS.layette = ['roll', 'linenc'];

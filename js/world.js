@@ -44,8 +44,8 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // Versão 11: bem menos lagos no meio do continente (ficam os 3 maiores e os rios) e nenhuma colina: o mapa sem montanhas.
 // Versão 12: mapa 20% maior e biomas: tundra entre a neve e o campo, estepe e deserto ao sul, pântanos nas baixadas
 // úmidas perto de rios e lagos (com recursos e animais próprios); a passagem de um bioma para o outro é gradual.
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626, 10: 0.7626, 11: 0.7626, 12: 0.7626 };
-const TERRAIN_V = 12, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626, 10: 0.7626, 11: 0.7626, 12: 0.7626, 13: 0.7626 };
+const TERRAIN_V = 13, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 // níveis das estradas (Construção → Infraestrutura): quanto mais alto, mais rápido se anda; o custo é por bloco
 const ROAD_LV = [null,
@@ -376,12 +376,25 @@ const World = {
     this.capitals[6] = take(c => around(c, [T.HILL]));            // Gondor: colinas suaves
     this.capitals[5] = take(c => around(c, [T.SAND, T.WATER]));   // Babilônia: costa
     this.capitals[0] = left[0];                                   // Midgard
+    // terreno 13: Valáquia fica no norte, entre Winterfel e Olympus; onde ela ficaria vira terra selvagem
+    let wildSpot = null;
+    if ((this.terrainV || 0) >= 13) {
+      const W = this.capitals[2], O = this.capitals[4], mx = (W.x + O.x) / 2, my = (W.y + O.y) / 2;
+      const others = [start, ...this.capitals.filter((c, i) => i !== 3)];
+      let best = null, bd = 1e9;
+      for (const c of cands) {
+        if (others.some(o => U.dist(c.x, c.y, o.x, o.y) < 26)) continue;
+        const d = U.dist(c.x, c.y, mx, my); if (d < bd) { bd = d; best = c; }
+      }
+      if (best) { wildSpot = this.capitals[3]; this.capitals[3] = best; }
+    }
 
     // territórios
     for (let y = 0; y < WORLD_H; y++) for (let x = 0; x < WORLD_W; x++) {
       const i = this.idx(x, y);
       if (this.tiles[i] === T.DEEP) continue;
       if (U.dist(x, y, start.x, start.y) < 24) continue;
+      if (wildSpot && U.dist(x, y, wildSpot.x, wildSpot.y) < 34) continue; // o antigo lugar de Valáquia fica sem dono
       if (this.islands.some(is => is.ratio && U.dist(x, y, is.x, is.y) < is.r + 6)) continue; // ilhas não são de reino nenhum
       let bc = -1, bd = 62;
       for (let c = 0; c < NC; c++) {

@@ -37,6 +37,9 @@ const PREDATORS = ['wolf', 'bear', 'croc'];
 // a quer atacar b?
 function hostile(a, b) {
   if (a.faction === 'pet' || b.faction === 'pet' || a.kind === 'caravan') return false;
+  // quem resistiu à prisão: os guardas daquele reino atacam
+  if (a.kind === 'guard' && b === P && Crime.hunting(a.civ)) return true;
+  if (b.kind === 'guard' && a === P && Crime.hunting(b.civ)) return true;
   // no campo de batalha: cada lado ataca o outro
   if (a.battle && a.battle === b.battle) return a.civ !== b.civ && a.dmg > 0;
   if (a.faction === 'rebel' || b.faction === 'rebel') return Families.rebelHostile(a, b);
@@ -78,6 +81,7 @@ function hostile(a, b) {
 // O jogador pode golpear esta criatura?
 function canHit(e) {
   if (e.faction === 'pet' || e.faction === 'duelist') return false;
+  if (e.kind === 'guard' && Crime.hunting(e.civ)) return true;
   if (e.faction === 'arena') return true;
   if (e.faction === 'engine') return e.side === 'enemy';
   if (e.faction === 'rebel') return true;
