@@ -224,7 +224,7 @@ function drawVillageGate(ctx, s, X, Y, time) {
   }
   // a torre de vigia fica no trecho de muro colado ao portão (à esquerda ou em cima); sem muro ali, vai junto do portão
   const side = vert ? Gate.towerWall(s, true) : Gate.towerWall(s, false);
-  if (!side) drawGateTower(ctx, s, vert ? X : X - TILE, vert ? Y - TILE : Y, time);
+  if (!side) drawGateTower(ctx, s, vert ? X : X - 2 * TILE, vert ? Y - 2 * TILE : Y, time);
 }
 // torre de vigia com o porteiro lá em cima (X, Y = canto do bloco da torre)
 function drawGateTower(ctx, s, X, Y, time) {
@@ -359,10 +359,10 @@ Object.assign(Gate, {
     if (!this.axis(tx, ty)) return 'Ponha o portão na linha de um muro (com muro dos lados, a até 4 blocos) ou em cima de um trecho dele';
     return null;
   },
-  // muro onde fica a torre do portão: à esquerda (muralha horizontal) ou em cima (vertical)
-  towerWall(g, vert) { const b = World.blocker(World.idx(vert ? g.x : g.x - 1, vert ? g.y - 1 : g.y)); return this.wallPiece(b) ? b : null; },
+  // muro onde fica a torre do portão: um bloco de muro entre os dois — à esquerda (muralha horizontal) ou em cima (vertical)
+  towerWall(g, vert) { const b = World.blocker(World.idx(vert ? g.x : g.x - 2, vert ? g.y - 2 : g.y)); return this.wallPiece(b) ? b : null; },
   towerGate(w) {
-    for (const [dx, dy, v] of [[1, 0, false], [0, 1, true]]) { const g = World.blocker(World.idx(w.x + dx, w.y + dy)); if (g && g.type === 'vgate' && this.vertical(g) === v) return g; }
+    for (const [dx, dy, v] of [[2, 0, false], [0, 2, true]]) { const g = World.blocker(World.idx(w.x + dx, w.y + dy)); if (g && g.type === 'vgate' && this.vertical(g) === v) return g; }
     return null;
   },
   wallPiece(s) { return !!s && ['vwall', 'wall_stone', 'wall_wood'].includes(s.type); },
