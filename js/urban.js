@@ -56,6 +56,12 @@ const Urban = {
     return null;
   },
   hasAny() { return G.civs.some(c => c.ruler === 'player') || this.myVillages().length > 0; },
+  // construção de uma vila sua (chefe) ou do seu reino (rei): perto dela você constrói à vontade (e emenda no muro)
+  ownStruct(o) {
+    if (!o) return false;
+    if (o.village !== undefined && World.villages[o.village] && World.villages[o.village].lord === 'player') return true;
+    return typeof o.owner === 'number' && !!G.civs[o.owner] && G.civs[o.owner].ruler === 'player';
+  },
   // vila ou castelo de outra pessoa (onde só o chefe ou o rei mexem)
   foreignTown(tx, ty) {
     if (this.authority(tx, ty)) return null;
@@ -231,7 +237,7 @@ const Urban = {
     }
     // construções do jogador: fora da sua vila ou reino, longe das cidades dos outros
     if (!a) for (const o of World.structs) {
-      if (o === s || o.hidden || (typeof o.owner !== 'number' && o.owner !== 'bandit')) continue;
+      if (o === s || o.hidden || o.removed || (typeof o.owner !== 'number' && o.owner !== 'bandit') || this.ownStruct(o)) continue;
       if (tx < o.x + o.w + 2 && tx + def.w > o.x - 2 && ty < o.y + o.h + 2 && ty + def.h > o.y - 2) return 'Perto demais de uma cidade';
     }
     return null;

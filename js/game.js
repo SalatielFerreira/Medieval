@@ -1107,7 +1107,7 @@ const Game = {
     if (U.dist(cx, cy, P.x, P.y) > 8 * TILE) return 'Longe demais';
     if (b.blocks && P.x + P.r > tx * TILE && P.x - P.r < (tx + b.w) * TILE && P.y > ty * TILE && P.y - P.r < (ty + b.h) * TILE) return 'Você está no caminho';
     if (!Urban.authority(Math.floor(tx + b.w / 2), Math.floor(ty + b.h / 2))) for (const s of World.structs) {
-      if (s.hidden || (typeof s.owner !== 'number' && s.owner !== 'bandit')) continue;
+      if (s.hidden || s.removed || (typeof s.owner !== 'number' && s.owner !== 'bandit') || Urban.ownStruct(s)) continue; // nas suas vilas e no seu reino, pode
       if (tx < s.x + s.w + 2 && tx + b.w > s.x - 2 && ty < s.y + s.h + 2 && ty + b.h > s.y - 2) return 'Perto demais de uma cidade';
     }
     return null;

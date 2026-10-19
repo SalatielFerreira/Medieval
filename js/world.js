@@ -1183,6 +1183,7 @@ const World = {
   wallAt(x, y) {
     if (!this.inb(x, y)) return false;
     const id = this.sgrid[this.idx(x, y)], o = id >= 0 && this.structs[id];
+    if (this.tiles[this.idx(x, y)] === T.CWALL) return true; // o muro da cidade (capital) também emenda
     return !!o && !o.removed && !o.hidden && (o.type === 'wall_wood' || o.type === 'wall_stone' || o.type === 'vwall');
   },
   // muro que se liga aos vizinhos: cada lado com muro ganha um "braço" até a borda; onde um muro horizontal
