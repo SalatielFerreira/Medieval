@@ -222,7 +222,30 @@ function drawVillageGate(ctx, s, X, Y, time) {
     else { R(4, -4, 4, 34, wood); R(24, -4, 4, 34, wood); R(4, 4, 4, 2, iron); R(24, 4, 4, 2, iron); }
     R(15, -26, 2, 16, '#5a3a1e'); R(17, -26, 9, 6, col);
   }
-  if (d && d.alarm > G.realTime && Math.sin(time * 10) > 0) { ctx.fillStyle = 'rgba(255,60,40,0.85)'; ctx.font = '12px sans-serif'; ctx.fillText('⚠️', X + 10, Y - 26); }
+  // a torre de vigia fica no trecho de muro colado ao portão (à esquerda ou em cima); sem muro ali, vai junto do portão
+  const side = vert ? Gate.towerWall(s, true) : Gate.towerWall(s, false);
+  if (!side) drawGateTower(ctx, s, vert ? X : X - TILE, vert ? Y - TILE : Y, time);
+}
+// torre de vigia com o porteiro lá em cima (X, Y = canto do bloco da torre)
+function drawGateTower(ctx, s, X, Y, time) {
+  const v = World.villages[s.village], d = Gate.peek(s);
+  const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(X + x), Math.round(Y + y), w, h); };
+  const col = v && G.civs[v.civ] ? Game.civColor(v.civ) : '#a83030';
+  const tx = 16, ty = 32, top = ty - 46, ts = '#b8b0a2', tdk = '#5a544c';
+  ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(X + tx - 14, Y + ty - 2, 28, 6);
+  R(tx - 13, top, 26, ty - top, tdk); R(tx - 12, top + 1, 24, ty - top - 1, ts);
+  for (let k = top + 7; k < ty; k += 8) R(tx - 12, k, 24, 1, '#9a9284');
+  for (let k = top + 11; k < ty; k += 16) R(tx - 4, k, 1, 8, '#9a9284');
+  R(tx - 2, top + 12, 4, 8, '#2a2a3a'); R(tx - 4, ty - 14, 8, 14, '#3a2410'); // seteira e porta
+  R(tx - 16, top - 4, 32, 5, '#7a4a22'); R(tx - 16, top - 4, 32, 1, '#a8743e');
+  for (let k = tx - 16; k <= tx + 14; k += 5) R(k, top - 12, 2, 8, '#6b4423'); R(tx - 16, top - 13, 32, 2, '#8b5f38');
+  R(tx + 12, top - 34, 2, 30, '#5a3a1e'); R(tx + 14, top - 34, 9, 6, col);
+  const k = typeof Work === 'undefined' || ((s._kpT || 0) > G.realTime - 2 && s._kp === undefined) ? null : Work.keeperFast(s);
+  if (k) {
+    const lk = People.look(k), dir = d && d.alarm > G.realTime ? (P.x < X + G.cam.x ? -1 : 1) : (Math.sin(time * 0.4 + s.id) > 0 ? 1 : -1);
+    drawHuman(ctx, X + tx, Y + top - 4, Object.assign(lk, { dir, scale: 0.85, helmet: lk.helmet || '#9aa0a8', weapon: lk.weapon || '#cfd6dd', wlen: lk.wlen || 16 }));
+  }
+  if (d && d.alarm > G.realTime && Math.sin(time * 10) > 0) { ctx.fillStyle = 'rgba(255,60,40,0.85)'; ctx.font = '12px sans-serif'; ctx.fillText('⚠️', X + tx - 6, Y + top - 40); }
 }
 
 {
@@ -247,7 +270,12 @@ function drawVillageGate(ctx, s, X, Y, time) {
     return r;
   };
   const ds0 = World.drawStruct.bind(World);
-  World.drawStruct = function (ctx, s, X, Y, time) { if (s.type === 'vgate') { drawVillageGate(ctx, s, X, Y, time); return; } return ds0(ctx, s, X, Y, time); };
+  World.drawStruct = function (ctx, s, X, Y, time) {
+    if (s.type === 'vgate') { drawVillageGate(ctx, s, X, Y, time); return; }
+    const r = ds0(ctx, s, X, Y, time);
+    if (Gate.wallPiece(s) && !s.hidden && !s.removed) { const g = Gate.towerGate(s); if (g) drawGateTower(ctx, g, X, Y, time); }
+    return r;
+  };
   const il0 = Game.interactLabel.bind(Game);
   Game.interactLabel = function (s) { if (s.type === 'vgate') return `Portão — ${Gate.mine(s) ? 'pedágio, fiscalização e defesa' : (s.gateClosed ? 'pedir passagem' : 'ver o portão')}`; return il0(s); };
   const ci0 = Content2.interact.bind(Content2);
@@ -257,7 +285,7 @@ function drawVillageGate(ctx, s, X, Y, time) {
   UI.act = function (a, d) { if (a === 'gate') { Gate.act(d); return; } return act0(a, d); };
   // o porteiro fica no portão (não entra em lugar nenhum)
   const st0 = Routine.staysIn.bind(Routine);
-  Routine.staysIn = function (e, s, ph) { if (s && s.type === 'vgate') return false; return st0(e, s, ph); };
+  Routine.staysIn = function (e, s, ph) { if (s && s.type === 'vgate') return e.npc.shop === s.okey; return st0(e, s, ph); }; // o porteiro fica na torre
   // a cada quadro (o War.update roda sempre)
   const wu0 = War.update.bind(War);
   War.update = function (dt) { Gate.update(dt); return wu0(dt); };
@@ -329,6 +357,12 @@ Object.assign(Gate, {
     if (!v) return 'O portão fica na muralha de uma vila';
     if (v.lord !== 'player') return `Só o chefe de ${v.name} pode instalar o portão`;
     if (!this.axis(tx, ty)) return 'Ponha o portão na linha de um muro (com muro dos lados, a até 4 blocos) ou em cima de um trecho dele';
+    return null;
+  },
+  // muro onde fica a torre do portão: à esquerda (muralha horizontal) ou em cima (vertical)
+  towerWall(g, vert) { const b = World.blocker(World.idx(vert ? g.x : g.x - 1, vert ? g.y - 1 : g.y)); return this.wallPiece(b) ? b : null; },
+  towerGate(w) {
+    for (const [dx, dy, v] of [[1, 0, false], [0, 1, true]]) { const g = World.blocker(World.idx(w.x + dx, w.y + dy)); if (g && g.type === 'vgate' && this.vertical(g) === v) return g; }
     return null;
   },
   wallPiece(s) { return !!s && ['vwall', 'wall_stone', 'wall_wood'].includes(s.type); },
