@@ -298,3 +298,108 @@ function drawVillageGate(ctx, s, X, Y, time) {
     return cv0(v, winner, quiet);
   };
 }
+
+// ------------------------------------------------------------------ muros em qualquer direção e quantos o chefe quiser
+// O portão se ajusta à muralha em que está: muro à esquerda e à direita → muralha horizontal; muro em cima e embaixo →
+// muralha vertical. Serve para qualquer muro (a muralha da vila, trechos novos do chefe, o seu muro de pedra ou madeira).
+// O chefe ergue muralha em qualquer lugar da vila (e um pouco além dela), clicando e arrastando como nas estradas.
+const GATE_REACH = VILLAGE_R + 10; // até onde a vila pode ter muralha e portão (a partir do centro)
+Object.assign(Gate, {
+  isWall(x, y) { return World.wallAt(x, y); },
+  // eixo da muralha numa passagem: 'h' (muros à esquerda/direita), 'v' (em cima/embaixo) ou null
+  axis(x, y) {
+    const near = (dx, dy) => { for (let k = 1; k <= 4; k++) { const nx = x + dx * k, ny = y + dy * k; if (!World.inb(nx, ny)) return 0; if (this.isWall(nx, ny)) return k; const t = World.tile(nx, ny); if (!TINFO[t].walk || World.isWater(t)) return 0; } return 0; };
+    const l = near(-1, 0), r = near(1, 0), u = near(0, -1), d = near(0, 1);
+    const h = (l ? 1 : 0) + (r ? 1 : 0), v = (u ? 1 : 0) + (d ? 1 : 0);
+    if (!h && !v) return null;
+    return h > v ? 'h' : v > h ? 'v' : (Math.min(l || 9, r || 9) <= Math.min(u || 9, d || 9) ? 'h' : 'v');
+  },
+  vertical(s) { if (!s._axis) s._axis = this.axis(s.x, s.y) || 'h'; return s._axis === 'v'; },
+  placeErr(tx, ty) {
+    if (!World.inb(tx, ty)) return 'Fora do mapa';
+    const i = World.idx(tx, ty);
+    if (World.tiles[i] !== T.ROAD) return 'O portão fica sobre a estrada, na passagem da muralha';
+    if (World.blocker(i)) return 'Já há uma construção aqui';
+    if (P.x + P.r > tx * TILE && P.x - P.r < (tx + 1) * TILE && P.y > ty * TILE && P.y - P.r < (ty + 1) * TILE) return 'Você está no caminho';
+    const v = World.villages[Urban.villageNear(tx, ty, GATE_REACH)];
+    if (!v) return 'O portão fica na muralha de uma vila';
+    if (v.lord !== 'player') return `Só o chefe de ${v.name} pode instalar o portão`;
+    if (!this.axis(tx, ty)) return 'Ponha o portão onde a estrada atravessa um muro (com muro dos lados, a até 4 blocos)';
+    return null;
+  },
+  fillWalls(s) {
+    const vert = this.vertical(s); let n = 0;
+    for (const dir of [-1, 1]) for (let k = 1; k <= 4; k++) {
+      const x = vert ? s.x : s.x + dir * k, y = vert ? s.y + dir * k : s.y;
+      if (!World.inb(x, y)) break;
+      const i = World.idx(x, y);
+      if (World.blocker(i)) break;
+      const t = World.tiles[i];
+      if (t === T.ROAD || t === T.BRIDGE || !TINFO[t].walk || World.isWater(t)) break;
+      World.obj[i] = 0; World.freeHidden(i);
+      Urban.addCivic('vwall', x, y, s.village); n++;
+    }
+    return n;
+  },
+  // erguer um trecho de muralha (clique ou arrasto)
+  wallErr(tx, ty) {
+    if (!World.inb(tx, ty)) return 'Fora do mapa';
+    const i = World.idx(tx, ty), t = World.tiles[i];
+    if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE || World.isWater(t)) return 'Terreno inválido';
+    if (t === T.ROAD) return 'Não construa sobre a estrada (na estrada vai o portão)';
+    if (World.obj[i]) return 'Remova árvores/rochas primeiro';
+    if (World.blocker(i)) return 'Já há uma construção aqui';
+    if (P.x + P.r > tx * TILE && P.x - P.r < (tx + 1) * TILE && P.y > ty * TILE && P.y - P.r < (ty + 1) * TILE) return 'Você está no caminho';
+    const v = World.villages[Urban.villageNear(tx, ty, GATE_REACH)];
+    if (!v) return 'A muralha fica numa vila sua (ou logo em volta dela)';
+    if (v.lord !== 'player') return `Só o chefe de ${v.name} pode erguer a muralha`;
+    return null;
+  },
+  buildWall(tx, ty, quiet) {
+    const err = this.wallErr(tx, ty);
+    if (err) { if (!quiet) Urban.warn(err); return false; }
+    if (!Inv.has(CIVIC.vwall.cost)) { Urban.warn('Faltam materiais: 1 Pedra por trecho'); return false; }
+    Inv.pay(CIVIC.vwall.cost);
+    Urban.addCivic('vwall', tx, ty, Urban.villageNear(tx, ty, GATE_REACH)); // anota no jogo salvo e libera lugares reservados
+    World.structTouch && World.structTouch({ x: tx - 1, y: ty - 1, w: 3, h: 3 });
+    World.chunks.clear();
+    Game.burst((tx + 0.5) * TILE, (ty + 0.6) * TILE, '#9a958c', 4);
+    return true;
+  },
+});
+{
+  CIVIC.vwall.desc = 'Trecho de muralha de pedra (1 pedra). Só o chefe ergue a muralha da vila: em qualquer lugar dela e logo em volta, quantos trechos quiser — clique e arraste. Ela se emenda nos outros muros.';
+  // a regra da muralha (e do portão) vale até GATE_REACH, e só para o chefe
+  const pe1 = Urban.placeErr.bind(Urban);
+  Urban.placeErr = function (def, tx, ty, s, civic) { if (def && def.chief && !def.gate && !s) return Gate.wallErr(tx, ty); return pe1(def, tx, ty, s, civic); };
+  // clicar e arrastar ergue a muralha bloco a bloco
+  const ck0 = Urban.click.bind(Urban);
+  Urban.click = function () {
+    if (this.mode === 'c:vwall') { this.drag = true; this.last = null; const t = this.mouseTile(); Gate.buildWall(t.x, t.y, false); this.last = t; return; }
+    if (this.mode === 'c:vgate') {
+      const t = this.mouseTile(), err = Gate.placeErr(t.x, t.y), d = CIVIC.vgate;
+      if (err) { this.warn(err); return; }
+      if (!Inv.has(d.cost)) { this.warn('Faltam materiais para o Portão.'); return; }
+      Inv.pay(d.cost);
+      const vi = this.villageNear(t.x, t.y, GATE_REACH);
+      this.addCivic('vgate', t.x, t.y, vi);
+      Game.burst((t.x + 0.5) * TILE, (t.y + 0.5) * TILE, '#c9a978', 14); Sound.play('build');
+      UI.msg(`🚪 Portão instalado em ${World.villages[vi].name}. Clique nele para o pedágio, a revista e a defesa.`, 'gold');
+      Progress.add('built'); this.stop(); return;
+    }
+    return ck0();
+  };
+  const up0 = Urban.update.bind(Urban);
+  Urban.update = function () {
+    if (this.mode === 'c:vwall' && this.drag) {
+      const t = this.mouseTile(), from = this.last || t;
+      if (this.last && t.x === this.last.x && t.y === this.last.y) return;
+      const n = Math.max(Math.abs(t.x - from.x), Math.abs(t.y - from.y));
+      for (let k = 1; k <= n; k++) { const x = Math.round(from.x + (t.x - from.x) * k / n), y = Math.round(from.y + (t.y - from.y) * k / n); if (!Gate.buildWall(x, y, true) && !Inv.has(CIVIC.vwall.cost)) break; }
+      this.last = t; return;
+    }
+    return up0();
+  };
+  const pr0 = Urban.prompt.bind(Urban);
+  Urban.prompt = function () { if (this.mode === 'c:vwall') return '🧱 <b>Muralha</b> — clique e arraste · 1 pedra por trecho · só o chefe da vila · botão direito/Esc encerra'; return pr0(); };
+}
