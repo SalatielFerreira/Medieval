@@ -157,3 +157,20 @@ const WarEnvoy = {
     return lv0(...a);
   };
 }
+
+// ------------------------------------------------------------------ a batalha só acaba quando você cai (ou quando cai o último inimigo)
+// O rei do seu lado pode cair e o seu exército inteiro também: enquanto você estiver de pé, a luta continua.
+{
+  const wu1 = War.update.bind(War);
+  War.update = function (dt) {
+    const r = wu1(dt);
+    const B = G.place;
+    if (B && B.kind === 'battle' && !B.fake && !B.done && !P.dead) {
+      const king = G.ents.some(e => !e.dead && e.battle === B.id && e.wside === B.side && e.battleKing);
+      if (!king && B.hadKing && !B.kingMsg) { B.kingMsg = true; UI.banner('👑 O rei do seu lado caiu!'); UI.msg('O rei do seu lado caiu, mas a batalha continua enquanto você estiver de pé.', 'bad', true); }
+      if (king) B.hadKing = true;
+      if (!B.aloneMsg && War.fighters(B.side).length === 0) { B.aloneMsg = true; UI.banner('⚔️ Você luta sozinho!'); UI.msg('Todo o seu exército caiu. A batalha só acaba quando você vencer — ou cair.', 'bad', true); }
+    }
+    return r;
+  };
+}
