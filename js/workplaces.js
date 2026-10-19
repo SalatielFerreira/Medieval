@@ -449,3 +449,29 @@ People.commoner = function (p) { return !!p && p.alive && p.rank === 'peasant' &
   const so0 = Work.shopOf;
   Work.shopOf = s => so0(s) || (s && s.owner === 'player' && PLAYER_SHOP[s.type]) || null;
 }
+
+// ------------------------------------------------------------------ vender só o que não está equipado
+Inv.sellable = function (k) { const eq = Object.values(P.equip || {}).filter(x => x === k).length; return Math.max(0, this.count(k) - eq); };
+
+// ------------------------------------------------------------------ dormir na estalagem (10 Salin)
+// As camas da estalagem da vila alugam a noite: dorme até o amanhecer (vida e energia cheias, o jogo salva) e o
+// dinheiro vai para o responsável. A sua casa continua sendo o lugar para onde você volta.
+const INN_NIGHT = 10;
+{
+  const inn0 = LAYOUTS.w_inn;
+  LAYOUTS.w_inn = o => { const L = inn0(o); L.items = L.items.map(it => it[0] === 'bed' ? [it[0], it[1], it[2], it[3], it[4], Object.assign({}, it[5] || {}, { act: 'innbed' })] : it); return L; };
+  const fl2 = Places.furnLabel.bind(Places);
+  Places.furnLabel = function (f) { if (f.act === 'innbed') return `Cama — dormir até o amanhecer por ${INN_NIGHT} Salin`; return fl2(f); };
+  const use2 = Places.use.bind(Places);
+  Places.use = function (f) {
+    if (f.act !== 'innbed') return use2(f);
+    const s = G.place && G.place.src, k = s && Shops.keeper(s);
+    if (P.gold < INN_NIGHT) { UI.msg(`🛏️ A noite na estalagem custa ${INN_NIGHT} 🪙.`, 'bad'); return; }
+    Dialog.confirm({ icon: '🛏️', title: 'Dormir na estalagem', ok: `Dormir (${INN_NIGHT} 🪙)`, text: `Alugar uma cama por ${INN_NIGHT} Salin e dormir até o amanhecer? Você acorda com a vida e a energia cheias, e o jogo é salvo.` }, () => {
+      if (P.gold < INN_NIGHT) return;
+      P.gold -= INN_NIGHT; if (k) k.purse = People.purse(k) + INN_NIGHT;
+      UI.msg(`🛏️ ${k ? `${k.name} arrumou a cama` : 'Você alugou uma cama'} — ${INN_NIGHT} 🪙. Boa noite!`, 'gold');
+      Game.sleep(null);
+    });
+  };
+}

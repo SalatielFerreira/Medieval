@@ -1671,7 +1671,7 @@ const Game = {
       Market.traded(ci, k, n, 'buy');
     } else {
       const cash = owner ? People.purse(owner) : c.treasury;
-      n = Math.min(n, Inv.count(k), Math.floor(cash / pr.sell));
+      n = Math.min(n, Inv.sellable(k), Math.floor(cash / pr.sell)); // nunca vende o que está equipado
       if (n <= 0) { if (owner) UI.msg(`${owner.name} não tem dinheiro para comprar isso agora (bolsa: ${cash} 🪙).`, 'bad'); return; }
       P.gold += n * pr.sell;
       if (owner) owner.purse -= n * pr.sell; else c.treasury -= n * pr.sell;

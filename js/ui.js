@@ -1477,7 +1477,7 @@ const UI = {
     const sh = Biz.trade(s), mul = Biz.popMul(s), ci = Biz.civOf(s);
     s.shelf = s.shelf || {};
     const goods = Object.keys(s.goods || {}).filter(k => s.goods[k] > 0), shelf = Object.keys(s.shelf).filter(k => s.shelf[k] > 0);
-    const mine = Object.keys(P.inv).filter(k => P.inv[k] > 0 && ITEMS[k] && sh.buys(ITEMS[k]));
+    const mine = Object.keys(P.inv).filter(k => P.inv[k] > 0 && ITEMS[k] && sh.buys(ITEMS[k]) && Inv.sellable(k) > 0);
     const row = (k, a, b, c) => `<tr><td>${UI.ii(ITEMS[k])} ${ITEMS[k].name}</td><td>${a}</td><td>${b}</td><td>${c}</td></tr>`;
     let h = `<div class="bzs-head"><div><b>🪙 ${s.till || 0}</b><small>no caixa</small></div><div><b>×${mul.toFixed(2)}</b><small>freguesia (cresce com a população)</small></div><div><b>${Biz.workerCount(s)}</b><small>atendendo</small></div><div><b>${P.gold}</b><small>seu ouro</small></div></div>
       <p class="muted">Como dono, você compra no atacado (30% mais barato) e pode pôr mercadoria no balcão: o caixa paga na hora e os fregueses compram aos poucos, todo mês, pelo preço cheio. Quanto mais gente mora perto, mais eles compram.</p>`;
@@ -1667,14 +1667,14 @@ const UI = {
         <td><button data-act="trade2" data-k="${k}" data-n="1" data-m="buy" ${can ? '' : 'disabled'}>Comprar 1</button><button data-act="trade2" data-k="${k}" data-n="10" data-m="buy" ${can ? '' : 'disabled'}>10</button></td></tr>`;
     }
     h += '</table><h3>Vender para esta loja</h3>';
-    const mine = Object.keys(P.inv).filter(k => sh.buys(ITEMS[k]));
+    const mine = Object.keys(P.inv).filter(k => sh.buys(ITEMS[k]) && Inv.sellable(k) > 0); // o que está equipado não entra
     if (!mine.length) h += `<p class="muted">Você não tem nada que interesse ${type === 'hunter' ? 'ao caçador' : 'a esta loja'}.</p>`;
     else {
       h += '<table class="trade"><tr><th>Item</th><th>Você tem</th><th>Paga</th><th></th></tr>';
       for (const k of mine) {
         const it = ITEMS[k], pr = Game.priceFor(civ, k, owner);
         const can = People.purse(owner) >= pr.sell;
-        h += `<tr><td>${UI.ii(it)} ${it.name}${Object.values(P.equip).includes(k) ? ' <small class="muted">(equipado)</small>' : ''}</td><td>${Inv.count(k)}</td><td>${pr.sell} 🪙${this.trendIcon(civ, k)}</td>
+        h += `<tr><td>${UI.ii(it)} ${it.name}</td><td>${Inv.sellable(k)}</td><td>${pr.sell} 🪙${this.trendIcon(civ, k)}</td>
           <td><button data-act="trade2" data-k="${k}" data-n="1" data-m="sell" ${can ? '' : 'disabled'}>Vender 1</button><button data-act="trade2" data-k="${k}" data-n="10" data-m="sell" ${can ? '' : 'disabled'}>10</button></td></tr>`;
       }
       h += '</table>';

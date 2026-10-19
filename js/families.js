@@ -630,7 +630,7 @@ const Biz = {
   },
   // o dono põe mercadoria no balcão: o caixa paga na hora e os fregueses compram ao longo dos meses (pelo preço cheio)
   ownerSell(s, k, n) {
-    const pay = this.shelfPay(s, k), can = Math.min(n, Inv.count(k), Math.floor((s.till || 0) / pay));
+    const pay = this.shelfPay(s, k), can = Math.min(n, Inv.sellable(k), Math.floor((s.till || 0) / pay));
     if (can <= 0) { UI.msg(Inv.count(k) <= 0 ? 'Você não tem esse item.' : `O caixa do empreendimento não tem ${pay} 🪙 para pagar.`, 'bad'); return; }
     Inv.add(k, -can); s.till -= pay * can; P.gold += pay * can; s.shelf = s.shelf || {}; s.shelf[k] = (s.shelf[k] || 0) + can; Sound.play('coin');
     UI.msg(`🏪 ${can} ${ITEMS[k].name} no balcão: o caixa pagou ${pay * can} 🪙.`, 'gold');
