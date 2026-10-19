@@ -3626,3 +3626,7 @@ body.small #surrenderBtn { top: calc(8px + env(safe-area-inset-top)); padding: 0
 .mir-row .picker { display: flex; align-items: center; gap: 6px; }
 .mir-row .picker b { min-width: 140px; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .mir-sw { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .4); }
+
+/* livro do portão */
+.glog { margin: 4px 0 0; padding-left: 18px; max-height: 240px; overflow: auto; }
+.glog li { margin: 2px 0; }
