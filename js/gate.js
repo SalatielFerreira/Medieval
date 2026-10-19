@@ -206,12 +206,13 @@ function drawVillageGate(ctx, s, X, Y, time) {
   const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(X + x), Math.round(Y + y), w, h); };
   const col = v && G.civs[v.civ] ? Game.civColor(v.civ) : '#a83030';
   if (vert) {
-    // muralha de norte a sul: pilares em cima e embaixo, folhas do portão na vertical
-    R(9, -18, 14, 16, stone); R(9, -18, 14, 3, dark); for (let k = 9; k < 23; k += 5) R(k, -22, 3, 4, stone);
-    R(9, 28, 14, 10, stone); R(9, 28, 14, 2, dark);
-    if (closed) { R(12, -2, 8, 30, wood); for (let y = 2; y < 28; y += 6) R(12, y, 8, 1, '#5a3418'); R(12, 6, 8, 2, iron); R(12, 18, 8, 2, iron); R(14, 12, 4, 3, '#c8a040'); }
-    else { R(10, -2, 3, 12, wood); R(10, 16, 3, 12, wood); R(10, 2, 3, 1, iron); R(10, 22, 3, 1, iron); }
-    R(18, -30, 2, 12, '#5a3a1e'); R(20, -30, 8, 6, col);
+    // muralha de norte a sul: uma torrezinha de entrada, com a passagem (leste–oeste) no meio
+    ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.fillRect(X + 3, Y + 34, 26, 5);
+    R(4, -22, 24, 16, stone); R(4, -22, 24, 3, dark); for (let k = 4; k < 28; k += 6) R(k, -27, 4, 5, stone);
+    R(4, 28, 24, 10, stone); R(4, 28, 24, 2, dark); R(4, -6, 3, 34, dark); R(25, -6, 3, 34, dark);
+    if (closed) { R(7, -6, 18, 34, wood); for (let y = -1; y < 28; y += 6) R(7, y, 18, 1, '#5a3418'); R(7, 2, 18, 2, iron); R(7, 18, 18, 2, iron); R(14, 9, 4, 4, '#c8a040'); }
+    else { R(7, -6, 18, 34, 'rgba(25,18,10,0.45)'); R(7, -6, 3, 34, wood); R(22, -6, 3, 34, wood); R(7, 2, 3, 2, iron); R(22, 2, 3, 2, iron); }
+    R(19, -38, 2, 12, '#5a3a1e'); R(21, -38, 9, 6, col);
   } else {
     // muralha de leste a oeste: pilares dos lados, arco com as folhas do portão
     R(-6, -14, 10, 44, stone); R(28, -14, 10, 44, stone); R(-6, -14, 10, 3, dark); R(28, -14, 10, 3, dark);
@@ -318,14 +319,24 @@ Object.assign(Gate, {
   placeErr(tx, ty) {
     if (!World.inb(tx, ty)) return 'Fora do mapa';
     const i = World.idx(tx, ty);
-    if (World.tiles[i] !== T.ROAD) return 'O portão fica sobre a estrada, na passagem da muralha';
-    if (World.blocker(i)) return 'Já há uma construção aqui';
+    // vale estrada ou chão firme; em cima de um trecho de muro, o portão toma o lugar dele (abre uma passagem)
+    const t = World.tiles[i], b = World.blocker(i);
+    if (t === T.BRIDGE || !TINFO[t].walk || World.isWater(t)) return 'Terreno inválido';
+    if (b && !this.wallPiece(b)) return 'Já há uma construção aqui';
+    if (!b && World.obj[i]) return 'Remova árvores/rochas primeiro';
     if (P.x + P.r > tx * TILE && P.x - P.r < (tx + 1) * TILE && P.y > ty * TILE && P.y - P.r < (ty + 1) * TILE) return 'Você está no caminho';
     const v = World.villages[Urban.villageNear(tx, ty, GATE_REACH)];
     if (!v) return 'O portão fica na muralha de uma vila';
     if (v.lord !== 'player') return `Só o chefe de ${v.name} pode instalar o portão`;
-    if (!this.axis(tx, ty)) return 'Ponha o portão onde a estrada atravessa um muro (com muro dos lados, a até 4 blocos)';
+    if (!this.axis(tx, ty)) return 'Ponha o portão na linha de um muro (com muro dos lados, a até 4 blocos) ou em cima de um trecho dele';
     return null;
+  },
+  wallPiece(s) { return !!s && ['vwall', 'wall_stone', 'wall_wood'].includes(s.type); },
+  // o trecho de muro que dá lugar ao portão sai (e fica anotado no jogo salvo)
+  clearFor(tx, ty) {
+    const b = World.blocker(World.idx(tx, ty)); if (!this.wallPiece(b)) return;
+    if (b.owner !== 'player') Urban.record('remove', b, b.x, b.y);
+    World.removeStruct(b);
   },
   fillWalls(s) {
     const vert = this.vertical(s); let n = 0;
@@ -382,6 +393,7 @@ Object.assign(Gate, {
       if (!Inv.has(d.cost)) { this.warn('Faltam materiais para o Portão.'); return; }
       Inv.pay(d.cost);
       const vi = this.villageNear(t.x, t.y, GATE_REACH);
+      Gate.clearFor(t.x, t.y);
       this.addCivic('vgate', t.x, t.y, vi);
       Game.burst((t.x + 0.5) * TILE, (t.y + 0.5) * TILE, '#c9a978', 14); Sound.play('build');
       UI.msg(`🚪 Portão instalado em ${World.villages[vi].name}. Clique nele para o pedágio, a revista e a defesa.`, 'gold');
