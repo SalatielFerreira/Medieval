@@ -1050,19 +1050,24 @@ const UI = {
           <div class="acc-col"><small>Previsão do próximo mês</small><div class="acc-row"><span>Faturamento</span><b class="ok">+${money(fcs.reduce((a, x) => a + x.fc.gold + Biz.goodsValue(x.fc.out), 0))} 🪙</b></div>
             <div class="acc-row"><span>Salários</span><b class="bad">−${money(wages)} 🪙</b></div><div class="acc-row tot"><span>Lucro</span><b>${money(fcs.reduce((a, x) => a + x.fc.gold + Biz.goodsValue(x.fc.out), 0) - wages)} 🪙</b></div></div>
         </div>
-        <div class="bz-each">${biz.length ? '<div class="acc-line head"><span>Empreendimento</span><span>Faturou</span><span>Salários</span><span>Lucro</span></div>' : ''}
-          ${biz.map(b => { const e = Biz.earn(b); return `<div class="acc-line"><span>${Game.buildIcon(b.type)} ${BUILDINGS[b.type].name}</span><span class="ok">+${money(e.rev)}</span><span class="bad">−${money(e.wages)}</span><b class="${e.rev - e.wages >= 0 ? 'ok' : 'bad'}">${money(e.rev - e.wages)}</b></div>`; }).join('')}</div>
         <small class="muted">Faturamento = ouro do caixa + valor do que foi produzido (pelo preço de venda, 60%). A sua Taverna conta o que vendeu no balcão.</small></div>`;
-      const mobile = `<div class="biz-m">
-        <div class="card bz-dash kalone"><div class="sec">Painel do dono <span>por dia</span></div>
+      const each = `${biz.length ? `<div class="card bz-eachcard"><div class="sec">📊 Por empreendimento <span>desde o início</span></div>
+        <div class="bz-each"><div class="acc-line head"><span>Empreendimento</span><span>Faturou</span><span>Salários</span><span>Lucro</span></div>
+          ${biz.map(b => { const e = Biz.earn(b); return `<div class="acc-line"><span>${Game.buildIcon(b.type)} ${BUILDINGS[b.type].name}</span><span class="ok">+${money(e.rev)}</span><span class="bad">−${money(e.wages)}</span><b class="${e.rev - e.wages >= 0 ? 'ok' : 'bad'}">${money(e.rev - e.wages)}</b></div>`; }).join('')}</div></div>` : ''}`;
+      const dash = `<div class="card bz-dash kalone"><div class="sec">Painel do dono <span>por dia</span></div>
           <div class="bz-stats"><div><span class="bz-big">💼</span><b>${biz.length}</b><small>${biz.length === 1 ? 'empreendimento' : 'empreendimentos'}</small></div>
             <div><span class="bz-big">👷</span><b>${staff}/${slots}</b><small>funcionários</small><i class="bz-bar"><i style="width:${slots ? staff / slots * 100 : 0}%"></i></i></div>
             <div><span class="bz-big">💸</span><b class="${wages ? 'bad' : ''}">−${wages}</b><small>salários 🪙</small></div>
             <div><span class="bz-big">💰</span><b class="${goldDay ? 'ok' : ''}">+${goldDay}</b><small>lucro 🪙${till ? ` · caixa ${till}` : ''}</small></div></div>
           <div class="bz-made">${madeHtml || `<span class="muted">${biz.length ? 'Contrate moradores para começar a produzir.' : 'Nada produzindo ainda: construa um empreendimento e contrate moradores das vilas.'}</span>`}</div>
-          ${P.gold < wages * 3 && wages ? '<div class="bz-warn">⚠️ Pouco ouro para os salários: sem pagamento, os funcionários se revoltam.</div>' : ''}</div>
-        ${biz.length ? `<div class="card bz-list kalone"><div class="sec">Seus empreendimentos <span>${biz.length}</span></div><div class="bz-grid">${biz.map(bcard).join('')}</div></div>` : ''}</div>`;
-      return this.pageHead('💼', 'Empreendimentos', 'Construa em Construir → Empreendimentos e contrate moradores das vilas') + ledger + mobile
+          ${P.gold < wages * 3 && wages ? '<div class="bz-warn">⚠️ Pouco ouro para os salários: sem pagamento, os funcionários se revoltam.</div>' : ''}</div>`;
+      const mobile = `<div class="biz-m">${biz.length ? `<div class="card bz-list kalone"><div class="sec">Seus empreendimentos <span>${biz.length}</span></div><div class="bz-grid">${biz.map(bcard).join('')}</div></div>` : ''}</div>`;
+      // duas páginas: as contas (com o painel do dono) e a lista dos empreendimentos
+      const bsub = this.sel.bizsub === 'list' ? 'list' : 'contas';
+      const tabs = `<div class="tabs subtabs"><button class="tab ${bsub === 'contas' ? 'on' : ''}" data-act="bizsub" data-s="contas">📒 Contas e painel</button><button class="tab ${bsub === 'list' ? 'on' : ''}" data-act="bizsub" data-s="list">💼 Seus empreendimentos (${biz.length})</button></div>`;
+      const head = this.pageHead('💼', 'Empreendimentos', 'Construa em Construir → Empreendimentos e contrate moradores das vilas') + tabs;
+      if (bsub === 'contas') return head + ledger + dash;
+      return head + each + mobile
         + `<div class="biz-d"><div class="card">${biz.map(s => { const fc = Biz.forecast(s); return `<div class="crow"><span class="ri">${Game.buildIcon(s.type)}</span><span><b>${BUILDINGS[s.type].name}</b><small>${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários · salários ${fc.wages} 🪙/dia${s.till ? ` · caixa ${s.till} 🪙` : ''}</small></span><span class="act-row"><button data-act="bizopen" data-s="${s.id}">Abrir</button></span></div>`; }).join('')
           || '<p class="muted">Nenhum ainda. Construa uma Fazenda Comercial, Moinho, Serraria, Pedreira, Mina, Ferraria, Empório ou a sua Taverna, e contrate moradores das vilas próximas.</p>'}</div></div>`;
     }
@@ -2709,6 +2714,7 @@ const UI = {
       case 'cst': this.sel.st = d.s; break;
       case 'bsel': this.sel.build = d.k; break;
       case 'ksub': this.sel.ksub = d.s; break;
+      case 'bizsub': this.sel.bizsub = d.s; break;
       case 'kping': {
         const cp = World.capitals[+d.c];
         G.ping = { x: cp.door.x + 0.5, y: cp.door.y + 1.5, name: 'Castelo de ' + CIV_DEFS[+d.c].short };

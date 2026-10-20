@@ -3630,3 +3630,11 @@ body.small #surrenderBtn { top: calc(8px + env(safe-area-inset-top)); padding: 0
 /* livro do portão */
 .glog { margin: 4px 0 0; padding-left: 18px; max-height: 240px; overflow: auto; }
 .glog li { margin: 2px 0; }
+
+/* Empreendimentos em duas páginas (abas): contas e painel / seus empreendimentos */
+body:not(.small) .kpg.kdesk[data-nav="biz"]:not(:has(.bz-list)) { grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+body:not(.small) .kpg.kdesk[data-nav="biz"]:not(:has(.bz-list)):not(:has(.bz-eachcard)) { grid-template-rows: auto auto auto minmax(0, 1fr); }
+body:not(.small) .kpg.kdesk[data-nav="biz"] > .subtabs { align-self: start; }
+body:not(.small) .kpg.kdesk[data-nav="biz"] .bz-eachcard { display: flex; flex-direction: column; min-height: 0; }
+body:not(.small) .kpg.kdesk[data-nav="biz"] .bz-eachcard .bz-each { flex: 1; min-height: 0; overflow: auto; }
+body:not(.small) .kpg.kdesk[data-nav="biz"]:has(.bz-list):has(.bz-eachcard) { grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.4fr); }
