@@ -66,15 +66,15 @@ const Towns = {
     const vis = World.structs.filter(s => s && !s.removed && !s.hidden && s.w && s.h).map(s => [rank(s), s]).sort((a, b) => a[0] - b[0] || a[1].id - b[1].id);
     const hits = s => { for (let j = s.y; j < s.y + s.h; j++) for (let i = s.x; i < s.x + s.w; i++) { if (!World.inb(i, j)) continue; const o = occ[World.idx(i, j)]; if (o >= 0 && o !== s.id) return true; } return false; };
     const paint = s => { for (let j = s.y; j < s.y + s.h; j++) for (let i = s.x; i < s.x + s.w; i++) if (World.inb(i, j)) { const k = World.idx(i, j); occ[k] = s.id; World.sgrid[k] = s.id; } };
-    let fixed = 0;
+    let fixed = 0; const moved = [];
     for (const [r, s] of vis) {
       if (r < 3 || !hits(s)) { paint(s); continue; }
       fixed++;
       const spot = s.type === 'vwall' ? null : this.freeSpot(s, occ);
-      if (spot) { Urban.relocate(s, spot.x, spot.y); paint(s); }
+      if (spot) { moved.push({ x: s.x, y: s.y, w: s.w, h: s.h }); Urban.relocate(s, spot.x, spot.y); paint(s); moved.push(s); }
       else { Urban.record('remove', s, s.x, s.y); World.removeStruct(s); }
     }
-    if (fixed) { for (const [, s] of vis) if (!s.removed) paint(s); World.chunks.clear(); }
+    if (fixed) { for (const [, s] of vis) if (!s.removed) { paint(s); } for (const s of moved) World.touchArea(s.x - 1, s.y - 1, s.w + 2, s.h + 2); }
     return fixed;
   },
   freeSpot(s, occ) {
@@ -103,7 +103,7 @@ const Towns = {
       const c = G.civs[v.civ], raided = v.raid && v.raid.until >= G.day - ECON_DAYS;
       // vila livre: cresce por conta própria, sem depender da felicidade e do tesouro de um reino
       const happy = v.free ? 60 : c.happy, rich = v.free ? false : c.treasury > 600;
-      v.prosper = U.clamp(v.prosper + (happy - 45) / 35 + (rich ? 0.5 : 0) + U.rnd(-0.4, 0.8) - (raided ? 5 : 0), 0, PROSPER_MAX);
+      v.prosper = U.clamp(v.prosper + (typeof VillageEcon !== "undefined" ? VillageEcon.delta(v, vi, happy, rich, raided) : (happy - 45) / 35 + (rich ? 0.5 : 0) + U.rnd(-0.4, 0.8) - (raided ? 5 : 0)), 0, PROSPER_MAX); // cresce conforme o poder econômico da vila
       if (raided && Math.random() < 0.6) v.ruin = Math.min(3, v.ruin + 1);
       else if (!raided && v.ruin > 0 && Math.random() < 0.3) v.ruin--;
       const lvl = this.levelOf(v.prosper);
@@ -438,8 +438,7 @@ const NpcRoads = {
       const c = G.civs[ci]; if (!c || c.ruler === 'player' || c.dead) return;
       total += work(cp.x, cp.y, 12, 5, L => { const p = 4 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; });
     });
-    if (total) World.chunks.clear();
-    return total;
+    return total; // cada bloco evoluído já foi redesenhado (setTile)
   },
   // por mês: cada vila liga até n construções (as que não acharam caminho tentam de novo daqui a um ano)
   tick(n = 2) {
@@ -455,7 +454,7 @@ const NpcRoads = {
       if ((per[s.village] = (per[s.village] || 0) + 1) > n) continue;
       if (this.build(s)) { any = true; F[s.okey] = key; } else s.noRoadAt = key;
     }
-    if (any) { World.chunks.clear(); if (World.mini) World.buildMinimap(); }
+    // cada caminho aberto já redesenhou os próprios blocos (carveRoad): nada de refazer o mapa inteiro
     return any;
   },
   // começo do jogo: todas as vilas já ligadas

@@ -862,10 +862,13 @@ const UI = {
     if (S.knav === 'market' || S.knav === 'news') S.knav = 'overview'; // páginas que saíram do Reino
     if (S.knav.startsWith('k:') && !ruled.some(c => 'k:' + c.id === S.knav)) S.knav = ruled.length ? 'k:' + ruled[0].id : 'overview';
     const mine = Urban.myVillages(), alerts = this.kAlerts();
+    if (S.knav.startsWith('v:') && !mine.some(({ i }) => 'v:' + i === S.knav)) S.knav = 'overview';
     const groups = [['Você', [['overview', '🏠', 'Visão geral', alerts.length, alerts.length > 0], ['crown', '👑', 'Coroa e títulos'], ['family', '👪', 'Família'],
       ['villages', '🏘️', 'Vilas e guardas', mine.length], ['biz', '💼', 'Empreendimentos', Biz.list().length]]]];
     if (ruled.length) groups.push(['Seus reinos', ruled.map(c => ['k:' + c.id, Heraldry.armsSvg(c.id, 16), CIV_DEFS[c.id].short,
       c.rebel > 0 || c.atWar ? '!' : '', c.rebel > 0 || c.atWar])]);
+    // as vilas em que você é o chefe: cada uma com a sua administração
+    if (mine.length) groups.push(['Suas vilas', mine.map(({ v, i }) => ['v:' + i, '🏘️', v.name, v.raid && v.raid.until >= G.day ? '!' : '', !!(v.raid && v.raid.until >= G.day)])]);
     groups.push(['O mundo', [['atlas', '🗺️', 'Reino'], ['families', '🏛️', 'Grandes Casas'], ['tree', '🌳', 'Linhagens']]]);
     const page = this.kPage(S.knav);
     this.open('Portfólio', `<div class="iconnav">${this.navHtml(groups, S.knav, 'knav', `<div class="kpg">${page}</div>`)}</div>`, 'showKingdom', [], 'Você, seus reinos e o mundo');

@@ -193,7 +193,7 @@ const Families = {
       World.addStruct(type, x, y, d.w, d.h, v.civ, { village: vi, fam: f.id });
       f.biz.push({ type, x, y });
       f.wealth -= 200 + f.biz.length * 40;
-      World.chunks.clear();
+      World.touchArea(x, y, d.w, d.h);
       const known = U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 50;
       Diplo.chronicle(`🏗️ A ${this.name(f)} abriu ${d.name === 'Quinta' ? 'uma' : 'um'} ${d.name} em ${v.name}.`, known);
       return;

@@ -3638,3 +3638,7 @@ body:not(.small) .kpg.kdesk[data-nav="biz"] > .subtabs { align-self: start; }
 body:not(.small) .kpg.kdesk[data-nav="biz"] .bz-eachcard { display: flex; flex-direction: column; min-height: 0; }
 body:not(.small) .kpg.kdesk[data-nav="biz"] .bz-eachcard .bz-each { flex: 1; min-height: 0; overflow: auto; }
 body:not(.small) .kpg.kdesk[data-nav="biz"]:has(.bz-list):has(.bz-eachcard) { grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.4fr); }
+
+/* administração da vila: barra até o próximo nível */
+.va-bar { height: 12px; border-radius: 6px; background: rgba(214, 174, 96, .15); overflow: hidden; margin: 6px 0 10px; border: 1px solid rgba(214, 174, 96, .3); }
+.va-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #a8791a, #ffd54a); }

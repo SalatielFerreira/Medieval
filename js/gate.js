@@ -406,8 +406,7 @@ Object.assign(Gate, {
     if (!Inv.has(CIVIC.vwall.cost)) { Urban.warn('Faltam materiais: 1 Pedra por trecho'); return false; }
     Inv.pay(CIVIC.vwall.cost);
     Urban.addCivic('vwall', tx, ty, Urban.villageNear(tx, ty, GATE_REACH)); // anota no jogo salvo e libera lugares reservados
-    World.structTouch && World.structTouch({ x: tx - 1, y: ty - 1, w: 3, h: 3 });
-    World.chunks.clear();
+    World.touchArea(tx - 1, ty - 1, 3, 3);
     Game.burst((tx + 0.5) * TILE, (ty + 0.6) * TILE, '#9a958c', 4);
     return true;
   },

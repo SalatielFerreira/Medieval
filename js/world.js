@@ -611,6 +611,11 @@ const World = {
     this.miniPixel(i);
     if (typeof MapView !== 'undefined' && MapView.chunkCache) MapView.chunkCache.delete(Math.floor(x / CH) + ',' + Math.floor(y / CH));
   },
+  // uma área mudou (árvores retiradas, obra nova): redesenha só os pedaços do chão dela, não o mapa inteiro
+  touchArea(x, y, w, h) {
+    if (this.chunks) for (let cy = Math.floor((y - 1) / CH); cy <= Math.floor((y + h) / CH); cy++) for (let cx = Math.floor((x - 1) / CH); cx <= Math.floor((x + w) / CH); cx++) this.chunks.delete(cx + ',' + cy);
+    if (this.mini) for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (this.inb(i, j)) this.miniPixel(this.idx(i, j));
+  },
   // uma construção apareceu, sumiu ou mudou de lugar: o mapa mostra na hora
   structTouch(s) {
     if (!this.mini || !s) return;

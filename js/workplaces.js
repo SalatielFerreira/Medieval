@@ -112,6 +112,7 @@ Shops.ensure = function () {
     let q = null;
     // empreendimento de família: alguém da própria família
     if (s.fam !== undefined && Families.get(s.fam)) q = Families.members(Families.get(s.fam)).find(m => free(m) && m.age >= 18 && ['peasant', 'wanderer', rank].includes(m.rank) && !Families.isChief(m)) || null;
+    if (q) q.rank = rank; // quem é da família assume o ofício do negócio
     if (!q) q = G.people.find(p => free(p) && p.rank === rank && p.home.type === 'village' && p.home.idx === vi) || null;
     // todo prédio sempre tem alguém cuidando: um morador sem emprego assume (ou chega alguém de fora)
     if (!q) {

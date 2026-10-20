@@ -103,7 +103,7 @@ const Homes = {
       const s = this.make(e);
       const f = Families.get(famId);
       if (f && f.wealth >= 40) f.wealth -= 40;
-      World.chunks.clear();
+      World.touchArea(x, y, 2, 2);
       if (U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 40 && f) Game.note(`🔨 A ${Families.name(f)} começou a construir uma casa em ${v.name}.`);
       return s;
     }
