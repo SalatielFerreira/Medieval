@@ -140,6 +140,8 @@ const BIZ_PRICES = [0.6, 0.8, 1, 1.2, 1.5, 2];
 }
 
 // ------------------------------------------------------------------ poder econômico das vilas (o nível sobe com ele)
+// ritmo do crescimento: uma vila leva uns 48 meses para ir do nível 1 ao 3–4
+const VILLAGE_GROWTH = 0.5;
 const VillageEcon = {
   // de onde vem a força da economia da vila
   parts(vi) {
@@ -169,7 +171,7 @@ const VillageEcon = {
   base(v, vi) { return this.power(vi) / 50 - ((v.level || 1) - 1) * 0.2; },
   delta(v, vi, happy, rich, raided) {
     const econ = this.base(v, vi), mood = (happy - 45) / 70 + (rich ? 0.25 : 0);
-    const d = U.clamp(econ, -1, 3) + mood + U.rnd(-0.3, 0.4) - (raided ? 5 : 0);
+    const d = (U.clamp(econ, -1, 3) + mood + U.rnd(-0.3, 0.4)) * VILLAGE_GROWTH - (raided ? 5 : 0);
     v.grow = { d: Math.round(d * 100) / 100, econ: Math.round(econ * 100) / 100, mood: Math.round(mood * 100) / 100, raided: !!raided, day: G.day };
     return d;
   },
@@ -177,14 +179,21 @@ const VillageEcon = {
   forecast(vi) {
     const v = World.villages[vi], c = G.civs[v.civ];
     const happy = v.free ? 60 : c ? c.happy : 50, rich = !v.free && c && c.treasury > 600;
-    const works = typeof VillageWorks !== 'undefined' ? VillageWorks.of(vi).reduce((a, s) => a + ((VWORKS[s.type] || {}).pm || 0), 0) : 0;
-    const econ = U.clamp(this.base(v, vi), -1, 3), mood = (happy - 45) / 70 + (rich ? 0.25 : 0), per = econ + mood + works + 0.05;
+    const works = (typeof VillageWorks !== 'undefined' ? VillageWorks.of(vi).reduce((a, s) => a + ((VWORKS[s.type] || {}).pm || 0), 0) : 0) * VILLAGE_GROWTH;
+    const econ = U.clamp(this.base(v, vi), -1, 3) * VILLAGE_GROWTH, mood = ((happy - 45) / 70 + (rich ? 0.25 : 0)) * VILLAGE_GROWTH, per = econ + mood + works + 0.025;
     const lvl = v.level || 1, next = lvl < VILLAGE_MAX ? VILLAGE_LVLS[lvl] : null, from = VILLAGE_LVLS[lvl - 1] || 0;
     const left = next !== null ? Math.max(0, next - v.prosper) : 0;
     return { econ, mood, works, per, lvl, next, from, left, months: next === null ? null : per > 0.05 ? Math.ceil(left / per) : null, power: this.power(vi) };
   },
 };
 {
+  const vw0 = VillageWorks.monthTick.bind(VillageWorks);
+  VillageWorks.monthTick = function (...a) {
+    const before = World.villages.map(v => v.prosper || 0);
+    const r = vw0(...a);
+    World.villages.forEach((v, i) => { const g = (v.prosper || 0) - before[i]; if (g > 0) v.prosper = before[i] + g * VILLAGE_GROWTH; });
+    return r;
+  };
   // as caravanas do mês ficam guardadas para a conta do mês seguinte
   const gm0 = Gate.monthTick.bind(Gate);
   Gate.monthTick = function () { for (const s of this.list()) { const d = this.peek(s); if (d) d.lastCars = d.cars || 0; } return gm0(); };
@@ -219,7 +228,7 @@ const VillageAdmin = {
       const gates = Gate.list().filter(s => s.village === vi);
       const tips = [];
       if (!parts[1] || parts[1][2] < World.structs.filter(s => Shops.isShop(s) && s.village === vi && s.owner !== 'player').length * 6) tips.push('Ponha um responsável em todas as lojas e obras (aba Gente e obras).');
-      for (const [k, d] of Object.entries(VWORKS).filter(([k]) => !works.some(s => s.type === k)).sort((a, b) => ((b[1].pm || 0) + (b[1].rent || 0) / 40) - ((a[1].pm || 0) + (a[1].rent || 0) / 40)).slice(0, 3)) tips.push(`Construa ${d.icon} ${d.name}${d.pm ? ` (+${d.pm} de prosperidade por mês)` : ''}${d.rent ? ` · aluguel de ${d.rent} 🪙` : ''}.`);
+      for (const [k, d] of Object.entries(VWORKS).filter(([k]) => !works.some(s => s.type === k)).sort((a, b) => ((b[1].pm || 0) + (b[1].rent || 0) / 40) - ((a[1].pm || 0) + (a[1].rent || 0) / 40)).slice(0, 3)) tips.push(`Construa ${d.icon} ${d.name}${d.pm ? ` (+${Math.round(d.pm * VILLAGE_GROWTH * 100) / 100} de prosperidade por mês)` : ''}${d.rent ? ` · aluguel de ${d.rent} 🪙` : ''}.`);
       if (!gates.length) tips.push('Um portão na muralha cobra pedágio e as caravanas que passam aquecem o comércio.');
       if (!World.structs.some(s => !s.removed && s.village === vi && s.type === 'vmarket')) tips.push('A Feira na praça dá +8 de poder econômico.');
       return head + `<div class="card"><div class="sec">💪 Poder econômico <span>${Math.round(VillageEcon.power(vi))}</span></div>
