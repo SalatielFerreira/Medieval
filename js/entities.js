@@ -606,8 +606,6 @@ function humanBody(ctx, o, dir, t) {
     ell(ctx, 3.15, -26.55, 0.75, 0.42, lip); ell(ctx, 4.25, -26.55, 0.75, 0.42, lip);
     ell(ctx, 3.7, -25.95, 1.15, 0.55, shd(lip, 0.12)); ctx.fillStyle = lipD; ctx.fillRect(2.5, -26.25, 2.4, 0.28);
     ell(ctx, 3.9, -25.85, 0.42, 0.18, 'rgba(255,255,255,0.55)');
-    // brinco
-    ell(ctx, -2.1, -27.4, 0.5, 0.5, C('#e8c050')); limb(ctx, -2.1, -27, -2.1, -26.2, 0.25, C('#e8c050')); ell(ctx, -2.1, -25.8, 0.5, 0.6, C(['#c03050', '#3a7ad0', '#40a060', '#f0f0f0'][seed % 4]));
   } else {
     // ---- cabeça
     rr(ctx, -4.9, -34.8, 10.2, 10.8, 4.2, C(skin));
@@ -626,7 +624,6 @@ function humanBody(ctx, o, dir, t) {
     if (fem) {
       ctx.fillStyle = '#1a0e08'; ctx.fillRect(2, -31.5, 2.9, 0.55); ctx.fillRect(4.6, -31.9, 0.8, 0.5); ctx.fillRect(5, -31.4, 0.6, 0.4); ctx.fillRect(-1.2, -31.4, 0.7, 0.45); ctx.fillRect(-1.4, -31.8, 0.5, 0.4);
       ctx.fillStyle = 'rgba(120,70,110,0.22)'; ctx.fillRect(2.1, -32, 2.7, 0.6);       // sombra nos olhos
-      ell(ctx, -2.1, -26.6, 0.55, 0.75, C('#e8c050')); ell(ctx, -2.1, -25.8, 0.4, 0.4, C('#c03050'));   // brinco
     }
     // sobrancelhas
     if (fem) { limb(ctx, 2, -32.1, 4.9, -32.5, 0.5, hd); limb(ctx, -1, -31.9, 0.8, -32.2, 0.45, hd); }
@@ -707,16 +704,6 @@ function humanBody(ctx, o, dir, t) {
     ctx.save(); ctx.globalAlpha = 0.55; ctx.strokeStyle = shd(hc, 0.45); ctx.lineWidth = 0.9; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.arc(0.6, -31, 5, Math.PI * 1.22, Math.PI * 1.62); ctx.stroke();
     ctx.globalAlpha = 0.35; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.arc(0.6, -31, 4.1, Math.PI * 1.3, Math.PI * 1.55); ctx.stroke(); ctx.restore();
-  }
-  if (fem && !o.armor && !o.cape) {
-    // colar com pingente
-    ctx.strokeStyle = C('#d8b860'); ctx.lineWidth = 0.35; ctx.beginPath(); ctx.moveTo(-0.6, -23.6); ctx.quadraticCurveTo(2, -21.4, 4.6, -23.4); ctx.stroke();
-    ell(ctx, 2, -21.6, 0.65, 0.75, C(['#c03050', '#3a7ad0', '#40a060', '#e8e0f0'][seed % 4])); ell(ctx, 1.8, -21.9, 0.22, 0.22, 'rgba(255,255,255,0.8)');
-  }
-  if (fem && bareHead && !o.cap && !['bald', 'monk', 'crownbraid', 'afro'].includes(hs) && seed % 3 === 0) {
-    const fc = C(['#e05070', '#f0e060', '#80a0f0', '#f4f4f4'][seed % 4]);
-    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; ell(ctx, -3.6 + Math.cos(a) * 0.9, -35.2 + Math.sin(a) * 0.9, 0.75, 0.75, fc); }
-    ell(ctx, -3.6, -35.2, 0.5, 0.5, C('#f0c030'));
   }
   // ---- barba e bigode, com textura
   const bs = o.beardStyle || (o.beard ? 'short' : 'none');
