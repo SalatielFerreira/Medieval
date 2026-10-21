@@ -3,7 +3,7 @@
 //  • seus empreendimentos têm no máximo 2 funcionários (produzem o mesmo com menos gente) e você define o preço;
 //  • cada tipo de estabelecimento vende o que é dele, com itens novos (farinha, pão doce, sidra, manteiga, pérola...);
 //  • o nível das vilas sobe conforme o poder econômico delas (moradores, lojas com dono, obras, negócios, comércio);
-//  • o chefe tem a janela de administração da vila (Portfólio → Suas vilas).
+//  • o governador tem a janela de administração da vila (Portfólio → Suas vilas).
 
 // ------------------------------------------------------------------ itens novos
 Object.assign(ITEMS, {
@@ -162,6 +162,7 @@ const VillageEcon = {
       ['🏭', 'Negócios das famílias', fam * 5],
       ['⛲', 'Feira, chafariz e estátua', deco],
       ['🐫', 'Caravanas pelo portão (mês passado)', cars * 3],
+      ['💰', 'Investimentos no desenvolvimento', typeof Fin !== 'undefined' ? Math.round(Fin.vinv(vi) / 40) : 0],
     ];
     if (v.ruin) out.push(['🔥', 'Casas em ruína', -v.ruin * 5]);
     return out;
@@ -199,13 +200,13 @@ const VillageEcon = {
   Gate.monthTick = function () { for (const s of this.list()) { const d = this.peek(s); if (d) d.lastCars = d.cars || 0; } return gm0(); };
 }
 
-// ------------------------------------------------------------------ janela de administração da vila (chefe)
+// ------------------------------------------------------------------ janela de administração da vila (governador)
 const VillageAdmin = {
   page(vi) {
     const v = World.villages[vi]; if (!v) return '<p class="muted">Vila não encontrada.</p>';
     const S = UI.sel, sub = ['resumo', 'economia', 'gente'].includes(S.vsub) ? S.vsub : 'resumo', f = VillageEcon.forecast(vi);
     const tabs = `<div class="tabs subtabs">${[['resumo', '📊 Resumo'], ['economia', '💰 Economia'], ['gente', '👪 Gente e obras']].map(([k, l]) => `<button class="tab ${sub === k ? 'on' : ''}" data-act="vsub" data-s="${k}">${l}</button>`).join('')}</div>`;
-    const head = UI.pageHead('🏘️', v.name, `${v.free ? 'Vila livre' : 'Vila de ' + CIV_DEFS[v.civ].name} · você é o chefe`) + tabs;
+    const head = UI.pageHead('🏘️', v.name, `${v.free ? 'Vila livre' : 'Vila de ' + CIV_DEFS[v.civ].name} · você é o governador`) + tabs;
     const sign = n => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(2);
     if (sub === 'resumo') {
       const pct = f.next !== null ? U.clamp((v.prosper - f.from) / (f.next - f.from) * 100, 0, 100) : 100;
@@ -235,7 +236,7 @@ const VillageAdmin = {
           <div class="kv">${parts.map(([ic, l, n]) => `<div>${ic} ${l}<b class="${n >= 0 ? 'ok' : 'bad'}">${n >= 0 ? '+' : ''}${Math.round(n)}</b></div>`).join('')}</div>
           <p class="dt-desc">Para subir do nível ${f.lvl} sem depender da sorte, a vila precisa de mais de <b>${Math.round((f.lvl - 1) * 0.2 * 50)}</b> de poder econômico.</p></div>
         <div class="card"><div class="sec">🪙 Rendas da vila <span>por mês</span></div>
-          <div class="kv"><div>Aluguéis das obras (vão para você, o chefe)<b>${rent} 🪙</b></div>
+          <div class="kv"><div>Aluguéis das obras (vão para você, o governador)<b>${rent} 🪙</b></div>
             ${gates.map(s => { const d = Gate.peek(s) || {}; return `<div>🚪 Portão: pedágio ${d.toll || 0} 🪙 · entrada ${d.fee || 0} 🪙<b>${d.lastMonth !== undefined ? d.lastMonth : 0} 🪙 no mês passado</b></div>`; }).join('')}</div></div>
         <div class="card"><div class="sec">💡 Como fazer a vila crescer</div><ul class="glog">${tips.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
     }

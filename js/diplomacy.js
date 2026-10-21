@@ -265,7 +265,7 @@ const Borders = {
     Towns.syncOwners();
     const n = this.claim(ci, v.x, v.y, 17);
     UI.banner(`👑 ${v.name} agora é do ${CIV_DEFS[ci].name}!`);
-    UI.msg(`${v.name} entrou no reino com ${n} blocos de terra em volta. Você continua chefe da vila.`, 'gold');
+    UI.msg(`${v.name} entrou no reino com ${n} blocos de terra em volta. Você continua governador da vila.`, 'gold');
     Diplo.chronicle(`👑 ${v.name} foi anexada ao ${CIV_DEFS[ci].name}.`);
   },
 };

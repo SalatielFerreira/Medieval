@@ -1383,7 +1383,9 @@ const Game = {
     else if (t === T.DESERT) kind = r < 0.6 ? 'camel' : r < 0.82 ? 'fox' : 'rabbit';
     else if (t === T.STEPPE) kind = r < 0.25 ? 'camel' : r < 0.45 ? 'deer' : r < 0.65 ? 'rabbit' : r < 0.78 ? 'fox' : r < (night ? 0.92 : 0.84) ? 'wolf' : 'boar';
     if (!kind) return;
-    const nearTown = World.capitals.some(c => U.dist(tx, ty, c.x, c.y) < 14) || World.villages.some(v => U.dist(tx, ty, v.x, v.y) < 10);
+    // bichos não nascem dentro dos muros das vilas; os predadores ficam longe delas e das capitais
+    if (World.villages.some(v => Math.max(Math.abs(tx - v.x), Math.abs(ty - v.y) * 1.25) < 17)) return;
+    const nearTown = World.capitals.some(c => U.dist(tx, ty, c.x, c.y) < 14) || World.villages.some(v => Math.max(Math.abs(tx - v.x), Math.abs(ty - v.y) * 1.25) < 22);
     if ((kind === 'wolf' || kind === 'bear' || kind === 'croc') && (nearTown || (G.day === 1 && !night))) return;
     if (Season.winter() && kind === 'deer' && Math.random() < 0.4) kind = 'wolf';
     this.spawn(kind, x, y, { leash: 14, mult: kind === 'wolf' && Season.winter() ? 1.35 : 1 });
@@ -1430,11 +1432,11 @@ const Game = {
     World.villages.forEach((v, vi) => {
       if (U.dist(ptx, pty, v.x, v.y) > 30) return;
       // vila sob ataque de um reino inimigo
-      if (v.raid && v.raid.until >= G.day && Diplo.atWar(v.raid.by, v.civ)) this.ensureGroup('raid' + vi, 4, () => {
-        const a = Math.random() * Math.PI * 2;
-        const s = freeSpotNear((v.x + Math.cos(a) * 9) * TILE, (v.y + Math.sin(a) * 7) * TILE, 3 * TILE);
-        return this.spawn('guard', s.x, s.y, { civ: v.raid.by, leash: 14, tag: 'raid' + vi, archer: Math.random() < 0.3 });
-      });
+      // o ataque vem de fora dos muros: os inimigos chegam diante do portão (ou além da muralha) e precisam arrombá-lo
+      if (v.raid && v.raid.until >= G.day && Diplo.atWar(v.raid.by, v.civ)) {
+        this.ensureGroup('raid' + vi, 5, () => Defense.spawnRaider(v, vi));
+        this.ensureGroup('def' + vi, Defense.defenders(v), () => Defense.spawnDefender(v, vi));
+      }
       // cada morador tem a sua casa (mendigos dormem na praça); de dia fica no trabalho ou perto de casa
       for (const p of People.residents(vi)) {
         if (G.spawned.has(p.id) || p.port || p.trip || p.jail > G.day) continue; // presos não andam pela vila // o marinheiro aparece no porto; quem está viajando, na vila que visita

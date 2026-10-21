@@ -8,9 +8,25 @@
 //    a mercadoria do ramo no atacado, vende aos fregueses pelos preços que você define e todo mês te entrega o lucro.
 //    No balcão você compra (como qualquer freguês) e vende para a loja.
 
-const FIN_SAVE_RATE = 0.01, FIN_INVEST_CAP = 3000, BIZ_RESERVE = 40;
+const FIN_SAVE_RATE = 0.01, FIN_INVEST_CAP = 3000, BIZ_RESERVE = 40, FIN_LICENSE = 200, FIN_FOREIGN_TAX = 0.1, FIN_VILLAGE_RATE = 0.015;
 const Fin = {
-  D() { const u = G.urban || (G.urban = {}); return u.fin || (u.fin = { save: 0, asks: [], inv: [], earned: 0, lent: 0 }); },
+  D() { const u = G.urban || (G.urban = {}); const d = u.fin || (u.fin = { save: 0, asks: [], inv: [], earned: 0, lent: 0 }); d.vinv = d.vinv || {}; d.lic = d.lic || {}; return d; },
+  // ---------------------------------------------------------------- vilas: investir no desenvolvimento
+  vinv(vi) { return this.D().vinv[vi] || 0; },
+  investVillage(vi, n) {
+    const v = World.villages[vi]; if (!v) return; n = Math.min(n, P.gold); if (n <= 0) return;
+    P.gold -= n; this.D().vinv[vi] = this.vinv(vi) + n;
+    if (!v.free && G.civs[v.civ] && G.civs[v.civ].ruler !== 'player') Game.addRelation(v.civ, Math.min(10, Math.round(n / 200)));
+    for (const p of People.residents(vi).slice(0, 12)) People.addAff(p, 1);
+    UI.msg('🏘️ Você investiu ' + n + ' 🪙 no desenvolvimento de ' + v.name + ': a economia da vila fica mais forte.', 'gold'); Sound.play('coin');
+  },
+  takeVillage(vi) { const n = this.vinv(vi); if (!n) return; const back = Math.round(n * 0.8); P.gold += back; delete this.D().vinv[vi]; UI.msg('Você retirou ' + back + ' 🪙 de ' + World.villages[vi].name + ' (20% ficaram nas obras).'); },
+  // ---------------------------------------------------------------- licença de comércio nos outros reinos
+  hasLicense(ci) { return !!this.D().lic[ci]; },
+  licenseErr(ci) { const c = G.civs[ci]; if (!c) return 'Reino inexistente'; if (c.atWar) return 'Vocês estão em guerra'; if ((c.relation || 0) < -20) return 'A relação está ruim demais'; if (P.gold < FIN_LICENSE) return 'Custa ' + FIN_LICENSE + ' 🪙'; return null; },
+  buyLicense(ci) { const e = this.licenseErr(ci); if (e) { UI.msg(e, 'bad'); return; } P.gold -= FIN_LICENSE; G.civs[ci].treasury += FIN_LICENSE; this.D().lic[ci] = G.day; Game.addRelation(ci, 3); UI.msg('📜 Licença de comércio de ' + CIV_DEFS[ci].name + ': seus empreendimentos podem funcionar nas vilas do reino (10% do lucro vai de imposto).', 'gold'); },
+  // empreendimento seu em terra de outro reino (paga imposto)
+  foreignCiv(s) { if (!World.inb(s.x, s.y)) return -1; const t = World.terr[World.idx(s.x, s.y)]; return t >= 0 && G.civs[t] && G.civs[t].ruler !== 'player' ? t : -1; },
 
   // ---------------------------------------------------------------- poupança
   deposit(n) { n = Math.min(n, P.gold); if (n <= 0) return; P.gold -= n; this.D().save += n; Sound.play('coin'); },
@@ -100,17 +116,18 @@ const Fin = {
       if (Math.random() < 0.1) continue; // mês fraco
       const g = Math.round(x.amount * this.rate(f)); P.gold += g; x.paid += g; div += g; D.earned += g;
     }
+    for (const vi in D.vinv) { const n = D.vinv[vi]; if (!World.villages[vi] || n <= 0) { delete D.vinv[vi]; continue; } const g = Math.round(n * FIN_VILLAGE_RATE); div += g; P.gold += g; D.earned += g; D.vinv[vi] = Math.round(n * 0.98); }
     if (div) Game.note(`📈 Seus investimentos renderam ${div} 🪙 este mês.`, 'gold');
     this.newAsks();
   },
 
   // ---------------------------------------------------------------- janela
   open() {
-    const D = this.D(), S = UI.sel, sub = ['poupanca', 'emprestar', 'investir'].includes(S.fsub) ? S.fsub : 'poupanca';
+    const D = this.D(), S = UI.sel, sub = ['poupanca', 'emprestar', 'investir', 'vilas'].includes(S.fsub) ? S.fsub : 'poupanca';
     if (!D.asks.length) this.newAsks();
-    const tabs = `<div class="tabs subtabs">${[['poupanca', '🏦 Poupança'], ['emprestar', '🤝 Emprestar'], ['investir', '📈 Investir']].map(([k, l]) => `<button class="tab ${sub === k ? 'on' : ''}" data-act="fsub" data-s="${k}">${l}</button>`).join('')}</div>`;
+    const tabs = `<div class="tabs subtabs">${[['poupanca', '🏦 Poupança'], ['emprestar', '🤝 Emprestar'], ['investir', '📈 Famílias'], ['vilas', '🏘️ Vilas e reinos']].map(([k, l]) => `<button class="tab ${sub === k ? 'on' : ''}" data-act="fsub" data-s="${k}">${l}</button>`).join('')}</div>`;
     const top = `<div class="tiles big"><div class="stile"><small>Seu ouro</small><b>${P.gold} 🪙</b></div><div class="stile"><small>Na poupança</small><b>${D.save} 🪙</b></div>
-      <div class="stile"><small>Emprestado</small><b>${this.debtors().reduce((a, p) => a + p.debt.total, 0)} 🪙</b></div><div class="stile"><small>Investido</small><b>${D.inv.reduce((a, x) => a + x.amount, 0)} 🪙</b></div></div>`;
+      <div class="stile"><small>Emprestado</small><b>${this.debtors().reduce((a, p) => a + p.debt.total, 0)} 🪙</b></div><div class="stile"><small>Investido</small><b>${D.inv.reduce((a, x) => a + x.amount, 0) + Object.values(D.vinv).reduce((a, n) => a + n, 0)} 🪙</b></div></div>`;
     const btn = (op, v, lab, ok) => `<button data-act="fin" data-op="${op}" data-v="${v}" ${ok ? '' : 'disabled'}>${lab}</button>`;
     let body = '';
     if (sub === 'poupanca') {
@@ -126,6 +143,18 @@ const Fin = {
       const debts = this.debtors().map(p => `<div class="crow"><span class="ri">🧾</span><span><b>${UI.esc(People.full(p))}</b><small>deve ${p.debt.total} 🪙 · ${p.debt.due > G.day ? `vence em ${p.debt.due - G.day} ${p.debt.due - G.day === 1 ? 'mês' : 'meses'}` : 'vence este mês'}${p.debt.ext ? ` · prazo estendido ${p.debt.ext}×` : ''}</small></span></div>`).join('');
       body = `<div class="card"><div class="sec">🤝 Pedidos de empréstimo <span>novos todo mês</span></div>${asks || '<p class="muted">Ninguém pedindo dinheiro agora. Volte no mês que vem.</p>'}</div>
         <div class="card"><div class="sec">🧾 Quem te deve</div>${debts || '<p class="muted">Ninguém te deve nada.</p>'}<p class="dt-desc">No prazo, o devedor paga tudo; quem não tem paga parte e ganha mais dois meses (até duas vezes). Depois disso, o calote vira boato — e mágoa.</p></div>`;
+    } else if (sub === 'vilas') {
+      const here = World.villages.map((v, i) => ({ v, i, d: U.dist(P.x / TILE, P.y / TILE, v.x, v.y) })).sort((a, b) => (b.v.lord === 'player') - (a.v.lord === 'player') || (this.vinv(b.i) > 0) - (this.vinv(a.i) > 0) || a.d - b.d).slice(0, 10);
+      const vl = here.map(({ v, i }) => { const n = this.vinv(i);
+        return '<div class="crow"><span class="ri">🏘️</span><span><b>' + UI.esc(v.name) + '</b><small>nível ' + (v.level || 1) + ' · ' + (v.free ? 'vila livre' : CIV_DEFS[v.civ].short) + (v.lord === 'player' ? ' · você governa' : '') + ' · poder econômico ' + Math.round(VillageEcon.power(i)) + (n ? ' · você investiu ' + n + ' 🪙' : '') + '</small></span>'
+          + '<span class="act-row">' + [100, 500, 1000].map(k => '<button data-act="fin" data-op="vinv" data-v="' + i + '" data-n="' + k + '" ' + (P.gold >= k ? '' : 'disabled') + '>+' + k + '</button>').join('') + (n ? '<button data-act="fin" data-op="vout" data-v="' + i + '">Retirar (−20%)</button>' : '') + '</span></div>'; }).join('');
+      const kl = G.civs.filter(c => c.ruler !== 'player' && CIV_DEFS[c.id]).map(c => { const has = this.hasLicense(c.id), err = this.licenseErr(c.id);
+        return '<div class="crow"><span class="ri">📜</span><span><b>' + CIV_DEFS[c.id].name + '</b><small>' + (has ? 'licença de comércio: seus empreendimentos funcionam nas vilas do reino (10% do lucro de imposto)' : 'sem licença · relação ' + Math.round(c.relation || 0) + (c.atWar ? ' · em guerra' : '')) + '</small></span>'
+          + '<span class="act-row">' + (has ? '<b class="ok">✓</b>' : '<button data-act="fin" data-op="lic" data-v="' + c.id + '" ' + (err ? 'disabled title="' + err + '"' : '') + '>Licença ' + FIN_LICENSE + ' 🪙</button>') + '</span></div>'; }).join('');
+      body = '<div class="card"><div class="sec">🏘️ Investir no desenvolvimento das vilas <span>rende 1,5% ao mês</span></div>' + vl
+        + '<p class="dt-desc">O dinheiro vira obras, comércio e empregos: aumenta o poder econômico da vila (ela cresce mais rápido) e rende 1,5% ao mês para você. As obras envelhecem: o valor cai 2% ao mês.</p></div>'
+        + '<div class="card"><div class="sec">📜 Licenças de comércio nos outros reinos</div>' + kl
+        + '<p class="dt-desc">Com a licença, você constrói os seus empreendimentos nas vilas daquele reino (Construir → Empreendimentos). O reino cobra 10% do lucro de imposto.</p></div>';
     } else {
       const fams = this.families().sort((a, b) => this.bizOf(b).length - this.bizOf(a).length || (b.wealth || 0) - (a.wealth || 0)).slice(0, 12);
       const mine = D.inv.map(x => { const f = Families.get(x.fam); if (!f) return ''; return `<div class="crow"><span class="ri">📈</span><span><b>${UI.esc(Families.name(f))}</b><small>${x.amount} 🪙 investidos · rendeu ${x.paid} 🪙 · cerca de ${(this.rate(f) * 100).toFixed(1)}% ao mês</small></span>
@@ -146,6 +175,9 @@ const Fin = {
     if (d.op === 'lend') this.lend(+v);
     if (d.op === 'inv') this.invest(+v, +d.n);
     if (d.op === 'out') this.divest(+v);
+    if (d.op === 'vinv') this.investVillage(+v, +d.n);
+    if (d.op === 'vout') this.takeVillage(+v);
+    if (d.op === 'lic') this.buyLicense(+v);
     this.open();
   },
 };
@@ -212,7 +244,8 @@ const Fin = {
       const cost = this.restock(s, rev);
       this.addRev(s, rev + (fc.gold || 0) - cost);
       // o responsável entrega o lucro (fica um pouco no caixa para repor a mercadoria)
-      const pay = Math.max(0, Math.round((s.till || 0) - BIZ_RESERVE));
+      let pay = Math.max(0, Math.round((s.till || 0) - BIZ_RESERVE));
+      const fc2 = Fin.foreignCiv(s); if (pay > 0 && fc2 >= 0) { const tax = Math.round(pay * FIN_FOREIGN_TAX); s.till -= tax; pay -= tax; G.civs[fc2].treasury += tax; this.earn(s).tax = (this.earn(s).tax || 0) + tax; }
       if (pay > 0) { s.till -= pay; P.gold += pay; profitAll += pay; this.earn(s).paid = (this.earn(s).paid || 0) + pay; }
       this.earn(s).lastPaid = pay;
       if (pay > 0) lines.push(`${BUILDINGS[s.type].name} ${pay}`);
@@ -293,5 +326,21 @@ const Fin = {
     const keep = Fin.debtors().map(p => [p, p.debt]);
     for (const [p] of keep) p.debt = null;
     try { return lm0(...a); } finally { for (const [p, d] of keep) p.debt = d; }
+  };
+}
+
+
+// empreendimentos nos outros reinos: com a licença de comércio, valem nas vilas deles (sem a distância das cidades)
+{
+  const cb0 = Game.canBuild.bind(Game);
+  Game.canBuild = function (k, tx, ty) {
+    const err = cb0(k, tx, ty);
+    if (!BIZ_TYPES[k]) return err;
+    const b = BUILDINGS[k], cx = Math.floor(tx + b.w / 2), cy = Math.floor(ty + b.h / 2);
+    const t = World.inb(cx, cy) ? World.terr[World.idx(cx, cy)] : -1;
+    const foreign = t >= 0 && G.civs[t] && G.civs[t].ruler !== 'player';
+    if (!foreign) return err;
+    if (!Fin.hasLicense(t)) return err || 'Para abrir um empreendimento em ' + CIV_DEFS[t].name + ', compre a licença de comércio (casa → Finanças → Vilas e reinos)';
+    return err === 'Perto demais de uma cidade' ? null : err;
   };
 }

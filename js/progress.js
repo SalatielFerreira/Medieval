@@ -16,7 +16,7 @@ const ACHIEVEMENTS = [
   { id: 'hunter',     icon: '🐺', name: 'Caçador',             desc: 'Abata 25 animais selvagens.',        t: s => (s.kill_deer || 0) + (s.kill_boar || 0) + (s.kill_wolf || 0) >= 25 },
   { id: 'bandits',    icon: '🗡️', name: 'Terror dos Bandidos', desc: 'Derrote 30 bandidos.',               t: s => (s.kill_bandit || 0) >= 30 },
   { id: 'camp',       icon: '🏕️', name: 'Limpa-Estradas',      desc: 'Destrua um acampamento de bandidos.', t: s => s.camps >= 1 },
-  { id: 'boss',       icon: '☠️', name: 'Matador de Monstros', desc: 'Derrote um chefe de caverna.',        t: s => s.bosses >= 1 },
+  { id: 'boss',       icon: '☠️', name: 'Matador de Monstros', desc: 'Derrote um governador de caverna.',        t: s => s.bosses >= 1 },
   { id: 'dragon',     icon: '🐉', name: 'Matador de Dragões',  desc: 'Derrote o Dragão Ancestral.',         t: s => (s.kill_dragon || 0) >= 1 },
   { id: 'chests',     icon: '💰', name: 'Saqueador de Tumbas', desc: 'Abra 10 baús de tesouro.',            t: s => s.chests >= 10 },
   { id: 'block',      icon: '🛡️', name: 'Muralha Viva',        desc: 'Bloqueie 50 golpes.',                 t: s => s.blocks >= 50 },
@@ -145,7 +145,7 @@ const Ranking = {
     const crown = p.rank === 'ruler' && p.civ >= 0 && G.civs[p.civ] ? G.civs[p.civ].treasury * 0.25 : 0;
     return Math.round((p.purse || 0) + share + crown);
   },
-  // popularidade: o quanto o povo conhece e admira a pessoa (cargo, família, filhos, chefia de vila)
+  // popularidade: o quanto o povo conhece e admira a pessoa (cargo, família, filhos, governo de vila)
   popularity(p) {
     const rankB = { ruler: 90, consort: 55, heir: 40, knight: 28, priest: 26, merchant: 18, innkeeper: 22, smith: 14, sailor: 12, mercenary: 10, hunter: 10 }[p.rank] || 4;
     const f = Families.of(p);

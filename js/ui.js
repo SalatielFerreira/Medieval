@@ -703,7 +703,7 @@ const UI = {
     this.fitDetail('.craft-dt', this.craftList, this.craftInner, this.craftNear);
   },
 
-  // Construir: lista agrupada e detalhes com custo (inclui estradas, reformas e as obras de chefe e rei)
+  // Construir: lista agrupada e detalhes com custo (inclui estradas, reformas e as obras de governador e rei)
   binfo(k) {
     if (!BUILDINGS[k]) { const inf = Urban.info(k); inf.icon = buildArt(k) || inf.icon; return inf; }
     const b = BUILDINGS[k], n = World.structs.filter(s => s.owner === 'player' && s.type === k && !s.removed).length;
@@ -738,7 +738,7 @@ const UI = {
     }).join('');
     const mine = Urban.myVillages(), kings = G.civs.filter(c => c.ruler === 'player');
     this.buildPower = kings.length || mine.length ? `<small class="ok">Você manda em: ${[...kings.map(c => '👑 ' + CIV_DEFS[c.id].short + ' (reino todo)'), ...mine.map(x => '🏘️ ' + this.esc(x.v.name))].join(' · ')}</small>`
-      : '<small class="muted">Para mexer nos imóveis e estradas das vilas, torne-se chefe de uma vila (fundando, conquistando ou pedindo ao rei) ou rei.</small>';
+      : '<small class="muted">Para mexer nos imóveis e estradas das vilas, torne-se governador de uma vila (fundando, conquistando ou pedindo ao rei) ou rei.</small>';
     this.buildCatKey = S.bcat;
     const b = this.binfo(S.build);
     const detail = `<div class="cdt-in">${this.buildDetailHtml(S.build)}</div>
@@ -867,7 +867,7 @@ const UI = {
       ['villages', '🏘️', 'Vilas e guardas', mine.length], ['biz', '💼', 'Empreendimentos', Biz.list().length]]]];
     if (ruled.length) groups.push(['Seus reinos', ruled.map(c => ['k:' + c.id, Heraldry.armsSvg(c.id, 16), CIV_DEFS[c.id].short,
       c.rebel > 0 || c.atWar ? '!' : '', c.rebel > 0 || c.atWar])]);
-    // as vilas em que você é o chefe: cada uma com a sua administração
+    // as vilas em que você é o governador: cada uma com a sua administração
     if (mine.length) groups.push(['Suas vilas', mine.map(({ v, i }) => ['v:' + i, '🏘️', v.name, v.raid && v.raid.until >= G.day ? '!' : '', !!(v.raid && v.raid.until >= G.day)])]);
     groups.push(['O mundo', [['atlas', '🗺️', 'Reino'], ['families', '🏛️', 'Grandes Casas'], ['tree', '🌳', 'Linhagens']]]);
     const page = this.kPage(S.knav);
@@ -908,7 +908,7 @@ const UI = {
       return this.pageHead(t.king ? '👑' : '🛡️', `${this.esc(G.name)} ${this.esc(G.surname || '')}`, `${this.esc(t.text)} · nível ${P.level} · ${P.age} anos · ${Calendar.full(G.day)}`)
         + (alerts.length ? `<div class="card"><div class="sec">⚠️ Atenção</div>${alerts.map(([txt, k]) => `<div class="alert row">${this.esc(txt)}<button data-act="knav" data-k="${k}">Ver</button></div>`).join('')}</div>` : '')
         + `<div class="card ov-card"><div class="sec">Seus domínios <span>clique para abrir</span></div><div class="tiles big">
-          ${link(ruled.length ? 'k:' + ruled[0].id : 'crown', 'Reinos governados', ruled.length, '👑', 45)}${link('villages', 'Vilas que você chefia', mine.length, '🏘️', 120)}
+          ${link(ruled.length ? 'k:' + ruled[0].id : 'crown', 'Reinos governados', ruled.length, '👑', 45)}${link('villages', 'Vilas que você governa', mine.length, '🏘️', 120)}
           ${link('biz', 'Empreendimentos', Biz.list().length, '💼', 28)}${link('villages', 'Guardas', Guards.all().length, '🛡️', 210)}
           ${link('family', 'Família', (Families.members(f).length + 1) + (Families.members(f).length ? ' pessoas' : ' pessoa'), '👪', 330)}${link('crown', 'Título', Court.title() ? this.esc(Court.titleName()) : '—', Court.title() ? Court.title().icon : '⚜️', 275)}</div></div>
         <div class="card ov-card"><div class="sec">Recursos pessoais</div><div class="tiles big">
@@ -1010,14 +1010,14 @@ const UI = {
       const vrow = ({ v, i }) => { const res = People.residents(i).length, post = { kind: 'village', vi: i };
         return `<div class="crow"><span class="ri">🏘️</span><span><b>${this.esc(v.name)}</b><small>${v.free ? 'Vila livre' : CIV_DEFS[v.civ].short} · nível ${v.level || 1} · ${res} moradores · impostos ${res * Court.villageTax()} 🪙/dia · guardas ${Guards.at(post).length}/${Guards.cap(post)}</small></span>
           <span class="act-row">${Borders.annexTarget(i) >= 0 ? `<button class="primary" data-act="vannex" data-v="${i}" title="A vila entra no seu reino com a terra em volta">👑 Anexar ao ${this.esc(CIV_DEFS[Borders.annexTarget(i)].short)}</button>` : ''}<button data-act="vping" data-v="${i}" title="Marcar no mapa">📍</button></span></div>`; };
-      return this.pageHead('🏘️', 'Vilas e guardas', 'O chefe recebe impostos e manda nas estradas e nos imóveis da vila')
-        + `<div class="card vchief"><div class="sec">Vilas que você chefia <span>${mine.length}</span></div>${mine.map(vrow).join('') || '<div class="vg-empty"><span class="vg-emb">🏘️</span><b>Nenhuma vila ainda</b><small>Peça, conquiste ou funde a sua.</small></div><p class="muted vg-none">Nenhuma ainda.</p>'}
-          <small class="muted">Como chefe, use Construir → Reformas e Obras para mudar, demolir e erguer imóveis e estradas dentro da vila.</small></div>
+      return this.pageHead('🏘️', 'Vilas e guardas', 'O governador recebe impostos e manda nas estradas e nos imóveis da vila')
+        + `<div class="card vchief"><div class="sec">Vilas que você governa <span>${mine.length}</span></div>${mine.map(vrow).join('') || '<div class="vg-empty"><span class="vg-emb">🏘️</span><b>Nenhuma vila ainda</b><small>Peça, conquiste ou funde a sua.</small></div><p class="muted vg-none">Nenhuma ainda.</p>'}
+          <small class="muted">Como governador, use Construir → Reformas e Obras para mudar, demolir e erguer imóveis e estradas dentro da vila.</small></div>
         ${this.guardsHtml()}
         ${this.vacancyHtml()}
-        <div class="card"><div class="sec">Como virar chefe de uma vila</div><div class="ways">
+        <div class="card"><div class="sec">Como virar governador de uma vila</div><div class="ways">
           <div class="way"><span class="way-ic">📜</span><b>Pedir ao rei</b><small>No castelo do reino, com boa relação e ouro.</small></div>
-          <div class="way"><span class="way-ic">⚔️</span><b>Conquistar</b><small>Converse com o chefe da vila e desafie-o. O rei decide se é uma afronta.</small></div>
+          <div class="way"><span class="way-ic">⚔️</span><b>Conquistar</b><small>Converse com o governador da vila e desafie-o. O rei decide se é uma afronta.</small></div>
           <div class="way"><span class="way-ic">🏗️</span><b>Fundar</b><small>A Vila ${this.esc(G.surname)}, livre de qualquer reino (${FOUND_COST.gold.toLocaleString('pt-BR')} Salin).</small></div></div></div>
         <div class="card found"><div class="sec">🏗️ Fundar uma vila (você escolhe o nome)</div>
           <p class="dt-desc">Fique no centro de um lugar aberto (longe de outras vilas e castelos) e funde uma vila com o nome da sua família, livre de qualquer reino. Colonos se mudam para lá e pagam impostos a você.</p>
@@ -1236,7 +1236,7 @@ const UI = {
     const court = G.people.filter(p => p.alive && p.home.type === 'castle' && p.home.civ === ci && NOBLE_RANKS.includes(p.rank)).sort((a, b) => RANKS[a.rank].order - RANKS[b.rank].order || b.age - a.age);
     const vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci && !x.v.free);
     const rv = (G.revolts || []).filter(r => !r.done && r.civ === ci);
-    // telas pequenas: 1) escudos dos reinos, estandarte e números · 2) corte e famílias · 3) vilas e seus chefes
+    // telas pequenas: 1) escudos dos reinos, estandarte e números · 2) corte e famílias · 3) vilas e seus governadores
     const col = Game.civColor(ci), births = (G.births || {})[ci] || 0, last = (G.lastBirths || {})[ci] || 0;
     const stat = (ic, label, val, cls) => `<div class="at-st"><span>${ic}</span><b class="${cls || ''}">${val}</b><small>${label}</small></div>`;
     const lordOf = v => v.lord === 'player' ? '<b class="ok">você</b>' : v.lordFam !== undefined && Families.get(v.lordFam) ? 'Casa ' + this.esc(Families.get(v.lordFam).surname) : 'a coroa';
@@ -1253,10 +1253,10 @@ const UI = {
           ${court.slice(0, 4).map(p => `<div class="at-row"><span class="at-ic">${p.rank === 'ruler' ? '👑' : p.rank === 'consort' ? '💍' : '⚜️'}</span><span><b>${this.esc(People.full(p))}</b><small>${People.title(p)} · ${p.age} anos</small></span></div>`).join('') || (c.ruler === 'player' ? '' : '<p class="muted">Sem corte.</p>')}</div></div>
         <div><div class="sec">🏛️ Famílias mais influentes</div><div class="at-list">
           ${fams.slice(0, 4).map((x, i) => `<div class="at-row"><span class="at-rank">${i + 1}º</span><span><b><i class="at-dot" style="background:${x.f.color}"></i>${this.esc(Families.name(x.f))}${x.f.noble ? ' 👑' : Families.activeRevoltOf(x.f) ? ' 🔥' : ''}</b><small>⭐ ${x.inf} · ${Families.members(x.f).length} membros</small></span><button data-act="famview" data-f="${x.f.id}">Ver</button></div>`).join('') || '<p class="muted">Nenhuma.</p>'}</div></div></div></div>
-      <div class="card at-vills kalone" style="--kc:${col}"><div class="sec">🏘️ Vilas e seus chefes <span>${vills.length}</span></div><div class="at-vgrid">
+      <div class="card at-vills kalone" style="--kc:${col}"><div class="sec">🏘️ Vilas e seus governadores <span>${vills.length}</span></div><div class="at-vgrid">
         ${vills.map(({ v, i }) => { const ch = Families.chiefOf(v), res = People.residents(i).length, cap = Families.vcap(v);
           return `<div class="at-v ${v.ruin ? 'ruin' : ''}"><span class="at-lv">${v.level || 1}</span><div><b>${this.esc(v.name)}${v.founded ? ' <small class="tag">nova</small>' : ''}${v.ruin ? ' <small class="bad">ruínas</small>' : ''}</b>
-            <i class="at-bar"><i style="width:${Math.min(100, res / Math.max(1, cap) * 100)}%"></i></i><small>👥 ${res}/${cap} · chefe ${ch === 'player' ? '<b class="ok">você</b>' : ch ? this.esc(People.full(ch)) : '—'} · senhor ${lordOf(v)}</small></div></div>`; }).join('') || '<p class="muted">Nenhuma vila.</p>'}</div></div></div>`;
+            <i class="at-bar"><i style="width:${Math.min(100, res / Math.max(1, cap) * 100)}%"></i></i><small>👥 ${res}/${cap} · governador ${ch === 'player' ? '<b class="ok">você</b>' : ch ? this.esc(People.full(ch)) : '—'} · senhor ${lordOf(v)}</small></div></div>`; }).join('') || '<p class="muted">Nenhuma vila.</p>'}</div></div></div>`;
     return this.pageHead('🗺️', 'Reino', 'Cortes, vilas, famílias e números de cada reino') + mobile + `<div class="atl-d"><div class="tabs ktabs">${tabs}</div>
       <div class="atlas-head herald" style="border-color:${Game.civColor(ci)}">${Heraldry.armsSvg(ci, 34)}${Heraldry.flagSvg(ci, 42, 28)}<div><b style="color:${Game.civColor(ci)}">${d.name}</b><small>${this.esc(d.desc)} · ${this.esc(c.rulerName)} · ${Game.relationText(c)}</small></div></div>
       ${rv.map(r => `<div class="alert">🔥 A ${this.esc(Families.name(Families.get(r.fam)))} está em revolta contra a coroa (dia ${r.days + 1}, força ${r.str}). <button data-act="famview" data-f="${r.fam}">Ver</button></div>`).join('')}
@@ -1276,8 +1276,8 @@ const UI = {
           ${court.map(p => `<div class="crow2">${this.personLine(p, Families.of(p) ? 'Casa ' + Families.of(p).surname : '')}</div>`).join('') || (c.ruler === 'player' ? '' : '<p class="muted">Sem corte.</p>')}</div>
         <div class="card"><div class="sec">🏛️ Famílias mais influentes</div>${fams.slice(0, 6).map((x, i) => this.famRow(x, i, false)).join('') || '<p class="muted">Nenhuma.</p>'}</div>
       </div>
-      <div class="card"><div class="sec">🏘️ Vilas e seus chefes</div>
-        <table class="trade vtable"><tr><th>Vila</th><th>Nível</th><th>Moradores</th><th>Chefe</th><th>Senhor</th></tr>${vills.map(({ v, i }) => {
+      <div class="card"><div class="sec">🏘️ Vilas e seus governadores</div>
+        <table class="trade vtable"><tr><th>Vila</th><th>Nível</th><th>Moradores</th><th>Governador</th><th>Senhor</th></tr>${vills.map(({ v, i }) => {
           const ch = Families.chiefOf(v), res = People.residents(i).length;
           const lord = v.lord === 'player' ? '<b class="ok">Você</b>' : v.lordFam !== undefined && Families.get(v.lordFam) ? 'Casa ' + this.esc(Families.get(v.lordFam).surname) : '<span class="muted">a coroa</span>';
           return `<tr><td><b>${this.esc(v.name)}</b>${v.founded ? ' <small class="tag">nova</small>' : ''}${v.ruin ? ' <small class="bad">ruínas</small>' : ''}</td><td>${v.level || 1}</td><td>${res} / ${Families.vcap(v)}</td>
@@ -1306,8 +1306,8 @@ const UI = {
         <div class="stile"><small>Vila fundada</small><b>${f.founded !== null && World.villages[f.founded] ? this.esc(World.villages[f.founded].name) : '—'}</b></div>
       </div>
       <div class="kgrid two">
-        <div class="card"><div class="sec">👪 Membros <span>chefe: ${h ? this.esc(h.name) : '—'}</span></div><div class="scroll" style="max-height:260px">
-          ${mem.map(p => `<div class="crow2">${this.personLine(p, p.maiden && p.maiden !== p.surname ? 'nascid' + (p.sex === 'f' ? 'a ' : 'o ') + p.maiden : '')}${p === h ? ' <span class="tag">chefe</span>' : ''}${Families.isChief(p) ? ' <span class="tag gold">chefe da vila</span>' : ''}</div>`).join('')}</div></div>
+        <div class="card"><div class="sec">👪 Membros <span>governador: ${h ? this.esc(h.name) : '—'}</span></div><div class="scroll" style="max-height:260px">
+          ${mem.map(p => `<div class="crow2">${this.personLine(p, p.maiden && p.maiden !== p.surname ? 'nascid' + (p.sex === 'f' ? 'a ' : 'o ') + p.maiden : '')}${p === h ? ' <span class="tag">governador</span>' : ''}${Families.isChief(p) ? ' <span class="tag gold">governador da vila</span>' : ''}</div>`).join('')}</div></div>
         <div class="card"><div class="sec">🏗️ Empreendimentos</div>
           ${bizs.map(s => `<div class="crow2">${FAMILY_BIZ[s.type].icon} <b>${FAMILY_BIZ[s.type].name}</b> <small class="muted">rende ${FAMILY_BIZ[s.type].income} 🪙/dia</small></div>`).join('') || '<p class="muted">Ainda nenhum. Famílias ricas abrem moinhos, empórios, oficinas, quintas e vinhedos.</p>'}
           <div class="act-row" style="margin-top:8px"><button data-act="tree" data-f="${f.id}">🌳 Árvore e relações</button>${typeof f.seat === 'number' ? `<button data-act="fping" data-f="${f.id}">📍 Marcar a sede no mapa</button>` : ''}
@@ -1327,7 +1327,7 @@ const UI = {
         <span><b>${post.kind === 'spot' ? 'Ficar aqui de guarda' : this.esc(Guards.name(post))}</b><small>${sub}${post.kind === 'spot' ? '' : ` · ${n}/${cap}`}</small></span><span class="rs ${n >= cap ? 'mat' : 'ok'}">${here ? 'Aqui' : n >= cap ? 'Lotado' : 'Mandar'}</span></button>`;
     };
     const rows = row(Guards.here(), 'parado neste lugar · patrulha e defende') +
-      Guards.places().map(post => row(post, post.kind === 'village' ? 'sua vila (chefe) · guardas' : 'seu castelo (rei) · guardas')).join('') +
+      Guards.places().map(post => row(post, post.kind === 'village' ? 'sua vila (governador) · guardas' : 'seu castelo (rei) · guardas')).join('') +
       '<div class="sec" style="margin-top:8px">Esperar numa vila ou cidade</div>' + Guards.nearPlaces(6).map(post => row(post, (post.kind === 'village' ? 'vila' : 'cidade do castelo') + ' · a ' + MapView.distText(Guards.spot(post).x, Guards.spot(post).y))).join('');
     this.open('🛡️ Guarda de ' + this.esc(p.name), `<p>Onde ${this.esc(p.name)} vai montar guarda? ${p.sex === 'f' ? 'Ela' : 'Ele'} patrulha o lugar, enfrenta bandidos, rebeldes e soldados inimigos e ajuda a defender quando um exército ataca. Guardas não contam no limite de seguidores, mas continuam recebendo soldo (4 🪙 por dia).</p>
       <div class="list">${rows}</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`, 'showGuard', [id]);
@@ -1736,7 +1736,7 @@ const UI = {
       else { acts.push(Court.isAlly(fm) ? ['funally', '💔 Desfazer a aliança'] : ['fally', `🤝 Propor aliança — ${Court.ALLY_COST} 🪙`]); acts.push(['fenemy', `⚔️ Declarar a Casa ${UI.esc(fm.surname)} inimiga`]); } } }
     if (p.rank === 'priest') acts.push(['church', '⛪ Assuntos da igreja']);
     if (p.port && Ports.portOf(p)) acts.push(['portnpc', '⚓ Negócios do porto']);
-    { const vi = Chiefdom.vilOf(p); if (vi >= 0 && G.civs[World.villages[vi].civ].ruler !== 'player') acts.push(['vchallenge', '⚔️ Desafiar pela chefia da vila']); }
+    { const vi = Chiefdom.vilOf(p); if (vi >= 0 && G.civs[World.villages[vi].civ].ruler !== 'player') acts.push(['vchallenge', '⚔️ Desafiar pelo governo da vila']); }
     if (p.kin === 'child' && p.age >= 12) acts.push(['profmenu', p.prof ? `${PROFESSIONS[p.prof].icon} Mudar profissão` : '🎓 Escolher profissão']);
     Lifesim.acts(p, acts);
     const st = p.capanga ? People.capangaStats(p) : null;
@@ -1757,7 +1757,7 @@ const UI = {
     const fam = Families.of(p), likes = p.fav && (p.aff >= 35 || p.kin) && ITEMS[p.fav];
     const chips = [
       fam ? `<span class="famchip" data-act="famview" data-f="${p.fam}" style="border-color:${fam.color}">🏛️ ${UI.esc(Families.name(fam))}</span>` : '',
-      Families.isChief(p) ? `<span class="tag">Chefe de ${UI.esc(World.villages.find(v => v.chief === p.id).name)}</span>` : '',
+      Families.isChief(p) ? `<span class="tag">${p.sex === 'f' ? 'Governadora' : 'Governador'} de ${UI.esc(World.villages.find(v => v.chief === p.id).name)}</span>` : '',
       ...Lifesim.chips(p), `<span>🎭 ${t.name}</span>`, likes ? `<span>❤️ Gosta de ${UI.ii(p.fav)} ${ITEMS[p.fav].name}</span>` : '',
       p.job !== undefined && p.job !== null && World.structs[p.job] ? `<span>💼 Trabalha no seu ${UI.esc(BUILDINGS[World.structs[p.job].type].name)}</span>` : '',
       p.capanga ? `<span>⭐ Nível ${p.clvl || 1} · ${STANCES[p.stance] ? STANCES[p.stance].icon + ' ' + STANCES[p.stance].name : '⚖️ Equilibrado'}</span>` : '',
@@ -1851,7 +1851,7 @@ const UI = {
       case 'recruit': r = People.recruit(p); break;
       case 'bribe': r = People.bribe(p); break;
       case 'dismiss': r = People.dismiss(p); break;
-      case 'stance': { const ks = Object.keys(STANCES), k = ks[(ks.indexOf(p.stance || 'normal') + 1) % ks.length]; People.setStance(p, k); r = { text: { aggressive: 'Vou pra cima deles!', normal: 'Do jeito de sempre, chefe.', defensive: 'Fico de olho e protejo você.' }[k], note: `Postura: ${STANCES[k].icon} ${STANCES[k].name} — ${STANCES[k].desc}.` }; break; }
+      case 'stance': { const ks = Object.keys(STANCES), k = ks[(ks.indexOf(p.stance || 'normal') + 1) % ks.length]; People.setStance(p, k); r = { text: { aggressive: 'Vou pra cima deles!', normal: 'Do jeito de sempre, governador.', defensive: 'Fico de olho e protejo você.' }[k], note: `Postura: ${STANCES[k].icon} ${STANCES[k].name} — ${STANCES[k].desc}.` }; break; }
       case 'setstance': People.setStance(p, d.k); this.showEquipC(p.id); return;
       case 'guardmenu': this.showGuard(p.id); return;
       case 'guard': if (Guards.assign(p, Guards.decode(d.k))) { this.close(); return; } this.showGuard(p.id); return;
@@ -1877,7 +1877,7 @@ const UI = {
       case 'vchallenge': {
         const vi = Chiefdom.vilOf(p), v = World.villages[vi];
         if (!v) return;
-        Dialog.confirm({ icon: '⚔️', title: 'Desafiar o chefe', text: `Atacar ${v.name} para tomar a chefia de ${p.name}? A milícia vai lutar, e o rei decide se isso é uma afronta à coroa.`, ok: 'Atacar a vila', danger: true }, () => { this.close(); Chiefdom.challenge(vi); });
+        Dialog.confirm({ icon: '⚔️', title: 'Desafiar o governador', text: `Atacar ${v.name} para tomar o governo de ${p.name}? A milícia vai lutar, e o rei decide se isso é uma afronta à coroa.`, ok: 'Atacar a vila', danger: true }, () => { this.close(); Chiefdom.challenge(vi); });
         return;
       }
       case 'profmenu': this.showProf(p.id); return;
@@ -2031,14 +2031,14 @@ const UI = {
     const c = G.civs[ci], vills = World.villages.map((v, i) => ({ v, i })).filter(x => x.v.civ === ci && !x.v.free);
     if (!vills.length) return '';
     const rows = vills.map(({ v, i }) => {
-      if (v.lord === 'player') return `<div class="crow2">🏘️ <b>${this.esc(v.name)}</b> <small class="ok">você é o chefe</small></div>`;
+      if (v.lord === 'player') return `<div class="crow2">🏘️ <b>${this.esc(v.name)}</b> <small class="ok">você é o governador</small></div>`;
       const need = Chiefdom.askNeed(i), wait = G.askDay && (G.askDay[i] || 0) > G.day;
       const ok = !c.atWar && c.relation >= need.rel && P.gold >= need.gold && !wait;
       return `<div class="crow2">🏘️ <b>${this.esc(v.name)}</b> <small class="muted">${People.residents(i).length} moradores · exige relação ${need.rel}+${wait ? ' · recusou até ' + Calendar.text(G.askDay[i]) : ''}</small>
-        <button data-act="vask" data-v="${i}" ${ok ? '' : 'disabled'}>📜 Pedir a chefia — ${need.gold} 🪙</button></div>`;
+        <button data-act="vask" data-v="${i}" ${ok ? '' : 'disabled'}>📜 Pedir o governo — ${need.gold} 🪙</button></div>`;
     }).join('');
-    return `<div class="card" style="margin-top:10px"><div class="sec">🏘️ Chefia das vilas <span>o chefe manda nas estradas e nos imóveis da vila</span></div>${rows}
-      <small class="muted">Também dá para virar chefe fundando uma vila (Portfólio → Vilas e guardas) ou pela força: converse com o chefe da vila e desafie-o. Atacar uma vila não é guerra com a coroa: o rei decide se foi uma afronta.</small></div>`;
+    return `<div class="card" style="margin-top:10px"><div class="sec">🏘️ Governo das vilas <span>o governador manda nas estradas e nos imóveis da vila</span></div>${rows}
+      <small class="muted">Também dá para virar governador fundando uma vila (Portfólio → Vilas e guardas) ou pela força: converse com o governador da vila e desafie-o. Atacar uma vila não é guerra com a coroa: o rei decide se foi uma afronta.</small></div>`;
   },
   relBar(c) { return `<b>${Math.round(c.relation)}</b> ${Game.relationText(c)}`; },
 
@@ -2158,7 +2158,7 @@ const UI = {
       page = this.pageHead('📊', 'Estatísticas', 'Tudo o que você já fez nesta vida')
         + card('⚒️ Trabalho', [['🪓', 'árvores cortadas', st.trees, 30], ['⛏️', 'rochas quebradas', st.ores, 220], ['🌿', 'plantas colhidas', st.plants, 110], ['🎣', 'peixes pescados', st.fish, 200],
           ['🌱', 'sementes plantadas', st.planted, 95], ['🌾', 'alimentos colhidos', st.harvested, 45], ['🔨', 'itens criados', st.crafted, 25], ['🏗️', 'construções', st.built, 15]])
-        + card('⚔️ Combate', [['⚔️', 'abatidos', kills, 0], ['🗡️', 'bandidos derrotados', st.kill_bandit, 350], ['☠️', 'chefes derrotados', st.bosses, 280], ['🏕️', 'acampamentos destruídos', st.camps, 20],
+        + card('⚔️ Combate', [['⚔️', 'abatidos', kills, 0], ['🗡️', 'bandidos derrotados', st.kill_bandit, 350], ['☠️', 'governadores derrotados', st.bosses, 280], ['🏕️', 'acampamentos destruídos', st.camps, 20],
           ['🛡️', 'golpes bloqueados', st.blocks, 210], ['🏆', 'batalhas vencidas', st.battlesWon, 45], ['🐫', 'caravanas salvas', st.caravansSaved, 120], ['🏴', 'caravanas saqueadas', st.caravansRobbed, 0]])
         + card('🍻 Vida', [['💰', 'baús abertos', st.chests, 45], ['🍺', 'bebidas tomadas', st.drinks, 35], ['🍻', 'lucro da taverna', st.tavernGold, 40], ['💍', 'casamentos', st.marriages, 330],
           ['👶', 'filhos', st.children, 300], ['🌟', 'nível', P.level, 50], ['📅', 'meses vividos', G.day, 260], ['🪙', 'ouro agora', P.gold, 45]]);
@@ -2578,7 +2578,7 @@ const UI = {
       case 'invest': Game.invest(+d.c, d.k); break;
       case 'kborder': Borders.expand(+d.c); break;
       case 'vannex': { const vi = +d.v, ci = Borders.annexTarget(vi); if (ci < 0) break;
-        Dialog.confirm({ icon: '👑', title: 'Anexar ao reino', text: `${World.villages[vi].name} deixa de ser livre e passa a fazer parte do ${CIV_DEFS[ci].name}, levando a terra selvagem em volta (raio de 17 blocos). Você continua chefe da vila.`, ok: 'Anexar' }, () => { Borders.annex(vi); this.refresh(); });
+        Dialog.confirm({ icon: '👑', title: 'Anexar ao reino', text: `${World.villages[vi].name} deixa de ser livre e passa a fazer parte do ${CIV_DEFS[ci].name}, levando a terra selvagem em volta (raio de 17 blocos). Você continua governador da vila.`, ok: 'Anexar' }, () => { Borders.annex(vi); this.refresh(); });
         return; }
       case 'krecruit': Game.kRecruit(+d.c); break;
       case 'kescort': Game.kEscort(+d.c); break;
@@ -2784,12 +2784,12 @@ const HELP_HTML = `
 <li>Clique em qualquer pessoa perto de você (ou no balão 💬) para conversar — a tecla <b>E</b> é só para interagir com as coisas: elogie, dê presentes (cada um tem um favorito), paquere, recrute <b>capangas</b> e equipe-os com armas e armaduras.</li>
 <li>Com amizade e romance altos, peça em namoro; com um <b>Anel de Prata</b>, peça em casamento. Casados, durmam em casa para ter filhos.</li>
 <li>Com um <b>arco</b> equipado, clique para atirar flechas (ou segure Espaço para mirar no inimigo mais próximo).</li>
-<li>Explore as <b>cavernas</b> nas montanhas e ilhas: monstros, minérios raros, baús de tesouro e chefes com itens lendários.</li>
+<li>Explore as <b>cavernas</b> nas montanhas e ilhas: monstros, minérios raros, baús de tesouro e governadores com itens lendários.</li>
 <li>A mochila tem <b>limite de peso</b>: guarde itens no Baú, ou compre um <b>cavalo</b> e uma <b>carroça</b> na taverna.</li>
 <li>O <b>calendário</b> conta meses, não dias: a pizza do relógio se enche em 5 minutos de dia; quando completa, escurece, vira o mês e vem 1 minuto de noite. O ano (12 meses) dura 72 minutos. O jogo começa em janeiro. As <b>estações</b> seguem os meses: primavera (março a maio), verão, outono e inverno (dezembro a fevereiro). No inverno a fome aperta, os lobos atacam mais e as fazendas não produzem. Árvores, pedras e minérios coletados só renascem depois de 1 ano.</li>
 <li>Abra <b>estradas</b> (B → Estradas): de graça; sobre rio raso vira ponte. Clique e arraste.</li>
-<li>Como chefe ou rei, mande capangas <b>fazer guarda</b> na sua vila ou no seu castelo (converse com o capanga).</li>
-<li>Vire <b>chefe de uma vila</b> fundando a sua, conquistando (converse com o chefe e desafie-o) ou pedindo ao rei no castelo. O chefe (na vila) e o rei (no reino todo) podem criar, mudar de lugar e demolir estradas e imóveis (B → Reformas e Obras).</li>
+<li>Como governador ou rei, mande capangas <b>fazer guarda</b> na sua vila ou no seu castelo (converse com o capanga).</li>
+<li>Vire <b>governador de uma vila</b> fundando a sua, conquistando (converse com o governador e desafie-o) ou pedindo ao rei no castelo. O governador (na vila) e o rei (no reino todo) podem criar, mudar de lugar e demolir estradas e imóveis (B → Reformas e Obras).</li>
 <li>Com a <b>Enxada</b>, are a terra, plante sementes e colha; regue com o <b>Regador</b> (encha na água). Chuva também rega.</li>
 <li>Construa <b>Galinheiro, Curral e Colmeia</b> para ovos, leite, lã e mel; cozinhe no <b>Forno</b> e fabrique bebidas na <b>Cervejaria</b>. Pratos e bebidas dão <b>efeitos temporários</b>.</li>
 <li>Monte sua própria <b>Taverna</b> e venda pratos e bebidas.</li>

@@ -1,13 +1,13 @@
 'use strict';
-// Obras: estradas abertas pelo jogador, o poder do chefe de vila (na vila) e do rei (no reino todo) de criar,
-// mudar de lugar e demolir estradas e imóveis, e as três formas de virar chefe de uma vila:
+// Obras: estradas abertas pelo jogador, o poder do governador de vila (na vila) e do rei (no reino todo) de criar,
+// mudar de lugar e demolir estradas e imóveis, e as três formas de virar governador de uma vila:
 // fundar, conquistar pela força ou pedir ao rei.
 
 const VILLAGE_R = 16; // meio lado (em blocos) da área quadrada de uma vila
 // distância "em quadrado": a área da vila é um quadrado de lado 2 × VILLAGE_R + 1, centrado na praça
 const sqDist = (x1, y1, x2, y2) => Math.max(Math.abs(x1 - x2), Math.abs(y1 - y2));
 const ROAD_GROUND = [T.GRASS, T.FOREST, T.HILL, T.SAND, T.SNOW, T.SWAMP, T.DESERT, T.TUNDRA, T.STEPPE];
-// imóveis públicos que chefes e reis podem erguer dentro das vilas
+// imóveis públicos que governadores e reis podem erguer dentro das vilas
 const CIVIC = {
   vhouse: { name: 'Casa',      icon: '🏠', w: 2, h: 2, cost: { wood: 30, stone: 15 },              desc: 'Moradia para os aldeões da vila.' },
   store:  { name: 'Armazém',   icon: '🧺', w: 3, h: 2, cost: { wood: 30, stone: 10 },              desc: 'Loja de comida, tecidos e sementes.', slot: 'store' },
@@ -17,7 +17,7 @@ const CIVIC = {
   tavern: { name: 'Taverna',   icon: '🍺', w: 3, h: 2, cost: { wood: 35, stone: 15 },              desc: 'Mercenários, cavalos, comida e boatos.', slot: 'tavern' },
   chapel: { name: 'Capela',    icon: '⛪', w: 2, h: 2, cost: { stone: 30, wood: 15 },              desc: 'Igreja da vila, com padre.', slot: 'chapel' },
   well:   { name: 'Poço',      icon: '🪣', w: 1, h: 1, cost: { stone: 12 },                        desc: 'Poço de água para a praça.' },
-  vwall:  { name: 'Muralha',   icon: '🧱', w: 1, h: 1, cost: { stone: 1 }, chief: true,            desc: 'Trecho de muralha de pedra. Só o chefe da vila ergue a muralha dela.' },
+  vwall:  { name: 'Muralha',   icon: '🧱', w: 1, h: 1, cost: { stone: 1 }, chief: true,            desc: 'Trecho de muralha de pedra. Só o governador da vila ergue a muralha dela.' },
   field:  { name: 'Plantação', icon: '🌾', w: 3, h: 2, cost: { wood: 8 },                          desc: 'Campo de trigo da vila.' },
   port:   { name: 'Porto',     icon: '⚓', w: 4, h: 3, cost: { wood: 80, stone: 40 },              desc: 'Cais na beira da água (com a água logo abaixo dele): o mestre do porto compra peixes, polvos, tubarões e baleias.', coast: true },
 };
@@ -47,7 +47,7 @@ const Urban = {
     World.villages.forEach((v, i) => { const d = sqDist(tx, ty, v.x, v.y); if (d <= bd) { bd = d; best = i; } });
     return best;
   },
-  // quem manda neste lugar: o rei (todo o território do reino) ou o chefe (a área da vila)
+  // quem manda neste lugar: o rei (todo o território do reino) ou o governador (a área da vila)
   authority(tx, ty) {
     if (G.dungeon || !World.inb(tx, ty)) return null;
     const t = World.terr[World.idx(tx, ty)];
@@ -56,13 +56,13 @@ const Urban = {
     return null;
   },
   hasAny() { return G.civs.some(c => c.ruler === 'player') || this.myVillages().length > 0; },
-  // construção de uma vila sua (chefe) ou do seu reino (rei): perto dela você constrói à vontade (e emenda no muro)
+  // construção de uma vila sua (governador) ou do seu reino (rei): perto dela você constrói à vontade (e emenda no muro)
   ownStruct(o) {
     if (!o) return false;
     if (o.village !== undefined && World.villages[o.village] && World.villages[o.village].lord === 'player') return true;
     return typeof o.owner === 'number' && !!G.civs[o.owner] && G.civs[o.owner].ruler === 'player';
   },
-  // vila ou castelo de outra pessoa (onde só o chefe ou o rei mexem)
+  // vila ou castelo de outra pessoa (onde só o governador ou o rei mexem)
   foreignTown(tx, ty) {
     if (this.authority(tx, ty)) return null;
     const vi = this.villageNear(tx, ty);
@@ -84,7 +84,7 @@ const Urban = {
     if (World.obj[i]) return 'Remova a árvore ou a rocha primeiro';
     if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
     const town = this.foreignTown(tx, ty);
-    if (town) return `Só o chefe da vila ou o rei pode mexer nas estradas de ${town}`;
+    if (town) return `Só o governador da vila ou o rei pode mexer nas estradas de ${town}`;
 
 
     return null;
@@ -118,7 +118,7 @@ const Urban = {
     if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
     // evoluir pode em todo lugar (até perto de castelos alheios), menos dentro de uma vila que não é sua
     const vi = this.authority(tx, ty) ? -1 : this.villageNear(tx, ty);
-    if (vi >= 0) return `Só o chefe da vila ou o rei pode evoluir as estradas de ${World.villages[vi].name}`;
+    if (vi >= 0) return `Só o governador da vila ou o rei pode evoluir as estradas de ${World.villages[vi].name}`;
     if (!Inv.has(L.cost)) return `Faltam materiais: ${Object.entries(L.cost).map(([k, n]) => n + ' ' + ITEMS[k].name).join(', ')} por bloco`;
     return null;
   },
@@ -143,7 +143,7 @@ const Urban = {
     if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
     // fora das vilas e castelos dos outros, qualquer estrada (até as do mapa) pode ser removida
     const town = this.E().mine[i] === undefined ? this.foreignTown(tx, ty) : null;
-    if (town) return `Só o chefe da vila ou o rei pode mexer nas estradas de ${town}`;
+    if (town) return `Só o governador da vila ou o rei pode mexer nas estradas de ${town}`;
     return null;
   },
   // terreno que volta no lugar de uma estrada antiga (a vizinhança decide)
@@ -190,7 +190,7 @@ const Urban = {
     }
     if (FIXED_STRUCTS.includes(s.type)) return `${this.nameOf(s)} não pode ser mudado de lugar nem demolido.`;
     if (s.owner === 'player') return null;
-    if (!this.authority(Math.floor(s.x + s.w / 2), Math.floor(s.y + s.h / 2))) return 'Só o chefe da vila (dentro dela) ou o rei (no reino) pode mexer nos imóveis daqui.';
+    if (!this.authority(Math.floor(s.x + s.w / 2), Math.floor(s.y + s.h / 2))) return 'Só o governador da vila (dentro dela) ou o rei (no reino) pode mexer nos imóveis daqui.';
     return null;
   },
   // a construção (def com w, h, blocks) cabe em (tx, ty)?  s = a que está sendo mudada; civic = imóvel de vila
@@ -225,14 +225,14 @@ const Urban = {
     if (def.blocks !== false && P.x + P.r > tx * TILE && P.x - P.r < (tx + def.w) * TILE && P.y > ty * TILE && P.y - P.r < (ty + def.h) * TILE) return 'Você está no caminho';
     const cx = Math.floor(tx + def.w / 2), cy = Math.floor(ty + def.h / 2), a = this.authority(cx, cy);
     if (civic) {
-      if (!a) return 'Aqui você não é chefe nem rei';
+      if (!a) return 'Aqui você não é governador nem rei';
       const vi = s && s.village !== undefined ? s.village : this.villageNear(cx, cy, VILLAGE_R + 2);
       if (vi < 0 || !World.villages[vi]) return 'Imóveis de vila precisam ficar dentro de uma vila';
       const v = World.villages[vi];
       if (sqDist(cx, cy, v.x, v.y) > VILLAGE_R + 2) return `Precisa ficar dentro de ${v.name}`;
       if (a.kind === 'chief' && World.villages[a.vi] !== v) return 'Fora da sua vila';
       if (def.king && a.kind === 'chief') return 'Só o rei pode erguer uma arena';
-      if (def.chief && !s && v.lord !== 'player') return `Só o chefe de ${v.name} pode erguer a muralha`; // nem o rei: a muralha é do chefe da vila
+      if (def.chief && !s && v.lord !== 'player') return `Só o governador de ${v.name} pode erguer a muralha`; // nem o rei: a muralha é do governador da vila
       return null;
     }
     // construções do jogador: fora da sua vila ou reino, longe das cidades dos outros
@@ -328,7 +328,7 @@ const Urban = {
   // ------------------------------------------------------------ modo de obras (clicar no mapa)
   start(mode) {
     if (G.dungeon) { UI.msg('Não dá para fazer obras dentro das cavernas.', 'bad'); return; }
-    if (mode.startsWith('c:') && !this.hasAny()) { UI.msg('Só chefes de vila e reis podem erguer imóveis nas vilas.', 'bad'); return; }
+    if (mode.startsWith('c:') && !this.hasAny()) { UI.msg('Só governadores de vila e reis podem erguer imóveis nas vilas.', 'bad'); return; }
     G.placing = null; this.mode = mode; this.pick = null; this.drag = false; this.last = null;
     const tips = {
       road: '🛣️ Clique (ou segure e arraste) para abrir estradas. Sobre rio raso vira ponte.',
@@ -460,31 +460,31 @@ const Urban = {
   // ------------------------------------------------------------ painel de construção
   info(k) {
     if (k === 'road') return { name: 'Estrada', icon: '🛣️', sub: 'de graça · clique e arraste', can: true, btn: '🛣️ Abrir estradas',
-      desc: 'Abre uma estrada de terra batida, onde se anda 25% mais rápido. Não gasta material. Sobre rio raso vira ponte. Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode abrir estradas.' };
+      desc: 'Abre uma estrada de terra batida, onde se anda 25% mais rápido. Não gasta material. Sobre rio raso vira ponte. Dentro de vilas e castelos dos outros, só o governador da vila ou o rei pode abrir estradas.' };
     if (/^u:road\d$/.test(k)) {
       const lv = +k.slice(6), L = ROAD_LV[lv];
       return { name: `${L.name} (nível ${lv})`, icon: L.icon, cost: L.cost, sub: `+${Math.round((L.speed - 1) * 100)}% de velocidade · custo por bloco`, can: Inv.has(L.cost), btn: `${L.icon} Evoluir estradas`,
         desc: `Evolui as estradas para ${L.name.toLowerCase()}: quem anda por ela (você, os moradores e os animais) vai ${Math.round((L.speed - 1) * 100)}% mais rápido que no campo (a de terra dá +25%). Clique e arraste sobre estradas já abertas; cada bloco gasta o material mostrado. Vale em qualquer lugar, menos dentro de vilas que não são suas. Sobe um nível por vez: só vira ${L.name.toLowerCase()} a estrada que já é ${ROAD_LV[lv - 1].name.toLowerCase()}.` };
     }
     if (k === 'u:unroad') return { name: 'Remover estrada', icon: '⛏️', sub: 'reforma', can: true, btn: '⛏️ Remover estradas',
-      desc: 'Remove qualquer estrada ou ponte, inclusive as que já vêm no mapa (o terreno volta a ser campo, floresta ou rio). Dentro de vilas e castelos dos outros, só o chefe da vila ou o rei pode remover.' };
+      desc: 'Remove qualquer estrada ou ponte, inclusive as que já vêm no mapa (o terreno volta a ser campo, floresta ou rio). Dentro de vilas e castelos dos outros, só o governador da vila ou o rei pode remover.' };
     if (k === 'u:move') return { name: 'Mudar de lugar', icon: '🔀', sub: 'reforma', can: true, btn: '🔀 Escolher a construção',
-      desc: 'Clique numa construção e depois no novo lugar. As suas mudam em qualquer lugar; casas, lojas, muralhas e outros imóveis das vilas só como chefe (dentro da vila) ou rei (no reino todo). O castelo só o rei muda de lugar, sempre dentro do reino. Cavernas, acampamentos e santuários não saem do lugar.' };
+      desc: 'Clique numa construção e depois no novo lugar. As suas mudam em qualquer lugar; casas, lojas, muralhas e outros imóveis das vilas só como governador (dentro da vila) ou rei (no reino todo). O castelo só o rei muda de lugar, sempre dentro do reino. Cavernas, acampamentos e santuários não saem do lugar.' };
     if (k === 'u:demolish') return { name: 'Demolir', icon: '💥', sub: 'reforma', can: true, btn: '💥 Escolher a construção',
-      desc: 'Derruba uma construção e devolve metade do material. As suas podem ser demolidas em qualquer lugar; imóveis das vilas só pelo chefe ou pelo rei.' };
+      desc: 'Derruba uma construção e devolve metade do material. As suas podem ser demolidas em qualquer lugar; imóveis das vilas só pelo governador ou pelo rei.' };
     const d = CIVIC[k.slice(2)];
-    if (d.chief) return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · só o chefe da vila`, can: Inv.has(d.cost) && this.myVillages().length > 0, btn: '📍 Construir na vila',
-      desc: d.desc + (this.myVillages().length ? ' Fica dentro de uma vila em que você é o chefe.' : ' Você não é chefe de nenhuma vila: só o chefe pode erguer a muralha (nem o rei).') };
+    if (d.chief) return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · só o governador da vila`, can: Inv.has(d.cost) && this.myVillages().length > 0, btn: '📍 Construir na vila',
+      desc: d.desc + (this.myVillages().length ? ' Fica dentro de uma vila em que você é o governador.' : ' Você não é governador de nenhuma vila: só o governador pode erguer a muralha (nem o rei).') };
     return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · imóvel da vila`, can: Inv.has(d.cost), btn: '📍 Construir na vila',
-      desc: d.desc + ' Fica dentro de uma vila sua (chefe) ou de qualquer vila do seu reino (rei).' };
+      desc: d.desc + ' Fica dentro de uma vila sua (governador) ou de qualquer vila do seu reino (rei).' };
   },
 };
 
-// ====================================================================== chefia das vilas
+// ====================================================================== governo das vilas
 const Chiefdom = {
   t: 0,
   vilOf(p) { return World.villages.findIndex(v => v.chief === p.id); },
-  // pela diplomacia: pedir a chefia ao rei
+  // pela diplomacia: pedir o governo ao rei
   askNeed(vi) {
     const v = World.villages[vi], noble = Court.levelIn(v.civ) >= 1;
     return { rel: noble ? 35 : 50, gold: Math.max(100, 250 + People.residents(vi).length * 15 - (noble ? 100 : 0)), noble };
@@ -495,19 +495,19 @@ const Chiefdom = {
     if (v.lord === 'player') return;
     if (c.atWar) { UI.msg('O rei não conversa com inimigos da coroa.', 'bad'); return; }
     if (c.relation < need.rel) { UI.msg(`Precisa de relação ${need.rel}+ com ${CIV_DEFS[v.civ].short}.`, 'bad'); return; }
-    if (P.gold < need.gold) { UI.msg(`A chefia de ${v.name} custa ${need.gold} 🪙.`, 'bad'); return; }
+    if (P.gold < need.gold) { UI.msg(`O governo de ${v.name} custa ${need.gold} 🪙.`, 'bad'); return; }
     if ((G.askDay[vi] || 0) > G.day) { UI.msg(`O rei já recusou. Tente de novo a partir de ${Calendar.text(G.askDay[vi])}.`, 'bad'); return; }
     const chance = U.clamp(0.45 + (c.relation - need.rel) / 80 + (need.noble ? 0.2 : 0), 0.1, 0.95);
     if (Math.random() < chance) {
       P.gold -= need.gold; c.treasury += need.gold;
       Game.addRelation(v.civ, 5);
-      this.grant(vi, `${c.rulerName} entregou a você a chefia de ${v.name}.`);
+      this.grant(vi, `${c.rulerName} entregou a você o governo de ${v.name}.`);
     } else {
       G.askDay[vi] = G.day + ECON_DAYS; Game.addRelation(v.civ, -3);
       UI.msg(`${c.rulerName} recusa: "Ainda não confio tanto em você." Tente de novo no próximo mês.`, 'bad');
     }
   },
-  // pela força: desafiar o chefe e derrotar a milícia da vila
+  // pela força: desafiar o governador e derrotar a milícia da vila
   challenge(vi) {
     const v = World.villages[vi], c = G.civs[v.civ];
     if (!v || v.lord === 'player') return;
@@ -534,7 +534,7 @@ const Chiefdom = {
         Diplo.chronicle(`⚔️ ${G.name} ${G.surname} atacou ${v.name}; a coroa de ${Diplo.name(v.civ)} não interveio.`);
       }
     }
-    UI.msg(`Derrote os ${n} milicianos de ${v.name} para tomar a chefia. Se você se afastar, o ataque termina.`, 'bad');
+    UI.msg(`Derrote os ${n} milicianos de ${v.name} para tomar o governo. Se você se afastar, o ataque termina.`, 'bad');
   },
   update(dt) {
     const w = G.vwar;
@@ -570,16 +570,16 @@ const Chiefdom = {
     const v = World.villages[vi];
     v.lord = 'player'; v.lordFam = undefined;
     Families.refresh();
-    UI.banner(`🏘️ Chefe de ${v.name}!`);
-    UI.msg(`${why} Agora você é o chefe da vila: recebe impostos dos moradores e pode criar, mudar e demolir estradas e imóveis dentro dela (B → Obras).`, 'gold', true);
-    Progress.diary(`🏘️ Tornou-se chefe de ${v.name}.`);
-    Diplo.chronicle(`🏘️ ${G.name} ${G.surname} é o novo chefe de ${v.name} (${Diplo.name(v.civ)}).`, true);
+    UI.banner(`🏘️ Governador de ${v.name}!`);
+    UI.msg(`${why} Agora você é o governador da vila: recebe impostos dos moradores e pode criar, mudar e demolir estradas e imóveis dentro dela (B → Obras).`, 'gold', true);
+    Progress.diary(`🏘️ Tornou-se governador de ${v.name}.`);
+    Diplo.chronicle(`🏘️ ${G.name} ${G.surname} ${P.sex === 'f' ? 'é a nova governadora' : 'é o novo governador'} de ${v.name} (${Diplo.name(v.civ)}).`, true);
     Sound.play('levelup');
   },
 };
 
 // ====================================================================== capangas de guarda
-// O chefe pode deixar capangas guardando a sua vila e o rei, o castelo. Eles patrulham o lugar,
+// O governador pode deixar capangas guardando a sua vila e o rei, o castelo. Eles patrulham o lugar,
 // lutam contra quem ameaçar e reforçam a defesa quando um exército ataca. Não contam como seguidores.
 const GUARD_CAP = { village: 6, castle: 12, spot: 99, away: 4 };
 const Guards = {
@@ -592,7 +592,7 @@ const Guards = {
     if (k[0] === 's') { const [x, y] = k.slice(1).split(',').map(Number); return { kind: 'spot', x, y }; }
     return k[0] === 'v' ? { kind: 'village', vi: +k.slice(1) } : { kind: 'castle', civ: +k.slice(1) };
   },
-  // é seu (vila que você chefia ou castelo do seu reino)? os outros lugares são só "esperar lá"
+  // é seu (vila que você governa ou castelo do seu reino)? os outros lugares são só "esperar lá"
   mine(post) {
     if (post.kind === 'village') { const v = World.villages[post.vi]; return !!v && v.lord === 'player'; }
     if (post.kind === 'castle') return !!G.civs[post.civ] && G.civs[post.civ].ruler === 'player';
@@ -722,7 +722,7 @@ const Dig = {
     if (World.obj[i]) return { err: 'Remova árvores/rochas primeiro' };
     if (Farm.plots()[i]) return { err: 'Aqui há uma plantação' };
     const town = Urban.foreignTown(tx, ty);
-    if (town) return { err: `Só o chefe da vila ou o rei pode cavar em ${town}` };
+    if (town) return { err: `Só o governador da vila ou o rei pode cavar em ${town}` };
     if (fill) {
       if (t === T.DEEP) return { op: 'fill', to: T.WATER, need: 2, cost: 1 };
       if (t === T.WATER) return { op: 'fill', to: this.mat() === 'sand' ? T.SAND : T.GRASS, need: 2, cost: 2 };

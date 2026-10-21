@@ -1,7 +1,7 @@
 'use strict';
 // Obras que fazem a vila enriquecer: cada uma rende algo todo mês — aluguéis e comércio (Salin), recursos para o
 // reino (trigo, madeira, pedra, ferro), prosperidade (a vila sobe de nível), lugar para mais gente morar e a chance
-// de atrair uma família nova. O chefe da vila recebe o dinheiro; numa vila do seu reino (sem você de chefe), vai
+// de atrair uma família nova. O governador da vila recebe o dinheiro; numa vila do seu reino (sem você de governador), vai
 // para o tesouro. Nas vilas dos outros reinos, o rendimento fica com eles.
 
 // rent = Salin por mês · stock = recursos por mês para o reino · pm = prosperidade por mês

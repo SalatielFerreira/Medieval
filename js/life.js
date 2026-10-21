@@ -45,7 +45,7 @@ const Towns = {
   // mostra ou esconde as construções conforme o nível e as ruínas
   show(v) {
     for (const s of [...v.extra.houses, ...v.extra.walls, ...(v.extra.well ? [v.extra.well] : [])]) {
-      if (s.removed) continue; // demolida pelo chefe ou pelo rei
+      if (s.removed) continue; // demolida pelo governador ou pelo rei
       const was = s.hidden;
       s.hidden = v.level < s.growth;
       if (was !== s.hidden) World.structTouch(s); // a casa nova (ou a que sumiu) aparece no mapa
@@ -405,7 +405,7 @@ const NpcRoads = {
     return true;
   },
   // por mês: as vilas (e os castelos) dos NPCs evoluem as próprias estradas, um nível por vez, até o nível que a vila sustenta
-  // (vila 1–2: cascalho · 3–4: pedra · 5–6: calçada · 7+: Estrada Real; castelos chegam à real). As vilas em que você é o chefe ficam com você.
+  // (vila 1–2: cascalho · 3–4: pedra · 5–6: calçada · 7+: Estrada Real; castelos chegam à real). As vilas em que você é o governador ficam com você.
   upgradeTick(per = 8) {
     if (G.dungeon) return 0;
     if (!World.roadLv || World.roadLv.length !== WORLD_W * WORLD_H) World.roadLv = new Uint8Array(WORLD_W * WORLD_H);

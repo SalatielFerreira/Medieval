@@ -124,7 +124,7 @@ const Homes = {
   },
   // jogo salvo: recria as casas construídas pelos moradores
   restore() { for (const e of this.B()) this.make(e); },
-  // o chefe ou o rei mudou ou demoliu uma casa construída por um morador
+  // o governador ou o rei mudou ou demoliu uma casa construída por um morador
   moved(s) { const e = this.B().find(q => q.id === s.hid); if (e) { e.x = s.x; e.y = s.y; } },
   removed(s) {
     const b = this.B(), i = b.findIndex(q => q.id === s.hid);

@@ -548,7 +548,7 @@ const World = {
   },
   addStruct(type, x, y, w, h, owner, extra) {
     const info = BUILDINGS[type] && owner === 'player' ? BUILDINGS[type] : CIV_STRUCTS[type];
-    // okey: tipo e posição de origem, iguais em todo carregamento (usado para guardar obras de chefes e reis)
+    // okey: tipo e posição de origem, iguais em todo carregamento (usado para guardar obras de governadores e reis)
     const s = Object.assign({ id: this.structs.length, okey: type + '@' + x + ',' + y, type, x, y, w, h, owner, blocks: info.blocks }, extra || {});
     this.structs.push(s);
     for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) {

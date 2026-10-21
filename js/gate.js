@@ -1,5 +1,5 @@
 'use strict';
-// Portão da vila: o chefe instala o portão na passagem da estrada pela muralha (as laterais da passagem são fechadas
+// Portão da vila: o governador instala o portão na passagem da estrada pela muralha (as laterais da passagem são fechadas
 // com trechos de muralha). Com ele a vila:
 //  • cobra pedágio das caravanas que passam (caravana que passa aquece o comércio; pedágio caro faz a caravana
 //    reclamar ou dar meia-volta);
@@ -44,7 +44,7 @@ const Gate = {
     const vi = Urban.villageNear(tx, ty, this.R + 3);
     const v = World.villages[vi];
     if (!v) return 'O portão fica na muralha de uma vila';
-    if (v.lord !== 'player') return `Só o chefe de ${v.name} pode instalar o portão`;
+    if (v.lord !== 'player') return `Só o governador de ${v.name} pode instalar o portão`;
     const r = this.ring(tx, ty, v);
     if (r < this.R - 2 || r > this.R + 2) return `Ponha o portão na linha da muralha de ${v.name}, onde a estrada atravessa`;
     return null;
@@ -145,7 +145,7 @@ const Gate = {
       const parts = [`🚶 Entraram ${visitors} forasteiros${d.fee ? ` (${visitors * d.fee} 🪙 de entrada)` : ''} e ${d.cars} caravanas.`];
       // revista: ladrões barrados e contrabando de viajantes
       if (d.search && k && Math.random() < 0.3) { const f = U.rint(20, 50); got += f; parts.push(`🦹 O porteiro barrou um ladrão de fora (multa de ${f} 🪙).`); if (typeof Rumors !== 'undefined') Rumors.atV(s.village, `O porteiro de ${v.name} barrou um ladrão na entrada da vila.`); }
-      // o salário do porteiro (pago pelo chefe)
+      // o salário do porteiro (pago pelo governador)
       if (mine && k) { const wage = Gate.WAGE || 5; got -= wage; parts.push(`🪖 Soldo d${k.sex === 'f' ? 'a porteira' : 'o porteiro'}: ${wage} 🪙.`); }
       if (mine) { P.gold = Math.max(0, P.gold + got); d.earned += Math.max(0, got); }
       for (const t of parts) this.log(s, t);
@@ -249,7 +249,7 @@ function drawGateTower(ctx, s, X, Y, time) {
 }
 
 {
-  // instalar: sobre a estrada, na linha da muralha (só o chefe)
+  // instalar: sobre a estrada, na linha da muralha (só o governador)
   const pe0 = Urban.placeErr.bind(Urban);
   Urban.placeErr = function (def, tx, ty, s, civic) { if (def && def.gate && !s) return Gate.placeErr(tx, ty); return pe0(def, tx, ty, s, civic); };
   const ac0 = Urban.addCivic.bind(Urban);
@@ -328,10 +328,10 @@ function drawGateTower(ctx, s, X, Y, time) {
   };
 }
 
-// ------------------------------------------------------------------ muros em qualquer direção e quantos o chefe quiser
+// ------------------------------------------------------------------ muros em qualquer direção e quantos o governador quiser
 // O portão se ajusta à muralha em que está: muro à esquerda e à direita → muralha horizontal; muro em cima e embaixo →
-// muralha vertical. Serve para qualquer muro (a muralha da vila, trechos novos do chefe, o seu muro de pedra ou madeira).
-// O chefe ergue muralha em qualquer lugar da vila (e um pouco além dela), clicando e arrastando como nas estradas.
+// muralha vertical. Serve para qualquer muro (a muralha da vila, trechos novos do governador, o seu muro de pedra ou madeira).
+// O governador ergue muralha em qualquer lugar da vila (e um pouco além dela), clicando e arrastando como nas estradas.
 const GATE_REACH = VILLAGE_R + 10; // até onde a vila pode ter muralha e portão (a partir do centro)
 Object.assign(Gate, {
   isWall(x, y) { return World.wallAt(x, y); },
@@ -355,7 +355,7 @@ Object.assign(Gate, {
     if (P.x + P.r > tx * TILE && P.x - P.r < (tx + 1) * TILE && P.y > ty * TILE && P.y - P.r < (ty + 1) * TILE) return 'Você está no caminho';
     const v = World.villages[Urban.villageNear(tx, ty, GATE_REACH)];
     if (!v) return 'O portão fica na muralha de uma vila';
-    if (v.lord !== 'player') return `Só o chefe de ${v.name} pode instalar o portão`;
+    if (v.lord !== 'player') return `Só o governador de ${v.name} pode instalar o portão`;
     if (!this.axis(tx, ty)) return 'Ponha o portão na linha de um muro (com muro dos lados, a até 4 blocos) ou em cima de um trecho dele';
     return null;
   },
@@ -397,7 +397,7 @@ Object.assign(Gate, {
     if (P.x + P.r > tx * TILE && P.x - P.r < (tx + 1) * TILE && P.y > ty * TILE && P.y - P.r < (ty + 1) * TILE) return 'Você está no caminho';
     const v = World.villages[Urban.villageNear(tx, ty, GATE_REACH)];
     if (!v) return 'A muralha fica numa vila sua (ou logo em volta dela)';
-    if (v.lord !== 'player') return `Só o chefe de ${v.name} pode erguer a muralha`;
+    if (v.lord !== 'player') return `Só o governador de ${v.name} pode erguer a muralha`;
     return null;
   },
   buildWall(tx, ty, quiet) {
@@ -412,8 +412,8 @@ Object.assign(Gate, {
   },
 });
 {
-  CIVIC.vwall.desc = 'Trecho de muralha de pedra (1 pedra). Só o chefe ergue a muralha da vila: em qualquer lugar dela e logo em volta, quantos trechos quiser — clique e arraste. Ela se emenda nos outros muros.';
-  // a regra da muralha (e do portão) vale até GATE_REACH, e só para o chefe
+  CIVIC.vwall.desc = 'Trecho de muralha de pedra (1 pedra). Só o governador ergue a muralha da vila: em qualquer lugar dela e logo em volta, quantos trechos quiser — clique e arraste. Ela se emenda nos outros muros.';
+  // a regra da muralha (e do portão) vale até GATE_REACH, e só para o governador
   const pe1 = Urban.placeErr.bind(Urban);
   Urban.placeErr = function (def, tx, ty, s, civic) { if (def && def.chief && !def.gate && !s) return Gate.wallErr(tx, ty); return pe1(def, tx, ty, s, civic); };
   // clicar e arrastar ergue a muralha bloco a bloco
@@ -446,11 +446,11 @@ Object.assign(Gate, {
     return up0();
   };
   const pr0 = Urban.prompt.bind(Urban);
-  Urban.prompt = function () { if (this.mode === 'c:vwall') return '🧱 <b>Muralha</b> — clique e arraste · 1 pedra por trecho · só o chefe da vila · botão direito/Esc encerra'; return pr0(); };
+  Urban.prompt = function () { if (this.mode === 'c:vwall') return '🧱 <b>Muralha</b> — clique e arraste · 1 pedra por trecho · só o governador da vila · botão direito/Esc encerra'; return pr0(); };
 }
 
 // ------------------------------------------------------------------ demolir e mudar de lugar qualquer muralha sua
-// O chefe demole e muda de lugar as muralhas e os portões da vila dele, dentro e fora dela; os seus muros de pedra e de
+// O governador demole e muda de lugar as muralhas e os portões da vila dele, dentro e fora dela; os seus muros de pedra e de
 // madeira valem em qualquer lugar. No modo Demolir, um clique num trecho de muro derruba na hora e arrastar derruba vários.
 {
   const chiefOf = s => { const v = World.villages[s.village]; return !!v && v.lord === 'player'; };
@@ -488,8 +488,8 @@ Object.assign(Gate, {
   Urban.prompt = function () { if (this.mode === 'u:demolish') return '💥 <b>Demolir</b> — clique numa construção · muros: clique ou arraste para derrubar na hora · botão direito/Esc encerra'; return pr1(); };
 }
 
-// ------------------------------------------------------------------ o porteiro é um soldado contratado pelo chefe
-// Ninguém assume o portão sozinho: o chefe escolhe um morador e o contrata como soldado porteiro (alistamento de
+// ------------------------------------------------------------------ o porteiro é um soldado contratado pelo governador
+// Ninguém assume o portão sozinho: o governador escolhe um morador e o contrata como soldado porteiro (alistamento de
 // 40 🪙 e soldo de 8 🪙 por mês). Ele recebe elmo, cota de malha e espada. Sem porteiro, o portão não revista, não
 // prende procurados e não segura os saques.
 {

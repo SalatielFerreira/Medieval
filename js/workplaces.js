@@ -107,7 +107,7 @@ Shops.ensure = function () {
   const free = q => q && q.alive && !q.shop && !q.capanga && !used.has(q.id) && q.age >= 16 && !q.kin && q.spouse !== 'player' && !People.isCourt(q) && !q.trip && !q.port;
   const hired = [];
   for (const s of World.structs) {
-    if (!this.isShop(s) || owners.has(s.okey) || (Shops.noAuto && Shops.noAuto.has(s.type))) continue; // o porteiro é contratado pelo chefe
+    if (!this.isShop(s) || owners.has(s.okey) || (Shops.noAuto && Shops.noAuto.has(s.type))) continue; // o porteiro é contratado pelo governador
     const vi = Work.vi(s), v = World.villages[vi], rank = SHOP_KEEPER[s.type], mine = s.owner === 'player';
     let q = null;
     // empreendimento de família: alguém da própria família

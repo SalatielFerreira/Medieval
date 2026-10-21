@@ -1,5 +1,5 @@
 'use strict';
-// Famílias (casas): sobrenomes, riqueza, empreendimentos, influência, chefes de vila, revoltas contra a coroa
+// Famílias (casas): sobrenomes, riqueza, empreendimentos, influência, governadores de vila, revoltas contra a coroa
 // e vilas fundadas com o nome da família. Também os empreendimentos do jogador, com funcionários contratados.
 
 const FAMILY_BIZ = {
@@ -38,7 +38,7 @@ const Families = {
   members(f, all) { return G.people.filter(p => p.fam === f.id && (all || p.alive)); },
   adults(f) { return this.members(f).filter(p => p.age >= 16); },
   name(f) { return f.player ? `Casa ${f.surname} (sua)` : `Casa ${f.surname}`; },
-  // chefe: o adulto mais velho com ofício, ou o mais velho
+  // governador: o adulto mais velho com ofício, ou o mais velho
   head(f) {
     if (f.player) return null;
     const a = this.adults(f);
@@ -158,7 +158,7 @@ const Families = {
       delete this.F()[f.id];
     }
   },
-  // chefes de vila e sedes das famílias
+  // governadores de vila e sedes das famílias
   refresh() {
     World.villages.forEach((v, vi) => {
       if (v.lord === 'player') { v.chief = 'player'; return; }
@@ -709,7 +709,7 @@ const Biz = {
 // Da vila livre (fundada pelo jogador) nasce um reino: quando ela chega ao nível 5, o castelo
 // (Construção → Moradia) cria um reino novo de verdade: entra na lista dos reinos, com castelo, guarnição,
 // território em volta e diplomacia. Só um reino fundado por vez: se ele for tomado, dá para fundar outro.
-const REALM_GOLD = 3000;
+const REALM_GOLD = 0; // o castelo custa só os materiais
 const BASE_CIVS = CIV_DEFS.length;
 const Realm = {
   list() { return G.realms || (G.realms = []); },
@@ -723,11 +723,12 @@ const Realm = {
   siteErr(tx, ty) {
     const a = this.active();
     if (a) return `Você já tem um reino fundado (${CIV_DEFS[a.ci].name}). Só depois que ele cair dá para fundar outro`;
-    const cx = tx + 3, cy = ty + 3, vi = this.villageFor(cx, cy);
-    if (vi === null) return 'O castelo precisa ficar perto da sua vila livre (funde uma em Portfólio → Vilas e guardas)';
-    const v = World.villages[vi];
-    if ((v.level || 1) < REALM_LVL) return `${v.name} ainda precisa crescer até o nível ${REALM_LVL} para virar um reino (está no ${v.level || 1})`;
-    if (World.capitals.some(c => U.dist(c.x, c.y, cx, cy) < 30)) return 'Muito perto do castelo de outro reino';
+    // o reino nasce do zero, só com o castelo: em terra selvagem (ou na terra de uma vila livre sua), longe dos outros castelos
+    const cx = tx + 3, cy = ty + 3;
+    if (!World.inb(cx, cy)) return 'Fora do mapa';
+    const t = World.terr[World.idx(cx, cy)];
+    if (t >= 0 && G.civs[t] && G.civs[t].ruler !== 'player') return `Esta terra é de ${CIV_DEFS[t].name}: erga o castelo em terra selvagem`;
+    if (World.capitals.some(c => c && U.dist(c.x, c.y, cx, cy) < 30)) return 'Muito perto do castelo de outro reino';
     return null;
   },
   // as duas listas de reinos voltam a ter só os 7 do começo (antes de um jogo novo ou de carregar)
@@ -750,7 +751,7 @@ const Realm = {
     World.chunks = new Map(); if (World.mini) World.buildMinimap();
   },
   found(tx, ty) {
-    const cx = tx + 3, cy = ty + 3, vi = this.villageFor(cx, cy), v = World.villages[vi], ci = CIV_DEFS.length;
+    const cx = tx + 3, cy = ty + 3, vi = this.villageFor(cx, cy), v = vi !== null ? World.villages[vi] : null, ci = CIV_DEFS.length;
     const name = 'Reino ' + G.surname, short = G.surname;
     const r = { ci, x: tx, y: ty, vi, day: G.day,
       def: { name, short, ruler: 'Rei ' + G.name, color: '#a8791a', roof: '#a8791a', title: ['Rei', 'Rainha'], rname: G.name, rsex: P.sex, prod: { wheat: 26, wood: 14, stone: 10, iron_ore: 4 }, desc: 'O reino que você fundou a partir da sua vila.', founded: true },
@@ -758,18 +759,20 @@ const Realm = {
     this.list().push(r);
     this.build(r);
     Graves.place(); // o reino novo ganha o seu cemitério
-    G.civs[ci] = { id: ci, ruler: 'npc', rulerName: G.name, pop: 40 + People.residents(vi).length, treasury: 300, garrison: 6, tax: 0.1, happy: 65, relation: 100, atWar: false, rebel: 0, festival: 0,
+    G.civs[ci] = { id: ci, ruler: 'npc', rulerName: G.name, pop: 20 + (v ? People.residents(vi).length : 0), treasury: 150, garrison: v ? 6 : 4, tax: 0.1, happy: 65, relation: 100, atWar: false, rebel: 0, festival: 0,
       stock: { wheat: 40, wood: 30, stone: 20, iron_ore: 5 }, invest: { farms: 0, sawmill: 0, quarry: 0, mines: 0, housing: 0, walls: 0 }, founded: true };
     // diplomacia: os outros reinos olham o reino novo com desconfiança
     const rel = Diplo.D().rel; for (const row of rel) row.push(0); rel.push(rel.map(() => 0)); rel[ci].push(0);
     for (let o = 0; o < ci; o++) rel[o][ci] = rel[ci][o] = U.rint(-20, 10);
     // a vila livre passa a ser do reino (e quem mora nela também)
-    v.free = false; v.civ = ci;
-    const spec = (G.founded || []).find(x => x.x === v.x && x.y === v.y); if (spec) { spec.free = false; spec.civ = ci; }
-    for (const p of People.residents(vi)) p.civ = ci;
+    if (v) {
+      v.free = false; v.civ = ci;
+      const spec = (G.founded || []).find(x => x.x === v.x && x.y === v.y); if (spec) { spec.free = false; spec.civ = ci; }
+      for (const p of People.residents(vi)) p.civ = ci;
+    }
     Towns.syncOwners(); // casas, lojas e muralhas passam a ter as cores do reino novo
     Game.becomeRuler(ci, `O castelo está de pé.`);
-    Diplo.chronicle(`👑 ${G.name} ${G.surname} ergueu um castelo em ${v.name} e fundou o ${name}.`, true);
+    Diplo.chronicle(`👑 ${G.name} ${G.surname} ergueu um castelo ${v ? 'em ' + v.name : 'na terra selvagem'} e fundou o ${name}.`, true);
     UI.banner(`👑 ${name}!`);
     Progress.diary(`👑 Fundou o ${name}.`);
     return ci;

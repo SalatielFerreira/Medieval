@@ -1,7 +1,7 @@
 'use strict';
 // Mais coisas no mundo: dez empreendimentos novos (com o lado de dentro), horta e pomar, praça (poço, chafariz, estátua,
 // lampião, banco, canteiros e cercas), cultura e fé (biblioteca, campo de treino, oratório), torre de vigia, as oficinas
-// novas (defumadouro, tear e olaria) e as obras novas que chefes e reis erguem nas vilas. Também desenha tudo isso.
+// novas (defumadouro, tear e olaria) e as obras novas que governadores e reis erguem nas vilas. Também desenha tudo isso.
 
 // ---------------------------------------------------------------- empreendimentos novos
 Object.assign(BIZ_TYPES, {
@@ -199,7 +199,7 @@ const Content = {
   },
 };
 
-// ---------------------------------------------------------------- obras novas nas vilas (chefes e reis)
+// ---------------------------------------------------------------- obras novas nas vilas (governadores e reis)
 Object.assign(CIVIC, {
   vfountain: { name: 'Chafariz',  icon: '⛲', w: 2, h: 2, cost: { stone: 40, iron_bar: 2 }, desc: 'Enfeita a praça: a vila prospera mais rápido.', prosper: 3 },
   vstatue:   { name: 'Estátua',   icon: '🗿', w: 1, h: 1, cost: { stone: 50 },              desc: 'Uma estátua em honra ao soberano.', prosper: 2 },
