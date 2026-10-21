@@ -91,10 +91,13 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades: visual das pessoas
 
+- **Rosto masculino novo:** queixo e mandíbula marcados, olhos com íris e brilho, sobrancelhas grossas, nariz com volume e boca desenhada.
+- **Roupa de cada ofício** (homens e mulheres): avental de couro (ferreiro, armeiro, pedreiro), avental branco (padeiro, taverneiro, curandeiro), batina com gola branca e cruz (padre, ermitão), casaco com botões dourados (comerciante), gibão bordado a ouro com joia (rei, rainha e herdeiros), camisa listrada (marinheiro), veste de pele (caçador) e roupa remendada, às vezes com chapéu de palha (camponês). Quem veste uma armadura ou roupa comprada usa a dela.
+
 - **22 penteados:** curto, longo, longo ondulado, médio, chanel, joãozinho, repartido de lado, rabo de cavalo, rabo baixo, maria-chiquinha, tranças, trança coroa, coque, coque no alto, cacheado, black power, dreadlocks, espetado, raspado dos lados, moicano, tonsura de monge e careca.
 - **13 barbas:** sem barba, por fazer, curta, cheia, longa, bifurcada, trançada, bigode, bigode guidão, cavanhaque, pera, contorno e costeletas.
 - **Mais cores de cabelo:** castanho claro, acaju, loiro claro e preto-azulado.
-- **Visual feminino caprichado:** corpete com cintura e busto, vestido longo e rodado que balança ao andar, faixa com laço, ombro bufante, cílios, sombra, lábios, brincos e flores no cabelo.
+- **Visual feminino caprichado:** corpete com cintura e busto, vestido longo e rodado que balança ao andar, faixa com laço, ombro bufante, rosto oval, olhos amendoados com cílios e brilho, lábios e blush.
 - **Espelho:** em casa, mude penteado, barba, cor do cabelo e cores da roupa a qualquer momento.
 - Os moradores nascem com todos esses estilos, e alguns padres usam tonsura.
 

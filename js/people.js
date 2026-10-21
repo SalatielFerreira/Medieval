@@ -40,6 +40,10 @@ const RANKS = {
   beggar:    { m: 'Mendigo', f: 'Mendiga', order: 9 },
   child:     { m: 'Criança', f: 'Criança', order: 10 },
 };
+// roupa de cada ofício (desenhada por cima: avental, batina, casaco, gibão bordado...)
+const PEOPLE_OUTFIT = { smith: 'apron_leather', armorer: 'apron_leather', mason: 'apron_leather', baker: 'apron_white', innkeeper: 'apron_white', brewer: 'apron_white', miller: 'apron_white',
+  healer: 'apron_white', granger: 'apron_white', priest: 'robe', hermit: 'robe', merchant: 'coat', trader: 'coat', ruler: 'noble', consort: 'noble', heir: 'noble',
+  sailor: 'sailor', hunter: 'fur', peasant: 'patched', teacher: 'scholar', potter: 'apron_leather', carpenter: 'apron_leather', smoker: 'apron_leather', weaver: 'coat', vintner: 'apron_white' };
 // cor da roupa de cada ofício
 const RANK_LOOK = {
   ruler: '#7a1f2a', consort: '#6a2a6a', heir: '#2a4a8a', knight: '#8d949c', merchant: '#6d7f4a', smith: '#4a3a30',
@@ -197,13 +201,14 @@ const People = {
       armor: torso && torso.def >= 3 ? torso.color : (p.rank === 'knight' ? '#8d949c' : null),
       legs: it('legs') ? it('legs').color : '#4a3a2a', boots: it('feet') ? it('feet').color : null,
       helmet: head && head.def >= 2 ? head.color : (p.rank === 'knight' ? '#9aa0a8' : null),
-      cap: head && head.def < 2 ? head.color : (p.rank === 'hunter' ? '#3a4a20' : null),
+      cap: head && head.def < 2 ? head.color : (p.rank === 'hunter' ? '#3a4a20' : p.rank === 'peasant' && !child && p.id % 4 === 0 ? '#d8c070' : null),
       hood: p.rank === 'beggar' ? '#5a4a38' : null,
       hair: this.hairAt(p.hair, p.age), skin: p.skin, hairStyle: p.hairStyle || (p.sex === 'f' ? 'long' : 'short'),
       fem: p.sex === 'f', beardStyle: p.sex === 'm' && p.age >= 18 ? (p.beardStyle || (p.id % 3 ? 'short' : 'none')) : 'none', skirt: p.sex === 'f',
       crown: royal, cape: royal ? '#7a1f2a' : (p.rank === 'heir' ? '#2a4a8a' : null),
       weapon: it('weapon') ? it('weapon').color : (RANKS[p.rank].fighter || p.capanga ? '#cfd6dd' : null), wlen: it('weapon') ? it('weapon').len : 18,
       shield: p.rank === 'knight' && p.civ >= 0 ? CIV_DEFS[p.civ].color : null,
+      outfit: child || torso ? null : PEOPLE_OUTFIT[p.rank] || null,
     };
   },
   // rótulo do relacionamento com o jogador
