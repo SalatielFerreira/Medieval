@@ -75,6 +75,13 @@ const Graves = {
   place() {
     World.capitals.forEach((cp, ci) => {
       if (!cp || World.structs.some(s => s && s.type === 'cemetery' && s.owner === ci && !s.removed)) return;
+      // o rei mudou o cemitério de lugar: ele volta para onde foi posto
+      const sv = this.saved(ci);
+      if (sv && !this.spotErr(null, sv.x, sv.y, true)) {
+        for (let j = sv.y; j < sv.y + 4; j++) for (let i = sv.x; i < sv.x + 6; i++) World.obj[World.idx(i, j)] = 0;
+        World.addStruct('cemetery', sv.x, sv.y, 6, 4, ci);
+        return;
+      }
       let best = null;
       // primeiro bem perto do castelo, dentro do reino e longe das estradas; se não couber, um pouco mais longe
       for (const [r0, r1, strict] of [[9, 18, true], [9, 28, false], [8, 42, null]]) {
@@ -96,6 +103,20 @@ const Graves = {
       World.addStruct('cemetery', best.x, best.y, 6, 4, ci);
     });
     World.chunks = new Map();
+  },
+  // onde o rei pôs o cemitério (guardado no jogo salvo)
+  saved(ci) { return ((G.urban || {}).cem || {})[ci] || null; },
+  // o cemitério pode ir para qualquer lugar do mapa: só precisa de chão firme e livre (árvores e pedras são retiradas)
+  spotErr(s, tx, ty, loading) {
+    for (let y = ty; y < ty + 4; y++) for (let x = tx; x < tx + 6; x++) {
+      if (!World.inb(x, y)) return 'Fora do mapa';
+      const i = World.idx(x, y), t = World.tiles[i];
+      if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido (água ou montanha)';
+      if (t === T.ROAD) return 'Não ponha sobre a estrada';
+      const b = World.blocker(i); if (b && (!s || b.id !== s.id)) return 'Já há uma construção aqui';
+    }
+    if (!loading && P.x + P.r > tx * TILE && P.x - P.r < (tx + 6) * TILE && P.y > ty * TILE && P.y - P.r < (ty + 4) * TILE) return 'Você está no caminho';
+    return null;
   },
   flowers(i) {
     const g = this.list()[i]; if (!g) return;
@@ -123,3 +144,21 @@ UI.showCemetery = function (ci) {
     ${others ? `<small class="muted">Mais ${others} ${others === 1 ? 'parente descansa' : 'parentes descansam'} em outros reinos.</small>` : ''}</div>${detail}</div>`;
   this.open('⚰️ Cemitério de ' + CIV_DEFS[ci].short, h, 'showCemetery', [ci], 'Visite os seus familiares que já partiram');
 };
+
+// mudar o cemitério de lugar: o rei do reino pode pô-lo em qualquer lugar do mapa (dentro ou fora do reino, perto ou longe
+// das vilas), pelo Construir → Obras → Mudar de lugar. As lápides vão junto.
+{
+  const mv0 = Urban.movable.bind(Urban);
+  Urban.movable = function (s) {
+    if (s && s.type === 'cemetery') return G.civs[s.owner] && G.civs[s.owner].ruler === 'player' ? null : `Só quem governa ${CIV_DEFS[s.owner].name} pode mudar o cemitério de lugar.`;
+    return mv0(s);
+  };
+  const pe0 = Urban.placeErr.bind(Urban);
+  Urban.placeErr = function (def, tx, ty, s, civic) { return s && s.type === 'cemetery' ? Graves.spotErr(s, tx, ty) : pe0(def, tx, ty, s, civic); };
+  const rl0 = Urban.relocate.bind(Urban);
+  Urban.relocate = function (s, nx, ny, quiet) {
+    const r = rl0(s, nx, ny, quiet);
+    if (s.type === 'cemetery') { const u = G.urban || (G.urban = {}); (u.cem || (u.cem = {}))[s.owner] = { x: s.x, y: s.y }; }
+    return r;
+  };
+}

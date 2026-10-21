@@ -89,6 +89,10 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: cemitério em qualquer lugar
+
+- Quem governa o reino pode **mudar o cemitério para qualquer lugar do mapa** (dentro ou fora do reino, perto ou longe das vilas): Construir → Obras nas vilas → Mudar de lugar, clique no cemitério e depois no lugar novo. Árvores e pedras no caminho são retiradas, as lápides vão junto e o lugar novo fica guardado no jogo salvo.
+
 ## Novidades: janelas de negociar mais confortáveis
 
 - **Loja e Balcão redesenhados:** comprar e vender lado a lado, cada lista com a sua própria rolagem. Linhas e colunas de tamanho fixo: ao clicar, nada sai do lugar — dá para clicar várias vezes seguidas no mesmo botão.
