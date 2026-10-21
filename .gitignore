@@ -2,3 +2,4 @@ Thumbs.db
 .DS_Store
 desktop.ini
 __shot_tmp.html
+node_modules/

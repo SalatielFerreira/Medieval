@@ -1,0 +1,12 @@
+# Todos os arquivos de texto com quebra de linha LF, em qualquer máquina (Windows, Mac ou Linux).
+# Assim um commit mostra só as linhas que mudaram, e não o arquivo inteiro.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.webp binary
+*.mp3 binary
+*.ogg binary
+*.woff binary
+*.woff2 binary
