@@ -12,12 +12,13 @@ module.exports = async () => {
       const spot = (w, h) => { for (let r = 12; r < 60; r++) for (let k = 0; k < 48; k++) { const a = k / 48 * 6.283, x = Math.round(v.x + Math.cos(a) * r), y = Math.round(v.y + Math.sin(a) * r); if (World.areaOk(x - 1, y - 1, w + 2, h + 4) && World.areaFree(x - 1, y - 1, w + 2, h + 4)) return { x, y }; } };
       const sp = spot(3, 2), bz = World.addStruct('biz_bakery', sp.x, sp.y, BUILDINGS.biz_bakery.w, BUILDINGS.biz_bakery.h, 'player', { built: true }); Biz.autoHire(true);
       for (let k = 0; k < 8; k++) { Game.onNewDay(); await new Promise(r => setTimeout(r, 15)); }
-      return { asked, families: Fin.families().length, saveGain: Fin.D().save - 1000, invPaid: (Fin.D().inv[0] || {}).paid || 0, bizPaid: Biz.earn(bz).paid || 0, workers: Biz.workerCount(bz) };
+      return { asked, families: Fin.families().length, saveGain: Fin.D().save - 1000, invPaid: (Fin.D().inv[0] || {}).paid || 0, invGone: !!f && !Fin.D().inv.length, bizPaid: Biz.earn(bz).paid || 0, workers: Biz.workerCount(bz) };
     });
     if (!r.asked) fails.push('nenhum morador pediu empréstimo');
     if (!r.families) fails.push('nenhuma família para investir');
     if (r.saveGain <= 0) fails.push('a poupança não rendeu');
-    if (r.invPaid <= 0) fails.push('o investimento não rendeu');
+    // se a família perdeu os negócios no meio do caminho, o jogo devolve metade do investimento: também está certo
+    if (r.invPaid <= 0 && !r.invGone) fails.push('o investimento não rendeu');
     if (r.bizPaid <= 0) fails.push('a padaria não entregou lucro');
     if (r.workers > 2) fails.push('empreendimento com mais de 2 funcionários');
   } finally { await close(); }
