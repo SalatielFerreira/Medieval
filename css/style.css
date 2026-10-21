@@ -3675,3 +3675,56 @@ body:not(.small) .kpg.kdesk[data-nav="d:news"] > .nw-fame { grid-column: 1; over
 body:not(.small) .kpg.kdesk[data-nav="d:news"] > .nw-feed { grid-column: 2; display: flex; flex-direction: column; min-height: 0; }
 body:not(.small) .kpg.kdesk[data-nav="d:news"] .nw-list { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
 body.small .nw-tip { display: none; }
+
+/* ================================================================ computador: TODAS as janelas em tela cheia e do mesmo tamanho.
+   As janelas de conteúdo curto (lojas, baú, estábulo, conselho de guerra...) usam uma coluna central de leitura, com uma
+   folha clara por trás, em vez de flutuar pequenas no meio do mapa. */
+body:not(.small) #panel:not(.wide) { width: 100vw; height: 100vh; height: 100dvh; max-height: none; left: 0; top: 0; transform: none; border-radius: 0; }
+body:not(.small) #panel:not(.wide) .ph, body:not(.small) #panel:not(.wide)::before, body:not(.small) #panel:not(.wide)::after { border-radius: 0 !important; }
+body:not(.small) #panel:not(.wide) > .pb { flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box;
+  padding: 26px max(28px, calc((100vw - 1040px) / 2)) 32px;
+  background: linear-gradient(90deg, transparent calc(50% - 552px), rgba(214, 174, 96, .16) calc(50% - 552px), rgba(255, 226, 160, .035) calc(50% - 551px),
+    rgba(255, 226, 160, .035) calc(50% + 551px), rgba(214, 174, 96, .16) calc(50% + 551px), transparent calc(50% + 552px)); }
+/* com uma janela aberta, a faixa da guerra some (ela cobria o título); o aviso volta ao fechar */
+body.win-open #warcall { display: none; }
+
+/* ================================================================ Cena de abertura das janelas (UI.scene / UI.personScene) e cartões de ação (UI.tiles) */
+.scn { position: relative; overflow: hidden; display: flex; align-items: center; gap: 18px; padding: 16px 20px; margin-bottom: 12px; border-radius: 14px;
+  border: 1px solid rgba(214, 174, 96, .45); min-height: 118px; box-shadow: inset 0 -40px 60px rgba(20, 12, 4, .5); background: linear-gradient(160deg, #5a3e14, #b08434); }
+.scn::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 85% 0%, rgba(255, 240, 200, .18), transparent 60%); }
+.scn.t-green { background: linear-gradient(160deg, #1e3a14 0%, #4f7a2a 55%, #a89a4a 100%); }
+.scn.t-red { background: linear-gradient(160deg, #2a0c0c 0%, #7a2418 55%, #b0603a 100%); }
+.scn.t-blue { background: linear-gradient(160deg, #10203a 0%, #2e5a86 55%, #8aa8c0 100%); }
+.scn.t-earth { background: linear-gradient(160deg, #2a1c10 0%, #6a4a2a 55%, #b08a5a 100%); }
+.scn.t-purple { background: linear-gradient(160deg, #22142e 0%, #5a3a6e 55%, #b07a8a 100%); }
+.scn.t-amber { background: linear-gradient(160deg, #2a1406 0%, #8a4a14 55%, #e0a040 100%); }
+.scn.t-stone { background: linear-gradient(160deg, #1a1c20 0%, #4a4e56 55%, #8a8a80 100%); }
+.scn-med { position: relative; z-index: 1; flex: none; width: 86px; height: 86px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .22), rgba(0, 0, 0, .35) 70%); border: 3px solid #c9a24a; box-shadow: 0 0 0 4px rgba(0, 0, 0, .25), 0 6px 16px rgba(0, 0, 0, .4); }
+.scn-ic { font-size: 44px; line-height: 1; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .45)); }
+.scn-por { width: 96px; height: 112px; margin-top: 18px; image-rendering: pixelated; }
+.scn-t { position: relative; z-index: 1; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
+.scn-t > b { font-family: 'Cinzel', Georgia, serif; font-size: 22px; color: #ffe9b0; letter-spacing: 1px; }
+.scn-t > small { font-family: Georgia, serif; font-size: 13.5px; line-height: 1.4; color: #f6ead0; }
+.scn-t > .scn-k { font-family: var(--ui-font); font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #ffd98a; }
+.acts { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.acts .ra { min-height: 96px; }
+body.small .scn { min-height: 0; padding: 10px 12px; gap: 12px; margin-bottom: 8px; }
+body.small .scn-med { width: 60px; height: 60px; }
+body.small .scn-ic { font-size: 30px; }
+body.small .scn-por { width: 72px; height: 84px; margin-top: 14px; }
+body.small .scn-t > b { font-size: 17px; }
+body.small .scn-t > small { font-size: 12px; }
+body.small .acts { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+body.small .acts .ra { min-height: 70px; padding: 10px; }
+
+/* janelas de conteúdo curto no computador: listas de botões viram uma grade de cartões, a frase de abertura ganha destaque */
+body:not(.small) #panel:not(.wide) .btns.col { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+body:not(.small) #panel:not(.wide) .btns.col > button { min-height: 48px; padding: 10px 14px; text-align: left; border-radius: 10px; }
+body:not(.small) #panel:not(.wide) .btns.col > small { grid-column: 1 / -1; }
+body:not(.small) #panel:not(.wide) .pb > p:first-child { font-family: Georgia, serif; font-size: 15px; line-height: 1.5; color: #f3e6c8; }
+body:not(.small) #panel:not(.wide) .pb > .card + .card, body:not(.small) #panel:not(.wide) .pb > .list + .card { margin-top: 12px; }
+/* Baú e taverna do jogador no computador: as duas colunas ocupam a altura da tela */
+body:not(.small) #panel:not(.wide) > .pb:has(> .chest-layout) { display: flex; flex-direction: column; }
+body:not(.small) #panel:not(.wide) > .pb > .chest-layout { flex: 1; min-height: 0; }
+body.small .scn .rh-chips { justify-content: flex-start; }

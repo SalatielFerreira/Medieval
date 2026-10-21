@@ -198,6 +198,7 @@ const UI = {
     if (this.down && this.down.size) { this.tapLock = true; clearTimeout(this.tapLockT); }
     document.body.classList.add('win-open'); // os controles de toque somem enquanto a janela está aberta
     for (const el of this.panel.querySelectorAll('[data-scroll], .pb')) { const k = el.dataset.scroll || 'pb'; if (scrolls[k]) el.scrollTop = scrolls[k]; }
+    for (const cv of this.panel.querySelectorAll('canvas.scn-por')) { const q = People.get(+cv.dataset.pid); if (q) this.drawPersonPortrait(cv, q, 2.3); }
     G.paused = true;
   },
   // setas ◀ ▶ no cabeçalho das janelas principais
@@ -851,6 +852,23 @@ const UI = {
     track.scrollLeft = Math.min(S.kpageOf[key] || 0, pages.length - 1) * W;
     mark();
   },
+  // cena de abertura das janelas: medalhão (ícone ou retrato), título, frase e números. Temas: gold, green, red, blue,
+  // earth, purple, amber, stone (cores de fundo em css "Cena de abertura")
+  scene(o) {
+    const chips = (o.chips || []).filter(Boolean).map(([ic, v, cls]) => `<span class="rh-chip ${cls || ''}">${ic} <b>${v}</b></span>`).join('');
+    return `<div class="scn t-${o.theme || 'gold'}"><div class="scn-med">${o.art || `<span class="scn-ic">${o.ic}</span>`}</div>
+      <div class="scn-t">${o.kicker ? `<small class="scn-k">${o.kicker}</small>` : ''}<b>${o.title}</b>${o.line ? `<small>${o.line}</small>` : ''}${chips ? `<div class="rh-chips">${chips}</div>` : ''}</div>${o.side || ''}</div>`;
+  },
+  // a cena das janelas sobre uma pessoa (presentear, contratar, profissão, guarda...): o retrato dela
+  personScene(p, line, theme, chips) {
+    const rel = People.relation(p);
+    return this.scene({ art: `<canvas class="scn-por" data-pid="${p.id}" width="96" height="112"></canvas>`, kicker: `${People.title(p)} · ${p.age} anos · ${this.esc(People.homeName(p))}`,
+      title: this.esc(People.full(p)), line, theme: theme || 'gold', chips: chips || [[p.aff >= 0 ? '💛' : '💢', rel.text], ['🤝', `amizade ${Math.round(p.aff)}`]] });
+  },
+  // cartões de ação grandes (o mesmo visual dos da Casa)
+  tiles(list) {
+    return `<div class="acts">${list.filter(Boolean).map(t => `<button class="ra ${t.cls || ''}" ${t.attrs || ''} ${t.off ? 'disabled' : ''}><span class="ra-ic">${t.ic}</span><span class="ra-t"><b>${t.label}</b><small>${t.sub || ''}</small></span></button>`).join('')}</div>`;
+  },
   pageHead(ic, title, sub) { return `<div class="pg-head"><span class="pg-ic">${ic}</span><div><h3>${title}</h3>${sub ? `<small>${sub}</small>` : ''}</div></div>`; },
 
   // ============================================================ Reino
@@ -1329,7 +1347,7 @@ const UI = {
     const rows = row(Guards.here(), 'parado neste lugar · patrulha e defende') +
       Guards.places().map(post => row(post, post.kind === 'village' ? 'sua vila (governador) · guardas' : 'seu castelo (rei) · guardas')).join('') +
       '<div class="sec" style="margin-top:8px">Esperar numa vila ou cidade</div>' + Guards.nearPlaces(6).map(post => row(post, (post.kind === 'village' ? 'vila' : 'cidade do castelo') + ' · a ' + MapView.distText(Guards.spot(post).x, Guards.spot(post).y))).join('');
-    this.open('🛡️ Guarda de ' + this.esc(p.name), `<p>Onde ${this.esc(p.name)} vai montar guarda? ${p.sex === 'f' ? 'Ela' : 'Ele'} patrulha o lugar, enfrenta bandidos, rebeldes e soldados inimigos e ajuda a defender quando um exército ataca. Guardas não contam no limite de seguidores, mas continuam recebendo soldo (4 🪙 por dia).</p>
+    this.open('🛡️ Guarda de ' + this.esc(p.name), `${this.personScene(p, `Onde ${this.esc(p.name)} vai montar guarda? ${p.sex === 'f' ? 'Ela' : 'Ele'} patrulha o lugar, enfrenta bandidos, rebeldes e soldados inimigos e ajuda a defender quando um exército ataca. Guardas não contam no limite de seguidores, mas continuam recebendo soldo (4 🪙 por dia).`, 'red')}
       <div class="list">${rows}</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`, 'showGuard', [id]);
   },
   showPort(sid) {
@@ -1383,7 +1401,7 @@ const UI = {
       return `<button class="rrow" data-act="tk" data-op="hire" data-s="${s.id}" data-id="${id}" ${full || P.gold < 15 ? 'disabled' : ''}><span class="ri">${Game.buildIcon(s.type)}</span>
         <span><b>${BUILDINGS[s.type].name}</b><small>${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários · salário ${Biz.wage(p, s)} 🪙/dia${sk ? ' · ⭐ especialista (+50%)' : ''}</small></span><span class="rs ${full ? 'mat' : 'ok'}">${full ? 'Lotado' : 'Contratar'}</span></button>`;
     }).join('');
-    this.open('💼 Contratar ' + this.esc(p.name), `<p>Em qual empreendimento ${this.esc(p.name)} vai trabalhar? O contrato custa 15 🪙 de adiantamento, e o salário é pago todo amanhecer.</p>
+    this.open('💼 Contratar ' + this.esc(p.name), `${this.personScene(p, `Em qual empreendimento ${this.esc(p.name)} vai trabalhar? O contrato custa 15 🪙 de adiantamento, e o salário é pago todo amanhecer.`, 'blue')}
       <div class="list">${rows}</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`, 'showHire', [id]);
   },
   showBiz(sid) {
@@ -1622,7 +1640,8 @@ const UI = {
     const btns = !P.horse ? `<button class="primary" data-act="buyride" data-k="horse" data-p="220" ${P.gold >= 220 ? '' : 'disabled'}>Comprar — 220 🪙</button>`
       : `${mine ? `<button class="primary" data-act="hfetch" data-s="${sid}">🐴 Levar comigo</button>` : here ? `<button class="primary" data-act="hstall" data-s="${sid}">🏠 Deixar no estábulo</button>` : ''}
          <button data-act="hsell" data-s="${sid}" ${mine || here ? '' : 'disabled'}>💰 Vender${P.cart ? ' (com a carroça)' : ''} — ${Ride.sellPrice()} Salin</button>`;
-    const h = `<div class="kgrid two">
+    const h = this.scene({ ic: '🐴', theme: 'earth', kicker: 'Estábulo', title: P.horse ? hn : 'Sem cavalo ainda', line: where + '.',
+      chips: [['💨', 'quase 2× mais rápido'], ['🎒', `+${HORSE_CARRY} de peso`], P.cart ? ['🛒', `carroça: +${CART_CARRY}`] : null] }) + `<div class="kgrid two">
       <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🐴</div><div><b>Cavalo</b><div class="dt-cat">${where}</div></div></div>
         <p class="dt-desc">Quase o dobro da velocidade (tecla ${Keys.label('ride')} para montar). Os alforjes carregam +${HORSE_CARRY} de peso. Deixe-o no estábulo para ele esperar por você; os alforjes ficam com ele.</p>
         <div class="btns">${btns}</div></div>
@@ -1633,17 +1652,23 @@ const UI = {
   },
 
   showFarm() {
-    const n = World.structs.filter(s => s.owner === 'player' && s.type === 'farm').length;
-    this.open('🌾 Fazenda', `<p>Suas plantações de trigo estão crescendo.</p><p>Você possui <b>${n}</b> fazenda(s), que produzem <b>${n * 6}</b> de trigo a cada amanhecer.</p><p class="muted">Use o trigo para assar pão na fogueira ou venda nos mercados.</p>`, 'showFarm');
+    const n = World.structs.filter(s => s.owner === 'player' && s.type === 'farm' && !s.removed).length, crop = Season.cur().farm || 0;
+    this.open('🌾 Fazenda', this.scene({ ic: '🌾', theme: 'green', kicker: Calendar.full(G.day), title: n === 1 ? 'Sua fazenda' : 'Suas fazendas',
+      line: crop ? 'O trigo cresce dourado nos campos. A colheita do mês vai direto para a sua mochila.' : '❄️ No inverno a terra descansa: as fazendas não produzem até a primavera.',
+      chips: [['🌾', `${n} ${n === 1 ? 'fazenda' : 'fazendas'}`], ['📦', `${n * crop} de trigo por mês`, crop ? '' : 'bad'], ['🎒', `${Inv.count('wheat')} na mochila`]] })
+      + `<div class="card"><div class="sec">🍞 Como aproveitar o trigo</div><p class="dt-desc">Asse pão na fogueira ou no forno, faça cerveja na cervejaria, alimente os animais ou venda nos mercados — quando falta trigo no reino, o preço sobe. Mais fazendas, mais colheita: construa outras em Construir → Fazenda e animais.</p></div>`, 'showFarm');
   },
 
   showBarracks() {
     const cap = Game.followerCap(), n = Game.allies().length;
     const cost = { gold: 35, wheat: 5 };
     const can = Inv.has(cost) && n < cap;
-    this.open('🛡️ Quartel', `<p>Recrutas treinam com espadas de madeira no pátio.</p>
-      <p>Seguidores: <b>${n}/${cap}</b> · Cada soldado cobra 4 🪙 por mês.</p>
-      <div class="btns"><button data-act="train" ${can ? '' : 'disabled'}>Treinar soldado — ${this.fmtCost(cost)}</button></div>`, 'showBarracks');
+    const mine = Game.allies().map(e => e.npc).filter(Boolean);
+    this.open('🛡️ Quartel', this.scene({ ic: '🛡️', theme: 'red', kicker: 'Pátio de treino', title: 'Quartel', line: 'Recrutas treinam com espadas de madeira no pátio. Cada soldado treinado segue você e luta ao seu lado.',
+      chips: [['⚔️', `${n}/${cap} seguidores`, n >= cap ? 'bad' : ''], ['🪙', '4 por mês cada'], ['💰', `${P.gold} no bolso`]] })
+      + this.tiles([{ cls: 'main', attrs: 'data-act="train"', off: !can, ic: '⚔️', label: 'Treinar soldado', sub: `${this.fmtCost(cost)}${n >= cap ? ' · limite de seguidores' : ''}` }])
+      + `<div class="card"><div class="sec">⚔️ Quem segue você <span>${mine.length}</span></div>${mine.length ? `<div class="list">${mine.map(q => `<div class="crow"><span class="ri">🛡️</span><span><b>${this.esc(People.full(q))}</b><small>${People.title(q)} · nível ${q.clvl || 1}</small></span><span class="act-row"><button data-act="tk" data-op="open" data-id="${q.id}">💬 Falar</button></span></div>`).join('')}</div>`
+        : '<p class="muted">Ninguém ainda. Treine soldados aqui ou contrate mercenários na taverna.</p>'}</div>`, 'showBarracks');
   },
 
   // ------------------------------------------------------------ lojas especializadas
@@ -1784,7 +1809,7 @@ const UI = {
     const p = People.get(id);
     const keys = Object.keys(P.inv).filter(k => !Object.values(P.equip).includes(k) || P.inv[k] > 1)
       .sort((a, b) => (b === p.fav) - (a === p.fav) || ITEMS[b].price - ITEMS[a].price);
-    let h = `<p>O que você quer dar para <b>${UI.esc(p.name)}</b>? Presentes valiosos agradam mais, e o favorito agrada muito mais.</p>
+    let h = `${this.personScene(p, `O que você quer dar para ${UI.esc(p.name)}? Presentes valiosos agradam mais, e o favorito agrada muito mais.`, 'purple')}
       <div class="btns"><button data-act="tk" data-op="gold" data-n="10" data-id="${id}" ${P.gold >= 10 ? '' : 'disabled'}>🪙 10 moedas</button>
       <button data-act="tk" data-op="gold" data-n="50" data-id="${id}" ${P.gold >= 50 ? '' : 'disabled'}>🪙 50 moedas</button>
       <button data-act="tk" data-op="gold" data-n="100" data-id="${id}" ${P.gold >= 100 ? '' : 'disabled'}>🪙 100 moedas</button></div><div class="list">`;
@@ -1799,7 +1824,7 @@ const UI = {
   },
   showEquipC(id) {
     const p = People.get(id), st = People.capangaStats(p);
-    let h = `<p>Entregue armas e armaduras da sua mochila para <b>${UI.esc(People.full(p))}</b>. Itens removidos voltam para você.</p>
+    let h = `${this.personScene(p, 'Entregue armas e armaduras da sua mochila. Itens removidos voltam para você.', 'red')}
       <div class="stats"><div>⭐ Nível <b>${st.lvl}</b> · ${p.cxp || 0}/${People.capXpNext(p)} XP</div><div>❤️ Vida <b>${st.hp}</b></div><div>⚔️ Dano <b>${st.dmg}</b></div><div>🛡️ Defesa <b>${st.def}</b></div></div>
       ${this.bar(p.cxp || 0, People.capXpNext(p))}
       <div class="sec" style="margin-top:10px">Postura em combate</div><div class="act-row">${Object.entries(STANCES).map(([k, s]) => `<button class="${(p.stance || 'normal') === k ? 'primary' : ''}" data-act="tk" data-op="setstance" data-k="${k}" data-id="${id}" title="${s.desc}">${s.icon} ${s.name}</button>`).join('')}</div>
@@ -1952,9 +1977,9 @@ const UI = {
     if (!keeper) { this.open('🍺 Taverna de ' + v.name, '<p class="bad">A taverna está fechada. O taverneiro morreu sem herdeiros.</p>' + this.appointHtml(s.village, 'innkeeper'), 'showTavern', [sid]); return; }
     const h = `<div class="shopowner"><canvas class="mini-portrait" data-pid="${keeper.id}" width="44" height="44"></canvas><div><b>${UI.esc(People.full(keeper))}</b> · ${People.title(keeper)}<br><small>“${UI.esc(TRAITS[keeper.trait].line)}”</small></div>
       <button data-act="tk" data-op="open" data-id="${keeper.id}">💬 Conversar</button></div>
-      <p>O cheiro de cerveja e ensopado enche o salão. Mercenários jogam dados num canto.</p>
+      ${this.scene({ ic: '🍺', theme: 'amber', kicker: v.name, title: 'O salão da taverna', line: 'O cheiro de cerveja e ensopado enche o salão. Mercenários jogam dados num canto.',
+        chips: [['⚔️', `${n}/${cap} seguidores`, n >= cap ? 'bad' : ''], ['🪙', '4 por mês cada soldado']] })}
       <blockquote>“${r}”</blockquote>
-      <p>Seguidores: <b>${n}/${cap}</b> · Cada soldado cobra 4 🪙 por mês.</p>
       <div class="btns col">
         <button data-act="hire" data-s="${sid}" ${P.gold >= 60 && n < cap ? '' : 'disabled'}>⚔️ Contratar mercenário — 60 🪙</button>
         <button data-act="buyride" data-k="horse" data-p="250" ${!P.horse && P.gold >= 250 ? '' : 'disabled'}>🐴 ${P.horse ? 'Você já tem ' + this.esc(P.horse.name) : 'Comprar um cavalo — 250 🪙'}</button>
@@ -1991,9 +2016,9 @@ const UI = {
         <button data-act="deploy" data-k="catapult" ${Inv.count('catapult') ? '' : 'disabled'}>🏹 Montar catapulta (${Inv.count('catapult')})</button>
         <small class="muted">Derrube o portão (${Math.ceil(G.siege.gate || 0)} de resistência) com aríetes, catapultas ou golpes. Enquanto ele estiver de pé, arqueiros atiram das muralhas e o soberano não sai.</small>`;
     }
-    h += this.courtCard(ci) + this.titleCard(ci) + this.chiefCard(ci);
+    h += '</div>' + this.courtCard(ci) + this.titleCard(ci) + this.chiefCard(ci);
     const court = G.people.filter(q => q.alive && q.home.type === 'castle' && q.home.civ === ci).sort((a, b) => RANKS[a.rank].order - RANKS[b.rank].order);
-    h += '</div><h3>Corte real</h3><div class="list">' + (RoyalCourt.isMember(ci) ? `<div class="item"><span class="ic">${COURT_OFFICES[RoyalCourt.C().office].icon}</span><div class="info"><b>${UI.esc(G.name + ' ' + G.surname)}</b><small>${RoyalCourt.officeName(RoyalCourt.C().office)} · você</small></div></div>` : '') + court.map(q => { const rl = People.relation(q); return `<div class="item"><canvas class="mini-portrait" data-pid="${q.id}" width="44" height="44"></canvas>
+    h += '<h3>Corte real</h3><div class="list">' + (RoyalCourt.isMember(ci) ? `<div class="item"><span class="ic">${COURT_OFFICES[RoyalCourt.C().office].icon}</span><div class="info"><b>${UI.esc(G.name + ' ' + G.surname)}</b><small>${RoyalCourt.officeName(RoyalCourt.C().office)} · você</small></div></div>` : '') + court.map(q => { const rl = People.relation(q); return `<div class="item"><canvas class="mini-portrait" data-pid="${q.id}" width="44" height="44"></canvas>
       <div class="info"><b>${UI.esc(People.full(q))}</b><small>${People.title(q)} · ${q.age} anos · <span style="color:${rl.col}">${rl.text}</span></small></div>
       <div class="acts"><button data-act="tk" data-op="open" data-id="${q.id}">💬 Falar</button></div></div>`; }).join('') + '</div>';
     h += `<p class="muted">Para conquistar pela força, derrote toda a guarnição (${c.garrison} soldados) e depois o próprio soberano diante dos portões. Leve seguidores!</p>`;
@@ -2061,7 +2086,7 @@ const UI = {
       return `<button class="rrow ${p.prof === k ? 'on' : ''}" data-act="tk" data-op="setprof" data-k="${k}" data-id="${id}" ${no ? 'disabled title="Você precisa governar um reino"' : ''}>
         <span class="ri">${pr.icon}</span><span><b>${p.sex === 'f' ? pr.f : pr.name}</b><small>${pr.desc}</small></span><span class="rs ${no ? 'mat' : 'ok'}">${p.prof === k ? 'Atual' : no ? 'Sem reino' : 'Escolher'}</span></button>`;
     }).join('');
-    this.open('🎓 Profissão de ' + this.esc(p.name), `<p>Que caminho ${this.esc(p.name)} deve seguir? Cada profissão ajuda a família de um jeito.</p>
+    this.open('🎓 Profissão de ' + this.esc(p.name), `${this.personScene(p, `Que caminho ${this.esc(p.name)} deve seguir? Cada profissão ajuda a família de um jeito.`, 'blue')}
       <div class="list">${rows}</div><div class="btns"><button data-act="tk" data-op="open" data-id="${id}">← Voltar à conversa</button></div>`, 'showProf', [id]);
   },
 
@@ -2072,8 +2097,12 @@ const UI = {
     const animals = Object.keys(cap).map(k => `<div class="crow"><span class="ri">${names[k][0]}</span><span><b>${names[k][1]} — ${a[k] || 0}/${cap[k]}</b><small>${names[k][2]}</small></span>
       <span class="act-row"><button class="primary" data-act="buyanimal" data-s="${sid}" data-k="${k}" ${P.gold >= ANIMAL_PRICES[k] && (a[k] || 0) < cap[k] ? '' : 'disabled'}>Comprar — ${ANIMAL_PRICES[k]} 🪙</button></span></div>`).join('');
     const goods = Object.keys(g).filter(k => g[k] > 0);
-    const title = { coop: '🐔 Galinheiro', pen: '🐄 Curral', beehive: '🐝 Colmeia' }[s.type];
-    this.open(title, `${s.type === 'beehive' ? '<p>As abelhas produzem 1 mel por mês (menos no inverno).</p>' : `<div class="list">${animals}</div>`}
+    const title = { coop: '🐔 Galinheiro', pen: '🐄 Curral', beehive: '🐝 Colmeia' }[s.type] || (BUILDINGS[s.type] ? BUILDINGS[s.type].name : 'Criação');
+    const total = Object.values(a).reduce((x, y) => x + (y || 0), 0), stored = goods.reduce((x, k) => x + g[k], 0);
+    this.open(title, this.scene({ ic: { coop: '🐔', pen: '🐄', beehive: '🐝' }[s.type] || '🐑', theme: 'green', kicker: 'Sua criação', title: String(title).replace(/^[^\p{L}]+/u, ''),
+      line: s.type === 'beehive' ? 'As abelhas zumbem entre as flores e enchem os favos de mel.' : 'Os animais comem, crescem e produzem um pouco a cada mês.',
+      chips: [s.type === 'beehive' ? null : ['🐾', `${total} ${total === 1 ? 'animal' : 'animais'}`], ['🧺', `${stored} guardado${stored === 1 ? '' : 's'}`], Season.winter() ? ['❄️', 'inverno: produz menos', 'bad'] : null] })
+      + `${s.type === 'beehive' ? '<p>As abelhas produzem 1 mel por mês (menos no inverno).</p>' : `<div class="list">${animals}</div>`}
       <div class="card" style="margin-top:10px"><div class="sec">Produção guardada</div>
         <div class="chips">${goods.length ? goods.map(k => `<span class="chip">${UI.ii(k)} ${g[k]} ${ITEMS[k].name}</span>`).join('') : '<span class="muted">Nada ainda — volte amanhã.</span>'}</div>
         <div class="act-row" style="margin-top:8px"><button class="primary" data-act="collect" data-s="${sid}" ${goods.length ? '' : 'disabled'}>🧺 Recolher tudo</button></div></div>
@@ -2300,7 +2329,7 @@ const UI = {
       return `<div class="crow"><span class="ri">${kind === 'royal' ? '👑' : '🏛️'}</span><span><b>${this.esc(People.full(p))}</b><small>${People.title(p)}, ${p.age} anos · ${civ >= 0 ? CIV_DEFS[civ].short : ''} · ${kind === 'royal' ? 'aliança entre reinos' : (f ? 'Casa ' + this.esc(f.surname) + ' · lealdade +35' : '')}${f && f.rival === G.playerFam ? ' · fim da rivalidade' : ''}</small></span>
         <span class="act-row"><button class="primary" data-act="domatch" data-id="${id}" data-q="${p.id}" ${P.gold >= 150 ? '' : 'disabled'}>💒 Casar — 150 🪙</button></span></div>`;
     }).join('') || '<p class="muted">Nenhum pretendente disponível agora. Herdeiros reais só aceitam filhos de reis e duques.</p>';
-    this.open(`💒 Casamento para ${this.esc(ch.name)}`, `<p>Escolha com quem ${this.esc(ch.name)} vai se casar. ${ch.sex === 'm' ? 'A noiva virá morar com a sua família e levará o sobrenome ' + this.esc(G.surname) + '.' : 'Ela assumirá o sobrenome do marido e irá morar com ele, mas continua sendo sua herdeira.'}</p>
+    this.open(`💒 Casamento para ${this.esc(ch.name)}`, `${this.personScene(ch, '', 'purple')}<p>Escolha com quem ${this.esc(ch.name)} vai se casar. ${ch.sex === 'm' ? 'A noiva virá morar com a sua família e levará o sobrenome ' + this.esc(G.surname) + '.' : 'Ela assumirá o sobrenome do marido e irá morar com ele, mas continua sendo sua herdeira.'}</p>
       <div class="list">${rows}</div><div class="btns"><button data-act="kview" data-v="casa">← Voltar</button></div>`, 'showMatch', [id]);
   },
 
@@ -2761,7 +2790,7 @@ const HELP_HTML = `
 <tr><td>J</td><td>Diário: conquistas, estatísticas e dinastia</td></tr>
 <tr><td>G</td><td>Montar aríete ou catapulta durante um cerco</td></tr>
 <tr><td>Clique numa pessoa</td><td>Conversar com ela</td></tr>
-<tr><td>E</td><td>Conversar com pessoas e interagir (cabana, lojas, taverna, castelo, forja...)</td></tr>
+<tr><td>E</td><td>Interagir com as coisas: cabana, lojas, taverna, castelo, forja, portão... (para conversar, clique na pessoa)</td></tr>
 <tr><td>I</td><td>Inventário (equipar e comer)</td></tr>
 <tr><td>C</td><td>Criação de itens</td></tr>
 <tr><td>B</td><td>Construção</td></tr>

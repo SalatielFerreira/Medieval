@@ -79,7 +79,7 @@ chame a função original e devolva o resultado dela.
 | Vilas e cidades | `life` (crescimento das vilas, caravanas, estradas dos moradores), `urban` (obras do governador e do rei, estradas), `villageworks` (obras das vilas), `gate` (portão, porteiro, muralhas), `defense` (ataques vindos de fora dos muros), `graves` (cemitérios) |
 | Economia | `market` (preços), `farming` (lavoura e animais), `content`/`content2` (mais construções e empreendimentos), `workplaces` (interiores e responsáveis de todos os prédios), `economy` (poder econômico das vilas, itens e lojas próprias, administração da vila), `finance` (poupança, empréstimos, investimentos, lojas do jogador), `rivalry` (concorrência e destaques) |
 | Vida à vista | `chronicle` (o Pregoeiro: notícias do mês, balões sobre os moradores, subida na vida) |
-| Interface e controles | `ui` (HUD e janelas), `interior` (lugares fechados), `input` (gamepad e toque), `audio`, `menu` |
+| Interface e controles | `ui` (HUD e janelas), `windows` (cenas de abertura das janelas: tabela WIN_SCENES), `interior` (lugares fechados), `input` (gamepad e toque), `audio`, `menu` |
 | Núcleo | `game` (estado, laço principal, salvar e carregar) — carregado quase por último |
 
 ## Testes
@@ -98,3 +98,16 @@ abrir o jogo e `page.evaluate(...)` para mexer no jogo por dentro.
 - Quebras de linha **LF** e codificação **UTF-8** (`.gitattributes` e `.editorconfig` cuidam disso).
 - A moeda do jogo é o **Salin** (🪙).
 - Cada mudança para o jogador entra no **LEIAME.md**.
+
+## Janelas
+
+- **Toda janela ocupa a tela inteira**, no computador e no celular, e todas têm o mesmo tamanho. Nunca dê largura ou
+  altura própria a uma janela. As de conteúdo curto (fora de `WIDE_PANELS`) usam no computador uma coluna central de
+  ~1040 px.
+- **Cena de abertura:** `UI.scene({ ic, title, kicker, line, chips, theme })` monta a faixa colorida com medalhão;
+  `UI.personScene(p, frase)` faz o mesmo com o retrato da pessoa. Temas: gold, green, red, blue, earth, purple, amber,
+  stone.
+- **Cartões de ação:** `UI.tiles([{ ic, label, sub, attrs, cls, off }])` (o mesmo visual dos cartões da Casa).
+- Para dar cena a uma janela sem mexer nela, acrescente uma linha em `WIN_SCENES` (`js/windows.js`).
+- As páginas do Portfólio já aprovadas (Visão geral, Coroa e títulos, Família, Vilas e guardas, Empreendimentos, Reino e
+  Grandes Casas) não devem mudar.

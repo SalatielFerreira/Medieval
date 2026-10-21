@@ -89,6 +89,13 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: janelas padronizadas
+
+- **Todas as janelas do mesmo tamanho, em tela cheia** — inclusive as que antes flutuavam pequenas no meio do mapa (lojas, baú, estábulo, quartel, castelo, taverna, finanças, empréstimos, arsenal, mensageiros, cemitério...). No computador, as de pouco conteúdo usam uma coluna central confortável.
+- **Cena de abertura:** cada janela começa com uma faixa colorida com o medalhão do lugar, o título, uma frase e os números que importam (seguidores, trigo do mês, ouro guardado, força do inimigo...). As janelas sobre uma pessoa (presentear, contratar, profissão, casamento, guarda, equipar) mostram o retrato dela.
+- **Cartões grandes** no lugar das listas de botões (taverna, castelo, quartel).
+- A faixa vermelha da guerra não cobre mais o título das janelas; a ajuda explica que o E é para as coisas e o clique é para as pessoas.
+
 ## Novidades: a vida dos moradores à vista
 
 - **O Pregoeiro (Diário → Notícias):** tudo o que acontece no mundo vira notícia, separada em Gente, Negócios, Famílias, Vilas e Reinos: casamentos, nascimentos, mortes, novos mestres de ofício, negócios abertos, brigas de famílias, vilas que crescem ou caem, secas, escassez e guerras. Todo mês o pregoeiro anuncia a manchete.
