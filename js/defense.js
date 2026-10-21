@@ -24,8 +24,9 @@ const Defense = {
   spawnDefender(v, vi) {
     const g = this.gateOf(vi);
     let x = v.x * TILE, y = v.y * TILE;
-    if (g) { const o = this.out(v, g); x = (g.x + 0.5 - o.x * 3 + U.rnd(-1.5, 1.5)) * TILE; y = (g.y + 0.5 - o.y * 3 + U.rnd(-1.5, 1.5)) * TILE; }
-    const s = freeSpotNear(x, y, 3 * TILE);
+    if (g) { const o = this.out(v, g); x = (g.x + 0.5 - o.x * 4 + U.rnd(-1.5, 1.5)) * TILE; y = (g.y + 0.5 - o.y * 4 + U.rnd(-1.5, 1.5)) * TILE; }
+    let s = freeSpotNear(x, y, 3 * TILE);
+    if (Math.max(Math.abs(s.x / TILE - v.x), Math.abs(s.y / TILE - v.y) * 1.25) >= this.RING - 1) s = freeSpotNear(v.x * TILE, v.y * TILE, 4 * TILE); // sempre do lado de dentro
     const e = Game.spawn('guard', s.x, s.y, { civ: v.civ, leash: 10, tag: 'def' + vi });
     e.aggroOv = 10;
     return e;
@@ -47,8 +48,10 @@ const Defense = {
       let hits = 0;
       for (const e of raiders) {
         if (!closed) { if (!e.target) { e.home = inside; e.leash = 20 * TILE; } continue; } // portão aberto: entram
-        if (!e.target) { e.home = front; e.leash = 6 * TILE; }
-        if (U.dist(e.x, e.y, (g.x + 0.5) * TILE, (g.y + 0.5) * TILE) < 1.9 * TILE) { hits++; e.swing = 0.25; e.dir = (g.x + 0.5) * TILE < e.x ? -1 : 1; }
+        // com o portão fechado, quem está do lado de dentro não é alvo: primeiro é preciso arrombar o portão
+        if (e.target && Math.max(Math.abs(e.target.x / TILE - v.x), Math.abs(e.target.y / TILE - v.y) * 1.25) < this.RING) e.target = null;
+        if (!e.target) { e.home = front; e.leash = 1.5 * TILE; e.wx = front.x + U.rnd(-12, 12); e.wy = front.y + U.rnd(-12, 12); e.wt = 0.7; } // marcham direto até o portão
+        if (U.dist(e.x, e.y, (g.x + 0.5) * TILE, (g.y + 0.5) * TILE) < 3.2 * TILE) { hits++; e.swing = 0.25; e.dir = (g.x + 0.5) * TILE < e.x ? -1 : 1; }
       }
       if (hits) {
         this.hp(g); d.hp = Math.max(0, d.hp - hits * 4);
