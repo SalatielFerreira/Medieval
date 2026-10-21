@@ -89,11 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
-## Novidades: cemitério e arena em qualquer lugar
+## Novidades: cemitério, arena e catedral em qualquer lugar
 
 - Quem governa um reino pode **erguer e mudar o cemitério e a arena para qualquer lugar do mapa** — dentro ou fora do reino, perto ou longe das vilas. Só não pode em cima de outro imóvel, de estrada ou de vegetação (corte as árvores e tire as pedras antes).
 - **Erguer:** Construir → Obras nas vilas → Cemitério (40 pedras, 20 madeiras) ou Arena → "Escolher o lugar no mapa". **Mudar:** Obras nas vilas → Mudar de lugar, clique nele e depois no lugar novo.
-- Os dois são do reino: as lápides da família e os torneios continuam valendo onde quer que estejam, e tudo fica guardado no jogo salvo.
+- **A catedral** do reino também pode ser mudada para qualquer lugar (Obras nas vilas → Mudar de lugar), com as mesmas regras.
+- Os três são do reino: as lápides da família e os torneios continuam valendo onde quer que estejam, e tudo fica guardado no jogo salvo.
 
 ## Novidades: janelas de negociar mais confortáveis
 

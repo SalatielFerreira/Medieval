@@ -148,10 +148,13 @@ UI.showCemetery = function (ci) {
   this.open('⚰️ Cemitério de ' + CIV_DEFS[ci].short, h, 'showCemetery', [ci], 'Visite os seus familiares que já partiram');
 };
 
-// Cemitério e arena em qualquer lugar: quem governa um reino ergue e muda os dois para onde quiser no mapa (dentro ou fora
+// Cemitério, arena e catedral em qualquer lugar (a catedral só muda de lugar): quem governa um reino ergue e muda os dois para onde quiser no mapa (dentro ou fora
 // do reino, perto ou longe das vilas), menos em cima de outro imóvel, de estrada ou de vegetação. Construir → Obras →
 // Cemitério ou Arena para erguer; Obras → Mudar de lugar para mudar. As lápides e os torneios são do reino, não do lugar.
 const ANYWHERE = ['cemetery', 'arena'];
+// também mudam para qualquer lugar (mas não se ergue outra): a catedral do reino
+const MOVE_ANYWHERE = [...ANYWHERE, 'cathedral'];
+const ANY_NAME = { cemetery: 'no cemitério', arena: 'na arena', cathedral: 'na catedral' };
 CIVIC.cemetery = { name: 'Cemitério', icon: '⚰️', w: 6, h: 4, cost: { stone: 40, wood: 20 }, king: true,
   desc: 'Só quem governa um reino: um cemitério para as famílias, com coveiro e lápides. Pode ficar em qualquer lugar do mapa, fora das estradas e longe da vegetação.' };
 CIVIC.arena.desc = 'Só quem governa um reino: um coliseu para duelos, justas, torneios e apostas. Pode ficar em qualquer lugar do mapa, fora das estradas e longe da vegetação.';
@@ -165,12 +168,12 @@ CIVIC.arena.desc = 'Só quem governa um reino: um coliseu para duelos, justas, t
   };
   const mv0 = Urban.movable.bind(Urban);
   Urban.movable = function (s) {
-    if (s && ANYWHERE.includes(s.type)) return G.civs[s.owner] && G.civs[s.owner].ruler === 'player' ? null : `Só quem governa ${CIV_DEFS[s.owner].name} pode mexer ${s.type === 'arena' ? 'na arena' : 'no cemitério'}.`;
+    if (s && MOVE_ANYWHERE.includes(s.type)) return G.civs[s.owner] && G.civs[s.owner].ruler === 'player' ? null : `Só quem governa ${CIV_DEFS[s.owner].name} pode mexer ${ANY_NAME[s.type]}.`;
     return mv0(s);
   };
   const pe0 = Urban.placeErr.bind(Urban);
   Urban.placeErr = function (def, tx, ty, s, civic) {
-    if (s && ANYWHERE.includes(s.type)) return Graves.spotErr(s, tx, ty, false, s.w, s.h);
+    if (s && MOVE_ANYWHERE.includes(s.type)) return Graves.spotErr(s, tx, ty, false, s.w, s.h);
     const type = !s && def && ANYWHERE.find(k => CIVIC[k] === def || (CIVIC[k].name === def.name && CIVIC[k].w === def.w));
     if (type) {
       if (realmAt(Math.floor(tx + def.w / 2), Math.floor(ty + def.h / 2)) < 0) return `Só quem governa um reino pode erguer ${type === 'arena' ? 'uma arena' : 'um cemitério'}`;
