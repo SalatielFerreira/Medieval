@@ -75,6 +75,7 @@ const Graves = {
   place() {
     World.capitals.forEach((cp, ci) => {
       if (!cp || World.structs.some(s => s && s.type === 'cemetery' && s.owner === ci && !s.removed)) return;
+      if (((G.urban || {}).cemGone || {})[ci]) return;
       // o rei mudou o cemitério de lugar: ele volta para onde foi posto
       const sv = this.saved(ci);
       if (sv && !this.spotErr(null, sv.x, sv.y, true)) {
@@ -107,15 +108,17 @@ const Graves = {
   // onde o rei pôs o cemitério (guardado no jogo salvo)
   saved(ci) { return ((G.urban || {}).cem || {})[ci] || null; },
   // o cemitério pode ir para qualquer lugar do mapa: só precisa de chão firme e livre (árvores e pedras são retiradas)
-  spotErr(s, tx, ty, loading) {
-    for (let y = ty; y < ty + 4; y++) for (let x = tx; x < tx + 6; x++) {
+  spotErr(s, tx, ty, loading, w, h) {
+    w = w || 6; h = h || 4;
+    for (let y = ty; y < ty + h; y++) for (let x = tx; x < tx + w; x++) {
       if (!World.inb(x, y)) return 'Fora do mapa';
       const i = World.idx(x, y), t = World.tiles[i];
       if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido (água ou montanha)';
       if (t === T.ROAD) return 'Não ponha sobre a estrada';
       const b = World.blocker(i); if (b && (!s || b.id !== s.id)) return 'Já há uma construção aqui';
+      if (!loading && World.obj[i] && !(s && World.sgrid[i] === s.id)) return 'Há vegetação aqui: corte as árvores e tire as pedras antes';
     }
-    if (!loading && P.x + P.r > tx * TILE && P.x - P.r < (tx + 6) * TILE && P.y > ty * TILE && P.y - P.r < (ty + 4) * TILE) return 'Você está no caminho';
+    if (!loading && P.x + P.r > tx * TILE && P.x - P.r < (tx + w) * TILE && P.y > ty * TILE && P.y - P.r < (ty + h) * TILE) return 'Você está no caminho';
     return null;
   },
   flowers(i) {
@@ -145,20 +148,101 @@ UI.showCemetery = function (ci) {
   this.open('⚰️ Cemitério de ' + CIV_DEFS[ci].short, h, 'showCemetery', [ci], 'Visite os seus familiares que já partiram');
 };
 
-// mudar o cemitério de lugar: o rei do reino pode pô-lo em qualquer lugar do mapa (dentro ou fora do reino, perto ou longe
-// das vilas), pelo Construir → Obras → Mudar de lugar. As lápides vão junto.
+// Cemitério e arena em qualquer lugar: quem governa um reino ergue e muda os dois para onde quiser no mapa (dentro ou fora
+// do reino, perto ou longe das vilas), menos em cima de outro imóvel, de estrada ou de vegetação. Construir → Obras →
+// Cemitério ou Arena para erguer; Obras → Mudar de lugar para mudar. As lápides e os torneios são do reino, não do lugar.
+const ANYWHERE = ['cemetery', 'arena'];
+CIVIC.cemetery = { name: 'Cemitério', icon: '⚰️', w: 6, h: 4, cost: { stone: 40, wood: 20 }, king: true,
+  desc: 'Só quem governa um reino: um cemitério para as famílias, com coveiro e lápides. Pode ficar em qualquer lugar do mapa, fora das estradas e longe da vegetação.' };
+CIVIC.arena.desc = 'Só quem governa um reino: um coliseu para duelos, justas, torneios e apostas. Pode ficar em qualquer lugar do mapa, fora das estradas e longe da vegetação.';
 {
+  // o reino de quem ergue: o reino governado onde está o lugar, ou o seu reino principal
+  const realmAt = (x, y) => {
+    const a = Urban.authority(x, y);
+    if (a && a.kind === 'king' && G.civs[a.civ] && G.civs[a.civ].ruler === 'player') return a.civ;
+    if (G.mainRealm !== undefined && G.mainRealm !== null && G.civs[G.mainRealm] && G.civs[G.mainRealm].ruler === 'player') return G.mainRealm;
+    const c = G.civs.find(c => c.ruler === 'player'); return c ? c.id : -1;
+  };
   const mv0 = Urban.movable.bind(Urban);
   Urban.movable = function (s) {
-    if (s && s.type === 'cemetery') return G.civs[s.owner] && G.civs[s.owner].ruler === 'player' ? null : `Só quem governa ${CIV_DEFS[s.owner].name} pode mudar o cemitério de lugar.`;
+    if (s && ANYWHERE.includes(s.type)) return G.civs[s.owner] && G.civs[s.owner].ruler === 'player' ? null : `Só quem governa ${CIV_DEFS[s.owner].name} pode mexer ${s.type === 'arena' ? 'na arena' : 'no cemitério'}.`;
     return mv0(s);
   };
   const pe0 = Urban.placeErr.bind(Urban);
-  Urban.placeErr = function (def, tx, ty, s, civic) { return s && s.type === 'cemetery' ? Graves.spotErr(s, tx, ty) : pe0(def, tx, ty, s, civic); };
+  Urban.placeErr = function (def, tx, ty, s, civic) {
+    if (s && ANYWHERE.includes(s.type)) return Graves.spotErr(s, tx, ty, false, s.w, s.h);
+    const type = !s && def && ANYWHERE.find(k => CIVIC[k] === def || (CIVIC[k].name === def.name && CIVIC[k].w === def.w));
+    if (type) {
+      if (realmAt(Math.floor(tx + def.w / 2), Math.floor(ty + def.h / 2)) < 0) return `Só quem governa um reino pode erguer ${type === 'arena' ? 'uma arena' : 'um cemitério'}`;
+      return Graves.spotErr(null, tx, ty, false, def.w, def.h);
+    }
+    return pe0(def, tx, ty, s, civic);
+  };
+  // erguer: o imóvel fica do reino de quem governa (não precisa de vila)
+  const st0 = Urban.start.bind(Urban);
+  Urban.start = function (mode) {
+    const type = mode && mode.startsWith('c:') ? mode.slice(2) : null;
+    if (ANYWHERE.includes(type)) {
+      if (!G.civs.some(c => c.ruler === 'player')) { UI.msg(`Só quem governa um reino pode erguer ${type === 'arena' ? 'uma arena' : 'um cemitério'}.`, 'bad'); return; }
+      const msg0 = UI.msg; UI.msg = () => {}; let r; try { r = st0(mode); } finally { UI.msg = msg0; } // sem o aviso de "dentro da vila"
+      UI.msg(`${CIVIC[type].icon} Escolha qualquer lugar do mapa para ${type === 'arena' ? 'a arena' : 'o cemitério'}: chão limpo, fora da estrada e sem vegetação. Botão direito ou Esc encerra.`, 'gold');
+      return r;
+    }
+    return st0(mode);
+  };
+  const ck0 = Urban.click.bind(Urban);
+  Urban.click = function () {
+    const type = this.mode && this.mode.startsWith('c:') ? this.mode.slice(2) : null;
+    if (!ANYWHERE.includes(type)) return ck0();
+    const d = CIVIC[type], p = this.ghost(d.w, d.h), err = this.placeErr(d, p.x, p.y, null, true);
+    if (err) { this.warn(err); return; }
+    if (!Inv.has(d.cost)) { this.warn(`Faltam materiais para ${d.name}.`); return; }
+    const ci = realmAt(Math.floor(p.x + d.w / 2), Math.floor(p.y + d.h / 2));
+    Inv.pay(d.cost);
+    // é do reino, não da vila: sem 'village' (senão passaria para o dono da vila vizinha)
+    const s = World.addStruct(type, p.x, p.y, d.w, d.h, ci, { added: true });
+    this.E().added.push({ type, x: p.x, y: p.y, village: -1, civ: ci });
+    World.touchArea(p.x, p.y, d.w, d.h);
+    Shops.ensure && Shops.ensure();
+    Game.burst((p.x + d.w / 2) * TILE, (p.y + d.h / 2) * TILE, '#c9a978', 18);
+    Sound.play('build');
+    UI.msg(`🏗️ ${d.name} de ${CIV_DEFS[ci].short} construíd${type === 'arena' ? 'a' : 'o'}.`, 'gold');
+    Progress.add('built');
+    this.stop();
+    return s;
+  };
+  // ao carregar: os erguidos fora das vilas voltam com o reino certo
+  const rs0 = Urban.restore.bind(Urban);
+  Urban.restore = function () {
+    const r = rs0();
+    for (const a of this.E().added) {
+      if (!ANYWHERE.includes(a.type) || a.civ === undefined) continue;
+      const s = World.structs.find(o => o && !o.removed && o.type === a.type && o.x === a.x && o.y === a.y);
+      if (s) { s.owner = a.civ; delete s.village; }
+    }
+    return r;
+  };
+  // o cemitério original do reino guarda o lugar novo (os erguidos já são guardados pela lista de obras)
   const rl0 = Urban.relocate.bind(Urban);
   Urban.relocate = function (s, nx, ny, quiet) {
-    const r = rl0(s, nx, ny, quiet);
-    if (s.type === 'cemetery') { const u = G.urban || (G.urban = {}); (u.cem || (u.cem = {}))[s.owner] = { x: s.x, y: s.y }; }
+    const ax = s.x, ay = s.y, r = rl0(s, nx, ny, quiet);
+    if (s.type === 'cemetery' && !s.added) { const u = G.urban || (G.urban = {}); (u.cem || (u.cem = {}))[s.owner] = { x: s.x, y: s.y }; }
+    if (s.added && ANYWHERE.includes(s.type)) { const e = this.E().added.find(q => q.type === s.type && q.x === ax && q.y === ay); if (e) { e.x = s.x; e.y = s.y; } }
+    return r;
+  };
+  // demolir o cemitério original: ele não volta mais ao carregar
+  const dd0 = Urban.doDemolish.bind(Urban);
+  Urban.doDemolish = function (s) {
+    if (s && s.type === 'cemetery' && !s.added) { const u = G.urban || (G.urban = {}); (u.cemGone || (u.cemGone = {}))[s.owner] = true; if (u.cem) delete u.cem[s.owner]; }
+    return dd0(s);
+  };
+}
+{
+  // no painel do Construir: sem "dentro da vila"
+  const in0 = Urban.info.bind(Urban);
+  Urban.info = function (k) {
+    const r = in0(k), type = k && k.startsWith('c:') ? k.slice(2) : null;
+    if (r && ANYWHERE.includes(type)) Object.assign(r, { desc: CIVIC[type].desc, sub: `${CIVIC[type].w}×${CIVIC[type].h} · do reino, em qualquer lugar`, btn: '📍 Escolher o lugar no mapa', can: Inv.has(CIVIC[type].cost) && G.civs.some(c => c.ruler === 'player') });
     return r;
   };
 }
