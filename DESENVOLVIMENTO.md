@@ -59,7 +59,7 @@ chame a função original e devolva o resultado dela.
 - `Game.snapshot()` (em `js/game.js`) monta o objeto salvo e `Game.load()` o restaura. Os campos salvos são listados
   um a um.
 - **Dados novos de módulos de expansão** ficam dentro de `G.urban` (que já é salvo), cada módulo na sua chave:
-  `G.urban.fin` (finanças), `G.urban.arsenal`, `G.urban.gates`... Assim não é preciso mexer no `snapshot`.
+  `G.urban.fin` (finanças), `G.urban.arsenal`, `G.urban.gates`, `G.urban.news` (notícias)... Assim não é preciso mexer no `snapshot`.
 - As pessoas vivas são salvas por inteiro (`G.people`): campos novos numa pessoa (`p.debt`, `p.fame`...) já vão junto.
 - Construções do jogador são salvas pela posição; obras de vila feitas pelo governador e pelo rei ficam em
   `Urban.E()` (adicionadas, removidas, mudadas de lugar) e são refeitas ao carregar.
@@ -78,6 +78,7 @@ chame a função original e devolva o resultado dela.
 | Guerra | `war` (campo de batalha), `siege` (cercos), `arsenal` (máquinas e equipamento da tropa), `arena` |
 | Vilas e cidades | `life` (crescimento das vilas, caravanas, estradas dos moradores), `urban` (obras do governador e do rei, estradas), `villageworks` (obras das vilas), `gate` (portão, porteiro, muralhas), `defense` (ataques vindos de fora dos muros), `graves` (cemitérios) |
 | Economia | `market` (preços), `farming` (lavoura e animais), `content`/`content2` (mais construções e empreendimentos), `workplaces` (interiores e responsáveis de todos os prédios), `economy` (poder econômico das vilas, itens e lojas próprias, administração da vila), `finance` (poupança, empréstimos, investimentos, lojas do jogador), `rivalry` (concorrência e destaques) |
+| Vida à vista | `chronicle` (o Pregoeiro: notícias do mês, balões sobre os moradores, subida na vida) |
 | Interface e controles | `ui` (HUD e janelas), `interior` (lugares fechados), `input` (gamepad e toque), `audio`, `menu` |
 | Núcleo | `game` (estado, laço principal, salvar e carregar) — carregado quase por último |
 

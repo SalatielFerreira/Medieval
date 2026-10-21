@@ -89,6 +89,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: a vida dos moradores à vista
+
+- **O Pregoeiro (Diário → Notícias):** tudo o que acontece no mundo vira notícia, separada em Gente, Negócios, Famílias, Vilas e Reinos: casamentos, nascimentos, mortes, novos mestres de ofício, negócios abertos, brigas de famílias, vilas que crescem ou caem, secas, escassez e guerras. Todo mês o pregoeiro anuncia a manchete.
+- **Gente em destaque:** quem ganha fama aparece no topo; clique para conversar.
+- **Os moradores sobem na vida:** o oficial ou mestre de ofício junta as economias e abre um negócio com a família; o soldado mais valente é armado cavaleiro pelo rei; o comerciante rico compra um título e passa a ser chamado de Dom ou Dona. E quem vai mal também aparece: a loja que quase não vende.
+- **Balões no mundo:** perto de você, os moradores mostram o que estão vivendo (💍 casou, 👶 bebê, 🖤 luto, 🏅 virou mestre, 🛡️ cavaleiro, 🐎 cavalo novo, 💸 apertado, 😠 bravo...) e às vezes falam sozinhos quando você passa.
+- **Na conversa:** a fama da pessoa e as últimas notícias da vida dela.
+
 ## Novidades: visual das pessoas
 
 - **Rosto masculino novo:** queixo e mandíbula marcados, olhos com íris e brilho, sobrancelhas grossas, nariz com volume e boca desenhada.

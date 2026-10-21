@@ -69,7 +69,7 @@ const Heroes = {
     if (!p.hero || p.hero.fell) return; p.hero.fell = true;
     this.fallen().unshift({ name: People.full(p), epi: p.hero.epi, civ: p.hero.civ, fame: p.hero.fame, wins: p.hero.wins, kills: p.hero.kills, day: G.day, age: p.age, cause: cause || 'em batalha', by: by || null, deeds: p.hero.deeds.slice(0, 3) });
     if (this.fallen().length > 24) this.fallen().length = 24;
-    Diplo.chronicle(`⚰️ ${this.name(p)}, herói de ${this.civName(p.hero.civ)}, caiu ${cause || 'em batalha'}${by ? ` diante de ${by}` : ''}.`, true);
+    Diplo.chronicle(`⚰️ ${this.name(p)}, herói de ${this.civName(p.hero.civ)}, caiu ${cause || 'em batalha'}${by ? ` diante ${/^[ao] /.test(by) ? 'd' + by : 'de ' + by}` : ''}.`, true);
     const c = G.civs[p.hero.civ]; if (c) c.happy = Math.max(0, (c.happy || 50) - 3);
   },
 
@@ -142,7 +142,7 @@ const Heroes = {
       p.hero.battles++;
       const f = fell.get(id);
       if (f) {
-        if (Math.random() < 0.6) { this.fall(p, 'no campo de batalha', f.by); People.die(p, 'no campo de batalha'); lines.push(`⚰️ ${this.name(p)} (${this.civName(p.hero.civ)}) caiu${f.by ? ' diante de ' + f.by : ''}.`); }
+        if (Math.random() < 0.6) { this.fall(p, 'no campo de batalha', f.by); People.die(p, 'no campo de batalha'); lines.push(`⚰️ ${this.name(p)} (${this.civName(p.hero.civ)}) caiu${f.by ? ' diante ' + (/^[ao] /.test(f.by) ? 'd' + f.by : 'de ' + f.by) : ''}.`); }
         else { this.deed(p, `foi carregado ferido do campo de batalha contra ${this.civName(foe)}`, 2); lines.push(`🩸 ${this.name(p)} saiu ferido.`); }
         if (f.player) { G.fame = (G.fame || 0) + 6; Progress.diary(`🏅 Derrubou ${this.name(p)}, herói de ${this.civName(p.hero.civ)}, no campo de batalha.`); }
         continue;
