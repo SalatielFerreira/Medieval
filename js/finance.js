@@ -273,14 +273,22 @@ const Fin = {
     s.shelf = s.shelf || {};
     const mgr = Biz.manager(s), mul = Biz.popMul(s), e = Biz.earn(s);
     const cat = Biz.catalog(s), mine = Object.keys(P.inv).filter(k => P.inv[k] > 0 && ITEMS[k] && Biz.trade(s).buys(ITEMS[k]) && Inv.sellable(k) > 0);
-    let h = `<div class="bzs-head"><div><b>🪙 ${s.till || 0}</b><small>no caixa</small></div><div><b>×${mul.toFixed(2)}</b><small>freguesia</small></div><div><b>${mgr ? UI.esc(mgr.name) : '—'}</b><small>${mgr ? 'responsável' : 'sem responsável'}</small></div><div><b>${e.lastPaid || 0} 🪙</b><small>lucro entregue no mês passado</small></div></div>
-      <p class="muted">${mgr ? `${UI.esc(mgr.name)} cuida da loja: põe a produção na prateleira, repõe a mercadoria do ramo no atacado, vende aos fregueses pelos <b>preços que você define</b> e todo mês te entrega o lucro (fica ${BIZ_RESERVE} 🪙 no caixa para a reposição).` : 'Contrate um funcionário: o primeiro cuida da loja.'} Preço alto rende mais por venda, mas os fregueses levam menos.</p>
-      <h3>🧾 Prateleira e preços</h3><table class="trade"><tr><th>Item</th><th>Na prateleira</th><th>Preço</th><th></th></tr>${cat.map(k => {
-        const pr = Biz.itemPrice(s, k), m = Biz.itemMul(s, k), n = s.shelf[k] || 0;
-        return `<tr><td>${UI.ii(k)} ${ITEMS[k].name}</td><td>${n}</td><td><button data-act="bzp" data-s="${sid}" data-k="${k}" data-d="-0.1">−</button> <b>${pr} 🪙</b> <small class="${m > 1.05 ? 'ok' : m < 0.95 ? 'bad' : 'muted'}">${Math.round(m * 100)}%</small> <button data-act="bzp" data-s="${sid}" data-k="${k}" data-d="0.1">+</button></td>
-          <td><button data-act="bzbuy" data-s="${sid}" data-k="${k}" data-n="1" ${n && P.gold >= pr ? '' : 'disabled'}>Comprar 1</button><button data-act="bzbuy" data-s="${sid}" data-k="${k}" data-n="10" ${n && P.gold >= pr ? '' : 'disabled'}>10</button></td></tr>`; }).join('')}</table>
-      <h3>🏷️ Vender para a loja</h3>${mine.length ? `<table class="trade"><tr><th>Item</th><th>Você tem</th><th>O caixa paga</th><th></th></tr>${mine.map(k => { const pay = Biz.wholesale(s, k), ok = (s.till || 0) >= pay;
-        return `<tr><td>${UI.ii(k)} ${ITEMS[k].name}</td><td>${Inv.sellable(k)}</td><td>${pay} 🪙</td><td><button data-act="bzsell" data-s="${sid}" data-k="${k}" data-n="1" ${ok ? '' : 'disabled'}>Vender 1</button><button data-act="bzsell" data-s="${sid}" data-k="${k}" data-n="10" ${ok ? '' : 'disabled'}>10</button></td></tr>`; }).join('')}</table>` : '<p class="muted">Você não tem nada do ramo desta loja.</p>'}`;
+    const stat = (b, l) => `<div><b>${b}</b><small>${l}</small></div>`;
+    const head = `<div class="bzs-head">${stat(`🪙 ${s.till || 0}`, 'no caixa')}${stat(`×${mul.toFixed(2)}`, 'freguesia')}${stat(mgr ? UI.esc(mgr.name) : '—', mgr ? 'responsável' : 'sem responsável')}${stat(`${e.lastPaid || 0} 🪙`, 'lucro entregue no mês passado')}${stat(`${P.gold} 🪙`, 'seu ouro')}</div>
+      <p class="muted trd-tip">${mgr ? `${UI.esc(mgr.name)} cuida da loja: põe a produção na prateleira, repõe a mercadoria do ramo, vende pelos <b>preços que você define</b> (− e +) e todo mês entrega o lucro (fica ${BIZ_RESERVE} 🪙 no caixa para a reposição). Preço alto rende mais por venda; baixo vende mais.` : 'Contrate um funcionário: o primeiro cuida da loja.'}</p>`;
+    const shelf = cat.map(k => {
+      const pr = Biz.itemPrice(s, k), m = Biz.itemMul(s, k), n = s.shelf[k] || 0, can = n > 0 && P.gold >= pr;
+      return Trade.row({ ic: UI.ii(k), name: ITEMS[k].name, sub: `na prateleira: ${n}`,
+        price: `<span class="trd-adj"><button class="trd-pm" data-act="bzp" data-s="${sid}" data-k="${k}" data-d="-0.1">−</button><span><b>${pr} 🪙</b><small class="${m > 1.05 ? 'ok' : m < 0.95 ? 'bad' : 'muted'}">${Math.round(m * 100)}%</small></span><button class="trd-pm" data-act="bzp" data-s="${sid}" data-k="${k}" data-d="0.1">+</button></span>`,
+        btns: Trade.btn(`data-act="bzbuy" data-s="${sid}" data-k="${k}" data-n="1"`, '1', can, 'main') + Trade.btn(`data-act="bzbuy" data-s="${sid}" data-k="${k}" data-n="10"`, '10', can) });
+    });
+    const sell = mine.map(k => {
+      const pay = Biz.wholesale(s, k), ok = (s.till || 0) >= pay, n = Inv.sellable(k);
+      return Trade.row({ ic: UI.ii(k), name: ITEMS[k].name, sub: `você tem ${n}`, price: `${pay} 🪙`, off: !ok,
+        btns: Trade.btn(`data-act="bzsell" data-s="${sid}" data-k="${k}" data-n="1"`, '1', ok, 'main') + Trade.btn(`data-act="bzsell" data-s="${sid}" data-k="${k}" data-n="${Math.max(1, n)}"`, 'Tudo', ok) });
+    });
+    const h = Trade.wrap(head, Trade.col('bshelf', '🧾', 'Prateleira e preços', 'você define o preço; comprar tira da prateleira', shelf, '<span>🧾</span><b>Prateleira vazia</b>', 'bz'),
+      Trade.col('bsell', '🏷️', 'Vender para a loja', 'o caixa paga o atacado', sell, `<span>🎒</span><b>Nada do ramo na mochila</b><small>Você não tem nada do ramo desta loja.</small>`));
     this.open('🏪 Balcão · ' + BUILDINGS[s.type].name, h, 'showBizShop', [sid], 'Prateleira, preços e vendas');
   };
   // o preço geral (no quadro do empreendimento) vale para tudo: limpa os preços de cada item

@@ -35,3 +35,19 @@ const WIN_SCENES = {
     return open0(title, body, fn, args, sub);
   };
 }
+
+// ---------------------------------------------------------------- janelas de negociar (loja, balcão)
+// Comprar e vender lado a lado, cada lista com a sua rolagem (guardada entre os cliques); as linhas e as colunas têm
+// tamanho fixo, então nada se desloca quando um número muda ou um botão fica cinza.
+const Trade = {
+  row(o) {
+    return `<div class="trd-row ${o.off ? 'off' : ''}"><span class="trd-ic">${o.ic}</span><span class="trd-n"><b>${o.name}</b><small>${o.sub || ''}</small></span>
+      <span class="trd-p">${o.price}</span><span class="trd-b">${o.btns}</span></div>`;
+  },
+  btn(attrs, label, ok, cls) { return `<button class="trd-btn ${cls || ''}" ${attrs} ${ok ? '' : 'disabled'}>${label}</button>`; },
+  col(key, ic, title, sub, rows, empty, cls) {
+    return `<div class="card trd-col"><div class="sec">${ic} ${title}${sub ? ` <span>${sub}</span>` : ''}</div>
+      ${rows.length ? `<div class="trd-list ${cls || ''}" data-scroll="${key}">${rows.join('')}</div>` : `<div class="trd-empty">${empty}</div>`}</div>`;
+  },
+  wrap(head, left, right) { return `<div class="trd">${head}<div class="trd-cols">${left}${right}</div></div>`; },
+};

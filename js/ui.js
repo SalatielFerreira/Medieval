@@ -1497,25 +1497,7 @@ const UI = {
   },
 
   // ------------------------------------------------------------ balcão do seu empreendimento: comprar e vender
-  showBizShop(sid) {
-    const s = World.structs[sid];
-    if (!s || !BIZ_TYPES[s.type]) return;
-    const sh = Biz.trade(s), mul = Biz.popMul(s), ci = Biz.civOf(s);
-    s.shelf = s.shelf || {};
-    const goods = Object.keys(s.goods || {}).filter(k => s.goods[k] > 0), shelf = Object.keys(s.shelf).filter(k => s.shelf[k] > 0);
-    const mine = Object.keys(P.inv).filter(k => P.inv[k] > 0 && ITEMS[k] && sh.buys(ITEMS[k]) && Inv.sellable(k) > 0);
-    const row = (k, a, b, c) => `<tr><td>${UI.ii(ITEMS[k])} ${ITEMS[k].name}</td><td>${a}</td><td>${b}</td><td>${c}</td></tr>`;
-    let h = `<div class="bzs-head"><div><b>🪙 ${s.till || 0}</b><small>no caixa</small></div><div><b>×${mul.toFixed(2)}</b><small>freguesia (cresce com a população)</small></div><div><b>${Biz.workerCount(s)}</b><small>atendendo</small></div><div><b>${P.gold}</b><small>seu ouro</small></div></div>
-      <p class="muted">Como dono, você compra no atacado (30% mais barato) e pode pôr mercadoria no balcão: o caixa paga na hora e os fregueses compram aos poucos, todo mês, pelo preço cheio. Quanto mais gente mora perto, mais eles compram.</p>`;
-    if (goods.length) h += `<h3>📦 Produção guardada</h3><table class="trade"><tr><th>Item</th><th>Guardado</th><th>Preço</th><th></th></tr>${goods.map(k => row(k, s.goods[k], 'seu',
-      `<button data-act="bzget" data-s="${sid}" data-k="${k}" data-n="1">Pegar 1</button><button data-act="bzget" data-s="${sid}" data-k="${k}" data-n="9999">Tudo</button>`)).join('')}</table>`;
-    h += `<h3>🛒 Comprar no atacado</h3><table class="trade"><tr><th>Item</th><th>Você tem</th><th>Preço do dono</th><th></th></tr>${sh.sells.map(k => { const pr = Biz.wholesale(s, k);
-      return row(k, Inv.count(k), `${pr} 🪙 <small class="muted"><s>${Game.price(ci, k).buy}</s></small>`, `<button data-act="bzbuy" data-s="${sid}" data-k="${k}" data-n="1" ${P.gold >= pr ? '' : 'disabled'}>Comprar 1</button><button data-act="bzbuy" data-s="${sid}" data-k="${k}" data-n="10" ${P.gold >= pr ? '' : 'disabled'}>10</button>`); }).join('')}</table>`;
-    h += `<h3>🏷️ Pôr à venda no balcão</h3>${mine.length ? `<table class="trade"><tr><th>Item</th><th>Você tem</th><th>O caixa paga</th><th></th></tr>${mine.map(k => { const pay = Biz.shelfPay(s, k), ok = (s.till || 0) >= pay;
-      return row(k, Inv.count(k), `${pay} 🪙`, `<button data-act="bzsell" data-s="${sid}" data-k="${k}" data-n="1" ${ok ? '' : 'disabled'}>Pôr 1</button><button data-act="bzsell" data-s="${sid}" data-k="${k}" data-n="10" ${ok ? '' : 'disabled'}>10</button>`); }).join('')}</table>` : '<p class="muted">Nada na mochila que este empreendimento venda.</p>'}`;
-    if (shelf.length) h += `<h3>🧾 No balcão (os fregueses compram todo mês)</h3><table class="trade"><tr><th>Item</th><th>Quantidade</th><th>Vende por</th><th></th></tr>${shelf.map(k => row(k, s.shelf[k], `${Math.round(ITEMS[k].price * Math.min(1.25, 0.9 + 0.1 * mul))} 🪙`, `<button data-act="bzret" data-s="${sid}" data-k="${k}">Retirar</button>`)).join('')}</table>`;
-    this.open('🏪 Balcão · ' + BUILDINGS[s.type].name, h, 'showBizShop', [sid], 'Comprar e vender no seu empreendimento');
-  },
+  // (o Balcão do seu empreendimento está em js/finance.js)
 
   // ============================================================ Ajustes: Jogo · Tela · Som · Controles · Como jogar
   showSettings(tab) {
@@ -1687,31 +1669,24 @@ const UI = {
     }
     const rel = People.relation(owner);
     const disc = Math.round(owner.aff / 4);
-    let h = `<div class="shopowner"><canvas class="mini-portrait" data-pid="${owner.id}" width="44" height="44"></canvas>
-      <div><b>${UI.esc(People.full(owner))}</b> · ${People.title(owner)} · <span style="color:${rel.col}">${rel.text}</span><br>
-      <small>Bolsa d${owner.sex === 'f' ? 'a' : 'o'} ${RANKS[owner.rank][owner.sex].toLowerCase()}: ${People.purse(owner)} 🪙 · Seu ouro: ${P.gold} 🪙 · ${disc > 0 ? `Desconto de amizade: ${disc}%` : disc < 0 ? `Preços ${-disc}% mais caros (não gosta de você)` : 'Seja amigo do dono para ganhar desconto'}</small></div>
-      <button data-act="tk" data-op="open" data-id="${owner.id}">💬 Conversar</button></div>
-      ${Lifesim.shopExtra(civ, owner, type, vi)}<h3>À venda</h3><table class="trade"><tr><th>Item</th><th>Você tem</th><th>Estoque</th><th>Preço</th><th></th></tr>`;
-    for (const k of sh.sells) {
-      const it = ITEMS[k], pr = Game.priceFor(civ, k, owner);
-      const raw = c.stock[k] !== undefined;
-      const can = P.gold >= pr.buy && (!raw || c.stock[k] > 0);
-      h += `<tr><td>${UI.ii(it)} ${it.name}</td><td>${Inv.count(k)}</td><td>${raw ? c.stock[k] : '∞'}</td><td>${pr.buy} 🪙${this.trendIcon(civ, k)}</td>
-        <td><button data-act="trade2" data-k="${k}" data-n="1" data-m="buy" ${can ? '' : 'disabled'}>Comprar 1</button><button data-act="trade2" data-k="${k}" data-n="10" data-m="buy" ${can ? '' : 'disabled'}>10</button></td></tr>`;
-    }
-    h += '</table><h3>Vender para esta loja</h3>';
+    const chip = (ic, v, cls) => `<span class="trd-chip ${cls || ''}">${ic} ${v}</span>`;
+    const head = `<div class="trd-head"><canvas class="mini-portrait" data-pid="${owner.id}" width="44" height="44"></canvas>
+      <div class="trd-who"><b>${UI.esc(People.full(owner))}</b><small>${People.title(owner)} · <span style="color:${rel.col}">${rel.text}</span></small></div>
+      <div class="trd-chips">${chip('🪙', `<b>${P.gold}</b> seu ouro`)}${chip('💰', `<b>${People.purse(owner)}</b> na bolsa d${owner.sex === 'f' ? 'a' : 'o'} dono`)}${chip('🏷️', disc > 0 ? `<b>${disc}%</b> de desconto de amizade` : disc < 0 ? `<b>+${-disc}%</b>: não gosta de você` : 'amizade dá desconto', disc < 0 ? 'bad' : disc > 0 ? 'ok' : '')}</div>
+      <button data-act="tk" data-op="open" data-id="${owner.id}">💬 Conversar</button>${Lifesim.shopExtra(civ, owner, type, vi)}</div>`;
+    const buy = sh.sells.map(k => {
+      const it = ITEMS[k], pr = Game.priceFor(civ, k, owner), raw = c.stock[k] !== undefined, can = P.gold >= pr.buy && (!raw || c.stock[k] > 0);
+      return Trade.row({ ic: UI.ii(it), name: it.name, sub: `você tem ${Inv.count(k)} · estoque ${raw ? c.stock[k] : '∞'}`, price: `${pr.buy} 🪙${this.trendIcon(civ, k)}`, off: !can,
+        btns: Trade.btn(`data-act="trade2" data-k="${k}" data-n="1" data-m="buy"`, '1', can, 'main') + Trade.btn(`data-act="trade2" data-k="${k}" data-n="10" data-m="buy"`, '10', can) });
+    });
     const mine = Object.keys(P.inv).filter(k => sh.buys(ITEMS[k]) && Inv.sellable(k) > 0); // o que está equipado não entra
-    if (!mine.length) h += `<p class="muted">Você não tem nada que interesse ${type === 'hunter' ? 'ao caçador' : 'a esta loja'}.</p>`;
-    else {
-      h += '<table class="trade"><tr><th>Item</th><th>Você tem</th><th>Paga</th><th></th></tr>';
-      for (const k of mine) {
-        const it = ITEMS[k], pr = Game.priceFor(civ, k, owner);
-        const can = People.purse(owner) >= pr.sell;
-        h += `<tr><td>${UI.ii(it)} ${it.name}</td><td>${Inv.sellable(k)}</td><td>${pr.sell} 🪙${this.trendIcon(civ, k)}</td>
-          <td><button data-act="trade2" data-k="${k}" data-n="1" data-m="sell" ${can ? '' : 'disabled'}>Vender 1</button><button data-act="trade2" data-k="${k}" data-n="10" data-m="sell" ${can ? '' : 'disabled'}>10</button></td></tr>`;
-      }
-      h += '</table>';
-    }
+    const sell = mine.map(k => {
+      const it = ITEMS[k], pr = Game.priceFor(civ, k, owner), can = People.purse(owner) >= pr.sell, n = Inv.sellable(k);
+      return Trade.row({ ic: UI.ii(it), name: it.name, sub: `você tem ${n}`, price: `${pr.sell} 🪙${this.trendIcon(civ, k)}`, off: !can,
+        btns: Trade.btn(`data-act="trade2" data-k="${k}" data-n="1" data-m="sell"`, '1', can, 'main') + Trade.btn(`data-act="trade2" data-k="${k}" data-n="${Math.max(1, n)}" data-m="sell"`, 'Tudo', can) });
+    });
+    const h = Trade.wrap(head, Trade.col('tbuy', '🛒', 'Comprar', `${buy.length} itens`, buy, ''),
+      Trade.col('tsell', '💰', 'Vender', 'o que interessa à loja', sell, `<span>🎒</span><b>Nada para vender aqui</b><small>Você não tem nada que interesse ${type === 'hunter' ? 'ao caçador' : 'a esta loja'}.</small>`));
     this.open(title, h, 'showShop', [type, vi, npcId]);
     this.drawMiniPortraits();
   },

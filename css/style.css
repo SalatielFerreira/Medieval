@@ -3762,3 +3762,73 @@ body.small .scn .rh-chips { justify-content: flex-start; }
 }
 body.small .pf-p { min-height: 0 !important; height: auto !important; padding: 0 7px !important; font-size: 11px !important; line-height: 1.5; }
 body.small .pf-tabs .tab { min-height: 0 !important; height: auto !important; padding: 3px 10px !important; font-size: 11px !important; }
+
+/* ================================================================ Janelas de negociar (loja e balcão): comprar e vender lado a lado, nada se desloca */
+#panel .pb:has(> .trd) { display: flex; flex-direction: column; }
+.trd { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.trd-head { flex: none; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px; background: linear-gradient(135deg, rgba(120, 80, 30, .35), rgba(20, 14, 8, .5)); border: 1px solid rgba(214, 174, 96, .35); }
+.trd-head .mini-portrait { width: 48px; height: 48px; flex: none; border-radius: 50%; border: 2px solid #c9a24a; background: rgba(0, 0, 0, .3); }
+.trd-who { display: flex; flex-direction: column; min-width: 0; }
+.trd-who b { font-family: 'Cinzel', Georgia, serif; font-size: 16px; color: var(--gold-hi); }
+.trd-who small { font-size: 12px; color: #c9b48a; }
+.trd-chips { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.trd-chip { font-size: 12px; padding: 4px 10px; border-radius: 12px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(214, 174, 96, .3); color: #e8dcc0; white-space: nowrap; }
+.trd-chip b { color: #fff3d0; font-variant-numeric: tabular-nums; }
+.trd-chip.ok { border-color: rgba(95, 211, 95, .5); }
+.trd-chip.bad { border-color: rgba(255, 93, 93, .5); }
+.trd > .steal-row, .trd > p, .trd > .scarce, .trd > div:not([class]) { flex: none; margin: 0; }
+.trd-tip { margin: 0; font-size: 12px; }
+.trd-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.trd-col { display: flex; flex-direction: column; min-height: 0; padding: 10px 10px 6px; }
+.trd-col .sec { flex: none; }
+.trd-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 4px; }
+.trd-row { flex: none; display: grid; grid-template-columns: 34px minmax(0, 1fr) 86px 112px; align-items: center; gap: 10px; min-height: 52px; padding: 6px 8px; border-radius: 10px;
+  background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 174, 96, .18); transition: background .12s, border-color .12s; }
+.trd-row:hover { background: rgba(255, 213, 74, .07); border-color: rgba(214, 174, 96, .4); }
+.trd-row.off { opacity: .55; }
+.trd-ic { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 20px; border-radius: 8px; background: rgba(0, 0, 0, .3); }
+.trd-ic .ii svg, .trd-ic svg { width: 26px; height: 26px; }
+.trd-n { display: flex; flex-direction: column; min-width: 0; }
+.trd-n b { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trd-n small { font-size: 11.5px; color: #a8946c; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trd-p { text-align: right; font-weight: 700; color: #ffe9b0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trd-b { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.trd-btn { min-width: 0; height: 36px; padding: 0 6px; border-radius: 9px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.trd-btn.main { background: linear-gradient(#f6d27a, #c99a3a); color: #2a1a06; border-color: #ffe9a8; }
+.trd-btn:disabled { background: rgba(0, 0, 0, .3); color: #7a6c52; border-color: rgba(214, 174, 96, .15); }
+.trd-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; color: #a8946c; padding: 20px; }
+.trd-empty span { font-size: 34px; opacity: .7; }
+.trd-empty b { color: #e8dcc0; }
+/* balcão: a coluna do preço tem os botões − e + */
+.trd-list.bz .trd-row { grid-template-columns: 34px minmax(0, 1fr) 150px 112px; }
+.trd-adj { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 4px; }
+.trd-adj > span { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.trd-adj small { font-size: 10.5px; font-weight: 600; }
+.trd-pm { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 17px; font-weight: 800; }
+body.small .trd { gap: 6px; }
+body.small .trd-head { padding: 5px 8px; gap: 8px; }
+body.small .trd-head .mini-portrait { width: 34px; height: 34px; }
+body.small .trd-who b { font-size: 12.5px; }
+body.small .trd-chip { font-size: 10px; padding: 2px 7px; }
+body.small .trd-cols { gap: 6px; }
+body.small .trd-col { padding: 6px 6px 4px; }
+body.small .trd-row { grid-template-columns: 26px minmax(0, 1fr) 58px 84px; gap: 6px; min-height: 42px; padding: 4px 5px; }
+body.small .trd-list.bz .trd-row { grid-template-columns: 26px minmax(0, 1fr) 112px 84px; }
+body.small .trd-ic { width: 26px; height: 26px; font-size: 15px; }
+body.small .trd-n b { font-size: 11.5px; }
+body.small .trd-n small { font-size: 10px; }
+body.small .trd-p { font-size: 11.5px; }
+body.small .trd-btn { height: 32px !important; min-height: 0 !important; font-size: 12px; padding: 0 4px !important; }
+body.small .trd-pm { width: 28px !important; height: 28px !important; min-height: 0 !important; font-size: 15px; }
+body.small .trd-adj { grid-template-columns: 28px 1fr 28px; }
+body.small .trd-tip, body.small .trd-chips .trd-chip:nth-child(n+3) { display: none; }
+.trd-head { flex-wrap: wrap; }
+.trd-head .steal-row { margin: 0; flex: none; }
+.trd-head .steal-row button { height: 36px; }
+.trd-head > :not(.mini-portrait):not(.trd-who):not(.trd-chips):not(button):not(.steal-row) { flex-basis: 100%; margin: 0; }
+body.small .trd-head .steal-row button, body.small .trd-head > button { min-height: 0 !important; height: 30px !important; padding: 0 10px !important; font-size: 11px !important; }
+body.small .trd .bzs-head { gap: 6px; }
+body.small .trd .bzs-head > div { padding: 4px 8px; min-height: 0; }
+body.small .trd .bzs-head b { font-size: 13px; }
+body.small .trd .bzs-head small { font-size: 9.5px; line-height: 1.2; }
+body.small .trd-col .sec span { display: none; }

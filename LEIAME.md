@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: janelas de negociar mais confortáveis
+
+- **Loja e Balcão redesenhados:** comprar e vender lado a lado, cada lista com a sua própria rolagem. Linhas e colunas de tamanho fixo: ao clicar, nada sai do lugar — dá para clicar várias vezes seguidas no mesmo botão.
+- **Botões maiores** (1, 10 e "Tudo" para vender), com o principal em dourado; itens que você não pode comprar ficam apagados.
+- No topo, o dono com retrato, o seu ouro, a bolsa do dono e o desconto de amizade; no Balcão, os botões − e + do preço ficam ao lado do valor.
+
 ## Novidades: a ficha de cada morador e mais o que fazer junto
 
 - **Aba "📋 Ficha" na conversa:** estado civil (casado com quem, viúvo, solteiro, de olho em alguém), filhos, pais, irmãos e a casa da família — clique num nome para conversar com essa pessoa; ofício, loja, carreira e mestre, riqueza, moradia, cavalo, dívidas e fama; personalidade, humor, do que gosta, sonho, força e inteligência; o que a pessoa lembra de você e as notícias da vida dela. O estado civil também aparece logo abaixo do nome.

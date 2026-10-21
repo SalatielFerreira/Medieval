@@ -23,7 +23,7 @@ module.exports = async () => {
         if (!(G.place && G.place.kind === 'room')) { bad.push(s.type + ': não entrou'); continue; }
         if (!Shops.keeper(s)) bad.push(s.type + ': sem responsável');
         const counter = Places.furn.find(f => f.act === 'work');
-        if (Work.shopOf(s) && counter) { Places.use(counter); if (!document.querySelector('.shopowner')) bad.push(s.type + ': balcão não negocia'); UI.close(); }
+        if (Work.shopOf(s) && counter) { Places.use(counter); if (!document.querySelector('.trd-head, .shopowner')) bad.push(s.type + ': balcão não negocia'); UI.close(); }
         Places.exit(true); UI.close();
       }
       return bad;
