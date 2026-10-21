@@ -1772,8 +1772,9 @@ const UI = {
     // ações em grupos (cada um com sua cor)
     const GROUP = { talk: 'conv', compliment: 'conv', giftmenu: 'conv', insult: 'conv', flirt: 'heart', date: 'heart', propose: 'heart', child: 'heart', breakup: 'heart',
       gossip: 'conv', loanask: 'work', midwife: 'heart', shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
-      fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other', attack: 'other', bribe: 'work' };
-    const GN = { conv: '💬 Conversa', heart: '💕 Coração', work: '🤝 Trabalho e capangas', house: '🏛️ Casas', other: '✨ Outros' };
+      fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other', attack: 'other', bribe: 'work',
+      congrats: 'conv', condole: 'conv', advice: 'conv', drink: 'fun', dice: 'fun', spar: 'fun', story: 'fun', cupid: 'heart', forgive: 'work' };
+    const GN = { conv: '💬 Conversa', heart: '💕 Coração', fun: '🎲 Passatempos', work: '🤝 Trabalho e capangas', house: '🏛️ Casas', other: '✨ Outros' };
     const split = lab => { const m = lab.match(/^(\S+)\s+(.*)$/); return m ? [m[1], m[2]] : ['•', lab]; };
     const groups = {};
     for (const [op, lab] of acts) (groups[GROUP[op] || 'other'] = groups[GROUP[op] || 'other'] || []).push([op, ...split(lab)]);

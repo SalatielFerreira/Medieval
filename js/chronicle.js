@@ -211,19 +211,4 @@ const News = {
   // filtro das notícias
   const act0 = UI.act.bind(UI);
   UI.act = function (a, d) { if (a === 'ncat') { this.sel.ncat = d.k; this.showDiary(); return; } return act0(a, d); };
-  // na conversa: a fama e as notícias da pessoa
-  const tk0 = UI.showTalk.bind(UI);
-  UI.showTalk = function (id, res) {
-    const r = tk0(id, res);
-    const p = People.get(id), box = this.panel && this.panel.querySelector('.tk2-l');
-    if (p && p.alive && box && this.cur && this.cur.fn === 'showTalk') {
-      const ns = News.of(p), st = News.status(p);
-      if (ns.length || p.fame || p.gentry) {
-        const div = document.createElement('div'); div.className = 'tk2-life';
-        div.innerHTML = `<div class="sec">📰 Vida de ${UI.esc(p.name)}${p.fame ? ` <span>⭐ fama ${p.fame}</span>` : ''}</div>${st ? `<small class="muted">Agora: ${st}</small>` : ''}${ns.map(n => `<div class="tk2-ln"><span class="dy-date">${Calendar.short(n.day)}</span><span>${UI.esc(n.text)}</span></div>`).join('')}`;
-        box.appendChild(div);
-      }
-    }
-    return r;
-  };
 }

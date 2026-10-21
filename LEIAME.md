@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: a ficha de cada morador e mais o que fazer junto
+
+- **Aba "📋 Ficha" na conversa:** estado civil (casado com quem, viúvo, solteiro, de olho em alguém), filhos, pais, irmãos e a casa da família — clique num nome para conversar com essa pessoa; ofício, loja, carreira e mestre, riqueza, moradia, cavalo, dívidas e fama; personalidade, humor, do que gosta, sonho, força e inteligência; o que a pessoa lembra de você e as notícias da vida dela. O estado civil também aparece logo abaixo do nome.
+- **Segredos:** quanto a pessoa tem guardado, do que gosta, o sonho e por quem está apaixonada. Descubra com amizade ou pagando uma bebida.
+- **Novas interações:** 🍺 pagar uma bebida, 🎲 jogar dados (10 🪙), ⚔️ treinar juntos (ganha experiência), 📖 ouvir histórias dos mais velhos, 🧭 pedir um conselho (comerciantes contam o que está em falta; soldados, onde há bandidos), 🎉 dar os parabéns, 🕯️ dar os pêsames, 🤲 perdoar uma dívida e 💘 bancar o cupido (pode terminar em casamento!).
+
 ## Novidades: janelas padronizadas
 
 - **Todas as janelas do mesmo tamanho, em tela cheia** — inclusive as que antes flutuavam pequenas no meio do mapa (lojas, baú, estábulo, quartel, castelo, taverna, finanças, empréstimos, arsenal, mensageiros, cemitério...). No computador, as de pouco conteúdo usam uma coluna central confortável.

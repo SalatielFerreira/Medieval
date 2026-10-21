@@ -19,8 +19,9 @@ module.exports = async () => {
       UI.close();
       // conversa com alguém que tem notícias
       const who = G.people.find(p => p.alive && !p.kin && News.of(p).length);
+      UI.sel.tktab = 'ficha'; UI.sel.tkfor = who && who.id;
       if (who) UI.showTalk(who.id);
-      const life = !!document.querySelector('.tk2-life');
+      const life = !!document.querySelector('.pf');
       UI.close();
       // balões: desenha os moradores perto do herói
       const v = World.villages[0]; P.x = v.x * TILE; P.y = v.y * TILE;
