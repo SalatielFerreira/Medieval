@@ -101,9 +101,8 @@ abrir o jogo e `page.evaluate(...)` para mexer no jogo por dentro.
 
 ## Janelas
 
-- **Toda janela ocupa a tela inteira**, no computador e no celular, e todas têm o mesmo tamanho. Nunca dê largura ou
-  altura própria a uma janela. As de conteúdo curto (fora de `WIDE_PANELS`) usam no computador uma coluna central de
-  ~1040 px.
+- **Tamanho das janelas:** as principais (`WIDE_PANELS`), as de negociar e o baú ocupam a tela inteira; as de pouco conteúdo
+  têm, no computador, o tamanho do conteúdo (centralizadas, até a altura da tela). No celular, todas ocupam a tela inteira.
 - **Cena de abertura:** `UI.scene({ ic, title, kicker, line, chips, theme })` monta a faixa colorida com medalhão;
   `UI.personScene(p, frase)` faz o mesmo com o retrato da pessoa. Temas: gold, green, red, blue, earth, purple, amber,
   stone.

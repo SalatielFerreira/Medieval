@@ -1,4 +1,5 @@
-// Abre as janelas do jogo uma a uma: todas abrem sem erro e ocupam a tela inteira (no computador e no celular deitado).
+// Abre as janelas do jogo uma a uma: todas abrem sem erro; as principais (e todas no celular) ocupam a tela inteira e as de
+// pouco conteúdo têm o tamanho dele, sem sair da tela.
 'use strict';
 const { open } = require('./harness');
 const WINS = ['UI.showInventory()', 'UI.showCrafting(null)', 'UI.showBuild()', "UI.sel.knav='overview'; UI.showKingdom()", "UI.sel.dtab='news'; UI.showDiary()",
@@ -20,7 +21,12 @@ async function run(width, height) {
         try { UI.close(); new Function(code)(); } catch (e) { out.push(`${code}: ${String(e).slice(0, 120)}`); continue; }
         const pn = document.getElementById('panel'), b = pn.getBoundingClientRect();
         if (pn.classList.contains('hidden')) out.push(`${code}: a janela não abriu`);
-        else if (Math.round(b.width) < innerWidth - 2 || Math.round(b.height) < innerHeight - 2) out.push(`${code}: ${Math.round(b.width)}×${Math.round(b.height)} em vez da tela inteira`);
+        else {
+          // tela cheia: no celular, nas janelas principais e nas de negociar/baú; as outras têm o tamanho do conteúdo, dentro da tela
+          const full = document.body.classList.contains('small') || pn.classList.contains('wide') || pn.querySelector('.trd, .chest-layout');
+          if (full && (Math.round(b.width) < innerWidth - 2 || Math.round(b.height) < innerHeight - 2)) out.push(`${code}: ${Math.round(b.width)}×${Math.round(b.height)} em vez da tela inteira`);
+          if (!full && (b.left < -1 || b.top < -1 || b.right > innerWidth + 1 || b.bottom > innerHeight + 1)) out.push(`${code}: a janela sai da tela`);
+        }
       }
       UI.close();
       return out;

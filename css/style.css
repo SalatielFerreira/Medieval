@@ -3676,15 +3676,14 @@ body:not(.small) .kpg.kdesk[data-nav="d:news"] > .nw-feed { grid-column: 2; disp
 body:not(.small) .kpg.kdesk[data-nav="d:news"] .nw-list { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
 body.small .nw-tip { display: none; }
 
-/* ================================================================ computador: TODAS as janelas em tela cheia e do mesmo tamanho.
-   As janelas de conteúdo curto (lojas, baú, estábulo, conselho de guerra...) usam uma coluna central de leitura, com uma
-   folha clara por trás, em vez de flutuar pequenas no meio do mapa. */
-body:not(.small) #panel:not(.wide) { width: 100vw; height: 100vh; height: 100dvh; max-height: none; left: 0; top: 0; transform: none; border-radius: 0; }
-body:not(.small) #panel:not(.wide) .ph, body:not(.small) #panel:not(.wide)::before, body:not(.small) #panel:not(.wide)::after { border-radius: 0 !important; }
-body:not(.small) #panel:not(.wide) > .pb { flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box;
-  padding: 26px max(28px, calc((100vw - 1040px) / 2)) 32px;
-  background: linear-gradient(90deg, transparent calc(50% - 552px), rgba(214, 174, 96, .16) calc(50% - 552px), rgba(255, 226, 160, .035) calc(50% - 551px),
-    rgba(255, 226, 160, .035) calc(50% + 551px), rgba(214, 174, 96, .16) calc(50% + 551px), transparent calc(50% + 552px)); }
+/* ================================================================ computador: as janelas principais (WIDE_PANELS) ocupam a tela inteira; as de pouco
+   conteúdo (pontos de nível, presentear, fazenda, estábulo...) têm o tamanho do conteúdo, no centro, e só crescem até a
+   altura da tela (pedido de 21/10/2026). As de negociar e o baú, que precisam de altura para as listas, ficam em tela cheia. */
+body:not(.small) #panel:not(.wide) { width: fit-content; min-width: min(560px, 96vw); max-width: min(1100px, 96vw); height: auto; max-height: 94vh; max-height: 94dvh; }
+body:not(.small) #panel:not(.wide) > .pb { flex: 1 1 auto; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 20px 24px 24px; }
+body:not(.small) #panel:not(.wide):has(.trd, .chest-layout) { width: 100vw; max-width: none; height: 100vh; height: 100dvh; max-height: none; left: 0; top: 0; transform: none; border-radius: 0; }
+body:not(.small) #panel:not(.wide):has(.trd, .chest-layout) .ph, body:not(.small) #panel:not(.wide):has(.trd, .chest-layout)::before, body:not(.small) #panel:not(.wide):has(.trd, .chest-layout)::after { border-radius: 0 !important; }
+body:not(.small) #panel:not(.wide):has(.trd, .chest-layout) > .pb { padding: 26px max(28px, calc((100vw - 1040px) / 2)) 32px; }
 /* com uma janela aberta, a faixa da guerra some (ela cobria o título); o aviso volta ao fechar */
 body.win-open #warcall { display: none; }
 
