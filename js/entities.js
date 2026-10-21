@@ -567,33 +567,77 @@ function humanBody(ctx, o, dir, t) {
     if (hs === 'afro') { ell(ctx, -0.6, -32, 8.4, 7.8, hd); ell(ctx, -1, -32.2, 7.6, 7, hc); }
   }
   // ---- cabeça
-  rr(ctx, -4.9, -34.8, 10.2, 10.8, 4.2, C(skin));
-  rr(ctx, -4.9, -34.8, 3.4, 10.8, 3.2, S(skin, -0.12));
-  ell(ctx, 1.4, -25.2, 3.4, 1, S(skin, -0.12));                                  // sombra do queixo
-  ell(ctx, 3.8, -28.6, 1.4, 0.9, 'rgba(255,255,255,0.12)');                      // maçã do rosto
-  ell(ctx, -2.3, -29.2, 1.35, 2, S(skin, -0.1)); ctx.fillStyle = S(skin, -0.32); ctx.fillRect(-2.6, -29.8, 0.6, 1.4); ctx.fillRect(-2.4, -28.4, 0.8, 0.4);
-  // olhos
-  rr(ctx, 2.2, -30.9, 2.4, 2.1, 0.7, '#f6f2ea');
-  ctx.fillStyle = eyeCol; ctx.fillRect(3.3, -30.9, 1.3, 2.1);
-  ctx.fillStyle = '#120a06'; ctx.fillRect(3.6, -30.5, 0.8, 1.4);
-  ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(3.4, -30.7, 0.5, 0.5);
-  ctx.fillStyle = S(skin, -0.45); ctx.fillRect(2.1, -31.2, 2.7, 0.55);          // pálpebra
-  rr(ctx, -0.8, -30.8, 1.5, 1.9, 0.5, '#e8e2d8'); ctx.fillStyle = eyeCol; ctx.fillRect(-0.3, -30.7, 0.9, 1.8); ctx.fillStyle = '#120a06'; ctx.fillRect(-0.1, -30.4, 0.5, 1.2);
-  ctx.fillStyle = S(skin, -0.45); ctx.fillRect(-0.9, -31.1, 1.7, 0.5);
   if (fem) {
-    ctx.fillStyle = '#1a0e08'; ctx.fillRect(2, -31.5, 2.9, 0.55); ctx.fillRect(4.6, -31.9, 0.8, 0.5); ctx.fillRect(5, -31.4, 0.6, 0.4); ctx.fillRect(-1.2, -31.4, 0.7, 0.45); ctx.fillRect(-1.4, -31.8, 0.5, 0.4);
-    ctx.fillStyle = 'rgba(120,70,110,0.22)'; ctx.fillRect(2.1, -32, 2.7, 0.6);       // sombra nos olhos
-    ell(ctx, -2.1, -26.6, 0.55, 0.75, C('#e8c050')); ell(ctx, -2.1, -25.8, 0.4, 0.4, C('#c03050'));   // brinco
+    // rosto oval e delicado: testa larga, bochechas suaves e o queixo afinando
+    const face = () => { ctx.beginPath(); ctx.moveTo(-4.6, -31); ctx.quadraticCurveTo(-4.8, -35.2, 0.4, -35.2); ctx.quadraticCurveTo(5.4, -35.2, 5.5, -31); ctx.quadraticCurveTo(5.6, -27.6, 4.2, -25.6);
+      ctx.quadraticCurveTo(2.8, -24, 1.4, -24.2); ctx.quadraticCurveTo(-1.4, -24.4, -3.2, -26.2); ctx.quadraticCurveTo(-4.6, -28, -4.6, -31); ctx.closePath(); };
+    ctx.fillStyle = C(skin); face(); ctx.fill();
+    ctx.save(); face(); ctx.clip();
+    ctx.fillStyle = S(skin, -0.11); ctx.fillRect(-5, -36, 3.4, 13);                               // lado na sombra
+    ell(ctx, 2.2, -24.6, 3.2, 1, S(skin, -0.1));                                                    // sombra do queixo
+    ctx.restore();
+    ell(ctx, -2.3, -29.4, 1.2, 1.8, S(skin, -0.1)); ctx.fillStyle = S(skin, -0.3); ctx.fillRect(-2.5, -29.8, 0.5, 1.2);   // orelha
+    // blush redondo e suave
+    const bl = ctx.createRadialGradient(3.2, -27.6, 0.2, 3.2, -27.6, 2.2); bl.addColorStop(0, hurt ? 'rgba(255,120,120,0.4)' : 'rgba(235,110,120,0.42)'); bl.addColorStop(1, 'rgba(235,110,120,0)');
+    ctx.fillStyle = bl; ctx.fillRect(1, -30, 4.6, 4.6);
+    ell(ctx, 4.1, -28.9, 0.9, 0.5, 'rgba(255,255,255,0.18)');                                       // brilho na maçã do rosto
+    // olho da frente: amendoado, íris grande, dois brilhos e cílios com o canto levantado
+    ell(ctx, 3.4, -29.7, 1.65, 1.3, '#fbf8f2');
+    ell(ctx, 3.75, -29.65, 1.05, 1.2, eyeCol); ell(ctx, 3.75, -29.3, 0.8, 0.55, shd(eyeCol, 0.25));
+    ell(ctx, 3.85, -29.7, 0.5, 0.62, '#100806');
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.fillRect(3.45, -30.35, 0.55, 0.55); ctx.fillRect(4.1, -29.2, 0.3, 0.3);
+    ctx.strokeStyle = '#2a160c'; ctx.lineCap = 'round'; ctx.lineWidth = 0.45;
+    ctx.beginPath(); ctx.moveTo(1.7, -29.9); ctx.quadraticCurveTo(3.2, -31.5, 5.1, -30.3); ctx.stroke();                   // linha dos cílios
+    ctx.lineWidth = 0.32; ctx.beginPath(); ctx.moveTo(4.9, -30.5); ctx.lineTo(5.5, -31.1); ctx.moveTo(4.4, -30.9); ctx.lineTo(4.7, -31.5); ctx.stroke();   // cantinho levantado
+    ctx.strokeStyle = 'rgba(120,70,60,0.45)'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(2.2, -28.7); ctx.quadraticCurveTo(3.4, -28.1, 4.8, -28.8); ctx.stroke();
+    ctx.fillStyle = 'rgba(150,90,130,0.2)'; ell(ctx, 3.4, -31, 1.7, 0.55, 'rgba(150,90,130,0.2)');              // sombra nas pálpebras
+    // olho de trás (de perfil, menor)
+    ell(ctx, -0.1, -29.7, 0.95, 1.15, '#f2ede4'); ell(ctx, 0.15, -29.65, 0.62, 1.05, eyeCol); ell(ctx, 0.2, -29.7, 0.32, 0.55, '#100806');
+    ctx.strokeStyle = '#1a0e08'; ctx.lineWidth = 0.45; ctx.beginPath(); ctx.moveTo(-1, -30.1); ctx.quadraticCurveTo(-0.1, -31.1, 0.9, -30.4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-0.9, -30.3); ctx.lineTo(-1.5, -30.9); ctx.stroke();
+    // sobrancelhas finas em arco
+    ctx.strokeStyle = shd(hd, 0.1); ctx.lineWidth = 0.34; ctx.beginPath(); ctx.moveTo(2.1, -32.5); ctx.quadraticCurveTo(3.7, -33.5, 5.2, -32.9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-1.1, -32.2); ctx.quadraticCurveTo(-0.1, -32.9, 0.9, -32.6); ctx.stroke();
+    // nariz pequeno
+    ell(ctx, 5.2, -28.3, 0.55, 0.95, S(skin, -0.12)); ctx.fillStyle = S(skin, 0.16); ctx.fillRect(5, -29.4, 0.4, 0.9);
+    ctx.fillStyle = S(skin, -0.32); ctx.fillRect(5.1, -27.5, 0.5, 0.35);
+    // lábios em coração
+    const lip = C('#c4485e'), lipD = shd(lip, -0.25);
+    ell(ctx, 3.15, -26.55, 0.75, 0.42, lip); ell(ctx, 4.25, -26.55, 0.75, 0.42, lip);
+    ell(ctx, 3.7, -25.95, 1.15, 0.55, shd(lip, 0.12)); ctx.fillStyle = lipD; ctx.fillRect(2.5, -26.25, 2.4, 0.28);
+    ell(ctx, 3.9, -25.85, 0.42, 0.18, 'rgba(255,255,255,0.55)');
+    // brinco
+    ell(ctx, -2.1, -27.4, 0.5, 0.5, C('#e8c050')); limb(ctx, -2.1, -27, -2.1, -26.2, 0.25, C('#e8c050')); ell(ctx, -2.1, -25.8, 0.5, 0.6, C(['#c03050', '#3a7ad0', '#40a060', '#f0f0f0'][seed % 4]));
+  } else {
+    // ---- cabeça
+    rr(ctx, -4.9, -34.8, 10.2, 10.8, 4.2, C(skin));
+    rr(ctx, -4.9, -34.8, 3.4, 10.8, 3.2, S(skin, -0.12));
+    ell(ctx, 1.4, -25.2, 3.4, 1, S(skin, -0.12));                                  // sombra do queixo
+    ell(ctx, 3.8, -28.6, 1.4, 0.9, 'rgba(255,255,255,0.12)');                      // maçã do rosto
+    ell(ctx, -2.3, -29.2, 1.35, 2, S(skin, -0.1)); ctx.fillStyle = S(skin, -0.32); ctx.fillRect(-2.6, -29.8, 0.6, 1.4); ctx.fillRect(-2.4, -28.4, 0.8, 0.4);
+    // olhos
+    rr(ctx, 2.2, -30.9, 2.4, 2.1, 0.7, '#f6f2ea');
+    ctx.fillStyle = eyeCol; ctx.fillRect(3.3, -30.9, 1.3, 2.1);
+    ctx.fillStyle = '#120a06'; ctx.fillRect(3.6, -30.5, 0.8, 1.4);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(3.4, -30.7, 0.5, 0.5);
+    ctx.fillStyle = S(skin, -0.45); ctx.fillRect(2.1, -31.2, 2.7, 0.55);          // pálpebra
+    rr(ctx, -0.8, -30.8, 1.5, 1.9, 0.5, '#e8e2d8'); ctx.fillStyle = eyeCol; ctx.fillRect(-0.3, -30.7, 0.9, 1.8); ctx.fillStyle = '#120a06'; ctx.fillRect(-0.1, -30.4, 0.5, 1.2);
+    ctx.fillStyle = S(skin, -0.45); ctx.fillRect(-0.9, -31.1, 1.7, 0.5);
+    if (fem) {
+      ctx.fillStyle = '#1a0e08'; ctx.fillRect(2, -31.5, 2.9, 0.55); ctx.fillRect(4.6, -31.9, 0.8, 0.5); ctx.fillRect(5, -31.4, 0.6, 0.4); ctx.fillRect(-1.2, -31.4, 0.7, 0.45); ctx.fillRect(-1.4, -31.8, 0.5, 0.4);
+      ctx.fillStyle = 'rgba(120,70,110,0.22)'; ctx.fillRect(2.1, -32, 2.7, 0.6);       // sombra nos olhos
+      ell(ctx, -2.1, -26.6, 0.55, 0.75, C('#e8c050')); ell(ctx, -2.1, -25.8, 0.4, 0.4, C('#c03050'));   // brinco
+    }
+    // sobrancelhas
+    if (fem) { limb(ctx, 2, -32.1, 4.9, -32.5, 0.5, hd); limb(ctx, -1, -31.9, 0.8, -32.2, 0.45, hd); }
+    else { poly(ctx, [1.9, -32.2, 5, -32.7, 5, -31.9, 1.9, -31.6], hd); poly(ctx, [-1.1, -31.9, 0.9, -32.3, 0.9, -31.6, -1.1, -31.4], hd); }
+    // nariz, boca e bochecha
+    rr(ctx, 4.8, -30, 1.4, 2.9, 0.6, S(skin, -0.1)); ctx.fillStyle = S(skin, 0.14); ctx.fillRect(4.9, -30, 0.5, 1.6);
+    ctx.fillStyle = S(skin, -0.35); ctx.fillRect(5.3, -27.4, 0.8, 0.4); ctx.fillRect(4.6, -27.3, 0.5, 0.5);
+    if (fem) { rr(ctx, 2.4, -27.1, 2.7, 0.8, 0.35, C('#a83a50')); rr(ctx, 2.6, -26.4, 2.3, 0.9, 0.4, C('#c85a6c')); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(3.2, -26.2, 0.8, 0.3); }
+    else { ctx.fillStyle = S(skin, -0.42); ctx.fillRect(2.6, -26.6, 2.2, 0.6); ctx.fillStyle = S(skin, -0.2); ctx.fillRect(2.9, -26, 1.6, 0.4); }
+    ctx.fillStyle = fem ? 'rgba(230,100,110,0.22)' : 'rgba(220,90,90,0.13)'; ctx.fillRect(2, -28.5, 2.8, 1.3);
   }
-  // sobrancelhas
-  if (fem) { limb(ctx, 2, -32.1, 4.9, -32.5, 0.5, hd); limb(ctx, -1, -31.9, 0.8, -32.2, 0.45, hd); }
-  else { poly(ctx, [1.9, -32.2, 5, -32.7, 5, -31.9, 1.9, -31.6], hd); poly(ctx, [-1.1, -31.9, 0.9, -32.3, 0.9, -31.6, -1.1, -31.4], hd); }
-  // nariz, boca e bochecha
-  rr(ctx, 4.8, -30, 1.4, 2.9, 0.6, S(skin, -0.1)); ctx.fillStyle = S(skin, 0.14); ctx.fillRect(4.9, -30, 0.5, 1.6);
-  ctx.fillStyle = S(skin, -0.35); ctx.fillRect(5.3, -27.4, 0.8, 0.4); ctx.fillRect(4.6, -27.3, 0.5, 0.5);
-  if (fem) { rr(ctx, 2.4, -27.1, 2.7, 0.8, 0.35, C('#a83a50')); rr(ctx, 2.6, -26.4, 2.3, 0.9, 0.4, C('#c85a6c')); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(3.2, -26.2, 0.8, 0.3); }
-  else { ctx.fillStyle = S(skin, -0.42); ctx.fillRect(2.6, -26.6, 2.2, 0.6); ctx.fillStyle = S(skin, -0.2); ctx.fillRect(2.9, -26, 1.6, 0.4); }
-  ctx.fillStyle = fem ? 'rgba(230,100,110,0.22)' : 'rgba(220,90,90,0.13)'; ctx.fillRect(2, -28.5, 2.8, 1.3);
   // ---- cabelo da frente, com mechas e brilho
   if (bareHead && !o.cap) {
     const cap = (yy, h) => {
@@ -657,6 +701,17 @@ function humanBody(ctx, o, dir, t) {
         rr(ctx, -5.4, -34, 11, 2.4, 1.2, hd); rr(ctx, -5.2, -33.8, 10.6, 1.8, 0.9, hc); rr(ctx, -5.2, -32.6, 2.6, 4.6, 1.1, hc); break;
       default: cap(-36.2, 4.8); rr(ctx, 3.2, -33.6, 2.6, 2, 0.9, hc); poly(ctx, [5.8, -33.4, 6.2, -32, 4.6, -32.6], hc);   // franja
     }
+  }
+  if (fem && bareHead && !o.cap && !o.helmet && !['bald', 'monk'].includes(hs)) {
+    // brilho do cabelo: um arco de luz sobre a cabeça
+    ctx.save(); ctx.globalAlpha = 0.55; ctx.strokeStyle = shd(hc, 0.45); ctx.lineWidth = 0.9; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(0.6, -31, 5, Math.PI * 1.22, Math.PI * 1.62); ctx.stroke();
+    ctx.globalAlpha = 0.35; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.arc(0.6, -31, 4.1, Math.PI * 1.3, Math.PI * 1.55); ctx.stroke(); ctx.restore();
+  }
+  if (fem && !o.armor && !o.cape) {
+    // colar com pingente
+    ctx.strokeStyle = C('#d8b860'); ctx.lineWidth = 0.35; ctx.beginPath(); ctx.moveTo(-0.6, -23.6); ctx.quadraticCurveTo(2, -21.4, 4.6, -23.4); ctx.stroke();
+    ell(ctx, 2, -21.6, 0.65, 0.75, C(['#c03050', '#3a7ad0', '#40a060', '#e8e0f0'][seed % 4])); ell(ctx, 1.8, -21.9, 0.22, 0.22, 'rgba(255,255,255,0.8)');
   }
   if (fem && bareHead && !o.cap && !['bald', 'monk', 'crownbraid', 'afro'].includes(hs) && seed % 3 === 0) {
     const fc = C(['#e05070', '#f0e060', '#80a0f0', '#f4f4f4'][seed % 4]);
