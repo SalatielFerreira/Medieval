@@ -602,3 +602,19 @@ const WallDrag = {
   const up0 = Urban.update.bind(Urban);
   Urban.update = function (...a) { WallDrag.update(); return up0(...a); };
 }
+
+// ------------------------------------------------------------------ quem ergue muralha
+// Perto de uma vila (dentro dela ou até GATE_REACH do centro), só o governador dela ou quem governa o reino a que ela
+// pertence ergue muro ou põe portão. Longe das vilas, os seus muros (para a sua base) continuam livres.
+Gate.wallAuthErr = function (tx, ty, what) {
+  const v = World.villages[Urban.villageNear(tx, ty, GATE_REACH)];
+  if (!v || v.ruin) return null;
+  if (v.lord === 'player' || (!v.free && G.civs[v.civ] && G.civs[v.civ].ruler === 'player')) return null;
+  return `Só o governador de ${v.name}${v.free ? '' : ` ou quem governa ${CIV_DEFS[v.civ].name}`} pode ${what || 'erguer muralha'} aqui`;
+};
+{
+  const cb0 = Game.canBuild.bind(Game);
+  Game.canBuild = function (k, tx, ty) { if (WallDrag.isWall(k)) { const e = Gate.wallAuthErr(tx, ty); if (e) return e; } return cb0(k, tx, ty); };
+  const gp0 = Gate.placeErr.bind(Gate);
+  Gate.placeErr = function (tx, ty) { return Gate.wallAuthErr(tx, ty, 'pôr portão') || gp0(tx, ty); };
+}

@@ -48,6 +48,24 @@ module.exports = async () => {
     if (a.vwallInObras) fails.push('a muralha ainda aparece em Obras nas vilas');
     if (a.row < 7) fails.push(`arrastando, só ${a.row} de 7 trechos de muro foram erguidos`);
     if (a.mapErr) fails.push('erro ao abrir o mapa: ' + a.mapErr);
+    // quem pode: o governador da vila ou o rei do reino dela; os outros não (nem o rei de outro reino)
+    const r = await page.evaluate(() => {
+      const v = World.villages.find((x, i) => i > 0 && x && !x.free && !x.ruin && x.civ !== World.villages[0].civ); if (!v) return null;
+      v.lord = null;
+      const free = () => { for (let rr = 3; rr < 14; rr++) for (let k = 0; k < 24; k++) { const a = k / 24 * 6.283, x = Math.round(v.x + Math.cos(a) * rr), y = Math.round(v.y + Math.sin(a) * rr), i = World.idx(x, y), t = World.tiles[i]; if (TINFO[t].walk && t !== T.ROAD && !World.isWater(t) && !World.obj[i] && !World.blocker(i)) return { x, y }; } };
+      const sp = free(); P.x = (sp.x + 0.5) * TILE; P.y = (sp.y + 2.5) * TILE;
+      const other = Game.canBuild('wall_stone', sp.x, sp.y); // ainda governa a vila 0, não esta
+      Game.becomeRuler(World.villages[0].civ, 'x'); const otherKing = Game.canBuild('wall_stone', sp.x, sp.y); // rei de outro reino
+      v.lord = 'player'; const gov = Game.canBuild('wall_stone', sp.x, sp.y); v.lord = null;
+      Game.becomeRuler(v.civ, 'x'); const king = Game.canBuild('wall_stone', sp.x, sp.y);
+      return { other, otherKing, gov, king };
+    });
+    if (r) {
+      if (!r.other || !/governador/.test(r.other)) fails.push('quem não governa a vila conseguiu erguer muro nela: ' + r.other);
+      if (!r.otherKing || !/governador/.test(r.otherKing)) fails.push('o rei de outro reino conseguiu erguer muro na vila');
+      if (r.gov) fails.push('o governador da vila não pôde erguer muro: ' + r.gov);
+      if (r.king) fails.push('o rei do reino da vila não pôde erguer muro: ' + r.king);
+    }
   } finally { await close(); }
   return fails.concat(errors.map(e => 'erro no jogo: ' + e));
 };

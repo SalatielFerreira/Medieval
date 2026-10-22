@@ -1407,11 +1407,9 @@ const Game = {
     for (let c = 0; c < CIV_DEFS.length; c++) {
       const cp = World.capitals[c], civ = G.civs[c];
       if (U.dist(ptx, pty, cp.x, cp.y) < 32) {
-        const max = Math.min(3, civ.garrison);
-        this.ensureGroup('cap' + c, max, () => {
-          const s = freeSpotNear((cp.door.x + 0.5) * TILE, (cp.door.y + 1.5) * TILE, 3 * TILE);
-          return this.spawn('guard', s.x, s.y, { civ: c, leash: 7, tag: 'cap' + c, archer: Math.random() < 0.25 });
-        });
+        // parte da guarnição guarda o castelo (o resto está nas vilas e nas estradas do reino: Garrison, em defense.js)
+        const max = Garrison.plan(c).cap;
+        this.ensureGroup('cap' + c, max, () => Garrison.spawnCastle(c));
       }
     }
     const spawnNpc = (p, x, y, leash, civ) => {
@@ -1459,11 +1457,10 @@ const Game = {
         const e = spot ? spawnNpc(p, (spot.x + spot.w / 2) * TILE, (spot.y + spot.h + 1.2) * TILE, 8, v.civ) : spawnNpc(p, (v.x + 0.5) * TILE, (v.y + 0.5) * TILE, 9, v.civ);
         e.visitor = true;
       }
-      if (!v.free && G.civs[v.civ].garrison > 0) this.ensureGroup('vg' + vi, 1, () => {
-        const s = freeSpotNear((v.x + 0.5) * TILE, (v.y - 0.5) * TILE, 2 * TILE);
-        return this.spawn('guard', s.x, s.y, { civ: v.civ, leash: 6, tag: 'vg' + vi });
-      });
+      const nv = v.free ? 0 : Garrison.plan(v.civ).v[vi] || 0; // os soldados da guarnição nesta vila, espalhados por ela
+      if (nv > 0) this.ensureGroup('vg' + vi, nv, () => Garrison.spawnVillage(v, vi));
     });
+    Garrison.patrol(ptx, pty); // e os que patrulham as estradas do reino
     Biz.ambient(spawnNpc);
     Ports.ambient(spawnNpc);
     Guards.ambient();
@@ -1834,7 +1831,9 @@ const Game = {
   kRecruit(ci) {
     const c = G.civs[ci];
     if (c.treasury < 40 || c.stock.wheat < 5 || c.garrison >= this.maxGarrison(c)) return;
+    const before = Garrison.plan(ci);
     c.treasury -= 40; c.stock.wheat -= 5; c.garrison++;
+    UI.msg(`🪖 Soldado recrutado: ${Garrison.where(ci, before)}.`, 'gold');
   },
   kEscort(ci) {
     const c = G.civs[ci];

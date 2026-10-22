@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: soldados por todo o reino
+
+- **A guarnição se espalha pelo reino:** cerca de um terço guarda o castelo (em volta dele, não só na porta), o resto é repartido entre as vilas do reino — as maiores primeiro, até 6 por vila, cada soldado num canto — e alguns patrulham as estradas do território. Ao recrutar, o aviso diz para onde o soldado novo foi.
+- **Os seus guardas também:** os capangas que você manda guardar uma vila ficam espalhados por ela; os que você manda para o castelo cobrem o reino inteiro, uns em volta do castelo e os outros pelas vilas do reino.
+- **Muralha só de quem manda:** perto de uma vila, só o governador dela ou quem governa o reino a que ela pertence ergue muro ou põe portão. Longe das vilas, os muros da sua base continuam livres.
+
 ## Novidades: um muro só
 
 - **A muralha da vila e o seu muro agora são a mesma coisa.** A Muralha saiu de Obras nas vilas: use o **Muro de Pedra** (ou a Paliçada) em **Defesa e exército** — o governador e o rei erguem dentro da vila e em volta dela, e ele serve de muralha, se emenda nos outros muros e recebe o portão.

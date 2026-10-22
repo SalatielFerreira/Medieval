@@ -103,3 +103,105 @@ const Defense = {
   const wu0 = War.update.bind(War);
   War.update = function (dt) { Defense.update(dt); return wu0(dt); };
 }
+
+// ------------------------------------------------------------------ a guarnição espalhada pelo reino
+// Os soldados da guarnição não ficam só na porta do castelo: cerca de um terço guarda o castelo, o resto é repartido entre
+// as vilas do reino (as maiores primeiro, até 6 por vila) e alguns patrulham as estradas do território. Como todo mundo no
+// jogo, eles só aparecem perto de você; o número de cada lugar sai da guarnição do reino (Portfólio → Reino → Recrutar).
+// o k-ésimo de n pontos num leque (como as sementes de um girassol): cobre a área inteira, do centro até a borda
+function spreadPoint(cx, cy, r0, r1, k, n, seed) {
+  const a = k * 2.39996 + (seed || 0), f = Math.sqrt((k + 0.5) / Math.max(1, n)), r = r0 + (r1 - r0) * f;
+  return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r / 1.25 };
+}
+const Garrison = {
+  _memo: new Map(),
+  villagesOf(c) { return World.villages.map((v, vi) => ({ v, vi })).filter(x => x.v && !x.v.free && !x.v.ruin && x.v.civ === c).sort((a, b) => (b.v.level || 1) - (a.v.level || 1) || a.vi - b.vi); },
+  // quantos soldados em cada lugar: { cap, patrol, v: { vi: n } }
+  plan(c) {
+    const civ = G.civs[c], g = civ ? Math.max(0, civ.garrison | 0) : 0, vs = this.villagesOf(c);
+    const key = c + ':' + g + ':' + vs.map(x => x.vi).join(',');
+    if (this._memo.has(key)) return this._memo.get(key);
+    const out = { cap: 0, patrol: 0, v: {} };
+    if (g > 0) {
+      out.cap = Math.min(g, Math.max(Math.min(3, g), Math.round(g * 0.35)));
+      let rest = g - out.cap;
+      out.patrol = Math.min(4, Math.floor(rest * 0.2)); rest -= out.patrol;
+      for (const x of vs) out.v[x.vi] = 0;
+      for (let k = 0; rest > 0 && vs.length && vs.some(x => out.v[x.vi] < 6); k++) { const x = vs[k % vs.length]; if (out.v[x.vi] < 6) { out.v[x.vi]++; rest--; } }
+      out.cap = Math.min(14, out.cap + rest); // o que sobra fica no castelo (até 14 à vista)
+    }
+    if (this._memo.size > 200) this._memo.clear();
+    this._memo.set(key, out);
+    return out;
+  },
+  // onde foi parar o soldado novo (comparando com a divisão de antes)
+  where(c, before) {
+    const now = this.plan(c);
+    for (const vi in now.v) if (now.v[vi] > (before.v[vi] || 0)) return `foi guardar ${World.villages[vi].name}`;
+    if (now.patrol > before.patrol) return 'vai patrulhar as estradas do reino';
+    return `reforça a guarda do castelo de ${CIV_DEFS[c].short}`;
+  },
+  // no castelo: em volta dele, não só na porta
+  spawnCastle(c) {
+    const cp = World.capitals[c], k = G.ents.filter(e => !e.dead && e.tag === 'cap' + c).length, p = spreadPoint(cp.x + 0.5, cp.y + 0.5, 5.5, 11, k, this.plan(c).cap, c);
+    const s = freeSpotNear(p.x * TILE, p.y * TILE, 2 * TILE);
+    return Game.spawn('guard', s.x, s.y, { civ: c, leash: 7, tag: 'cap' + c, archer: Math.random() < 0.25 });
+  },
+  // na vila: cada um num canto dela (praça, ruas, saídas)
+  spawnVillage(v, vi) {
+    const k = G.ents.filter(e => !e.dead && e.tag === 'vg' + vi).length, p = spreadPoint(v.x + 0.5, v.y + 0.5, 2, VILLAGE_R * 0.8, k, this.plan(v.civ).v[vi] || 1, vi);
+    const s = freeSpotNear(p.x * TILE, p.y * TILE, 2 * TILE);
+    return Game.spawn('guard', s.x, s.y, { civ: v.civ, leash: 7, tag: 'vg' + vi, archer: Math.random() < 0.2 });
+  },
+  // patrulha: quando você anda pelas estradas do reino, longe do castelo e das vilas
+  patrol(ptx, pty) {
+    if (G.place || G.dungeon || !World.inb(ptx | 0, pty | 0)) return;
+    const c = World.terr[World.idx(ptx | 0, pty | 0)];
+    if (!(c >= 0) || !G.civs[c]) return;
+    const n = this.plan(c).patrol; if (!n) return;
+    const cp = World.capitals[c];
+    if (cp && U.dist(ptx, pty, cp.x, cp.y) < 26) return;
+    if (World.villages.some(v => v && U.dist(ptx, pty, v.x, v.y) < VILLAGE_R + 6)) return;
+    Game.ensureGroup('gp' + c, n, () => {
+      for (let k = 0; k < 40; k++) {
+        const a = Math.random() * Math.PI * 2, r = U.rnd(8, 18), x = Math.round(ptx + Math.cos(a) * r), y = Math.round(pty + Math.sin(a) * r);
+        if (!World.inb(x, y) || World.tiles[World.idx(x, y)] !== T.ROAD || World.terr[World.idx(x, y)] !== c) continue;
+        const s = freeSpotNear((x + 0.5) * TILE, (y + 0.5) * TILE, 2 * TILE);
+        return Game.spawn('guard', s.x, s.y, { civ: c, leash: 14, tag: 'gp' + c });
+      }
+      const s = freeSpotNear((ptx + U.rnd(-10, 10)) * TILE, (pty + U.rnd(-10, 10)) * TILE, 3 * TILE);
+      return Game.spawn('guard', s.x, s.y, { civ: c, leash: 14, tag: 'gp' + c });
+    });
+  },
+};
+
+// ------------------------------------------------------------------ os seus guardas espalhados
+// Os capangas que você manda guardar uma vila ficam cada um num canto dela. Os que você manda para o castelo cobrem o reino
+// inteiro: uns em volta do castelo, os outros repartidos pelas vilas do reino. Cada um aparece quando você passa por lá.
+{
+  Guards.slot = function (p) {
+    const post = p.post;
+    if (!post || post.kind === 'spot' || !this.mine(post)) return this.spot(post);
+    const list = this.at(post).sort((a, b) => a.id - b.id), k = Math.max(0, list.indexOf(p)), n = list.length;
+    if (post.kind === 'village') { const v = World.villages[post.vi]; return spreadPoint(v.x + 0.5, v.y + 0.5, 2, VILLAGE_R * 0.8, k, n, post.vi + 7); }
+    // castelo: o 1º, o 2º... vão para o castelo e para cada vila do reino, em rodízio
+    const cp = World.capitals[post.civ], spots = [{ cp }, ...Garrison.villagesOf(post.civ).map(x => ({ v: x.v, vi: x.vi }))];
+    const t = spots[k % spots.length], m = Math.floor(k / spots.length), per = Math.ceil(n / spots.length);
+    return t.cp ? spreadPoint(cp.x + 0.5, cp.y + 0.5, 5.5, 11, m, per, post.civ + 3) : spreadPoint(t.v.x + 0.5, t.v.y + 0.5, 2, VILLAGE_R * 0.8, m, per, t.vi + 11);
+  };
+  Guards.spawn = function (p) {
+    const s = this.slot(p), sp = freeSpotNear(s.x * TILE, s.y * TILE, 2 * TILE);
+    const e = Game.spawn('sentry', sp.x, sp.y, { leash: 7, npc: p });
+    e.aggroOv = 11;
+    G.spawned.set(p.id, e);
+    return e;
+  };
+  Guards.ambient = function () {
+    if (G.dungeon) return;
+    for (const p of this.all()) {
+      if (G.spawned.has(p.id) || !this.valid(p.post)) continue;
+      const s = this.slot(p);
+      if (U.dist(P.x / TILE, P.y / TILE, s.x, s.y) < 30) this.spawn(p);
+    }
+  };
+}
