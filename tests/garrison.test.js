@@ -75,6 +75,16 @@ module.exports = async () => {
       if (g.villages && !g.cInVillages) fails.push('os guardas mandados ao castelo não foram para as vilas do reino');
       if (!g.cAtCastle) fails.push('nenhum guarda mandado ao castelo ficou no castelo');
     }
+    // nada de amontoado na frente do castelo: com 30 cavaleiros e a guarnição cheia, poucos ficam perto do portão
+    await page.evaluate(() => {
+      for (const e of G.ents) if (!e.dead && (e.kind === 'guard' || (e.npc && e.npc.rank === 'knight'))) { e.dead = true; if (e.npc) G.spawned.delete(e.npc.id); }
+      G.groups = {}; G.civs[0].garrison = 18;
+      let made = 0; for (const p of G.people) if (made < 30 && p.alive && p.age >= 20 && p.age < 50 && !p.kin && !p.capanga && ['peasant', 'soldier', 'mercenary'].includes(p.rank)) { p.rank = 'knight'; p.home = { type: 'castle', civ: 0 }; made++; }
+      const d = World.capitals[0].door; P.x = (d.x + 0.5) * TILE; P.y = (d.y + 4) * TILE;
+    });
+    await wait(3000);
+    const crowd = await page.evaluate(() => { const d = World.capitals[0].door; return G.ents.filter(e => !e.dead && (e.kind === 'guard' || (e.npc && e.npc.rank === 'knight')) && U.dist(e.x / TILE, e.y / TILE, d.x, d.y + 2) < 6).length; });
+    if (crowd > 8) fails.push(`${crowd} soldados e cavaleiros amontoados na frente do portão do castelo`);
   } finally { await close(); }
   return fails.concat(errors.map(e => 'erro no jogo: ' + e));
 };

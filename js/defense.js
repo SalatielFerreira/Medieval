@@ -123,16 +123,23 @@ const Garrison = {
     if (this._memo.has(key)) return this._memo.get(key);
     const out = { cap: 0, patrol: 0, v: {} };
     if (g > 0) {
-      out.cap = Math.min(g, Math.max(Math.min(3, g), Math.round(g * 0.35)));
+      out.cap = Math.min(g, 6, Math.max(Math.min(2, g), Math.round(g * 0.2))); // o castelo fica com poucos; o resto vai para o reino
       let rest = g - out.cap;
-      out.patrol = Math.min(4, Math.floor(rest * 0.2)); rest -= out.patrol;
+      out.patrol = Math.min(6, Math.floor(rest * 0.25)); rest -= out.patrol;
       for (const x of vs) out.v[x.vi] = 0;
-      for (let k = 0; rest > 0 && vs.length && vs.some(x => out.v[x.vi] < 6); k++) { const x = vs[k % vs.length]; if (out.v[x.vi] < 6) { out.v[x.vi]++; rest--; } }
-      out.cap = Math.min(14, out.cap + rest); // o que sobra fica no castelo (até 14 à vista)
+      for (let k = 0; rest > 0 && vs.length && vs.some(x => out.v[x.vi] < 8); k++) { const x = vs[k % vs.length]; if (out.v[x.vi] < 8) { out.v[x.vi]++; rest--; } }
+      out.patrol = Math.min(10, out.patrol + rest); // o que ainda sobra patrulha as estradas (e não se amontoa no castelo)
     }
     if (this._memo.size > 200) this._memo.clear();
     this._memo.set(key, out);
     return out;
+  },
+  // o lugar de cada cavaleiro do reino: o castelo e as vilas do reino, em rodízio (cada um num canto do lugar dele)
+  knightSlot(p) {
+    const c = p.home.civ, cp = World.capitals[c]; if (!cp) return null;
+    const ks = G.people.filter(q => q.alive && q.rank === 'knight' && q.home.type === 'castle' && q.home.civ === c && !q.capanga).sort((a, b) => a.id - b.id);
+    const spots = [null, ...this.villagesOf(c)], k = Math.max(0, ks.indexOf(p)), t = spots[k % spots.length], m = Math.floor(k / spots.length), per = Math.ceil(ks.length / spots.length);
+    return t ? spreadPoint(t.v.x + 0.5, t.v.y + 0.5, 2, VILLAGE_R * 0.8, m, per, t.vi + 21) : spreadPoint(cp.x + 0.5, cp.y + 0.5, 6, 16, m, per, c + 9);
   },
   // onde foi parar o soldado novo (comparando com a divisão de antes)
   where(c, before) {
@@ -143,7 +150,7 @@ const Garrison = {
   },
   // no castelo: em volta dele, não só na porta
   spawnCastle(c) {
-    const cp = World.capitals[c], k = G.ents.filter(e => !e.dead && e.tag === 'cap' + c).length, p = spreadPoint(cp.x + 0.5, cp.y + 0.5, 5.5, 11, k, this.plan(c).cap, c);
+    const cp = World.capitals[c], k = G.ents.filter(e => !e.dead && e.tag === 'cap' + c).length, p = spreadPoint(cp.x + 0.5, cp.y + 0.5, 6, 16, k, this.plan(c).cap, c);
     const s = freeSpotNear(p.x * TILE, p.y * TILE, 2 * TILE);
     return Game.spawn('guard', s.x, s.y, { civ: c, leash: 7, tag: 'cap' + c, archer: Math.random() < 0.25 });
   },

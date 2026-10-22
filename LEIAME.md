@@ -97,7 +97,8 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades: soldados por todo o reino
 
-- **A guarnição se espalha pelo reino:** cerca de um terço guarda o castelo (em volta dele, não só na porta), o resto é repartido entre as vilas do reino — as maiores primeiro, até 6 por vila, cada soldado num canto — e alguns patrulham as estradas do território. Ao recrutar, o aviso diz para onde o soldado novo foi.
+- **A guarnição se espalha pelo reino:** só uns poucos (até 6) guardam o castelo, espalhados em volta dele; o resto é repartido entre as vilas do reino — as maiores primeiro, até 8 por vila, cada soldado num canto — e os que sobram patrulham as estradas do território.
+- **Os cavaleiros e as damas cavaleiras também:** cada um guarda um lugar — o castelo ou uma das vilas do reino, em rodízio — e não ficam mais amontoados na frente do portão. Ao recrutar, o aviso diz para onde o soldado novo foi.
 - **Os seus guardas também:** os capangas que você manda guardar uma vila ficam espalhados por ela; os que você manda para o castelo cobrem o reino inteiro, uns em volta do castelo e os outros pelas vilas do reino.
 - **Muralha só de quem manda:** perto de uma vila, só o governador dela ou quem governa o reino a que ela pertence ergue muro ou põe portão. Longe das vilas, os muros da sua base continuam livres.
 

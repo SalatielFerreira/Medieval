@@ -1421,8 +1421,11 @@ const Game = {
     for (let c = 0; c < CIV_DEFS.length; c++) {
       const cp = World.capitals[c];
       if (U.dist(ptx, pty, cp.x, cp.y) > 30) continue;
-      for (const p of G.people) if (p.alive && p.rank === 'knight' && p.home.type === 'castle' && p.home.civ === c && !p.capanga && !G.spawned.has(p.id))
-        spawnNpc(p, (cp.door.x + 0.5) * TILE, (cp.door.y + 2) * TILE, 6, c);
+    }
+    // cavaleiros do reino: cada um guarda um lugar — o castelo ou uma das vilas do reino (Garrison.knightSlot), e aparece
+    // quando você passa por lá (antes todos ficavam amontoados na frente do portão)
+    for (const p of G.people) if (p.alive && p.rank === 'knight' && p.home.type === 'castle' && p.home.civ >= 0 && !p.capanga && !G.spawned.has(p.id)) {
+      const s = Garrison.knightSlot(p); if (s && U.dist(ptx, pty, s.x, s.y) < 30) spawnNpc(p, s.x * TILE, s.y * TILE, 6, p.home.civ);
     }
     if (U.dist(A.x, A.y, G.spawn.x, G.spawn.y) < 26 * TILE) for (const p of G.people) {
       if (p.alive && p.home.type === 'player' && !p.capanga && !G.spawned.has(p.id)) spawnNpc(p, G.spawn.x, G.spawn.y + TILE, 4, -1);
