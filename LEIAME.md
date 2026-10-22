@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: moradores mais trabalhadores
+
+- **Coletam mais:** além de camponeses, andarilhos e mendigos, os lenhadores, pedreiros e caçadores sem loja também cortam árvores e quebram pedras (o lenhador prefere árvores; o pedreiro, pedras), vão mais longe de casa e descansam menos entre uma coleta e outra. Longe de você, cada vila também coleta todo mês: madeira e pedra para o armazém do reino e renda para as famílias.
+- **Abrem mais negócios:** cada família pode ter até 3 empreendimentos (antes 2), com menos dinheiro guardado, e cada vila comporta mais negócios conforme cresce.
+- **Melhoram as estradas do mapa inteiro:** as caravanas melhoram o caminho por onde passam (até o calçamento de pedra), e cada reino cuida das estradas de todo o seu território, pago pelo tesouro, até o nível que as suas vilas já alcançaram.
+
 ## Novidades: soldados por todo o reino
 
 - **A guarnição se espalha pelo reino:** cerca de um terço guarda o castelo (em volta dele, não só na porta), o resto é repartido entre as vilas do reino — as maiores primeiro, até 6 por vila, cada soldado num canto — e alguns patrulham as estradas do território. Ao recrutar, o aviso diz para onde o soldado novo foi.

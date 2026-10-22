@@ -121,6 +121,8 @@ const Towns = {
     VillageWorks.monthTick(); // obras das vilas: aluguéis, recursos, prosperidade e famílias novas
     NpcRoads.tick(); // moradores abrem caminhos até as casas e lojas
     NpcRoads.upgradeTick(); // e evoluem as estradas da vila, um nível por vez
+    NpcRoads.travelTick(); // e as do reino inteiro, por onde os moradores e as caravanas passam
+    NPCWork.monthTick(); // coleta longe do jogador
     Faith.monthTick();
     People.purseTick(); // as lojas rendem para os próprios donos
     Ports.monthTick();
@@ -238,25 +240,27 @@ function drawCaravan(ctx, x, y, dir, anim, moving, col, hurt) {
 }
 
 // ====================================================================== trabalho dos civis
-// Camponeses, andarilhos e mendigos (quem não tem ofício) cortam árvores, quebram pedras e colhem plantas
-// perto de casa, dentro do próprio reino, e levam o que juntaram para a vila.
-const GATHER_RANKS = ['peasant', 'wanderer', 'beggar'];
+// Camponeses, andarilhos e mendigos — e lenhadores, pedreiros e caçadores que não têm loja — cortam árvores, quebram
+// pedras e colhem plantas em volta de casa, dentro do próprio reino, e levam o que juntaram para a vila. Longe de você,
+// cada vila também coleta todo mês (NPCWork.monthTick): o armazém do reino e as famílias enriquecem.
+const GATHER_RANKS = ['peasant', 'wanderer', 'beggar', 'lumber', 'mason', 'hunter'];
+const GATHER_PREF = { lumber: 'axe', mason: 'pick' }; // o lenhador prefere árvores; o pedreiro, pedras
 const NPCWork = {
   can(e) {
     const p = e.npc;
-    return !!p && p.alive && GATHER_RANKS.includes(p.rank) && p.age >= 16 && !p.capanga && (p.job === undefined || p.job === null) &&
+    return !!p && p.alive && GATHER_RANKS.includes(p.rank) && !p.shop && p.age >= 16 && !p.capanga && (p.job === undefined || p.job === null) &&
       !p.kin && !p.council && p.spouse !== 'player' && !p.hostile && e.kind === 'villager' && !e.placeNpc && e.inside == null;
   },
   update(e, dt, sp) {
     if (!this.can(e) || G.dungeon) return false;
-    const w = e.work || (e.work = { mode: 'idle', t: U.rnd(2, 10) });
+    const w = e.work || (e.work = { mode: 'idle', t: U.rnd(1, 5) });
     // à noite todos voltam para casa
     if (G.darkness > 0.55 && w.mode !== 'return') { if (w.mode !== 'idle') { w.mode = w.carry ? 'return' : 'idle'; w.t = 30; } if (w.mode === 'idle') return false; }
     const tilePos = i => ({ x: (i % WORLD_W + 0.5) * TILE, y: (((i / WORLD_W) | 0) + 1) * TILE });
     switch (w.mode) {
       case 'idle':
         w.t -= dt;
-        if (w.t <= 0 && !(G.darkness > 0.55) && !this.pick(e, w)) w.t = U.rnd(6, 14);
+        if (w.t <= 0 && !(G.darkness > 0.55) && !this.pick(e, w)) w.t = U.rnd(3, 7);
         return false;
       case 'go': {
         if (World.obj[w.i] !== w.type) { w.mode = 'idle'; w.t = 2; return false; }
@@ -307,11 +311,13 @@ const NPCWork = {
     const hx = Math.floor(e.home.x / TILE), hy = Math.floor(e.home.y / TILE), civ = Families.civOf(e.npc);
     const sx = Math.floor(World.start.x), sy = Math.floor(World.start.y);
     let best = null, bd = 1e9;
-    for (let k = 0; k < 45; k++) {
-      const x = hx + U.rint(-12, 12), y = hy + U.rint(-10, 10);
+    const pref = GATHER_PREF[e.npc.rank];
+    for (let k = 0; k < 60; k++) {
+      const x = hx + U.rint(-18, 18), y = hy + U.rint(-14, 14);
       if (!World.inb(x, y)) continue;
       const i = World.idx(x, y), t = World.obj[i];
       if (!t || OBJ[t].min > 1 || World.terr[i] !== civ) continue;
+      if (pref && OBJ[t].tool !== pref && Math.random() < 0.8) continue;
       if (Math.abs(x - sx) < 9 && Math.abs(y - sy) < 9) continue; // não mexe perto da cabana do jogador
       if (e.badT && e.badT.includes(i)) continue;
       if (G.ents.some(o => o !== e && o.work && o.work.i === i && o.work.mode !== 'idle')) continue;
@@ -329,13 +335,27 @@ const NPCWork = {
   // entrega o que juntou: vai para o armazém do reino e enriquece a família
   deposit(e, w) {
     const c = w.carry;
-    w.mode = 'idle'; w.t = U.rnd(5, 12); w.carry = null;
+    w.mode = 'idle'; w.t = U.rnd(2, 5); w.carry = null;
     if (!c) return;
     const civ = Families.civOf(e.npc), C = G.civs[civ];
     if (C && C.stock[c.k] !== undefined) C.stock[c.k] += c.n;
     const f = Families.of(e.npc);
     if (f) f.wealth += Math.max(1, Math.round(ITEMS[c.k].price * c.n * 0.5));
     if (G.stats) G.stats.npcGathered = (G.stats.npcGathered || 0) + c.n;
+  },
+  // longe de você, cada vila também coleta: madeira e pedra para o armazém do reino, e um pouco de renda para as famílias
+  monthTick() {
+    const win = Season.winter() ? 0.6 : 1;
+    World.villages.forEach((v, vi) => {
+      if (!v || v.ruin >= 3) return;
+      const ppl = People.residents(vi).filter(p => GATHER_RANKS.includes(p.rank) && !p.shop && p.age >= 16 && p.age <= 65 && !p.capanga && (p.job === undefined || p.job === null));
+      if (!ppl.length) return;
+      const got = { wood: 0, stone: 0 };
+      for (const p of ppl) { got.wood += p.rank === 'lumber' ? 4 : p.rank === 'mason' ? 0 : 2; got.stone += p.rank === 'mason' ? 4 : p.rank === 'lumber' ? 0 : 1; const f = Families.of(p); if (f) f.wealth += 2; }
+      const c = G.civs[v.civ];
+      if (c && !v.free) for (const k in got) c.stock[k] = Math.min(3000, (c.stock[k] || 0) + Math.round(got[k] * win));
+      if (G.stats) G.stats.npcGathered = (G.stats.npcGathered || 0) + Math.round((got.wood + got.stone) * win);
+    });
   },
   toolOf(e) { const w = e.work; return w && w.mode === 'work' && World.obj[w.i] ? OBJ[World.obj[w.i]].tool : null; },
 };
@@ -439,6 +459,33 @@ const NpcRoads = {
       total += work(cp.x, cp.y, 12, 5, L => { const p = 4 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; });
     });
     return total; // cada bloco evoluído já foi redesenhado (setTile)
+  },
+  // as estradas por onde se passa: as caravanas melhoram o caminho que percorrem (até a pedra), e cada reino cuida das
+  // estradas do seu território inteiro, pagando com o tesouro (até o nível que as suas vilas já alcançaram)
+  travelTick() {
+    if (G.dungeon) return 0;
+    if (!World.roadLv || World.roadLv.length !== WORLD_W * WORLD_H) World.roadLv = new Uint8Array(WORLD_W * WORLD_H);
+    const E = Urban.E(); E.rlv = E.rlv || {};
+    const up = (i, max, pay) => { if (World.tiles[i] !== T.ROAD) return false; const cur = World.roadLv[i] || 1; if (cur >= max || !pay(cur + 1)) return false; World.roadLv[i] = cur + 1; E.rlv[i] = cur + 1; World.setTile(i, T.ROAD); return true; };
+    let total = 0;
+    for (const c of Caravans.list()) {
+      if (c.done || !c.path) continue;
+      const cand = c.path.filter(i => World.tiles[i] === T.ROAD && (World.roadLv[i] || 1) < 3).sort((a, b) => (World.roadLv[a] || 1) - (World.roadLv[b] || 1)).slice(0, 25);
+      for (const i of cand) if (up(i, 3, () => true)) total++;
+    }
+    const byCiv = new Map();
+    for (let i = 0; i < World.tiles.length; i++) { if (World.tiles[i] !== T.ROAD) continue; const t = World.terr[i]; if (!(t >= 0)) continue; (byCiv.get(t) || byCiv.set(t, []).get(t)).push(i); }
+    for (const [ci, tiles] of byCiv) {
+      const c = G.civs[ci]; if (!c || c.dead) continue;
+      const vs = World.villages.filter(v => v && !v.free && v.civ === ci && !v.ruin), avg = vs.length ? vs.reduce((a, v) => a + (v.level || 1), 0) / vs.length : 1;
+      const max = Math.min(5, 1 + Math.floor((avg + 1) / 2)), cp = World.capitals[ci];
+      // no seu reino os moradores fazem por conta própria; nos outros, o rei paga
+      const pay = L => { if (c.ruler === 'player') return true; const p = 3 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; };
+      const cand = tiles.filter(i => (World.roadLv[i] || 1) < max).map(i => [World.roadLv[i] || 1, cp ? U.dist(i % WORLD_W, (i / WORLD_W) | 0, cp.x, cp.y) : 0, i]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      let n = 0; for (const [, , i] of cand) { if (n >= 40) break; if (up(i, max, pay)) n++; else if (c.ruler !== 'player' && c.treasury < 310) break; }
+      total += n;
+    }
+    return total;
   },
   // por mês: cada vila liga até n construções (as que não acharam caminho tentam de novo daqui a um ano)
   tick(n = 2) {

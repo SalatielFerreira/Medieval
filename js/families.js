@@ -133,7 +133,7 @@ const Families = {
         f.favor = (f.favor || 0) * 0.96;
       }
       if (this.canFound(f) && G.day - (G.lastFound || -99) >= 3 * ECON_DAYS && Math.random() < 0.15) { if (this.found(f)) G.lastFound = G.day; }
-      else if (typeof f.seat === 'number' && f.biz.length < 2 && f.wealth >= 300 + f.biz.length * 200 && this.bizIn(f.seat) < 4 && Math.random() < 0.2) this.buildBiz(f);
+      else if (typeof f.seat === 'number' && World.villages[f.seat] && f.biz.length < 3 && f.wealth >= 250 + f.biz.length * 180 && this.bizIn(f.seat) < 3 + (World.villages[f.seat].level || 1) * 2 && Math.random() < 0.35) this.buildBiz(f); // até 3 por família; a vila comporta mais negócios conforme cresce
       if (c && !f.noble && f.loyalty < 20 && f.wealth >= 300 && this.adults(f).length >= 2 && G.day > 8 * ECON_DAYS && G.day - (G.lastRevolt || -999) >= 10 * ECON_DAYS &&
         !G.revolts.some(r => !r.done && r.civ === f.civ) && Math.random() < 0.2) { this.startRevolt(f); G.lastRevolt = G.day; }
     }
@@ -186,7 +186,7 @@ const Families = {
     const type = types.length ? U.pick(types) : U.pick(Object.keys(FAMILY_BIZ).filter(t => !f.biz.some(b => b.type === t)));
     if (!type) return;
     const d = FAMILY_BIZ[type], vi = f.seat;
-    for (let r = 9; r <= 15; r++) for (let k = 0; k < 28; k++) {
+    for (let r = 9; r <= 22; r++) for (let k = 0; k < 28; k++) {
       const a = k / 28 * Math.PI * 2 + f.id;
       const x = Math.round(v.x + Math.cos(a) * r) - 1, y = Math.round(v.y + Math.sin(a) * r * 0.8) - 1;
       if (!World.areaOk(x - 1, y - 1, d.w + 2, d.h + 2) || !World.areaFree(x - 1, y - 1, d.w + 2, d.h + 2) || Towns.onRoad(x, y, d.w, d.h)) continue;
