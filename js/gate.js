@@ -558,3 +558,47 @@ CIVIC.vgate.desc = 'Ponha o portão em qualquer lugar entre muros — na muralha
     return r;
   };
 }
+
+// ------------------------------------------------------------------ um muro só
+// A muralha da vila e o seu muro são a mesma coisa: em Defesa e exército, o Muro de Pedra (ou a Paliçada) serve para a sua
+// base e, para o governador e o rei, também como muralha da vila. Clique e arraste para erguer vários trechos de uma vez.
+BUILDINGS.wall_stone.desc = 'Muro de pedra (1 pedra por trecho). É também a muralha da vila: o governador e o rei erguem dentro da vila e em volta dela. Clique e arraste para erguer vários trechos; ele se emenda nos outros muros e recebe o portão.';
+BUILDINGS.wall_wood.desc = 'Paliçada de madeira (3 madeiras por trecho). Clique e arraste para erguer vários trechos; ela se emenda nos outros muros e recebe o portão.';
+const WallDrag = {
+  held: false, last: null,
+  isWall(k) { return k === 'wall_stone' || k === 'wall_wood'; },
+  tile() { return { x: Math.floor(G.mouse.wx / TILE), y: Math.floor(G.mouse.wy / TILE) }; },
+  // ergue um trecho sem avisos (o arrastar não enche a tela de mensagens)
+  put(k, x, y) {
+    const b = BUILDINGS[k];
+    if (Game.canBuild(k, x, y) || !Inv.has(b.cost)) return false;
+    Inv.pay(b.cost); World.freeArea(x, y, 1, 1);
+    World.addStruct(k, x, y, 1, 1, 'player', { built: true });
+    World.touchArea(x - 1, y - 1, 3, 3);
+    Game.burst((x + 0.5) * TILE, (y + 0.6) * TILE, '#9a958c', 3);
+    Progress.add('built');
+    return true;
+  },
+  update() {
+    if (!this.held || !this.last || !this.isWall(G.placing) || G.paused || UI.isOpen()) return;
+    const t = this.tile(); if (t.x === this.last.x && t.y === this.last.y) return;
+    const n = Math.max(Math.abs(t.x - this.last.x), Math.abs(t.y - this.last.y)), k = G.placing;
+    let put = 0;
+    for (let i = 1; i <= n; i++) { const x = Math.round(this.last.x + (t.x - this.last.x) * i / n), y = Math.round(this.last.y + (t.y - this.last.y) * i / n); if (this.put(k, x, y)) put++; }
+    if (put) Sound.play('build', { vol: 0.5 });
+    this.last = t;
+    if (!Inv.has(BUILDINGS[k].cost)) { G.placing = null; this.last = null; UI.msg(`Acabou o material para ${BUILDINGS[k].name}.`, 'bad'); }
+  },
+};
+{
+  window.addEventListener('mousedown', e => { if (e.button === 0) WallDrag.held = true; });
+  window.addEventListener('mouseup', e => { if (e.button === 0) { WallDrag.held = false; WallDrag.last = null; } });
+  const pb0 = Game.placeBuilding.bind(Game);
+  Game.placeBuilding = function () {
+    const k = G.placing, n = World.structs.length, r = pb0();
+    if (WallDrag.isWall(k) && World.structs.length > n) WallDrag.last = WallDrag.tile(); // começou a arrastar
+    return r;
+  };
+  const up0 = Urban.update.bind(Urban);
+  Urban.update = function (...a) { WallDrag.update(); return up0(...a); };
+}

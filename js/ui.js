@@ -722,7 +722,7 @@ const UI = {
       ['infra', '🛣️', 'Infraestrutura', ['road', 'u:road2', 'u:road3', 'u:road4', 'u:road5', 'u:unroad', 'u:move', 'u:demolish']]]
       .map(([k, ic, name, ks]) => [k, ic, name, ks.filter(x => BUILDINGS[x] || x.includes(':') || x === 'road')]);
     const auth = Urban.hasAny();
-    if (auth) cats.push(['obras', '🏗️', 'Obras nas vilas', Object.keys(CIVIC).map(k => 'c:' + k)]);
+    if (auth) cats.push(['obras', '🏗️', 'Obras nas vilas', Object.keys(CIVIC).filter(k => k !== 'vwall').map(k => 'c:' + k)]); // o muro é um só: Defesa e exército
     this.buildCats = cats;
     const catOf = k => (cats.find(c => c[3].includes(k)) || cats[0])[0];
     if (S.build && S.build.startsWith('c:') && !auth) S.build = null;

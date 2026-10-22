@@ -402,9 +402,10 @@ const MapView = {
       for (const st of World.structs) {
         // só construções de reinos (santuários e outras sem dono ficam de fora) e visíveis
         if (st.type === 'castle' || st.type === 'cave_exit' || st.hidden || st.removed) continue;
-        const civ = typeof st.owner === 'number' && CIV_DEFS[st.owner] ? st.owner : -1;
+        const pwall = st.owner === 'player' && (st.type === 'wall_stone' || st.type === 'wall_wood'); // os seus muros: a cor da muralha da vila
+        const civ = typeof st.owner === 'number' && CIV_DEFS[st.owner] ? st.owner : pwall && CIV_DEFS[World.terr[World.idx(st.x, st.y)]] ? World.terr[World.idx(st.x, st.y)] : -1;
         const col = st.type === 'field' || st.type === 'farm' ? '#c9a24a' : st.type === 'camp' ? '#6a5034' : st.type === 'cave' ? '#3a3430' : st.type === 'cemetery' ? '#7a8a6a'
-          : st.owner === 'player' ? '#d8a840' : civ < 0 ? '#8a7a60' : st.type === 'store' ? Game.civColor(civ) : U.shade(CIV_DEFS[civ].roof, 0.05);
+          : st.owner === 'player' && !pwall ? '#d8a840' : civ < 0 ? '#8a7a60' : st.type === 'store' ? Game.civColor(civ) : U.shade(CIV_DEFS[civ].roof, 0.05);
         g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(X(st.x) + 1, Y(st.y) + 2, st.w * z - 2, st.h * z - 2);
         g.fillStyle = col; g.fillRect(X(st.x) + 1, Y(st.y) + 1, st.w * z - 2, st.h * z - 2);
       }
@@ -445,6 +446,7 @@ const MapView = {
     // construções do jogador
     for (const s of World.structs) {
       if (s.owner !== 'player' || s.removed || s.hidden) continue; // demolida: some do mapa
+      if (s.type === 'wall_stone' || s.type === 'wall_wood') continue; // os seus muros aparecem como a muralha da vila
       const w = Math.max(5, s.w * z), h = Math.max(5, s.h * z);
       g.fillStyle = '#000'; g.fillRect(X(s.x + s.w / 2) - w / 2 - 1.5, Y(s.y + s.h / 2) - h / 2 - 1.5, w + 3, h + 3);
       g.fillStyle = PLAYER_COLOR; g.fillRect(X(s.x + s.w / 2) - w / 2, Y(s.y + s.h / 2) - h / 2, w, h);

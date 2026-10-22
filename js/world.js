@@ -691,7 +691,7 @@ const World = {
   miniColor(i) {
     const sid = this.sgrid ? this.sgrid[i] : -1, st = sid >= 0 && this.structs[sid];
     if (st && !st.hidden && !st.removed && st.type !== 'cave_exit') {
-      const o = st.owner, col = o === 'player' ? '#d8a840' : typeof o === 'number' && CIV_DEFS[o] ? (st.type === 'castle' ? (G.civs && G.civs[o] ? Game.civColor(o) : CIV_DEFS[o].color) : CIV_DEFS[o].roof) : st.type === 'camp' ? '#6a5034' : st.type === 'cave' ? '#3a3430' : '#8a7a60';
+      const o = st.owner === 'player' && (st.type === 'wall_stone' || st.type === 'wall_wood') ? this.terr[i] : st.owner, col = o === 'player' ? '#d8a840' : typeof o === 'number' && CIV_DEFS[o] ? (st.type === 'castle' ? (G.civs && G.civs[o] ? Game.civColor(o) : CIV_DEFS[o].color) : CIV_DEFS[o].roof) : st.type === 'camp' ? '#6a5034' : st.type === 'cave' ? '#3a3430' : '#8a7a60';
       const [r, gg, b] = U.hexRgb(col); return [r, gg, b];
     }
     let [r, gg, b] = U.hexRgb(TINFO[this.tiles[i]].c);

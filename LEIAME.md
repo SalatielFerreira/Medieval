@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: um muro só
+
+- **A muralha da vila e o seu muro agora são a mesma coisa.** A Muralha saiu de Obras nas vilas: use o **Muro de Pedra** (ou a Paliçada) em **Defesa e exército** — o governador e o rei erguem dentro da vila e em volta dela, e ele serve de muralha, se emenda nos outros muros e recebe o portão.
+- **Clique e arraste** para erguer vários trechos de muro de uma vez.
+- **No mapa,** os seus muros têm a mesma cor da muralha da vila (a cor do reino onde estão), e não mais o dourado das suas construções.
+
 ## Novidades: portão em qualquer lugar entre muros
 
 - O **portão** pode ir em qualquer lugar **entre muros**: na muralha da vila ou nos seus muros de pedra e madeira, perto ou longe das vilas. Basta ter muro dos lados (a até 4 blocos) ou pôr em cima de um trecho de muro. Não vai sobre outro imóvel nem sobre vegetação.
