@@ -89,6 +89,11 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: portão em qualquer lugar entre muros
+
+- O **portão** pode ir em qualquer lugar **entre muros**: na muralha da vila ou nos seus muros de pedra e madeira, perto ou longe das vilas. Basta ter muro dos lados (a até 4 blocos) ou pôr em cima de um trecho de muro. Não vai sobre outro imóvel nem sobre vegetação.
+- Quem pode: o governador da vila ou quem governa o reino. O portão fica ligado à vila sua mais próxima, que recebe o pedágio; na defesa contra ataques, só conta o portão que fica na muralha da própria vila.
+
 ## Novidades: cemitério, arena e catedral em qualquer lugar
 
 - Quem governa um reino pode **erguer e mudar o cemitério e a arena para qualquer lugar do mapa** — dentro ou fora do reino, perto ou longe das vilas. Só não pode em cima de outro imóvel, de estrada ou de vegetação (corte as árvores e tire as pedras antes).

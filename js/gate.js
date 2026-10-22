@@ -29,7 +29,13 @@ const Gate = {
   },
   list() { return World.structs.filter(s => s.type === 'vgate' && !s.removed && !s.hidden); },
   village(s) { return World.villages[s.village] || null; },
-  mine(s) { const v = this.village(s); return !!v && v.lord === 'player'; },
+  mine(s) { const v = this.village(s); return !!v && (v.lord === 'player' || (!v.free && G.civs[v.civ] && G.civs[v.civ].ruler === 'player')); },
+  // a vila sua mais próxima (que você governa, ou do reino que você governa): o portão fica ligado a ela, esteja onde estiver
+  ownVillage(tx, ty) {
+    let best = -1, bd = 1e9;
+    World.villages.forEach((v, vi) => { if (!v || v.ruin || !(v.lord === 'player' || (!v.free && G.civs[v.civ] && G.civs[v.civ].ruler === 'player'))) return; const d = U.dist(tx, ty, v.x, v.y); if (d < bd) { bd = d; best = vi; } });
+    return best;
+  },
   log(s, text) { const d = this.data(s); d.log.unshift({ day: G.day, text }); if (d.log.length > 14) d.log.length = 14; },
   ring(x, y, v) { return Math.max(Math.abs(x - v.x), Math.abs(y - v.y) * 1.25 | 0); },
   vertical(s, v) { return Math.abs(s.x - v.x) >= Math.abs(s.y - v.y) * 1.25; }, // a muralha corre de norte a sul (lado leste ou oeste)
@@ -153,7 +159,7 @@ const Gate = {
     }
   },
   // com portão e porteiro, o saque e a tomada da vila nem sempre dão certo
-  guarded(vi) { return this.list().some(s => s.village === vi && Shops.keeper(s) && (this.peek(s) || {}).auto !== false); },
+  guarded(vi) { const v = World.villages[vi]; return !!v && this.list().some(s => s.village === vi && U.dist(s.x, s.y, v.x, v.y) <= GATE_REACH && Shops.keeper(s) && (this.peek(s) || {}).auto !== false); },
 
   // ---------------------------------------------------------------- janela
   open(sid) {
@@ -353,10 +359,8 @@ Object.assign(Gate, {
     if (b && !this.wallPiece(b)) return 'Já há uma construção aqui';
     if (!b && World.obj[i]) return 'Remova árvores/rochas primeiro';
     if (P.x + P.r > tx * TILE && P.x - P.r < (tx + 1) * TILE && P.y > ty * TILE && P.y - P.r < (ty + 1) * TILE) return 'Você está no caminho';
-    const v = World.villages[Urban.villageNear(tx, ty, GATE_REACH)];
-    if (!v) return 'O portão fica na muralha de uma vila';
-    if (v.lord !== 'player') return `Só o governador de ${v.name} pode instalar o portão`;
-    if (!this.axis(tx, ty)) return 'Ponha o portão na linha de um muro (com muro dos lados, a até 4 blocos) ou em cima de um trecho dele';
+    if (this.ownVillage(tx, ty) < 0) return 'Para pôr um portão você precisa governar uma vila ou um reino';
+    if (!this.axis(tx, ty)) return 'Ponha o portão entre muros (com muro dos lados, a até 4 blocos) ou em cima de um trecho de muro';
     return null;
   },
   // muro onde fica a torre do portão: um bloco de muro entre os dois — à esquerda (muralha horizontal) ou em cima (vertical)
@@ -425,7 +429,7 @@ Object.assign(Gate, {
       if (err) { this.warn(err); return; }
       if (!Inv.has(d.cost)) { this.warn('Faltam materiais para o Portão.'); return; }
       Inv.pay(d.cost);
-      const vi = this.villageNear(t.x, t.y, GATE_REACH);
+      const vi = Gate.ownVillage(t.x, t.y);
       Gate.clearFor(t.x, t.y);
       this.addCivic('vgate', t.x, t.y, vi);
       Game.burst((t.x + 0.5) * TILE, (t.y + 0.5) * TILE, '#c9a978', 14); Sound.play('build');
@@ -453,7 +457,7 @@ Object.assign(Gate, {
 // O governador demole e muda de lugar as muralhas e os portões da vila dele, dentro e fora dela; os seus muros de pedra e de
 // madeira valem em qualquer lugar. No modo Demolir, um clique num trecho de muro derruba na hora e arrastar derruba vários.
 {
-  const chiefOf = s => { const v = World.villages[s.village]; return !!v && v.lord === 'player'; };
+  const chiefOf = s => s.type === 'vgate' ? Gate.mine(s) : (() => { const v = World.villages[s.village]; return !!v && v.lord === 'player'; })();
   const mv0 = Urban.movable.bind(Urban);
   Urban.movable = function (s) { if (s && (s.type === 'vwall' || s.type === 'vgate') && chiefOf(s)) return null; return mv0(s); };
   const pe2 = Urban.placeErr.bind(Urban);
@@ -539,5 +543,18 @@ Object.assign(Gate, {
     if (dd.k === 'hire') { this.hire(s, G.people[+dd.v]); this.open(s.id); return; }
     if (dd.k === 'fire') { this.fire(s); this.open(s.id); return; }
     return act1(dd);
+  };
+}
+
+// ------------------------------------------------------------------ o portão em qualquer lugar entre muros
+// Não precisa ficar perto da vila: vale qualquer passagem entre muros (os da vila, os seus de pedra ou madeira, onde estiverem).
+// Ele fica ligado à vila sua mais próxima — a que você governa, ou uma do reino que você governa —, que recebe o pedágio.
+CIVIC.vgate.desc = 'Ponha o portão em qualquer lugar entre muros — na muralha da vila ou nos seus muros, perto ou longe. Ele se ajusta ao muro (horizontal ou vertical), fecha as laterais, cobra pedágio das caravanas e entrada dos forasteiros, revista cargas, fecha sozinho diante de inimigos e à noite e tem um porteiro. Fica ligado à vila sua mais próxima (governador ou rei).';
+{
+  const in0 = Urban.info.bind(Urban);
+  Urban.info = function (k) {
+    const r = in0(k);
+    if (r && k === 'c:vgate') Object.assign(r, { desc: CIVIC.vgate.desc, sub: '1×1 · entre muros, em qualquer lugar · governador ou rei', can: Inv.has(CIVIC.vgate.cost) && Gate.ownVillage(P.x / TILE, P.y / TILE) >= 0 });
+    return r;
   };
 }

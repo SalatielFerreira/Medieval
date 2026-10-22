@@ -6,7 +6,8 @@
 const GATE_HP = 300;
 const Defense = {
   RING: 16,
-  gateOf(vi) { return typeof Gate !== 'undefined' ? Gate.list().find(s => s.village === vi) || null : null; },
+  // o portão que defende a vila é o que fica na muralha dela (um portão seu longe dali não conta)
+  gateOf(vi) { const v = World.villages[vi]; return typeof Gate !== 'undefined' && v ? Gate.list().find(s => s.village === vi && U.dist(s.x, s.y, v.x, v.y) <= GATE_REACH) || null : null; },
   // direção de dentro para fora, passando pelo portão
   out(v, g) { const dx = g.x + 0.5 - v.x, dy = g.y + 0.5 - v.y, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d }; },
   spawnRaider(v, vi) {
