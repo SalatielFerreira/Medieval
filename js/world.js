@@ -44,8 +44,9 @@ function mixHex(a, b, t) { const x = U.hexRgb(a), y = U.hexRgb(b); return '#' + 
 // Versão 11: bem menos lagos no meio do continente (ficam os 3 maiores e os rios) e nenhuma colina: o mapa sem montanhas.
 // Versão 12: mapa 20% maior e biomas: tundra entre a neve e o campo, estepe e deserto ao sul, pântanos nas baixadas
 // úmidas perto de rios e lagos (com recursos e animais próprios); a passagem de um bioma para o outro é gradual.
-const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626, 10: 0.7626, 11: 0.7626, 12: 0.7626, 13: 0.7626 };
-const TERRAIN_V = 13, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
+// Versão 14: cada reino começa com uma vila só (as outras surgem com o tempo, fundadas pelas famílias e pelos reis).
+const TERRAIN_CUTS = { 1: 0.735, 2: 0.7626, 3: 0.7626, 4: 0.7626, 5: 0.7626, 6: 0.7626, 7: 0.7626, 8: 0.7626, 9: 0.7626, 10: 0.7626, 11: 0.7626, 12: 0.7626, 13: 0.7626, 14: 0.7626 };
+const TERRAIN_V = 14, MOUNT_CUT = TERRAIN_CUTS[TERRAIN_V];
 
 // níveis das estradas (Construção → Infraestrutura): quanto mais alto, mais rápido se anda; o custo é por bloco
 const ROAD_LV = [null,
@@ -412,8 +413,8 @@ const World = {
       cp.struct = s;
     }
 
-    // vilas: 3 por reino (2 a partir da versão 4 do terreno), bem espaçadas
-    const VPER = (this.terrainV || 0) >= 4 ? 2 : 3;
+    // vilas: 3 por reino (2 a partir da versão 4 do terreno, 1 a partir da 14), bem espaçadas
+    const VPER = (this.terrainV || 0) >= 14 ? 1 : (this.terrainV || 0) >= 4 ? 2 : 3;
     let vn = Math.floor(rng() * VILLAGE_NAMES.length);
     for (let c = 0; c < NC; c++) {
       const cp = this.capitals[c];
