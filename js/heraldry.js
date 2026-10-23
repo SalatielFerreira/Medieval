@@ -119,11 +119,19 @@ const Heraldry = {
   drawFlag(ctx, x, y, w, h, ci, t) {
     const im = this.img(ci, 'flag');
     if (!im) { ctx.fillStyle = Game.civColor(ci); ctx.fillRect(x, y, w, h); return; }
-    const n = 8, sw = w / n, iw = im.naturalWidth / n;
-    for (let k = 0; k < n; k++) {
-      const off = Math.sin(t * 4 + k * 0.7 + ci) * (k / n) * 2;
-      ctx.drawImage(im, k * iw, 0, iw, im.naturalHeight, x + k * sw, y + off, sw + 0.6, h);
+    const F = 12, ph = ((t * 4 + ci) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2), f = Math.floor(ph / (Math.PI * 2) * F) % F;
+    const sc = Math.max(1, Math.min(4, Math.round(Math.hypot(ctx.getTransform().a, ctx.getTransform().b) * 2) / 2));
+    const key = ci + '|' + w + '|' + h + '|' + sc + '|' + f + '|' + im.src.length, FC = this.flagCache || (this.flagCache = new Map());
+    let cv = FC.get(key);
+    if (!cv) {
+      cv = document.createElement('canvas'); cv.width = Math.ceil(w * sc + 2); cv.height = Math.ceil((h + 6) * sc);
+      const g = cv.getContext('2d'), n = 8, sw = w / n, iw = im.naturalWidth / n, tt = (f + 0.5) / F * Math.PI * 2;
+      g.scale(sc, sc);
+      for (let k = 0; k < n; k++) g.drawImage(im, k * iw, 0, iw, im.naturalHeight, k * sw, 3 + Math.sin(tt + k * 0.7) * (k / n) * 2, sw + 0.6, h);
+      if (FC.size > 600) FC.clear();
+      FC.set(key, cv);
     }
+    ctx.drawImage(cv, x, y - 3, cv.width / sc, cv.height / sc);
   },
   drawArms(ctx, cx, cy, s, ci) {
     const im = this.img(ci, 'arms');

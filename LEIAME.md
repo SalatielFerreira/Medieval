@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: o jogo mais leve com muita gente
+
+- **Pessoas desenhadas até 20 vezes mais rápido:** cada figura agora serve para as duas direções (a outra é o espelho) e a memória guarda as que estão na tela. Antes, com muita gente andando, o jogo descartava e redesenhava figuras sem parar.
+- **Bandeiras tremulando** são pré-desenhadas uma vez em 12 posições da onda, em vez de recortadas de uma imagem a cada quadro.
+- **A cópia de segurança automática** (que junta e compacta o jogo inteiro) passou de a cada 20 segundos para a cada 2 minutos, e só com você parado ou numa janela — nunca no meio de uma caminhada.
+
 ## Novidades: moradores mais trabalhadores
 
 - **Coletam mais:** além de camponeses, andarilhos e mendigos, os lenhadores, pedreiros e caçadores sem loja também cortam árvores e quebram pedras (o lenhador prefere árvores; o pedreiro, pedras), vão mais longe de casa e descansam menos entre uma coleta e outra. Longe de você, cada vila também coleta todo mês: madeira e pedra para o armazém do reino e renda para as famílias.

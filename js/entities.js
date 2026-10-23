@@ -857,13 +857,15 @@ function humanFrame(o) {
 function drawHuman(ctx, x, y, o) {
   const s = o.scale || 1, dir = o.dir < 0 ? -1 : 1, fr = humanFrame(o);
   const tf = ctx.getTransform(), res = Math.max(1, Math.min(10, Math.round(Math.hypot(tf.a, tf.b) * s * 2) / 2));
-  const key = [fr.key, dir, res, o.body, o.legs, o.skin, o.hair, o.hairStyle, o.beardStyle, o.beard, o.armor, o.helmet, o.cap, o.hood, o.crown, o.cape, o.outfit,
+  // a figura é a mesma para as duas direções (a da esquerda é o espelho): metade das figuras na memória
+  const key = [fr.key, res, o.body, o.legs, o.skin, o.hair, o.hairStyle, o.beardStyle, o.beard, o.armor, o.helmet, o.cap, o.hood, o.crown, o.cape, o.outfit,
     o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, !!(o.weapon || o.swing > 0 || o.rod)].join('|');
   let cv = HUMAN_CACHE.get(key);
+  if (cv) { HUMAN_CACHE.delete(key); HUMAN_CACHE.set(key, cv); } // a mais usada fica (as esquecidas saem primeiro)
   if (!cv) {
     cv = document.createElement('canvas'); cv.width = Math.ceil(44 * res); cv.height = Math.ceil(54 * res);
     const g = cv.getContext('2d'); g.scale(res, res); g.translate(22, 46);
-    humanBody(g, o, dir, fr.t);
+    humanBody(g, o, 1, fr.t);
     // contorno escuro e suave em volta da figura (deixa a pessoa nítida sobre qualquer chão)
     const sil = document.createElement('canvas'); sil.width = cv.width; sil.height = cv.height;
     const sg = sil.getContext('2d'); sg.drawImage(cv, 0, 0); sg.globalCompositeOperation = 'source-in'; sg.fillStyle = 'rgba(24,14,8,0.62)'; sg.fillRect(0, 0, sil.width, sil.height);
@@ -872,7 +874,7 @@ function drawHuman(ctx, x, y, o) {
     for (const [dx, dy] of [[d1, 0], [-d1, 0], [0, d1], [0, -d1]]) og.drawImage(sil, dx, dy);
     og.drawImage(cv, 0, 0);
     cv = out;
-    if (HUMAN_CACHE.size > 900) HUMAN_CACHE.delete(HUMAN_CACHE.keys().next().value);
+    if (HUMAN_CACHE.size > 1400) HUMAN_CACHE.delete(HUMAN_CACHE.keys().next().value);
     HUMAN_CACHE.set(key, cv);
   }
   const bob = o.moving ? -Math.abs(Math.sin(fr.t * 12)) * 1.1 : Math.sin(fr.t * 2.2) * 0.3;
@@ -880,7 +882,9 @@ function drawHuman(ctx, x, y, o) {
   ctx.translate(Math.round(x), Math.round(y));
   ctx.scale(s, s);
   ell(ctx, 0, 0, 9.5, 3.2, 'rgba(0,0,0,0.26)'); ell(ctx, 0, 0, 6, 2, 'rgba(0,0,0,0.12)'); // sombra no chão
+  if (dir < 0) ctx.scale(-1, 1);
   ctx.drawImage(cv, -22, -46, cv.width / res, cv.height / res);
+  if (dir < 0) ctx.scale(-1, 1);
 
   // ---- arma ou ferramenta (no mundo: a mira não é espelhada)
   const ang = o.swing > 0 ? o.aim - 1.3 + (1 - o.swing / 0.25) * 2.6 : (dir > 0 ? 0.9 : Math.PI - 0.9);

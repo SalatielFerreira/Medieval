@@ -2266,7 +2266,15 @@ const Resume = {
   watch() {
     window.addEventListener('pagehide', () => this.write());
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.write(); });
-    setInterval(() => { if (G.state === 'play' && !G.paused) this.write(); }, 20000);
+    // a cópia de segurança junta e compacta o jogo inteiro (num jogo grande, um tranco): só a cada 2 minutos e com você
+    // parado ou numa janela — nunca no meio de uma caminhada
+    let last = 0, px = 0, py = 0, still = 0;
+    setInterval(() => {
+      if (G.state !== 'play') return;
+      const moved = Math.abs(P.x - px) + Math.abs(P.y - py) > 4; px = P.x; py = P.y;
+      still = moved ? 0 : still + 1;
+      if (Date.now() - last >= 120000 && (G.paused || still >= 2)) { last = Date.now(); this.write(); }
+    }, 1500);
   },
   // devolve true se voltou para algum lugar (senão o jogo abre no menu inicial)
   restore() {

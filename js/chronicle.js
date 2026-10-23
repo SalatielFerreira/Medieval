@@ -107,7 +107,8 @@ const News = {
       if (line) e._say = { text: line.length > 46 ? line.slice(0, 44) + '…' : line, until: t + 4 };
     }
     if (e._say && t < e._say.until) {
-      ctx.font = '600 10px "Segoe UI", sans-serif'; const w = Math.min(230, ctx.measureText(e._say.text).width + 12), a = Math.min(1, (e._say.until - t) * 2);
+      ctx.font = '600 10px "Segoe UI", sans-serif'; if (e._say.w === undefined) e._say.w = Math.min(230, ctx.measureText(e._say.text).width + 12);
+      const w = e._say.w, a = Math.min(1, (e._say.until - t) * 2);
       ctx.globalAlpha = a; ctx.fillStyle = 'rgba(255,248,232,0.94)'; ctx.strokeStyle = 'rgba(60,40,20,0.6)'; ctx.lineWidth = 1;
       rrPath(ctx, x - w / 2, y - 17, w, 16, 6); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x - 3, y - 1); ctx.lineTo(x + 3, y - 1); ctx.lineTo(x, y + 4); ctx.closePath(); ctx.fill();
