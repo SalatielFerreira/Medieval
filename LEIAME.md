@@ -89,6 +89,10 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: mais bebês
+
+- **Natalidade maior:** as casadas de 18 a 42 anos engravidam com mais que o dobro da chance de antes (7,5% ao mês) e os gêmeos ficaram mais comuns. O freio das vilas lotadas só age quando a vila está bem acima do que comporta, e o mundo aguenta mais gente antes de os nascimentos rarearem. Resultado: cerca de 60% mais nascimentos.
+
 ## Novidades: vilas e castelos desbravados
 
 - **Os moradores desmatam de verdade:** todo mês, mesmo longe de você, cada vila corta árvores e quebra pedras do centro para fora, e a área limpa cresce com o nível da vila; em volta dos castelos também. A madeira e a pedra vão para o armazém do reino. Ficam de pé as árvores que dão fruta e algumas de sombra, e os veios de minério continuam lá.

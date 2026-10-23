@@ -16,7 +16,7 @@ const SHOP_RANKS = ['merchant', 'smith', 'lumber', 'mason', 'innkeeper'];
 const FOUND_COST = { gold: 100000 }; // fundar uma vila: o mesmo preço para o herói e para os reis NPC
 const MAX_FOUNDED = 12;
 // limite suave da população: acima disso nascem cada vez menos crianças
-const POP_SOFT = 600, POP_HARD = 850;
+const POP_SOFT = 900, POP_HARD = 1250;
 
 const Families = {
   F() { return G.fams || (G.fams = {}); },
@@ -525,7 +525,7 @@ const Families = {
     const v = World.villages[p.home.idx];
     if (!v) return 1;
     const n = People.residents(p.home.idx).length, cap = this.vcap(v);
-    return global * (n > cap * 1.3 ? 0.25 : n > cap ? 0.6 : 1);
+    return global * (n > cap * 1.6 ? 0.35 : n > cap * 1.25 ? 0.7 : 1); // só freia quando a vila está bem acima do que comporta
   },
 };
 

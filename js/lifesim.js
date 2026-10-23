@@ -110,6 +110,8 @@ const Rumors = {
 };
 
 // ====================================================================== gravidez e parto
+// natalidade: a chance de uma mulher casada (18 a 42 anos) engravidar em cada mês, e a de nascerem gêmeos
+const BIRTH_RATE = 0.075, TWINS_RATE = 0.05;
 const Birth = {
   LEN: 9,
   midwife(vi) {
@@ -130,7 +132,7 @@ const Birth = {
       if (m.preg || m.sex !== 'f' || m.age < 18 || m.age > 42 || m.spouse === null || m.spouse === 'player') continue;
       const s = G.people[m.spouse];
       if (!s || !s.alive || m.jail > G.day) continue;
-      if (Math.random() < 0.035 * Families.birthFactor(m)) this.conceive(m, s);
+      if (Math.random() < BIRTH_RATE * Families.birthFactor(m)) this.conceive(m, s);
     }
   },
   // o parto de uma moradora (com ou sem parteira na vila)
@@ -139,7 +141,7 @@ const Birth = {
     m.preg = null;
     if (!f) return;
     const royal = m.rank === 'ruler' || f.rank === 'ruler' || m.rank === 'consort';
-    const n = Math.random() < 0.03 ? 2 : 1, kids = [];
+    const n = Math.random() < TWINS_RATE ? 2 : 1, kids = [];
     for (let k = 0; k < n; k++) { const c = People.child(m, f, { rank: royal ? 'heir' : 'child' }); c.age = 0; kids.push(c); }
     Mind.feel(m, 'joy', 70); Mind.feel(f, 'joy', 60);
     const known = m.met || f.met || m.aff >= 10 || f.aff >= 10;
