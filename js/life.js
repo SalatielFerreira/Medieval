@@ -123,6 +123,7 @@ const Towns = {
     NpcRoads.upgradeTick(); // e evoluem as estradas da vila, um nível por vez
     NpcRoads.travelTick(); // e as do reino inteiro, por onde os moradores e as caravanas passam
     NPCWork.monthTick(); // coleta longe do jogador
+    NPCWork.clearTick(); // e desmatam a terra das vilas e dos castelos
     Faith.monthTick();
     People.purseTick(); // as lojas rendem para os próprios donos
     Ports.monthTick();
@@ -356,6 +357,54 @@ const NPCWork = {
       if (c && !v.free) for (const k in got) c.stock[k] = Math.min(3000, (c.stock[k] || 0) + Math.round(got[k] * win));
       if (G.stats) G.stats.npcGathered = (G.stats.npcGathered || 0) + Math.round((got.wood + got.stone) * win);
     });
+  },
+  // ------------------------------------------------------------ desmatamento
+  // Terra ocupada: a área da vila (e um pouco em volta, que cresce com o nível) e os arredores dos castelos. Ali, o que é
+  // cortado ou quebrado não rebrota; longe dali a natureza volta como sempre.
+  settledR(v) { return VILLAGE_R + 2 + Math.min(12, (v.level || 1) * 2); },
+  settled(x, y) {
+    for (const v of World.villages) if (v && !v.removed && v.ruin < 3 && Math.abs(x - v.x) <= this.settledR(v) && Math.abs(y - v.y) <= this.settledR(v)) return true;
+    for (const c of World.capitals) if (c && U.dist(x, y, c.x, c.y) <= 24) return true;
+    return false;
+  },
+  // o que os moradores derrubam: árvores e pedras comuns (os veios de minério e as plantas de colher ficam)
+  clearable(t) { const o = OBJ[t]; return !!o && (o.tool === 'axe' || o.tool === 'pick') && o.min <= 1; },
+  // ficam de pé as árvores que dão fruta e uma em cada sete (sombra): a vila fica limpa, mas não pelada
+  shade(i, t) { const o = OBJ[t]; return !!o.tree && (i % 7 === 0 || Object.keys(o.drops || {}).some(k => ITEMS[k] && ITEMS[k].food)); },
+  // todo mês, mesmo longe de você: cada vila derruba árvores e pedras de dentro para fora; os castelos limpam os arredores
+  clearTick() {
+    if (G.dungeon) return 0;
+    const px = P.x / TILE, py = P.y / TILE, sx = Math.floor(World.start.x), sy = Math.floor(World.start.y);
+    let total = 0;
+    const clear = (cx, cy, R, n, civ) => {
+      const cand = [];
+      for (let y = cy - R; y <= cy + R; y++) for (let x = cx - R; x <= cx + R; x++) {
+        if (!World.inb(x, y)) continue;
+        const i = World.idx(x, y), t = World.obj[i];
+        if (!t || !this.clearable(t) || World.sgrid[i] >= 0 || this.shade(i, t)) continue;
+        if (U.dist(x, y, px, py) < 14) continue;                          // nada some diante dos seus olhos
+        if (Math.abs(x - sx) < 9 && Math.abs(y - sy) < 9) continue;         // nem perto da sua cabana
+        cand.push([Math.abs(x - cx) + Math.abs(y - cy), i, t]);
+      }
+      cand.sort((a, b) => a[0] - b[0]);                                    // do centro para fora
+      const got = { wood: 0, stone: 0 };
+      for (const [, i, t] of cand.slice(0, n)) {
+        World.obj[i] = 0; World.objHp[i] = 0;
+        const k = OBJ[t].tool === 'axe' ? 'wood' : 'stone'; got[k] += 2;
+        World.touchArea(i % WORLD_W, (i / WORLD_W) | 0, 1, 1);
+        total++;
+      }
+      const C = G.civs[civ]; if (C) for (const k in got) C.stock[k] = Math.min(3000, (C.stock[k] || 0) + got[k]);
+    };
+    World.villages.forEach((v, vi) => {
+      if (!v || v.ruin >= 3) return;
+      const workers = People.residents(vi).filter(p => p.age >= 16 && p.age <= 65 && !p.capanga).length;
+      clear(v.x, v.y, this.settledR(v), Math.min(40, 6 + workers), v.free ? -1 : v.civ);
+    });
+    World.capitals.forEach((c, ci) => { if (c && G.civs[ci]) clear(c.x, c.y, 24, 20, ci); });
+    // o que já tinha sido cortado na terra ocupada não volta mais
+    World.regrow = World.regrow.filter(r => !this.settled(r.i % WORLD_W, (r.i / WORLD_W) | 0));
+    return total;
   },
   toolOf(e) { const w = e.work; return w && w.mode === 'work' && World.obj[w.i] ? OBJ[World.obj[w.i]].tool : null; },
 };
@@ -597,3 +646,12 @@ const Ports = {
     }
   },
 };
+
+// na terra ocupada (vilas e arredores dos castelos), o que é cortado ou quebrado não rebrota
+{
+  const ro0 = World.removeObj.bind(World);
+  World.removeObj = function (i) {
+    const n = this.regrow.length; ro0(i);
+    if (this.regrow.length > n && NPCWork.settled(i % WORLD_W, (i / WORLD_W) | 0)) this.regrow.pop();
+  };
+}

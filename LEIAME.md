@@ -89,6 +89,11 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: vilas e castelos desbravados
+
+- **Os moradores desmatam de verdade:** todo mês, mesmo longe de você, cada vila corta árvores e quebra pedras do centro para fora, e a área limpa cresce com o nível da vila; em volta dos castelos também. A madeira e a pedra vão para o armazém do reino. Ficam de pé as árvores que dão fruta e algumas de sombra, e os veios de minério continuam lá.
+- **Terra ocupada não rebrota:** dentro e em volta das vilas e dos castelos, o que é cortado ou quebrado (por você ou pelos moradores) não cresce de novo. No campo, a natureza volta como sempre.
+
 ## Novidades: o jogo mais leve com muita gente
 
 - **Pessoas desenhadas até 20 vezes mais rápido:** cada figura agora serve para as duas direções (a outra é o espelho) e a memória guarda as que estão na tela. Antes, com muita gente andando, o jogo descartava e redesenhava figuras sem parar.
