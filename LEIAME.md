@@ -89,6 +89,23 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: o banco do reino e a política
+
+- **🏦 Banco do reino:** cada reino tem o seu banco, perto do castelo e com nome próprio. No reino que você governa, você funda o banco (Portfólio → o seu reino → Resumo → Fundar o banco), escolhe o lugar no mapa e dá o nome; o nome aparece na administração do reino, onde fica o tesouro nacional.
+  - Lá dentro: caixas, mesa do escrivão, quadro das expedições, cofres particulares e a porta do cofre-forte, com banqueiro, caixa, guardas e clientes.
+  - **Conta** que rende (os juros quem define é o rei); se o reino quebrar, a conta perde 60%.
+  - **Aplicações** (títulos do Tesouro de 3, 6 e 12 meses): o dinheiro financia o reino e volta com juros; se o reino quebrar antes, vira pó.
+  - **Empréstimos**, **emprestar aos moradores** e **investir** em famílias e vilas (tudo o que antes ficava na sua casa).
+  - **Expedições de comércio** (caravana do sal, vinho, rota da seda, navio às ilhas e mina de prata): quanto mais longe, mais rende e maior o risco.
+  - **Cofre particular** para guardar itens (5 🪙 por mês) e, de noite, com uma gazua, dá para tentar **arrombar o cofre-forte**.
+  - **Tesouro Nacional** (só o rei, na sala do cofre): juros da conta do povo, pegar dinheiro do banco, emitir títulos, doar ou retirar ouro do tesouro, auditoria contra corruptos e renomear o banco.
+- **💥 Falência:** quando o tesouro não paga as contas, o banco cobre o rombo enquanto tiver reserva e crédito. Sem isso o reino entra em crise; com 3 meses de crise ele quebra: o rei cai (você também perde a coroa), as vilas ficam sem dono, o povo vira bárbaro (acampamentos novos e saques) e um exército anarquista anda pelas terras até uma família forte fundar uma nova dinastia (ou alguém tomar o castelo do chefe anarquista). Vale para todos os reinos.
+- **🗳️ Eleições nas vilas** (Portfólio → Sociedade → Política): o governador é eleito para um mandato de 5 meses (5 anos de vida). Ganha quem tem mais feitos pela vila (obras, doações, festas, investimentos e bandidos derrotados por perto), melhor relacionamento com os moradores e mais fama; os anciãos votam com peso 3. Quem governa, inclusive você, precisa se reeleger.
+- **👑 O trono:** a coroa passa de pai para filho, a não ser que alguém a tome. As únicas formas são matar o rei (na guerra ou na sala do trono) ou comprar todo o círculo do rei (general, tesoureiro, camareiro e capitão da guarda) e atacar sem que ninguém o proteja: com todos comprados, a guarda sai da sala do trono.
+  - Suborne pela conversa ou pelo castelo; quem recusa pode contar ao rei.
+  - Famílias descontentes dão golpes nos reinos da IA (às vezes você ouve o boato antes).
+  - Contra você: uma família com pouca lealdade compra o seu conselho e manda soldados traidores atacar onde você estiver, sem a guarda ajudar. Se você vencer, a família é expulsa; se morrer, a coroa vai para os golpistas e o seu herdeiro fica com os outros reinos. O mestre espião pode descobrir o complô antes (Reinado → Espionagem).
+
 ## Novidades: o dobro de obras nas vilas (36 → 70)
 
 - **34 obras novas** no menu Construção → Obras nas vilas, em ordem do mais barato ao mais caro:

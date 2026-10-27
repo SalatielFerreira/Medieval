@@ -3887,3 +3887,34 @@ body.small .fin-cols { grid-template-columns: 1fr; }
 .fin-card > .sec { display: flex; align-items: center; gap: 8px; text-align: left; } .fin-card > .sec span { margin-left: auto; float: none; }
 .war-odds { margin: 8px 0; }
 .ldi-bar .ldi-info { font-size: 16px; display: flex; align-items: center; justify-content: center; }
+
+/* ---- banco do reino ---- */
+.bankw { display: flex; flex-direction: column; gap: 10px; }
+.bankw > .tabs { flex-wrap: wrap; }
+.bank-big { display: flex; flex-direction: column; align-items: center; padding: 14px; margin: 6px 0 10px; border-radius: 10px; background: radial-gradient(ellipse at center, rgba(214,174,96,.22), rgba(0,0,0,.2)); border: 1px solid rgba(214,174,96,.4); }
+.bank-big b { font-family: 'Cinzel', Georgia, serif; font-size: 30px; color: var(--gold-hi); font-variant-numeric: tabular-nums; }
+.bank-big small { color: #c9b48a; }
+.bank-k .sec span { float: right; font-size: 11.5px; font-family: var(--ui-font); }
+.bank-k.saudável .sec span { color: #9fdc7c; } .bank-k.atenção .sec span { color: #f0c060; } .bank-k.crítico .sec span, .bank-k.anarquia .sec span { color: #f08a72; }
+.bank-k.crítico, .bank-k.anarquia { border-color: rgba(208,80,58,.6); box-shadow: inset 0 0 0 1px rgba(208,80,58,.25); }
+.bank-k-row { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: #d8c69c; margin: 4px 0 8px; }
+.bank-k-row b { color: #f1e4c6; font-variant-numeric: tabular-nums; }
+.bank-k .ok, .bankw .ok { color: #9fdc7c; } .bank-k .bad, .bankw .bad { color: #f08a72; }
+.bank-risk { display: block; height: 4px; border-radius: 2px; background: rgba(0,0,0,.35); margin-top: 3px; max-width: 220px; overflow: hidden; }
+.bank-risk i { display: block; height: 100%; background: linear-gradient(90deg, #d6ae60, #d0503a); }
+.bank-box { display: flex; flex-wrap: wrap; gap: 6px; }
+.bank-it { width: 84px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; }
+.bank-it b { font-size: 12px; } .bank-it small { font-size: 10.5px; color: #c9b48a; text-align: center; line-height: 1.15; }
+.bank-log { font-size: 12px; padding: 2px 0; border-bottom: 1px dashed rgba(214,174,96,.15); } .bank-log small { color: #a8977a; margin-right: 6px; }
+.bank-closed { border-color: rgba(208,80,58,.6); }
+.bank-rob { border-style: dashed; }
+/* ---- política ---- */
+.pol-cands { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 8px; margin: 6px 0 8px; }
+.pol-c { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid rgba(214,174,96,.2); }
+.pol-c.me { border-color: var(--gold); background: rgba(214,174,96,.08); }
+.pol-c b { color: #f1e4c6; } .pol-c small { color: #c9b48a; font-size: 11px; }
+.pol-sc { display: flex; gap: 8px; font-size: 12px; } .pol-sc i { font-style: normal; font-variant-numeric: tabular-nums; }
+.pol-bar { height: 6px; border-radius: 3px; background: rgba(0,0,0,.4); overflow: hidden; } .pol-bar i { display: block; height: 100%; background: linear-gradient(90deg, #6a8ad0, #a8c0f0); }
+.pol-c.me .pol-bar i { background: linear-gradient(90deg, #c9932f, #ffe9b0); }
+.pol-c button { align-self: flex-start; padding: 3px 10px; font-size: 12px; }
+.pol-v .sec span { float: right; font-size: 11.5px; color: #c9b48a; font-family: var(--ui-font); }
