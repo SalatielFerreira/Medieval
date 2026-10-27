@@ -34,7 +34,7 @@ module.exports = async () => {
       // 5. funcionários sobem de nível
       const w = Biz.workers(bakery)[0]; if (w) { w.bizXp = 7; Commerce.staff(bakery); ok(Commerce.lv(w) >= 2 && (w.raise || 0) >= 1, 'o funcionário não subiu de nível'); }
       // 6. guilda própria e recrutamento pela amizade
-      Commerce.found(); ok(Commerce.st().myGuild, 'não fundou a guilda');
+      Dialog.autoYes = true; Commerce.found(); ok(Commerce.st().myGuild && Commerce.st().myGuild.name.startsWith('Irmandade'), 'não fundou a guilda com o nome escolhido'); ok(Commerce.GUILDS.crafts.name === 'Maçonaria', 'as ordens do jogo não têm os nomes novos'); ok(RELIGIONS[Religion.of(1)].name === 'Islamismo', 'Dorne não segue o Islamismo');
       const smith = G.people.find(p => p.alive && p.rank === 'smith' && Commerce.guildOf(p) === 'smiths');
       if (smith) { smith.aff = 0; let res = Commerce.recruit(smith); ok(smith.guild !== 'player', 'recrutou sem amizade'); smith.aff = 90; res = Commerce.recruit(smith); ok(smith.guild === 'player', 'não recrutou com amizade: ' + (res && res.note)); }
       UI.showTalk(G.people.find(p => p.alive && p.age > 20 && p.guild !== 'player').id); ok(UI.panel.innerHTML.includes('grecruit'), 'a conversa não oferece convidar para a guilda'); UI.close();

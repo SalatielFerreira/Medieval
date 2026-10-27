@@ -164,13 +164,13 @@ const Commerce = {
   settle(s) { const ws = Biz.workers(s), cost = ws.length * 12; if (P.gold < cost) { UI.msg(`O acordo custa ${cost} 🪙 (12 por funcionário).`, 'bad'); return; } P.gold -= cost; for (const p of ws) People.addAff(p, 15); s.strike = 0; UI.msg(`🤝 Acordo fechado: ${cost} 🪙 de bônus e todos voltaram ao trabalho.`, 'gold'); },
   // ---------------------------------------------------------------- 6. guildas
   GUILDS: {
-    smiths: { name: 'Guilda dos Ferreiros', icon: '⚒️', ranks: ['smith', 'armorer'], biz: ['biz_smithy', 'biz_smelter', 'biz_armorer', 'biz_jeweler'] },
-    merchants: { name: 'Liga dos Mercadores', icon: '💰', ranks: ['merchant', 'trader'], biz: ['biz_shop', 'biz_bank', 'biz_inn', 'biz_theatre'] },
-    crafts: { name: 'Guilda dos Artesãos', icon: '🪚', ranks: ['carpenter', 'potter', 'glazier', 'mason', 'sawyer'], biz: ['biz_carpentry', 'biz_pottery', 'biz_glass', 'biz_mason', 'biz_cooper', 'biz_shipyard', 'biz_quarry', 'biz_lumber'] },
-    weavers: { name: 'Guilda dos Tecelões', icon: '🧵', ranks: ['weaver', 'tailor'], biz: ['biz_weaver', 'biz_tailor', 'biz_dyer', 'biz_ropery'] },
-    victuals: { name: 'Confraria dos Mantimentos', icon: '🍞', ranks: ['baker', 'miller', 'brewer', 'innkeeper', 'vintner', 'smoker'], biz: ['biz_mill', 'biz_bakery', 'biz_brewery', 'biz_winery', 'biz_dairy', 'biz_press', 'biz_butcher', 'biz_farm', 'biz_ranch', 'biz_fishery', 'biz_saltworks'] },
-    hunters: { name: 'Irmandade dos Caçadores', icon: '🏹', ranks: ['hunter'], biz: ['biz_tannery', 'biz_cobbler', 'biz_bowyer', 'biz_stables'] },
-    healers: { name: 'Círculo dos Curandeiros', icon: '🌿', ranks: ['healer', 'mage'], biz: ['biz_apothecary', 'biz_magic', 'biz_perfumer', 'biz_barber', 'biz_bathhouse', 'biz_chandler', 'biz_scribe', 'biz_charcoal', 'biz_mine'] },
+    smiths: { name: 'Cavaleiros Templários', icon: '✠', trade: 'ferreiros e armeiros', ranks: ['smith', 'armorer'], biz: ['biz_smithy', 'biz_smelter', 'biz_armorer', 'biz_jeweler'] },
+    merchants: { name: 'Illuminati', icon: '👁️', trade: 'mercadores e banqueiros', ranks: ['merchant', 'trader'], biz: ['biz_shop', 'biz_bank', 'biz_inn', 'biz_theatre'] },
+    crafts: { name: 'Maçonaria', icon: '📐', trade: 'pedreiros, carpinteiros e oleiros', ranks: ['carpenter', 'potter', 'glazier', 'mason', 'sawyer'], biz: ['biz_carpentry', 'biz_pottery', 'biz_glass', 'biz_mason', 'biz_cooper', 'biz_shipyard', 'biz_quarry', 'biz_lumber'] },
+    weavers: { name: 'Priorado de Sião', icon: '⚜️', trade: 'tecelões e alfaiates', ranks: ['weaver', 'tailor'], biz: ['biz_weaver', 'biz_tailor', 'biz_dyer', 'biz_ropery'] },
+    victuals: { name: 'Cavaleiros Hospitalários', icon: '✚', trade: 'padeiros, cervejeiros e taverneiros', ranks: ['baker', 'miller', 'brewer', 'innkeeper', 'vintner', 'smoker'], biz: ['biz_mill', 'biz_bakery', 'biz_brewery', 'biz_winery', 'biz_dairy', 'biz_press', 'biz_butcher', 'biz_farm', 'biz_ranch', 'biz_fishery', 'biz_saltworks'] },
+    hunters: { name: 'Ordem Teutônica', icon: '🦅', trade: 'caçadores, curtidores e arqueiros', ranks: ['hunter'], biz: ['biz_tannery', 'biz_cobbler', 'biz_bowyer', 'biz_stables'] },
+    healers: { name: 'Ordem Rosa-Cruz', icon: '🌹', trade: 'curandeiros, alquimistas e magos', ranks: ['healer', 'mage'], biz: ['biz_apothecary', 'biz_magic', 'biz_perfumer', 'biz_barber', 'biz_bathhouse', 'biz_chandler', 'biz_scribe', 'biz_charcoal', 'biz_mine'] },
   },
   // guilda de uma pessoa (ou 'player' = a sua)
   guildOf(p) {
@@ -190,11 +190,23 @@ const Commerce = {
     P.gold -= 100; S.member = g; UI.msg(`${this.GUILDS[g].icon} Você entrou na ${this.GUILDS[g].name}: preços combinados (+10% nas vendas do ofício), encomendas 10% melhores. Mensalidade: 5 🪙.`, 'gold');
   },
   leave() { const S = this.st(); if (!S.member) return; UI.msg(`Você saiu da ${this.GUILDS[S.member].name}.`); S.member = null; },
+  nameCheck(t) { if (t.length < 3) return 'O nome precisa de pelo menos 3 letras.'; if (Object.values(this.GUILDS).some(g => g.name.toLowerCase() === t.toLowerCase())) return 'Já existe uma ordem com esse nome.'; return null; },
   found() {
     const S = this.st();
     if (S.myGuild) return; if (Biz.list().length < 2) { UI.msg('Para fundar uma guilda você precisa ter pelo menos 2 empreendimentos.', 'bad'); return; }
     if (P.gold < 500) { UI.msg('Fundar a guilda custa 500 🪙 (alvará e salão).', 'bad'); return; }
-    P.gold -= 500; S.member = null; S.myGuild = { name: `Guilda ${G.surname}`, founded: G.day, members: [], rep: 10 };
+    Dialog.prompt({ icon: '🏛️', title: 'Nome da sua guilda', text: 'Como a sua guilda vai se chamar?', value: `Irmandade ${G.surname}`, max: 40, ok: 'Fundar (500 🪙)',
+      suggestions: [`Irmandade ${G.surname}`, 'Ordem do Leão Dourado', 'Liga dos Mercadores Livres', 'Companhia da Rosa Negra'], check: t => this.nameCheck(t) },
+      name => { if (S.myGuild || P.gold < 500) return; this.doFound(name); if (UI.cur && UI.cur.fn === 'showBizBoard') UI.showBizBoard('guilds'); });
+  },
+  rename() {
+    const g = this.st().myGuild; if (!g) return;
+    Dialog.prompt({ icon: '✏️', title: 'Renomear a guilda', text: 'Novo nome da sua guilda:', value: g.name, max: 40, check: t => this.nameCheck(t) },
+      name => { g.name = name; UI.msg(`🏛️ A sua guilda agora se chama ${name}.`, 'gold'); if (UI.cur && UI.cur.fn === 'showBizBoard') UI.showBizBoard('guilds'); });
+  },
+  doFound(name) {
+    const S = this.st();
+    P.gold -= 500; S.member = null; S.myGuild = { name, founded: G.day, members: [], rep: 10 };
     UI.banner('🏛️ Guilda fundada!'); UI.msg(`🏛️ Você fundou a ${S.myGuild.name}. Recrute gente das outras guildas conversando com elas: quanto mais importante a pessoa na guilda dela, mais intimidade (amizade) é preciso.`, 'gold', true);
     Diplo.chronicle(`🏛️ ${G.name} fundou a ${S.myGuild.name}.`, true);
   },
@@ -379,11 +391,11 @@ const Commerce = {
         <p class="muted">A entrega sai da mochila e, se faltar, do estoque dos seus negócios. Atrasar custa relação e fama.</p>`;
     } else if (tab === 'guilds') {
       const my = S.myGuild;
-      h += my ? `<div class="card"><div class="sec">🏛️ ${UI.esc(my.name)} <span>prestígio ${my.rep}</span></div><p>Você é o mestre. ${Commerce.myMembers().length} membros pagam 3 🪙 por mês cada, e os seus negócios produzem +${Math.min(25, Commerce.myMembers().length)}%. Recrute conversando com as pessoas (as que já são de outra guilda pedem mais amizade; mestres de guilda, muito mais).</p>
+      h += my ? `<div class="card"><div class="sec">🏛️ ${UI.esc(my.name)} <span>prestígio ${my.rep} · <button data-act="bbrename">✏️ Renomear</button></span></div><p>Você é o mestre. ${Commerce.myMembers().length} membros pagam 3 🪙 por mês cada, e os seus negócios produzem +${Math.min(25, Commerce.myMembers().length)}%. Recrute conversando com as pessoas (as que já são de outra guilda pedem mais amizade; mestres de guilda, muito mais).</p>
           <div class="list">${Commerce.myMembers().map(p => `<div class="item"><span class="ic">👤</span><div class="info"><b>${UI.esc(People.full(p))}</b><small>${UI.esc(People.title(p))}</small></div><button data-act="tk" data-op="open" data-id="${p.id}">💬</button></div>`).join('') || '<p class="muted">Nenhum membro ainda.</p>'}</div></div>`
-        : `<div class="card"><div class="sec">🏛️ Fundar a sua guilda</div><p>Com 2 empreendimentos e 500 🪙 você funda a sua guilda e passa a recrutar gente das outras pela amizade.</p><div class="act-row"><button class="primary" data-act="bbfound" ${Biz.list().length >= 2 && P.gold >= 500 ? '' : 'disabled'}>Fundar (500 🪙)</button></div></div>`;
+        : `<div class="card"><div class="sec">🏛️ Fundar a sua guilda</div><p>Com 2 empreendimentos e 500 🪙 você funda a sua guilda (você escolhe o nome) e passa a recrutar gente das outras ordens pela amizade.</p><div class="act-row"><button class="primary" data-act="bbfound" ${Biz.list().length >= 2 && P.gold >= 500 ? '' : 'disabled'}>Fundar (500 🪙)</button></div></div>`;
       h += Object.entries(Commerce.GUILDS).map(([g, d]) => { const m = Commerce.master(g), n = Commerce.members(g).length, me = S.member === g;
-        return `<div class="card"><div class="sec">${d.icon} ${d.name} <span>${n} membros${me ? ' · <b class="ok">você é membro</b>' : ''}</span></div><p class="dt-desc">Mestre: ${m ? UI.esc(People.full(m)) : '—'}. Negócios do ofício: ${d.biz.filter(b => BUILDINGS[b]).map(b => BUILDINGS[b].name).slice(0, 5).join(', ')}…</p>
+        return `<div class="card"><div class="sec">${d.icon} ${d.name} <span>${n} membros${me ? ' · <b class="ok">você é membro</b>' : ''}</span></div><p class="dt-desc">Ordem dos ${d.trade}. Mestre: ${m ? UI.esc(People.full(m)) : '—'}. Negócios do ofício: ${d.biz.filter(b => BUILDINGS[b]).map(b => BUILDINGS[b].name).slice(0, 5).join(', ')}…</p>
           <div class="act-row">${me ? '<button data-act="bbleave">Sair</button>' : my ? '' : `<button data-act="bbjoin" data-g="${g}">Entrar (100 🪙 + 5/mês)</button>`}${m ? `<button data-act="tk" data-op="open" data-id="${m.id}">💬 Falar com o mestre</button>` : ''}</div></div>`; }).join('');
     } else if (tab === 'market') {
       const f = Commerce.fair(), a = Commerce.auction();
@@ -408,7 +420,8 @@ const Commerce = {
       case 'bbbuyout': Commerce.buyOut(s); break;
       case 'bbtake': Commerce.take(+d.k); break;
       case 'bbdeliver': Commerce.deliver(+d.k); break;
-      case 'bbfound': Commerce.found(); break;
+      case 'bbfound': Commerce.found(); return;
+      case 'bbrename': Commerce.rename(); return;
       case 'bbjoin': Commerce.join(d.g); break;
       case 'bbleave': Commerce.leave(); break;
       case 'bbbid': Commerce.bid(+d.c); break;

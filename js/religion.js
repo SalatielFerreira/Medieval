@@ -1,20 +1,22 @@
 'use strict';
 // Religiões e culturas: cada reino tem a sua fé e o seu povo, com gostos, saudação e festa própria.
-//  • 5 religiões, cada uma com um dom para quem a segue. Você escolhe a sua (e pode se converter) nos templos;
+//  • 7 religiões (Cristianismo, Islamismo, Judaísmo, Budismo, Hinduísmo, Zoroastrismo e Paganismo Nórdico), cada uma com um dom para quem a segue. Você escolhe a sua (e pode se converter) nos templos;
 //    rezar num templo de outra fé rende metade. Reinos da mesma fé se aproximam; de fés diferentes, se estranham.
 //  • Como rei, você pode decretar a sua fé como a religião do reino (o povo estranha no começo).
 //  • 7 culturas: cada povo paga mais pelo que gosta (mexe nos preços), valoriza presentes do seu gosto e tem uma
 //    festa anual (o reino fica mais feliz e vira feira).
 
 const RELIGIONS = {
-  sol:     { name: 'Igreja do Sol Eterno',     icon: '☀️', color: '#f2c14a', god: 'o Sol Eterno',       temple: 'Igreja',      gift: 'Fé rende 25% a mais e cada prece cura você.' },
-  antigos: { name: 'Fé dos Deuses Antigos',    icon: '🪓', color: '#6a8ab0', god: 'Odrin e os Antigos', temple: 'Salão dos Antigos', gift: 'Golpes corpo a corpo 10% mais fortes.' },
-  lua:     { name: 'Culto da Lua Prateada',    icon: '🌙', color: '#b8c0e8', god: 'a Senhora da Lua',   temple: 'Santuário Lunar', gift: 'Magias 15% mais fortes e gastam menos energia.' },
-  chama:   { name: 'Ordem da Chama Sagrada',   icon: '🔥', color: '#e86a2a', god: 'a Chama Sagrada',    temple: 'Templo da Chama', gift: 'Forja, fundição e armeiro rendem 15% a mais.' },
-  terra:   { name: 'Caminho da Mãe Terra',     icon: '🌿', color: '#6aa84f', god: 'a Mãe Terra',        temple: 'Bosque Sagrado', gift: 'Colheitas e criações rendem 20% a mais.' },
+  sol:     { name: 'Cristianismo',      icon: '✝️', color: '#f2c14a', about: 'Fé em Deus e nos ensinamentos de Jesus Cristo.',          temple: 'Igreja',           gift: 'Fé rende 25% a mais e cada prece cura você.' },
+  islam:   { name: 'Islamismo',         icon: '☪️', color: '#3a9a6a', about: 'Fé em Deus (Alá) e nos ensinamentos do profeta Maomé.',   temple: 'Mesquita',         gift: 'Caravanas e mercados: você vende 5% mais caro e compra 3% mais barato.' },
+  jud:     { name: 'Judaísmo',          icon: '✡️', color: '#4a7ad0', about: 'Fé no Deus de Abraão, na Torá e na tradição dos sábios.', temple: 'Sinagoga',         gift: 'Estudo e sabedoria: 15% a mais de experiência.' },
+  lua:     { name: 'Budismo',           icon: '☸️', color: '#e8a040', about: 'O caminho de Buda: meditação, compaixão e iluminação.',  temple: 'Mosteiro',         gift: 'Mente disciplinada: magias 15% mais fortes e gastam menos energia.' },
+  terra:   { name: 'Hinduísmo',         icon: '🕉️', color: '#d86a3a', about: 'O dharma e os deuses do panteão hindu.',                  temple: 'Templo',           gift: 'Colheitas e criações rendem 20% a mais.' },
+  chama:   { name: 'Zoroastrismo',      icon: '🔥', color: '#e86a2a', about: 'Fé em Ahura Mazda e no fogo sagrado, sinal da verdade.',   temple: 'Templo do Fogo',   gift: 'Forja, fundição e armeiro rendem 15% a mais.' },
+  antigos: { name: 'Paganismo Nórdico', icon: '🪓', color: '#6a8ab0', about: 'Os deuses nórdicos: Odin, Thor, Freya e os antigos.',      temple: 'Salão dos Deuses', gift: 'Golpes corpo a corpo 10% mais fortes.' },
 };
 const cultoA = g => g.startsWith('o ') ? 'ao ' + g.slice(2) : g.startsWith('a ') ? 'à ' + g.slice(2) : 'a ' + g;
-const CIV_RELIGION = ['sol', 'chama', 'antigos', 'terra', 'lua', 'lua', 'sol'];
+const CIV_RELIGION = ['sol', 'islam', 'antigos', 'jud', 'lua', 'chama', 'terra']; // Midgard, Dorne, Winterfel, Valáquia, Olympus, Babilônia, Gondor
 const CULTURES = [
   { people: 'Midgardianos', icon: '🌾', value: 'Honra e trabalho no campo', greet: 'Que os seus campos sejam fartos!', likes: ['beer', 'mead', 'cooked_meat', 'bread', 'wool_cloak', 'iron_axe'], fest: 2, festName: 'Festa da Colheita' },
   { people: 'Dorneses', icon: '🏜️', value: 'Comércio e hospitalidade', greet: 'Sol e sombra para você, viajante.', likes: ['wine', 'spices', 'silk_cloth', 'olive_oil', 'grape', 'dates'], fest: 1, festName: 'Festa do Sol Alto' },
@@ -75,7 +77,7 @@ const Religion = {
   },
   card(ci) {
     const r = RELIGIONS[this.of(ci)], cu = this.culture(ci); if (!r || !cu) return '';
-    return `<div class="card"><div class="sec">${r.icon} ${UI.esc(r.name)} · ${cu.icon} ${UI.esc(cu.people)}</div><p class="dt-desc">Fé de ${CIV_DEFS[ci].short}: culto ${cultoA(r.god)}. Povo: ${UI.esc(cu.value)}. Gostam de ${cu.likes.filter(k => ITEMS[k]).map(k => ITEMS[k].name).join(', ')} (pagam 25% a mais). Festa: ${UI.esc(cu.festName)}.${this.of(ci) === this.mine() ? ' <b class="ok">É a sua fé.</b>' : ''}</p></div>`;
+    return `<div class="card"><div class="sec">${r.icon} ${UI.esc(r.name)} · ${cu.icon} ${UI.esc(cu.people)}</div><p class="dt-desc">Fé de ${CIV_DEFS[ci].short}: ${r.about} Povo: ${UI.esc(cu.value)}. Gostam de ${cu.likes.filter(k => ITEMS[k]).map(k => ITEMS[k].name).join(', ')} (pagam 25% a mais). Festa: ${UI.esc(cu.festName)}.${this.of(ci) === this.mine() ? ' <b class="ok">É a sua fé.</b>' : ''}</p></div>`;
   },
   // janela das religiões (nos templos e com os sacerdotes)
   show(ci) {
@@ -83,7 +85,7 @@ const Religion = {
     const h = `<p>Sua fé: <b>${RELIGIONS[mine].icon} ${RELIGIONS[mine].name}</b> · fé acumulada: ${Math.round(G.piety || 0)}. ${here ? `Fé deste lugar: <b>${RELIGIONS[here].icon} ${RELIGIONS[here].name}</b>.` : ''}</p>
       <div class="kgrid two">${Object.entries(RELIGIONS).map(([k, r]) => { const civs = G.civs.filter(x => this.of(x.id) === k).map(x => CIV_DEFS[x.id].short);
         return `<div class="card"><div class="sec"><span class="cdot" style="background:${r.color}"></span> ${r.icon} ${r.name}${k === mine ? ' <small class="ok">sua fé</small>' : ''}</div>
-          <p class="dt-desc">Culto ${cultoA(r.god)}. Dom: ${r.gift}<br>Reinos: ${civs.join(', ') || 'nenhum'}.</p>
+          <p class="dt-desc">${r.about} Dom dos fiéis: ${r.gift}<br>Reinos: ${civs.join(', ') || 'nenhum'}.</p>
           ${k !== mine && k === here ? `<div class="act-row"><button class="primary" data-act="relconv" data-r="${k}">Converter-se</button></div>` : ''}</div>`; }).join('')}</div>
       ${c && c.ruler === 'player' && here !== mine ? `<div class="act-row"><button data-act="reldecree" data-c="${ci}">📜 Decretar a ${RELIGIONS[mine].name} como fé de ${CIV_DEFS[ci].short} (−15 de felicidade)</button></div>` : ''}
       <p class="muted">Para se converter a outra fé, vá a um templo dela (as capelas e catedrais seguem a fé do reino) ou fale com um sacerdote dela.</p>`;
@@ -118,6 +120,10 @@ const Religion = {
   Farm.harvest = function (i) { const p = this.plots()[i], c = p && CROPS[p.crop], r = h0(i); if (r && c && Religion.is('terra') && Math.random() < 0.6) Inv.add(c.item, 1); return r; };
   const cp0 = Content.produce.bind(Content);
   Content.produce = function (s) { const out = cp0(s); if (out && Religion.is('terra')) for (const k in out) out[k] = Math.round(out[k] * 1.2); return out; };
+  const pf0 = Game.priceFor.bind(Game);
+  Game.priceFor = function (ci, k, owner) { const r = pf0(ci, k, owner); if (!Religion.is('islam')) return r; return { buy: Math.max(1, Math.round(r.buy * 0.97)), sell: Math.max(1, Math.round(r.sell * 1.05)) }; };
+  const xp0 = Game.gainXp.bind(Game);
+  Game.gainXp = function (n) { return xp0(Religion.is('jud') ? Math.round(n * 1.15) : n); };
   // presentes do gosto do povo valem mais
   const g0 = People.gift.bind(People);
   People.gift = function (p, k) { const r = g0(p, k); const cu = Religion.culture(People.civOf ? People.civOf(p) : p.civ); if (cu && cu.likes.includes(k)) { People.addAff(p, 4); if (r && typeof r === 'object') r.note = (r.note ? r.note + ' ' : '') + `${cu.icon} É do gosto dos ${cu.people}!`; } return r; };
@@ -142,7 +148,7 @@ const Religion = {
   UI.open = function (title, body, fn, args, sub) {
     if ((fn === 'showChapel') && args && World.structs[args[0]]) {
       const s = World.structs[args[0]], ci = typeof s.owner === 'number' ? s.owner : -1, r = RELIGIONS[Religion.of(ci)];
-      if (r) { title = `${r.icon} ${r.temple}`; body = `<div class="card"><div class="sec">${r.icon} ${r.name}</div><p class="dt-desc">Culto ${cultoA(r.god)}. Dom dos fiéis: ${r.gift}${Religion.of(ci) === Religion.mine() ? ' <b class="ok">É a sua fé.</b>' : ' Você segue outra fé: rezar aqui rende metade.'}</p><div class="act-row"><button data-act="relshow" data-c="${ci}">⛪ Religiões${Religion.of(ci) !== Religion.mine() ? ' · converter-se' : ''}</button></div></div>` + body; }
+      if (r) { title = `${r.icon} ${r.temple}`; body = `<div class="card"><div class="sec">${r.icon} ${r.name}</div><p class="dt-desc">${r.about} Dom dos fiéis: ${r.gift}${Religion.of(ci) === Religion.mine() ? ' <b class="ok">É a sua fé.</b>' : ' Você segue outra fé: rezar aqui rende metade.'}</p><div class="act-row"><button data-act="relshow" data-c="${ci}">⛪ Religiões${Religion.of(ci) !== Religion.mine() ? ' · converter-se' : ''}</button></div></div>` + body; }
     }
     if (fn === 'showCastle' && args && args[0] !== undefined) body += Religion.card(args[0]);
     return op0(title, body, fn, args, sub);

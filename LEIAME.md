@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: ordens famosas, religiões reais e o nome da sua guilda
+
+- **Sua guilda com o nome que você quiser:** ao fundar, você escreve o nome (há sugestões); dá para renomear depois no painel.
+- **As guildas do mundo são ordens famosas:** Maçonaria (pedreiros, carpinteiros, oleiros), Illuminati (mercadores e banqueiros), Cavaleiros Templários (ferreiros e armeiros), Cavaleiros Hospitalários (padeiros, cervejeiros, taverneiros), Ordem Teutônica (caçadores, curtidores, arqueiros), Priorado de Sião (tecelões e alfaiates) e Ordem Rosa-Cruz (curandeiros, alquimistas e magos).
+- **Religiões reais:** Cristianismo (Midgard), Islamismo (Dorne), Paganismo Nórdico (Winterfel), Judaísmo (Valáquia), Budismo (Olympus), Zoroastrismo (Babilônia) e Hinduísmo (Gondor). Cada templo leva o nome da fé (igreja, mesquita, sinagoga, mosteiro, templo, templo do fogo, salão dos deuses) e cada fé dá um dom a quem a segue.
+
 ## Novidades: economia viva, guildas, religiões e culturas
 
 - **Cadeia de produção:** os empreendimentos que transformam gastam insumos todo mês (o moinho gasta trigo, a padaria farinha e ovos, a ferraria minério e carvão, a vidraria areia...). O responsável usa primeiro o depósito do negócio (você entrega da mochila), depois o que os seus outros negócios produziram e, por fim, compra no mercado do reino. Sem insumo, produz menos.
@@ -100,7 +106,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Feiras e leilões:** feiras de estação (e as festas dos povos) num reino por vez; leilões de itens raros nos castelos.
 - **Sócios:** um morador rico entra com 40% do valor do negócio e leva 30% do lucro; dá para comprar a parte dele depois.
 - **Painel dos negócios:** lucro, quanto já devolveu, estado, insumos, funcionários, seguro, sócio, encomendas, guildas, feiras e o livro de ocorrências. Abre na janela de cada empreendimento e no Portfólio.
-- **Religiões:** 5 fés, cada uma com um dom: Igreja do Sol Eterno (fé e cura), Fé dos Deuses Antigos (golpes mais fortes), Culto da Lua Prateada (magia), Ordem da Chama Sagrada (forja) e Caminho da Mãe Terra (colheitas e criações). Converta-se num templo (capelas e catedrais seguem a fé do reino) ou com um sacerdote; como rei, decrete a sua fé no reino. Reinos da mesma fé se aproximam; de fés diferentes, se estranham.
+- **Religiões:** cada fé tem um dom: Cristianismo (fé e cura), Islamismo (comércio), Judaísmo (experiência), Budismo (magia), Hinduísmo (colheitas e criações), Zoroastrismo (forja) e Paganismo Nórdico (golpes mais fortes). Converta-se num templo (capelas e catedrais seguem a fé do reino) ou com um sacerdote; como rei, decrete a sua fé no reino. Reinos da mesma fé se aproximam; de fés diferentes, se estranham.
 - **Culturas:** cada reino tem o seu povo (Midgardianos, Dorneses, Nortenhos, Valacos, Olimpianos, Babilônios, Gondorianos), com valores, saudação, gostos (que mexem nos preços e nos presentes) e uma festa anual.
 
 ## Novidades: tudo em ordem, do mais fácil ao mais difícil
