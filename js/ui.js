@@ -382,7 +382,7 @@ const UI = {
     // o botão principal muda conforme o item escolhido
     const k = S.inv, it = k && ITEMS[k], eq = k && eqOf(k);
     const cellN = it ? Inv.cellN(S.cell || k) : 0, canSplit = it && cellN >= 2 && !eq && !P.quick.includes(k);
-    const use = !it ? '' : it.food || it.heal ? (it.food ? 'Comer' : 'Usar') : it.slot ? (eq ? 'Tirar' : it.slot === 'tool' ? 'Empunhar' : 'Equipar') : it.seed ? 'Plantar' : '';
+    const use = !it ? '' : it.food || it.heal ? (it.food ? 'Comer' : 'Usar') : it.slot ? (eq ? 'Tirar' : it.slot === 'tool' ? 'Empunhar' : 'Equipar') : it.seed ? 'Plantar' : it.use ? 'Usar' : '';
     const xpPct = U.clamp(P.xp / Game.xpNext() * 100, 0, 100);
     const body = `<div class="ldi">
       <div class="ldi-l">
@@ -720,7 +720,7 @@ const UI = {
       ['praca', '⛲', 'Praça e decoração', ['well_p', 'fountain', 'statue', 'lamppost', 'bench', 'pergola', 'sundial', 'flagpole_p', 'flowerbed', 'hedge', 'fence']], ['cultura', '📚', 'Cultura, fé e treino', ['library', 'oratory', 'training', 'archery', 'stage', 'watchtower']],
       ['guarda', '📦', 'Baús e estábulo', ['chest', 'big_chest', 'cellar', 'stable', 'kennel']], ['defesa', '🛡️', 'Defesa e exército', ['barracks', 'archer_tower', 'armory', 'spikes', 'wall_wood', 'wall_stone']],
       ['infra', '🛣️', 'Infraestrutura', ['road', 'u:road2', 'u:road3', 'u:road4', 'u:road5', 'u:unroad', 'u:move', 'u:demolish']]]
-      .map(([k, ic, name, ks]) => [k, ic, name, ks.filter(x => BUILDINGS[x] || x.includes(':') || x === 'road')]);
+      .map(([k, ic, name, ks]) => [k, ic, name, (k === 'infra' ? ks.slice(0, 5).concat((this.expCats && this.expCats.infra) || [], ks.slice(5)) : ks.concat((this.expCats && this.expCats[k]) || [])).filter(x => BUILDINGS[x] || x.includes(':') || x === 'road')]);
     const auth = Urban.hasAny();
     if (auth) cats.push(['obras', '🏗️', 'Obras nas vilas', Object.keys(CIVIC).filter(k => k !== 'vwall').map(k => 'c:' + k)]); // o muro é um só: Defesa e exército
     this.buildCats = cats;
@@ -1746,7 +1746,7 @@ const UI = {
     const said = this.tkLog.lines.length ? this.tkLog.lines.slice(-3) : [{ who: 'npc', text }];
     // ações em grupos (cada um com sua cor)
     const GROUP = { talk: 'conv', compliment: 'conv', giftmenu: 'conv', insult: 'conv', flirt: 'heart', date: 'heart', propose: 'heart', child: 'heart', breakup: 'heart',
-      gossip: 'conv', loanask: 'work', midwife: 'heart', shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
+      gossip: 'conv', fav: 'conv', loanask: 'work', midwife: 'heart', shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
       fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other', attack: 'other', bribe: 'work',
       congrats: 'conv', condole: 'conv', advice: 'conv', drink: 'fun', dice: 'fun', spar: 'fun', story: 'fun', cupid: 'heart', forgive: 'work' };
     const GN = { conv: '💬 Conversa', heart: '💕 Coração', fun: '🎲 Passatempos', work: '🤝 Trabalho e capangas', house: '🏛️ Casas', other: '✨ Outros' };
@@ -1842,7 +1842,7 @@ const UI = {
       case 'fpeace': r = Court.peace(Families.of(p)); break;
       case 'propose': r = People.propose(p); break;
       case 'breakup': Dialog.confirm({ icon: '💔', title: 'Terminar', text: `Terminar o relacionamento com ${p.name}?`, ok: 'Terminar', danger: true }, () => this.showTalk(p.id, People.breakUp(p))); return;
-      case 'gossip': case 'loanask': case 'midwife': { const lr = Lifesim.talkAct(p, d.op); if (lr === 'shown') return; r = lr; break; }
+      case 'gossip': case 'loanask': case 'midwife': case 'fav': { const lr = Lifesim.talkAct(p, d.op); if (lr === 'shown') return; r = lr; break; }
       case 'child':
         if (!G.family.dueDay) { G.family.tryChild = true; r = { text: 'Sim... vamos aumentar a nossa família! ❤', note: 'Durmam em casa (Cabana, Casa ou Casarão) para tentar ter um filho.' }; }
         else r = { text: 'Falta pouco para o bebê chegar!', note: '' };
@@ -2613,7 +2613,7 @@ const UI = {
       case 'iuse': {
         const k = this.sel.inv, it = k && ITEMS[k]; if (!it) break;
         const eq = Object.keys(P.equip).find(s => P.equip[s] === k);
-        if (it.food || it.heal) Game.eat(k); else if (it.slot) { if (eq) { P.equip[eq] = null; Inv.toBag(k); } else { const old = P.equip[it.slot]; Game.equip(k); if (old) Inv.toBag(old); } } else if (it.seed) P.seed = k;
+        if (it.food || it.heal) Game.eat(k); else if (it.use) { Expansion.use(k); } else if (it.slot) { if (eq) { P.equip[eq] = null; Inv.toBag(k); } else { const old = P.equip[it.slot]; Game.equip(k); if (old) Inv.toBag(old); } } else if (it.seed) P.seed = k;
         break;
       }
       case 'itrash': if (this.sel.inv) this.discard(this.sel.inv, this.sel.cell); return;

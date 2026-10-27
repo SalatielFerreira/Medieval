@@ -409,7 +409,7 @@ const Crime = {
     for (const ci in this.W()) { const w = this.W()[ci]; w.bounty = Math.round(w.bounty * 0.92); if (w.bounty < 25) delete this.W()[ci]; }
     // ladrões roubam casas à noite
     World.villages.forEach((v, vi) => {
-      if (Math.random() > 0.08) return;
+      if (Math.random() > (Crime.guarded && Crime.guarded(vi) ? 0.027 : 0.08)) return; // o pelourinho espanta os ladrões
       const res = People.residents(vi).filter(p => p.age >= 16 && !p.kin && !p.capanga && !People.isCourt(p));
       const thief = U.pick(res.filter(p => ['beggar', 'wanderer', 'peasant'].includes(p.rank) && (People.purse(p) < 60 || (p.mood && p.mood.envy > 30))));
       const fams = [...new Set(res.map(p => p.fam))].map(id => Families.get(id)).filter(f => f && !f.player && f.wealth > 80 && (!thief || f.id !== thief.fam));

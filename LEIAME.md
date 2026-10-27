@@ -89,6 +89,28 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: o dobro de tudo, assalto ao castelo e favoritos
+
+- **O dobro de construções:** Moradia 15 · Produção 20 · Fazenda e animais 20 · Empreendimentos 45 · Praça e decoração 20 · Cultura, fé e treino 10 · Baús e estábulo 10 · Defesa e exército 10 · Infraestrutura 15.
+  - **Moradias:** barraca de viagem, casa na árvore, casa comprida, casa de fazenda (+20% nas criações perto), sobrado, torre de pedra, mansão e palacete. Todas salvam e dão descanso; a maioria dá seguidores, aluguel e fama.
+  - **Oficinas:** serraria manual, fundição (latão, estanho-chumbo, eletro, mithril), vidraria, bancada de ourives, tinturaria, lagar, moenda de pedra, torre do mago (pergaminhos, cajados, varinhas) e oficina do armeiro.
+  - **Criações:** vinhedo, olival, cabril, sirgaria (seda), lago dos patos, coelheira, lupulal e campo de girassóis.
+  - **Empreendimentos (22 novos):** vidraria, tinturaria, lagar de azeite, fundição, armaria, arcoaria, casa do escriba, loja de magia, açougue, alfaiataria, sapataria, barbearia, casa de banhos, cavalariça de aluguel, estaleiro, carvoaria, salina, tanoaria, perfumaria, teatro, canteiro de pedra e cordoaria. Cada um emprega moradores, produz, tem balcão e loja próprios.
+  - **Praças:** coreto, obelisco, poço dos desejos, lago ornamental, arco triunfal, topiaria, estátua equestre, pelourinho (menos ladrões) e barraca de feira. Perto de uma vila, elas aumentam o poder econômico dela (o nível sobe) e deixam o reino mais feliz.
+  - **Cultura:** capela particular, observatório (previsão do tempo e das secas), liça de justa e círculo de pedras (magia mais forte).
+  - **Guarda:** celeiro (vira o trigo em farinha), armazém grande, cofre (ouro a salvo, rende 1% ao mês), garagem de carroças (+100 de carga) e casa de gelo.
+  - **Defesa:** balista, fosso com estacas, estábulo de guerra (+cavaleiros nas batalhas) e oficina de cerco (máquinas 30% mais baratas).
+  - **Infraestrutura:** guindaste (obras perto custam menos), cisterna (rega as plantações), moinho de vento, rede de esgoto, atracadouro, posto de pedágio e posto de muda (viagem rápida entre os seus postos).
+- **O dobro de itens (449):** 42 matérias-primas novas (madeiras, pedras, gemas, minérios, ervas raras, partes de monstros, frutos das criações), 25 materiais (vidro, ligas, tintas, tecidos tingidos, papel, sabão...), 16 ferramentas com função, 21 armas (bestas, montantes, alabardas, cajados mágicos), 38 armaduras (conjuntos de mago, patrulheiro, escamas, prata, mithril, nobre e dragão), 52 comidas, bebidas e poções e 27 objetos.
+  - Cada matéria-prima tem origem (árvores, rochas e veios dão itens a mais, monstros deixam partes, criações produzem, a pesca traz conchas, algas e mexilhões) e entra em alguma receita; tudo é vendido em lojas ou feito numa oficina.
+  - **Ferramentas:** foice (+colheita), tesoura (lã das ovelhas), faca de esfolar (+couro), rede de pesca, lanterna, luneta, gazua, martelo de carpinteiro (obras 15% mais baratas), serrote, tenaz, forcado, bússola, tocha, armadilha (caça todo mês), fole (economiza carvão) e pilão (+poções).
+  - **Magia:** cajados e varinhas gastam energia em vez de flechas (fogo queima, gelo deixa lento, tempestade salta de um inimigo para outro); pergaminhos lançam bola de fogo, relâmpago, cura, retorno para casa, pressa e proteção; vestes de mago fortalecem as magias.
+  - **Objetos:** instrumentos (toque na taverna para ganhar ouro e fama), dados, tomo do conhecimento, mapa do tesouro, orbe de cristal, água benta, incenso, relíquia, amuleto da sorte e corneta de guerra.
+  - 6 lavouras novas: abóbora, cebola, nabo, feijão, alho e ervilha.
+- **Guerra:** cada castelo tem até **30 soldados** e cada exército leva até **10 catapultas**.
+- **Assalto ao castelo:** no Conselho de Guerra escolha **batalha em campo aberto** (enfraquece a guarnição do inimigo) ou **invadir o castelo**. No assalto, o castelo inimigo tem muralhas, torres, portão e torre de menagem: arrombe o portão (catapultas, aríetes do arsenal, soldados e os seus golpes), entre no pátio e derrube o rei; vencer = o reino é seu. Quando o inimigo é mais forte, às vezes é ele que cerca o **seu** castelo: os arqueiros atiram das muralhas, e se você cair o reino cai. No castelo inimigo, "🏰 Convocar o exército" abre o conselho na hora.
+- **Favoritos:** na conversa, "☆ Favoritar" marca a pessoa com uma estrelinha discreta ao lado da cabeça, uma estrela no mapa e no minimapa, e uma seção "Favoritos" no mapa para marcar como destino.
+
 ## Novidades: reinos começam pequenos
 
 - **Cada reino começa com uma vila só.** As outras surgem com o tempo, fundadas pelas famílias ricas e pelos reis. Vale para jogos novos; os jogos já salvos continuam com o mapa que tinham.

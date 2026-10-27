@@ -1,7 +1,7 @@
 'use strict';
 // Arsenal: comprar máquinas de guerra (catapultas e aríetes, guardadas no arsenal), equipar a tropa (melhorias
 // para sempre do seu exército) e negociar armas com o armeiro. As catapultas guardadas vão sozinhas com o seu
-// exército para o campo de batalha (até 4) e as que sobrevivem voltam ao arsenal.
+// exército para o campo de batalha (até 10) e as que sobrevivem voltam ao arsenal.
 // Guerra por mensageiro: em vez de declarar na hora, um mensageiro leva a declaração — ou um ultimato
 // ("paguem tanto ou haverá guerra").
 
@@ -34,7 +34,7 @@ const Arsenal = {
     const ups = Object.entries(ARSENAL_UPS).map(([key, o]) => `<div class="card"><div class="sec">${o.icon} ${o.name}${A.up[key] ? ' <small class="ok">✓ equipado</small>' : ''}</div>
       <p class="dt-desc">${o.desc}${A.up[key] ? '' : ` Custa ${o.gold} 🪙 + ${this.costTxt(o.cost)}.`}</p>
       ${A.up[key] ? '' : `<div class="act-row"><button class="primary" data-act="arsenal" data-op="up" data-k="${key}" ${this.can(o) ? '' : 'disabled'}>Equipar a tropa</button></div>`}</div>`).join('');
-    UI.open('⚔️ Arsenal', `<p>Seu ouro: <b>${P.gold} 🪙</b>. As catapultas guardadas aqui vão com o seu exército às batalhas (até 4); as que sobrevivem voltam. Para um cerco, pegue a máquina para a mochila e monte-a perto do castelo.</p>
+    UI.open('⚔️ Arsenal', `<p>Seu ouro: <b>${P.gold} 🪙</b>. As catapultas guardadas aqui vão com o seu exército às batalhas (até 10); as que sobrevivem voltam. Para um cerco, pegue a máquina para a mochila e monte-a perto do castelo.</p>
       <h3>Máquinas de guerra</h3><div class="kgrid two">${eng}</div>
       <h3>Equipamento da tropa</h3><div class="kgrid two">${ups}</div>
       <h3>Armas e armaduras</h3><div class="act-row"><button data-act="arsenal" data-op="shop" data-s="${s ? s.id : ''}" ${k ? '' : 'disabled'}>⚒️ ${k ? `Negociar com ${UI.esc(k.name)} (${People.title(k)})` : 'Sem armeiro agora'}</button></div>`, 'showArsenal', [sid], 'Máquinas de guerra, tropa e armas');
@@ -128,7 +128,7 @@ const WarEnvoy = {
   // no campo de batalha: catapultas do arsenal e o equipamento da tropa
   const st0 = War.start.bind(War);
   War.start = function (...a) {
-    const A = Arsenal.A(), n = Math.min(4, A.catapult || 0);
+    const A = Arsenal.A(), n = Math.min(typeof WAR_CATS_MAX !== 'undefined' ? WAR_CATS_MAX : 4, A.catapult || 0);
     const before = new Set(G.ents);
     st0(...a);
     const B = G.place; if (!B || B.kind !== 'battle' || B.fake) return;
