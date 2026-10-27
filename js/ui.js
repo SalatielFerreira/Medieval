@@ -1747,7 +1747,7 @@ const UI = {
     const said = this.tkLog.lines.length ? this.tkLog.lines.slice(-3) : [{ who: 'npc', text }];
     // ações em grupos (cada um com sua cor)
     const GROUP = { talk: 'conv', compliment: 'conv', giftmenu: 'conv', insult: 'conv', flirt: 'heart', date: 'heart', propose: 'heart', child: 'heart', breakup: 'heart',
-      gossip: 'conv', fav: 'conv', grecruit: 'work', religion: 'heart', loanask: 'work', midwife: 'heart', shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
+      gossip: 'conv', fav: 'conv', grecruit: 'work', religion: 'heart', sTip: 'conv', sLoan: 'work', sRepay: 'work', sSecret: 'conv', sKeep: 'conv', sSpread: 'conv', sBlack: 'conv', sDinner: 'heart', sConfront: 'heart', sDivorce: 'heart', sArrange: 'heart', sDuel: 'conv', loanask: 'work', midwife: 'heart', shopnpc: 'work', hiremenu: 'work', bizfire: 'work', recruit: 'work', equipc: 'work', stance: 'work', dismiss: 'work', guardmenu: 'work', unguard: 'work', profmenu: 'work',
       fally: 'house', funally: 'house', fenemy: 'house', fpeace: 'house', church: 'other', vchallenge: 'other', attack: 'other', bribe: 'work',
       congrats: 'conv', condole: 'conv', advice: 'conv', drink: 'fun', dice: 'fun', spar: 'fun', story: 'fun', cupid: 'heart', forgive: 'work' };
     const GN = { conv: '💬 Conversa', heart: '💕 Coração', fun: '🎲 Passatempos', work: '🤝 Trabalho e capangas', house: '🏛️ Casas', other: '✨ Outros' };
@@ -1843,7 +1843,7 @@ const UI = {
       case 'fpeace': r = Court.peace(Families.of(p)); break;
       case 'propose': r = People.propose(p); break;
       case 'breakup': Dialog.confirm({ icon: '💔', title: 'Terminar', text: `Terminar o relacionamento com ${p.name}?`, ok: 'Terminar', danger: true }, () => this.showTalk(p.id, People.breakUp(p))); return;
-      case 'gossip': case 'loanask': case 'midwife': case 'fav': case 'grecruit': case 'religion': { const lr = Lifesim.talkAct(p, d.op); if (lr === 'shown') return; r = lr; break; }
+      case 'gossip': case 'loanask': case 'midwife': case 'fav': case 'grecruit': case 'religion': case 'sTip': case 'sLoan': case 'sRepay': case 'sSecret': case 'sKeep': case 'sSpread': case 'sBlack': case 'sDinner': case 'sConfront': case 'sDivorce': case 'sArrange': case 'sDuel': { const lr = Lifesim.talkAct(p, d.op); if (lr === 'shown') return; r = lr; break; }
       case 'child':
         if (!G.family.dueDay) { G.family.tryChild = true; r = { text: 'Sim... vamos aumentar a nossa família! ❤', note: 'Durmam em casa (Cabana, Casa ou Casarão) para tentar ter um filho.' }; }
         else r = { text: 'Falta pouco para o bebê chegar!', note: '' };

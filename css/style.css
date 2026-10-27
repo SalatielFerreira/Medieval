@@ -3831,3 +3831,11 @@ body.small .trd .bzs-head > div { padding: 4px 8px; min-height: 0; }
 body.small .trd .bzs-head b { font-size: 13px; }
 body.small .trd .bzs-head small { font-size: 9.5px; line-height: 1.2; }
 body.small .trd-col .sec span { display: none; }
+
+/* sociedade */
+.soc-bar { position: relative; height: 8px; border-radius: 4px; background: rgba(255,255,255,.08); margin: 4px 0 6px; }
+.soc-bar i { position: absolute; top: 0; height: 100%; border-radius: 4px; }
+.soc-bar::after { content: ''; position: absolute; left: 50%; top: -2px; width: 1px; height: 12px; background: rgba(255,255,255,.4); }
+.soc-guests { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.soc-guests button { padding: 4px 10px; font-size: 13px; }
+.soc-guests button.on { background: #b8861b; color: #1a1006; }

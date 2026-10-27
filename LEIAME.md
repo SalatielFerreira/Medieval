@@ -89,6 +89,18 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: sociedade (Portfólio → 🤝 Sociedade)
+
+- **Rede de amizades:** cada morador tem amigos, desafetos, um melhor amigo e um confidente (aparecem na ficha). O que você faz com alguém respinga no círculo dele: ajudar agrada os amigos e irrita os desafetos; ofender espalha.
+- **Reputação por grupo:** nobreza, clero, povo, mercadores, guildas e submundo. Com +30 cada grupo abre uma porta (desconto em luxo, multas menores, o povo não te denuncia, preços melhores, recrutar mais fácil, mercado negro e informantes); com −30, fecha. Doações, esmolas, crimes, impostos, comércio e encomendas mexem nas notas.
+- **Níveis de amizade:** Conhecido (10) → Colega (25: dicas de mercado e boatos) → Amigo (45: desconto) → Melhor amigo (70: empréstimo sem juros e defende você numa briga) → Confidente (90: conta segredos e testemunha a seu favor na prisão, cortando a multa pela metade).
+- **Romance:** o cônjuge pede atenção (sem conversa, presente ou jantar, o casamento esfria e pode virar traição); flertar com outra pessoa dá ciúme; dá para confrontar os boatos, perdoar ou pedir o divórcio; a família paga dote no casamento; e você arranja o casamento dos seus filhos com outras casas, selando alianças.
+- **Eventos:** dê banquetes escolhendo os convidados (vinho na mochila rende mais; desafetos na mesma mesa brigam). Moradores convidam você para casamentos, batizados e aniversários: vá até a vila e confirme; faltar ofende.
+- **Segredos:** venha a saber pelos confidentes ou por informantes do submundo; depois guarde (confiança), espalhe (derruba a pessoa, que pode virar sua rival) ou chantageie (ouro, com risco de denúncia).
+- **Honra:** insultar alguém na frente dos outros cria um rival, que desafia para duelo de honra (até alguém cair, ninguém morre). Recusar mancha o nome. Quem perde um pai ou mãe pelas suas mãos jura vingança e, adulto, vem cobrar.
+- **Política local:** cada vila elege o chefe todo ano; o conselho de anciãos tem voto triplo. Candidate-se, faça comícios ou apoie um candidato (se ele vencer, vira seu aliado). Vencer dá o governo da vila.
+- **Visitas e jantares:** ao dormir em casa, às vezes alguém bate à porta (um amigo com presente, um cobrador, um vizinho reclamando); convide quem quiser para jantar (precisa de uma comida preparada).
+
 ## Novidades: ordens famosas, religiões reais e o nome da sua guilda
 
 - **Sua guilda com o nome que você quiser:** ao fundar, você escreve o nome (há sugestões); dá para renomear depois no painel.
