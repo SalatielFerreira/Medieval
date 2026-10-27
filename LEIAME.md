@@ -89,6 +89,15 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: o dobro de obras nas vilas (36 → 70)
+
+- **34 obras novas** no menu Construção → Obras nas vilas, em ordem do mais barato ao mais caro:
+  - **campo e criação:** Horta Comunitária, Campo de Cevada, Campo de Linho, Galinheiro da Vila, Pocilga da Vila, Pesqueira do Rio, Feira do Gado, Lenhador da Vila e Carvoeiro;
+  - **ofícios e comércio:** Cesteiro, Forno Comunitário, Sapateiro da Vila, Açougue da Vila, Peixaria, Oleiro da Vila, Queijaria, Casa de Penhores, Mercado Coberto, Sede das Corporações e Casa da Moeda;
+  - **povo e governo:** Cruzeiro, Lavadouro, Fonte Sagrada, Albergue dos Peregrinos, Correio, Posto da Guarda, Orfanato, Enfermaria, Bairro dos Artesãos e Paço do Concelho;
+  - **grandes obras:** Termas, Mosteiro, Universidade e Catedral.
+- Cada uma tem o seu desenho no mapa e rende algo todo mês: aluguel e comércio, trigo, madeira ou pedra para o reino, prosperidade, lugar para mais moradores ou a chance de atrair famílias novas.
+
 ## Novidades: janelas mais úteis e organizadas
 
 - **🔔 Central de avisos:** um sino ao lado do seu retrato mostra quantas coisas precisam de você (pisca em vermelho quando é urgente): dilemas do conselho, audiências, complôs, barões revoltados, convites, encomendas com prazo, greves, parcelas atrasadas, quando você está sendo procurado, cônjuge carente, dívidas com amigos, eleições, leilões e guerras. Cada aviso tem um botão **Ir** que leva direto à janela certa.

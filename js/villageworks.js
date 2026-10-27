@@ -26,6 +26,41 @@ const VWORKS = {
   vsawmill:  { name: 'Serraria da Vila',     icon: '🪚', w: 2, h: 2, cost: { wood: 20, stone: 20 },               stock: { wood: 15 }, desc: 'Tábuas e madeira para o reino.' },
   vgranary:  { name: 'Celeiro',              icon: '🏚️', w: 3, h: 2, cost: { wood: 40 },                          stock: { wheat: 6 }, pm: 0.1, cap: 3, desc: 'Guarda a colheita: ninguém passa fome.' },
   vclinic:   { name: 'Casa de Curas',        icon: '🌿', w: 2, h: 2, cost: { wood: 25, stone: 20, herb: 4 },      pm: 0.18, cap: 2, attract: 0.05, desc: 'Uma curandeira cuida dos doentes.' },
+  // ---- obras novas (o dobro das obras da vila)
+  vgarden2:  { name: 'Horta Comunitária',     icon: '🥬', w: 3, h: 2, cost: { wood: 10, dirt: 8 },                  stock: { wheat: 6 }, pm: 0.06, attract: 0.02, look: ['field', '#6a4a2a', '#5aa83a'], desc: 'Couves e nabos para as famílias da vila.' },
+  vcross:    { name: 'Cruzeiro',              icon: '✝️', w: 1, h: 1, cost: { stone: 18, wood: 4 },                 pm: 0.06, look: ['monument', '#a8a296', '✝️'], desc: 'Uma cruz de pedra na entrada da vila.' },
+  vlaundry:  { name: 'Lavadouro',             icon: '🫧', w: 2, h: 1, cost: { stone: 20, wood: 6 },                 pm: 0.1, cap: 1, look: ['yard', '#8fb8c8', '#f2efe6'], desc: 'Tanques de pedra para lavar a roupa.' },
+  vbarley:   { name: 'Campo de Cevada',       icon: '🌾', w: 3, h: 2, cost: { wood: 10, dirt: 10 },                 stock: { wheat: 10 }, look: ['field', '#7a5a2a', '#d8b84a'], desc: 'Cevada para o pão e a cerveja.' },
+  vflax:     { name: 'Campo de Linho',        icon: '🌱', w: 3, h: 2, cost: { wood: 12, dirt: 8 },                  rent: 8, look: ['field', '#6a4a2a', '#7a9ad8'], desc: 'Linho para os tecelões venderem.' },
+  vhens:     { name: 'Galinheiro da Vila',    icon: '🐔', w: 2, h: 2, cost: { wood: 20 },                           rent: 7, pm: 0.06, look: ['yard', '#a8904a', '#f2e6c8'], desc: 'Ovos frescos para a feira.' },
+  vwood:     { name: 'Lenhador da Vila',      icon: '🪓', w: 2, h: 2, cost: { wood: 15, stone: 10 },                stock: { wood: 10 }, look: ['house', '#9a7a52', '#4a6a3a'], desc: 'Lenhadores trazem toras para o reino.' },
+  vbasket:   { name: 'Cesteiro',              icon: '🧺', w: 2, h: 1, cost: { wood: 20, rope: 2 },                  rent: 8, look: ['house', '#c8a878', '#8a6a3a'], desc: 'Cestos de vime para a feira.' },
+  vpigs:     { name: 'Pocilga da Vila',       icon: '🐖', w: 3, h: 2, cost: { wood: 30 },                           rent: 9, pm: 0.05, look: ['yard', '#7a5a3a', '#e8a0a0'], desc: 'Porcos engordam para o inverno.' },
+  voven:     { name: 'Forno Comunitário',     icon: '🔥', w: 2, h: 2, cost: { stone: 25, clay: 6 },                 rent: 6, pm: 0.08, attract: 0.02, look: ['house', '#c8a888', '#7a4a3a'], desc: 'Todos assam o pão no mesmo forno.' },
+  vfishery:  { name: 'Pesqueira do Rio',      icon: '🎣', w: 2, h: 2, cost: { wood: 25, rope: 4 },                  rent: 10, stock: { wheat: 4 }, look: ['yard', '#4a8ab8', '#c8d8e8'], desc: 'Redes e covos: peixe para a vila.' },
+  vshoe:     { name: 'Sapateiro da Vila',     icon: '👞', w: 2, h: 1, cost: { wood: 20, leather: 6 },               rent: 11, look: ['house', '#d8c8a8', '#6a3a2a'], desc: 'Botas e sandálias sob medida.' },
+  vcharcoal: { name: 'Carvoeiro',             icon: '⚫', w: 2, h: 2, cost: { wood: 30, clay: 6 },                  rent: 10, stock: { wood: 4 }, look: ['house', '#6a5a4a', '#3a3a3a'], desc: 'Fornos de carvão para os ferreiros.' },
+  vspring:   { name: 'Fonte Sagrada',         icon: '💧', w: 1, h: 1, cost: { stone: 30, marble: 4 },               pm: 0.12, attract: 0.03, look: ['monument', '#d8d4cc', '💧'], desc: 'Água que dizem curar: peregrinos vêm de longe.' },
+  vbutcher:  { name: 'Açougue da Vila',       icon: '🥩', w: 2, h: 2, cost: { wood: 25, stone: 20 },                rent: 12, pm: 0.08, look: ['house', '#e2d4b4', '#a03a3a'], desc: 'Carne fresca todo dia.' },
+  vfishshop: { name: 'Peixaria',              icon: '🐟', w: 2, h: 2, cost: { wood: 30, stone: 15 },                rent: 12, pm: 0.08, attract: 0.02, look: ['house', '#d8e0e2', '#2a5a7a'], desc: 'Peixe salgado e fresco na banca.' },
+  vpotter:   { name: 'Oleiro da Vila',        icon: '🏺', w: 2, h: 2, cost: { clay: 20, stone: 15, wood: 10 },      rent: 12, stock: { stone: 4 }, look: ['house', '#d8a878', '#8a4a2a'], desc: 'Potes, telhas e tijolos.' },
+  vcheese:   { name: 'Queijaria',             icon: '🧀', w: 2, h: 2, cost: { wood: 25, stone: 20, clay: 6 },       rent: 14, pm: 0.08, look: ['house', '#efe2b8', '#a8791a'], desc: 'Queijos curados que viajam longe.' },
+  vcattle:   { name: 'Feira do Gado',         icon: '🐄', w: 4, h: 3, cost: { wood: 45 },                           rent: 18, pm: 0.1, attract: 0.03, look: ['yard', '#8aa04a', '#5a3a2a'], desc: 'Uma vez por mês, compra e venda de gado.' },
+  vinn2:     { name: 'Albergue dos Peregrinos', icon: '🎒', w: 3, h: 2, cost: { wood: 45, stone: 20 },              cap: 6, attract: 0.06, look: ['house', '#e2d8c4', '#5a6a3a'], desc: 'Pouso barato: muitos acabam ficando.' },
+  vpost:     { name: 'Correio',               icon: '📯', w: 2, h: 2, cost: { wood: 35, stone: 20 },                pm: 0.15, attract: 0.03, look: ['house', '#e8dcc0', '#2a4a8a'], desc: 'Mensageiros a cavalo ligam a vila ao reino.' },
+  vguard:    { name: 'Posto da Guarda',       icon: '💂', w: 2, h: 2, cost: { stone: 35, wood: 20, iron_bar: 2 },   pm: 0.12, cap: 2, look: ['big', '#9a958c', '#5a5a6a'], desc: 'Guardas da vila: menos ladrões e mais paz.' },
+  vorphan:   { name: 'Orfanato',              icon: '🧸', w: 3, h: 2, cost: { wood: 40, stone: 30 },                pm: 0.12, cap: 6, attract: 0.04, look: ['house', '#f0e4cc', '#c86a4a'], desc: 'Um lar para as crianças sem família.' },
+  vpawn:     { name: 'Casa de Penhores',      icon: '💰', w: 2, h: 2, cost: { stone: 40, wood: 20, iron_bar: 2 },   rent: 22, look: ['house', '#c8b490', '#3a5a3a'], desc: 'Empréstimos com garantia: lucro certo.' },
+  vinfirm:   { name: 'Enfermaria',            icon: '⚕️', w: 3, h: 2, cost: { stone: 45, wood: 30, herb: 8 },       pm: 0.22, cap: 3, attract: 0.05, look: ['house', '#f2efe6', '#3a7a5a'], desc: 'Leitos e curandeiros: a vila vive mais.' },
+  vcraft:    { name: 'Bairro dos Artesãos',   icon: '🛠️', w: 4, h: 3, cost: { wood: 80, stone: 50, nails: 20 },     rent: 20, cap: 8, attract: 0.06, look: ['hall', '#d8c39a', '#7b3b22'], desc: 'Oficinas e casas dos artesãos lado a lado.' },
+  vhall:     { name: 'Paço do Concelho',      icon: '🏛️', w: 3, h: 3, cost: { stone: 60, wood: 40, glass: 4 },      rent: 10, pm: 0.3, look: ['hall', '#e8e0cc', '#2a4a6a'], desc: 'Onde os anciãos governam a vila.' },
+  vguild:    { name: 'Sede das Corporações',  icon: '⚖️', w: 3, h: 3, cost: { stone: 70, wood: 40, iron_bar: 4 },   rent: 30, pm: 0.15, look: ['hall', '#d8c8a0', '#6a2a3a'], desc: 'Os ofícios da vila se organizam e lucram.' },
+  vmint:     { name: 'Casa da Moeda',         icon: '🪙', w: 3, h: 2, cost: { stone: 60, iron_bar: 6, gold_bar: 1 }, rent: 45, look: ['big', '#b8b0a0', '#8a6a1a'], desc: 'Cunha moedas: dinheiro todo mês.' },
+  vhmarket:  { name: 'Mercado Coberto',       icon: '🏪', w: 4, h: 3, cost: { wood: 60, stone: 50, iron_bar: 3 },   rent: 35, pm: 0.15, attract: 0.04, look: ['hall', '#c9a978', '#a03a2a'], desc: 'Bancas sob um telhado: feira o ano todo.' },
+  vthermae:  { name: 'Termas',                icon: '🧖', w: 3, h: 3, cost: { stone: 80, marble: 10, glass: 4 },    pm: 0.3, cap: 4, attract: 0.06, look: ['hall', '#e2e6e2', '#3a7a9a'], desc: 'Banhos romanos de água quente.' },
+  vmonastery:{ name: 'Mosteiro',              icon: '🙏', w: 4, h: 3, cost: { stone: 90, wood: 50, glass: 6 },      stock: { wheat: 8 }, pm: 0.3, cap: 5, attract: 0.05, look: ['big', '#d8cfbc', '#5a4a3a'], desc: 'Monges rezam, plantam e copiam livros.' },
+  vuniv:     { name: 'Universidade',          icon: '🎓', w: 4, h: 3, cost: { stone: 100, wood: 50, glass: 10, iron_bar: 4 }, pm: 0.4, attract: 0.08, look: ['big', '#efe6d2', '#2a3a6a'], desc: 'Mestres e estudantes de todos os reinos.' },
+  vcathedral:{ name: 'Catedral',              icon: '⛪', w: 4, h: 3, cost: { stone: 150, marble: 20, glass: 12, gold_bar: 2 }, pm: 0.5, attract: 0.1, look: ['big', '#e8e2d4', '#4a5a7a'], desc: 'A maior obra da fé: a vila vira destino de peregrinos.' },
 };
 const STOCK_NAMES = { wheat: 'trigo', wood: 'madeira', stone: 'pedra', iron_ore: 'ferro' };
 // o texto da obra mostra o que ela rende
@@ -116,5 +151,16 @@ drawStructExtra = function (ctx, s, X, Y, time, H) {
     case 'vsawmill': house('#b08a5a', '#5a4026'); for (let k = 0; k < 3; k++) R(6, h - 10 - k * 4, 26, 3, k % 2 ? '#a8743e' : '#8a5a30'); ell(w - 14, h - 14, 8, 8, '#9aa0a8'); break;
     case 'vgranary': { shadow(); R(6, 20, w - 12, h - 24, '#9a3a2a'); roof(2, 2, w - 4, 22, '#6a2a1a'); R(w / 2 - 12, h - 26, 24, 22, '#5a2a1a'); ctx.strokeStyle = '#efe6d2'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X + w / 2 - 12, Y + h - 26); ctx.lineTo(X + w / 2 + 12, Y + h - 4); ctx.moveTo(X + w / 2 + 12, Y + h - 26); ctx.lineTo(X + w / 2 - 12, Y + h - 4); ctx.stroke(); break; }
     case 'vclinic': house('#efe6d2', '#3a6a3a'); for (let k = 0; k < 3; k++) { R(8 + k * 8, h - 12, 6, 6, '#9a5a3a'); ell(11 + k * 8, h - 14, 4, 3, '#5a9a3a'); } sign(w - 22, 30, '🌿'); break;
+    default: {
+      const L = VWORKS[s.type].look || ['house', '#d8c39a', '#7b3b22'], ic = VWORKS[s.type].icon, [kind, c1, c2] = L;
+      const big = (x, y, sz, t) => { ctx.font = `${sz}px sans-serif`; ctx.fillText(t, X + x, Y + y); };
+      if (kind === 'field') { R(2, 2, w - 4, h - 4, sn === 3 ? '#dfe6ea' : c1); if (sn !== 3) for (let y = 8; y < h - 6; y += 8) for (let x = 6; x < w - 6; x += 7) R(x, y + Math.sin(time * 2 + x) * 0.6, 3, 5, sn === 2 ? '#c8a04a' : c2); sign(w - 18, h - 14, ic); }
+      else if (kind === 'yard') { R(2, 2, w - 4, h - 4, sn === 3 ? '#dfe6ea' : c1); fence(); const bob = Math.sin(time * 2) * 1; for (let k = 0; k < Math.max(1, Math.floor(w / 24)); k++) { const x = 16 + k * 24, y = h / 2 + (k % 2 ? 6 : -2); ell(x, y + 7, 7, 2.5, 'rgba(0,0,0,0.2)'); ell(x, y + bob, 7, 5, c2); ell(x + 6, y - 2 + bob, 3, 3, U.shade(c2, -0.4)); } sign(w - 18, 4, ic); }
+      else if (kind === 'monument') { shadow(); R(w / 2 - 10, h - 10, 20, 8, U.shade(c1, -0.2)); R(w / 2 - 6, h - 24, 12, 16, c1); big(w / 2 - 8, h - 26, 16, c2); }
+      else if (kind === 'hall') { house(c1, c2); for (let k = 10; k < w - 10; k += 14) R(k, 26, 4, h - 32, U.shade(c1, 0.12)); R(6, h - 10, w - 12, 4, U.shade(c1, -0.25)); sign(w / 2 - 7, 8, ic); }
+      else if (kind === 'big') { house(c1, c2); R(w - 26, -26, 18, 52, U.shade(c1, -0.08)); roof(w - 30, -40, 26, 16, c2); R(w - 20, -14, 6, 9, '#2a2420'); flag(w - 18, -40, Game.civColor(typeof s.owner === 'number' ? s.owner : 0)); sign(10, 44, ic); }
+      else { house(c1, c2); if (/[🔥⚫]/u.test(ic)) for (let k = 0; k < 3; k++) { ctx.fillStyle = `rgba(200,200,200,${0.35 - k * 0.1})`; ctx.beginPath(); ctx.arc(X + w - 14 + Math.sin(time + k) * 3, Y - 6 - k * 8 - (time * 6 % 8), 3 + k, 0, Math.PI * 2); ctx.fill(); } sign(w - 22, 30, ic); }
+      break;
+    }
   }
 };
