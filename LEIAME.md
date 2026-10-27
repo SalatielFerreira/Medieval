@@ -89,6 +89,20 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: economia viva, guildas, religiões e culturas
+
+- **Cadeia de produção:** os empreendimentos que transformam gastam insumos todo mês (o moinho gasta trigo, a padaria farinha e ovos, a ferraria minério e carvão, a vidraria areia...). O responsável usa primeiro o depósito do negócio (você entrega da mochila), depois o que os seus outros negócios produziram e, por fim, compra no mercado do reino. Sem insumo, produz menos.
+- **Oferta e procura:** vender muito do mesmo item num reino derruba o preço lá por alguns meses; comprar muito, sobe. Reinos ricos pagam mais pelo luxo, e cada povo paga 25% a mais pelo que gosta.
+- **Encomendas:** o exército, as obras, as tavernas, a corte e a sua guilda fazem pedidos com prazo e recompensa (ouro, fama e relação). Atrasar custa relação e fama.
+- **Manutenção e riscos:** os prédios se desgastam e produzem menos (conserte no painel); incêndio e roubo podem acontecer (torres, quartel ou pelourinho por perto afastam ladrões). O seguro cobre as perdas.
+- **Funcionários:** de Aprendiz a Mestre com o tempo; produzem mais e ganham aumento. Insatisfeitos fazem greve; a concorrência tenta levar os bons (amizade alta os segura).
+- **Guildas:** 7 guildas de ofício com mestres e membros de verdade. Entre numa (preços combinados e encomendas melhores) ou **funde a sua** (2 negócios e 500 🪙) e **recrute gente das outras guildas** conversando com elas: quem não tem guilda pede amizade 20; membro, 35; experiente, 50; mestre de guilda, 70. Cada membro paga 3 🪙 por mês e aumenta a produção dos seus negócios.
+- **Feiras e leilões:** feiras de estação (e as festas dos povos) num reino por vez; leilões de itens raros nos castelos.
+- **Sócios:** um morador rico entra com 40% do valor do negócio e leva 30% do lucro; dá para comprar a parte dele depois.
+- **Painel dos negócios:** lucro, quanto já devolveu, estado, insumos, funcionários, seguro, sócio, encomendas, guildas, feiras e o livro de ocorrências. Abre na janela de cada empreendimento e no Portfólio.
+- **Religiões:** 5 fés, cada uma com um dom: Igreja do Sol Eterno (fé e cura), Fé dos Deuses Antigos (golpes mais fortes), Culto da Lua Prateada (magia), Ordem da Chama Sagrada (forja) e Caminho da Mãe Terra (colheitas e criações). Converta-se num templo (capelas e catedrais seguem a fé do reino) ou com um sacerdote; como rei, decrete a sua fé no reino. Reinos da mesma fé se aproximam; de fés diferentes, se estranham.
+- **Culturas:** cada reino tem o seu povo (Midgardianos, Dorneses, Nortenhos, Valacos, Olimpianos, Babilônios, Gondorianos), com valores, saudação, gostos (que mexem nos preços e nos presentes) e uma festa anual.
+
 ## Novidades: tudo em ordem, do mais fácil ao mais difícil
 
 - Todas as listas do jogo seguem a mesma regra: do mais barato (mais fácil) ao mais caro (mais difícil), pelo valor de mercado de tudo o que custa. Vale para cada categoria do menu Construção (a Moradia vai da Choupana ao Castelo, o último), as obras nas vilas, as receitas de cada oficina, as mercadorias das lojas (comprar e vender), o arsenal, os investimentos e as obras da coroa. As ferramentas grátis de Infraestrutura (tirar estrada, mudar, demolir) ficam no fim.
