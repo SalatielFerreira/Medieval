@@ -16,13 +16,13 @@
 const BANK_W = 5, BANK_H = 4, BANK_CRISIS = 3, BANK_DEBT_RATE = 0.02;
 const BANK_NAMES = ['Banco do Grifo de Ouro', 'Banco dos Mercadores de {r}', 'Casa de Crédito do Leão', 'Banco da Coroa de {r}', 'Tesouraria do Dragão Dourado', 'Banco da Torre de Prata', 'Casa Bancária do Carvalho'];
 const BANK_RATES = [0.005, 0.01, 0.015, 0.02];
-const BANK_TERMS = [[3, 0.015, 'Título de 3 meses'], [6, 0.02, 'Título de 6 meses'], [12, 0.03, 'Título de 12 meses']];
+const BANK_TERMS = [[3, 0.012, 'Título de 3 meses'], [6, 0.016, 'Título de 6 meses'], [12, 0.02, 'Título de 12 meses']];
 const BANK_EXPEDITIONS = [
-  { id: 'sal', icon: '🧂', name: 'Caravana do sal', m: 2, risk: 0.12, lo: 1.15, hi: 1.5, good: 'O sal chegou às feiras do norte e vendeu tudo.', bad: 'Bandidos levaram a caravana na estrada.' },
-  { id: 'vinho', icon: '🍷', name: 'Barris de vinho para o sul', m: 3, risk: 0.2, lo: 1.3, hi: 1.9, good: 'O vinho fez sucesso nas tavernas do sul.', bad: 'Os barris azedaram no caminho.' },
-  { id: 'seda', icon: '🧵', name: 'Rota da seda', m: 4, risk: 0.3, lo: 1.5, hi: 2.6, good: 'Os fardos de seda valeram ouro.', bad: 'Uma tempestade de areia engoliu os camelos.' },
-  { id: 'ilhas', icon: '⛵', name: 'Navio às ilhas das especiarias', m: 5, risk: 0.4, lo: 1.8, hi: 3.4, good: 'O navio voltou carregado de especiarias.', bad: 'O navio afundou num temporal.' },
-  { id: 'prata', icon: '⛏️', name: 'Mina de prata nas montanhas', m: 6, risk: 0.5, lo: 2, hi: 4.5, good: 'Os mineiros acharam um veio de prata!', bad: 'A mina desabou e não sobrou nada.' },
+  { id: 'sal', icon: '🧂', name: 'Caravana do sal', m: 2, risk: 0.1, lo: 1.05, hi: 1.3, good: 'O sal chegou às feiras do norte e vendeu tudo.', bad: 'Bandidos levaram a caravana na estrada.' },
+  { id: 'vinho', icon: '🍷', name: 'Barris de vinho para o sul', m: 3, risk: 0.18, lo: 1.15, hi: 1.55, good: 'O vinho fez sucesso nas tavernas do sul.', bad: 'Os barris azedaram no caminho.' },
+  { id: 'seda', icon: '🧵', name: 'Rota da seda', m: 4, risk: 0.28, lo: 1.3, hi: 1.85, good: 'Os fardos de seda valeram ouro.', bad: 'Uma tempestade de areia engoliu os camelos.' },
+  { id: 'ilhas', icon: '⛵', name: 'Navio às ilhas das especiarias', m: 5, risk: 0.38, lo: 1.45, hi: 2.3, good: 'O navio voltou carregado de especiarias.', bad: 'O navio afundou num temporal.' },
+  { id: 'prata', icon: '⛏️', name: 'Mina de prata nas montanhas', m: 6, risk: 0.48, lo: 1.7, hi: 3.0, good: 'Os mineiros acharam um veio de prata!', bad: 'A mina desabou e não sobrou nada.' },
 ];
 const BANK_TABS = [['conta', '💰 Conta'], ['prazo', '📜 Aplicações'], ['credito', '🧾 Empréstimos'], ['emprestar', '🤝 Emprestar'], ['investir', '📈 Investir'], ['expedicoes', '🐫 Expedições'], ['cofre', '🔐 Cofre'], ['tesouro', '👑 Tesouro']];
 
@@ -201,7 +201,7 @@ const Bank = {
     K.reserve += Math.round(c.pop * (0.4 + K.rate * 30)); // o povo deposita (juros maiores atraem mais)
     if (K.debt > 0) { K.debt += Math.ceil(K.debt * BANK_DEBT_RATE); const pay = Math.min(Math.max(0, c.treasury), Math.ceil(K.debt * 0.1)); c.treasury -= pay; K.debt -= pay; K.reserve += pay; }
     // o rei da IA às vezes gasta além da conta (banquetes, palácios, guerras)
-    if (!mine && c.rulerId !== null && Math.random() < 0.05) { const p = People.get(c.rulerId), n = U.rint(80, 260) * (p && ['ganancioso', 'orgulhoso'].includes(p.trait) ? 2 : 1); K.debt += n; K.reserve -= Math.min(K.reserve, n); }
+    if (!mine && c.rulerId !== null && !c.persona && Math.random() < 0.05) { const p = People.get(c.rulerId), n = U.rint(80, 260) * (p && ['ganancioso', 'orgulhoso'].includes(p.trait) ? 2 : 1); K.debt += n; K.reserve -= Math.min(K.reserve, n); }
     let red = false;
     if (expect < 0) {
       const need = -expect;
@@ -219,7 +219,8 @@ const Bank = {
     const B = this.B();
     // juros das contas (o reino em anarquia não paga)
     let j = 0;
-    for (const ci in B.acc) { const c = G.civs[ci]; if (!c || c.anarchy || B.acc[ci] <= 0) continue; const g = Math.round(B.acc[ci] * this.K(ci).rate); B.acc[ci] += g; j += g; }
+    for (const ci in B.acc) { const c = G.civs[ci], K = this.K(ci); if (!c || c.anarchy || B.acc[ci] <= 0) continue; const g = Math.min(Math.max(0, K.reserve), Math.round(B.acc[ci] * K.rate)); K.reserve -= g; B.acc[ci] += g; j += g; }
+    for (const ci in B.k) { const c = G.civs[ci], K = B.k[ci]; if (c && !c.anarchy && K.rate > 0.01) c.treasury = Math.max(0, c.treasury - Math.round(K.reserve * (K.rate - 0.01) * 0.25)); }
     if (j) Game.note(`🏦 Suas contas no banco renderam ${j} 🪙.`);
     // cofres particulares: 5 🪙 por mês de cada um
     for (const ci in B.box) if (Object.keys(B.box[ci]).length) { if (this.acc(ci) >= 5) B.acc[ci] -= 5; else if (P.gold >= 5) P.gold -= 5; }
@@ -595,7 +596,7 @@ UI.showBank = function (ci, tab, robbing) {
         <div class="tiles big"><div class="stile"><small>Tesouro</small><b>${c.treasury} 🪙</b></div><div class="stile"><small>Saldo do mês</small><b class="${H.net < 0 ? 'bad' : 'ok'}">${H.net >= 0 ? '+' : ''}${H.net} 🪙</b></div>
           <div class="stile"><small>Reserva do banco</small><b>${K.reserve} 🪙</b></div><div class="stile"><small>Dívida do reino</small><b class="${K.debt > H.cap * 0.7 ? 'bad' : ''}">${K.debt} / ${H.cap}</b></div><div class="stile"><small>Crise</small><b class="${K.crisis ? 'bad' : 'ok'}">${K.crisis}/${BANK_CRISIS}</b></div></div>
         <p class="dt-desc">Quando o tesouro não paga as contas, o banco cobre com a reserva e a dívida cresce (2% ao mês). Se a dívida passar do limite ou faltar reserva, o reino entra em crise; com ${BANK_CRISIS} meses de crise ele quebra: você perde a coroa e o povo vira bárbaro.</p></div>
-      <div class="kgrid two"><div class="card"><div class="sec">📊 Juros da conta do povo</div><p class="dt-desc">Juros maiores atraem mais depósitos para a reserva (e rendem mais para você).</p><div class="act-row">${BANK_RATES.map(r => `<button class="${K.rate === r ? 'primary' : ''}" data-act="bk" data-op="rate" data-c="${ci}" data-n="${r}">${(r * 100).toFixed(1)}%</button>`).join('')}</div></div>
+      <div class="kgrid two"><div class="card"><div class="sec">📊 Juros da conta do povo</div><p class="dt-desc">Juros maiores atraem mais depósitos para a reserva, mas acima de 1% o tesouro do reino paga a diferença todo mês.</p><div class="act-row">${BANK_RATES.map(r => `<button class="${K.rate === r ? 'primary' : ''}" data-act="bk" data-op="rate" data-c="${ci}" data-n="${r}">${(r * 100).toFixed(1)}%</button>`).join('')}</div></div>
         <div class="card"><div class="sec">🧾 Dinheiro do banco para o tesouro</div><div class="act-row">${[200, 500, 1000].map(n => btn('borrow', n, `+${n}`, K.reserve >= n && K.debt + n <= H.cap)).join('')}</div><div class="act-row">${[100, 500].map(n => btn('repay', n, `Pagar ${n}`, K.debt > 0 && c.treasury > 0)).join('')}${btn('repay', 'all', 'Pagar tudo', K.debt > 0 && c.treasury > 0)}</div></div>
         <div class="card"><div class="sec">📜 Emitir títulos</div><p class="dt-desc">O povo compra títulos: ${300 + Math.round(c.pop * 1.5)} 🪙 agora, ${Math.round((300 + Math.round(c.pop * 1.5)) * 1.3)} 🪙 a pagar em 6 meses. Não pagar é calote (crise).</p>${btn('bond', 0, '📜 Emitir', K.bonds.length < 3)}${K.bonds.length ? `<small class="muted"> ${K.bonds.map(b => `${b.pay} 🪙 em ${Calendar.short(b.due)}`).join(' · ')}</small>` : ''}</div>
         <div class="card"><div class="sec">💝 Seu bolso e o tesouro</div><div class="act-row">${[100, 500].map(n => btn('give', n, `Doar ${n}`, P.gold >= n)).join('')}</div><div class="act-row">${[100, 500].map(n => btn('take2', n, `Retirar ${n}`, c.treasury >= n)).join('')}</div><small class="muted">Doar agrada o povo; retirar desagrada o povo e as famílias.</small></div>

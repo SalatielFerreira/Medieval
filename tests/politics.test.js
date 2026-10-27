@@ -40,6 +40,10 @@ module.exports = async () => {
         vv.lord = 'player'; tieOf(civV, ['player', nw[0].id]); ok(vv.lord === 'player', 'você já governava, empatou e não ficou no cargo');
         vv.free = false; vv.lord = undefined;
       } else bad.push('sem vila para testar o empate');
+      // só vota quem não é candidato; só recebe voto quem se inscreveu
+      { const vx = World.villages.findIndex((x, i) => People.residents(i).filter(p => p.age >= 25).length >= 4); const Ex = Society.E(vx), rs = People.residents(vx).filter(p => p.age >= 25); Ex.reg = [rs[0].id, rs[1].id]; Ex.me = false; World.villages[vx].lord = undefined;
+        const res = Society.votes(vx), voters = People.residents(vx).filter(p => p.age >= 16 && !Ex.reg.includes(p.id)), el = Society.elders(vx), w = voters.reduce((a, p) => a + (el.includes(p) ? 3 : 1), 0);
+        ok(Object.keys(res).sort().join() === Ex.reg.map(String).sort().join(), 'votos para quem não se inscreveu'); ok(Object.values(res).reduce((a, n) => a + n, 0) === w, 'candidato votou'); Ex.reg = []; }
       // suborno do círculo do rei
       const ci = 2, L = Politics.circlePeople(ci); ok(L.length === 4, 'o círculo do rei não tem 4 pessoas');
       const rnd = Math.random; Math.random = () => 0.01;

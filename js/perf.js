@@ -80,7 +80,7 @@ const Perf = {
   for (const [o, n] of [[World, 'addStruct'], [World, 'removeStruct'], [Urban, 'addCivic'], [Urban, 'doDemolish'], [Urban, 'relocate'], [Families, 'buildBiz'], [Gate, 'monthTick']]) {
     const f = o[n]; if (typeof f !== 'function') continue; o[n] = function (...a) { Perf.memo.clear(); try { return f.apply(this, a); } finally { Perf.memo.clear(); } };
   }
-  Perf.remember(VillageEcon, 'parts'); Perf.remember(VillageWorks, 'of'); Perf.remember(VillageWorks, 'capOf'); Perf.remember(Families, 'bizIn');
+  Perf.remember(VillageEcon, 'parts'); Perf.remember(VillageWorks, 'of'); Perf.remember(VillageWorks, 'capOf'); Perf.remember(Families, 'bizIn'); Perf.remember(Shops, 'list');
   // moradores: o índice dá a lista curta; a condição completa continua sendo conferida em cada pessoa
   People.residents = function (vi) { const a = Perf.resIndex().get(vi); return a ? a.filter(p => p.alive && p.home.type === 'village' && p.home.idx === vi && !p.capanga && (p.job === undefined || p.job === null)) : []; };
   // o minimapa durante o jogo: refeito aos poucos (o primeiro, no carregamento, continua de uma vez)
@@ -118,7 +118,7 @@ const Perf = {
   // dentro das vilas e das famílias, cada subsistema vira uma fatia própria
   for (const [o, n, l] of [[Towns, 'settle', 'Towns.settle'], [NpcRoads, 'tick', 'NpcRoads.tick'], [NpcRoads, 'upgradeTick', 'NpcRoads.upgradeTick'], [NpcRoads, 'travelTick', 'NpcRoads.travelTick'],
     [NPCWork, 'monthTick', 'NPCWork.monthTick'], [NPCWork, 'clearTick', 'NPCWork.clearTick'], [Faith, 'monthTick', 'Faith.monthTick'], [People, 'purseTick', 'People.purseTick'], [Ports, 'monthTick', 'Ports.monthTick'],
-    [Shops, 'ensure', 'Shops.ensure'], [Trips, 'monthTick', 'Trips.monthTick'], [Families, 'crownTick', 'Families.crownTick']]) Perf.defer(o, n, l);
+    [Shops, 'ensure', 'Shops.ensure'], [Trips, 'monthTick', 'Trips.monthTick'], [Families, 'crownTick', 'Families.crownTick'], [Laws, 'monthTick', 'Laws.monthTick'], [Mercs, 'monthTick', 'Mercs.monthTick'], [Games, 'monthTick', 'Games.monthTick']]) Perf.defer(o, n, l);
   // a virada do mês "ao vivo" é a que acontece no laço do jogo
   // a virada inteira (envelhecer, guardas, arena, casas) também entra em fatias
   const nd0 = Game.onNewDay.bind(Game);

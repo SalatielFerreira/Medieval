@@ -27,6 +27,7 @@ const UIP = {
       if (R.aud.length) add('⚖️', `${R.aud.length} súdito(s) pedem audiência.`, () => UIP.goPage('x:reign', 'aud'), 1, 'este mês');
       for (const p of R.plots.filter(x => x.found)) add('🗡️', `Complô descoberto: ${G.people[p.pid] ? G.people[p.pid].name : '?'} ${Reign.PLOT_TXT[p.kind]}.`, () => UIP.goPage('x:reign', 'spy'), 3);
       for (const [vi, f] of Object.entries(R.fiefs)) { if (f.rebel) add('🏴', `Revolta do barão de ${World.villages[vi].name}: negocie ou esmague (${3 - (f.rebelMonths || 0)} mês(es)).`, () => UIP.goPage('x:reign', 'fiefs'), 3); else if (f.loyal < 25) add('🏰', `O barão de ${World.villages[vi].name} está insatisfeito (lealdade ${Math.round(f.loyal)}).`, () => UIP.goPage('x:reign', 'fiefs'), 2); }
+      if (typeof Laws !== 'undefined' && Laws.L().cases.length) add('⚖️', `${Laws.L().cases.length} caso(s) esperando julgamento no tribunal.`, () => UIP.goPage('x:reign', 'law'), Laws.L().cases.some(c => G.day - c.day >= 2) ? 2 : 1, 'até 3 meses');
       if (R.army.morale < 30) add('🏃', `A moral da tropa está baixa (${Math.round(R.army.morale)}): soldados podem desertar.`, () => UIP.goPage('x:reign', 'army'), 2);
     }
     if (typeof Society !== 'undefined') {
@@ -45,6 +46,8 @@ const UIP = {
     }
     if (typeof Loans !== 'undefined') for (const l of Loans.L().filter(x => x.left > 0 && x.missed > 0)) add('🧾', `Parcela atrasada com ${Loans.lenderName(l)} (${l.missed}ª vez): pague antes que mandem cobradores.`, () => UI.showLoans(l.kind, l.ci, l.pid), 3);
     if (typeof Crime !== 'undefined') for (const ci in Crime.W()) { const w = Crime.wanted(+ci); if (w) add('⚖️', `Você é procurado em ${CIV_DEFS[ci].short} (multa ${w.bounty} 🪙)${w.resist ? ': os guardas atacam' : ''}.`, null, w.resist ? 3 : 2); }
+    if (typeof Games !== 'undefined' && Games.S().on && Object.keys(Games.S().me).length < 3) add('🏅', `Jogos dos Sete Reinos em ${Games.hostName()}: vá à arena competir.`, () => UIP.goPage('x:games'), 1, `até ${Calendar.short(Games.S().day + 1)}`);
+    if (typeof Mercs !== 'undefined') for (const d of MERC_CO) { const c = Mercs.co(d.id); if (c.emp === 'player' && c.unpaid) add(d.icon, `${d.name} está sem soldo (${c.unpaid} mês): pague ou ela troca de lado.`, () => UIP.goPage('x:merc'), 3); }
     if (P.hunger < 20) add('🍖', 'Você está com fome: coma algo.', () => UI.showInventory(), 2);
     return out.sort((a, b) => b.urg - a.urg);
   },
@@ -219,7 +222,7 @@ const UIP = {
     return `<div class="card war-odds"><div class="sec">🎯 Chance estimada de vitória <span>${o.spy ? '🗡️ com dados do seu espião' : 'estimativa (sem espião lá)'}</span></div>${lines.map(l => `<p>${l}</p>`).join('')}<small class="muted">Conta soldados, arqueiros, cavaleiros, catapultas, treino, moral, generais, heróis e muralhas. A sorte também luta.</small></div>`;
   },
   // ---------------------------------------------------------------- 7. camadas do mapa
-  layers() { G.settings.mapLayers = G.settings.mapLayers || { biz: true, fav: true, war: true, faith: false, fair: true, fief: true }; return G.settings.mapLayers; },
+  layers() { const L = G.settings.mapLayers = G.settings.mapLayers || { biz: true, fav: true, war: true, faith: false, fair: true, fief: true }; for (const k of ['bank', 'elec', 'crisis', 'barb']) if (L[k] === undefined) L[k] = true; return L; },
 };
 
 // ------------------------------------------------------------------ ganchos
@@ -229,7 +232,7 @@ const UIP = {
   UI.navHtml = function (groups, cur, act, body) {
     if (act === 'knav' && !groups.some(g => g[0] === 'Gestão')) {
       const n = UIP.alerts().length, king = typeof Reign !== 'undefined' && Reign.isKing();
-      const items = [['x:alerts', '🔔', 'Avisos', n, UIP.alerts().some(a => a.urg >= 3)], king ? ['x:finance', '💰', 'Finanças do reino'] : null, ['x:board', '📊', 'Negócios', Biz.list().length], ['x:society', '🤝', 'Sociedade'], king ? ['x:reign', '👑', 'Reinado', Reign.R().dilemma ? '!' : ''] : null].filter(Boolean);
+      const items = [['x:alerts', '🔔', 'Avisos', n, UIP.alerts().some(a => a.urg >= 3)], king ? ['x:finance', '💰', 'Finanças do reino'] : null, ['x:board', '📊', 'Negócios', Biz.list().length], ['x:society', '🤝', 'Sociedade'], ['x:merc', '⚔️', 'Mercenários', typeof Mercs !== 'undefined' ? Mercs.mine().length || '' : ''], ['x:games', '🏅', 'Jogos', typeof Games !== 'undefined' && Games.S().on ? '!' : ''], king ? ['x:reign', '👑', 'Reinado', Reign.R().dilemma ? '!' : ''] : null].filter(Boolean);
       groups = [groups[0], ['Gestão', items], ...groups.slice(1)];
     }
     return nh0(groups, cur, act, body);
@@ -240,6 +243,8 @@ const UIP = {
     if (nav === 'x:finance') return UIP.financePage();
     if (nav === 'x:board') return UI.pageHead('📊', 'Negócios', 'Seus empreendimentos, encomendas, guildas e mercados') + UIP.capture(() => UIP._raw.board(UI.sel.bbTab));
     if (nav === 'x:society') return UI.pageHead('🤝', 'Sociedade', 'Reputação, amigos, eventos, política e segredos') + UIP.capture(() => UIP._raw.society(UI.sel.socTab));
+    if (nav === 'x:merc') return UI.pageHead('⚔️', 'Mercenários', 'Companhias livres para a guerra e para golpes') + Mercs.page();
+    if (nav === 'x:games') return UI.pageHead('🏅', 'Jogos dos Sete Reinos', 'Justa, arco e flecha e duelos entre os reinos') + Games.page();
     if (nav === 'x:reign') return UI.pageHead('👑', `${Reign.titleName()} ${UI.esc(G.name)}`, 'Conselho, audiências, vassalos, espionagem, herdeiros, diplomacia, tesouro, exército e corte') + UIP.capture(() => UIP._raw.reign(UI.sel.rgTab));
     return kp0(nav);
   };
@@ -287,7 +292,7 @@ const UIP = {
   const rs0 = MapView.renderSide.bind(MapView);
   MapView.renderSide = function () {
     rs0(); if (!this.side) return;
-    const L = UIP.layers(), names = { biz: '💼 Negócios', fav: '⭐ Favoritos', war: '⚔️ Guerras', faith: '⛪ Religiões', fair: '🎪 Feiras e leilões', fief: '🏰 Feudos' };
+    const L = UIP.layers(), names = { biz: '💼 Negócios', fav: '⭐ Favoritos', war: '⚔️ Guerras', faith: '⛪ Religiões', fair: '🎪 Feiras e leilões', fief: '🏰 Feudos', bank: '🏦 Bancos', elec: '🗳️ Eleições', crisis: '🚨 Crises', barb: '🏴 Bárbaros' };
     this.side.insertAdjacentHTML('afterbegin', `<div class="mv-sec"><h4>Camadas</h4><div class="mv-layers">${Object.keys(names).map(k => `<button class="${L[k] ? 'on' : ''}" data-layer="${k}">${names[k]}</button>`).join('')}</div></div>`);
     if (!this.side.dataset.lay) { this.side.dataset.lay = '1'; this.side.addEventListener('click', e => { const b = e.target.closest('[data-layer]'); if (!b) return; e.stopPropagation(); const L2 = UIP.layers(); L2[b.dataset.layer] = !L2[b.dataset.layer]; try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(G.settings)); } catch (er) { /* só nesta sessão */ } MapView.renderSide(); MapView.draw(); }, true); }
   };
@@ -307,6 +312,10 @@ const UIP = {
       if (L.faith && typeof Religion !== 'undefined') { const r = RELIGIONS[Religion.of(ci)]; if (r) mark(cp.x - 4, cp.y - 4, r.icon, r.name, 14); }
       if (L.fair && typeof Commerce !== 'undefined') { if (Commerce.fair(ci)) mark(cp.x, cp.y + 5, '🎪', Commerce.fair(ci).name, 15); const a = Commerce.auction(ci); if (a) mark(cp.x + 5, cp.y + 4, '🔨', ITEMS[a.item].name, 13); }
     });
+    if (L.bank) for (const s of World.structs) if (s && s.type === 'bank' && !s.removed) mark(s.x + 2.5, s.y + 2, '🏦', z >= 2.5 && typeof Bank !== 'undefined' ? Bank.name(s.owner) : '', 14);
+    if (L.elec && typeof Society !== 'undefined') World.villages.forEach((v, vi) => { const E = (Society.S().elect || {})[vi]; if (!E || !v) return; if (E.tie) mark(v.x - 3, v.y - 3, '⚖️', 'empate: você decide', 16); else if (E.next - G.day <= 1 || E.me) mark(v.x - 3, v.y - 3, '🗳️', z >= 3 ? `eleição ${Calendar.short(E.next)}` : '', 13); });
+    if (L.crisis && typeof Bank !== 'undefined') World.capitals.forEach((cp, ci) => { const c = G.civs[ci]; if (!c || !cp) return; if (c.anarchy) mark(cp.x, cp.y - 6, '💥', 'anarquia', 18); else if (Bank.K(ci).crisis) mark(cp.x, cp.y - 6, '🚨', `crise ${Bank.K(ci).crisis}/${BANK_CRISIS}`, 16); });
+    if (L.barb && typeof Bank !== 'undefined') for (const c of Bank.B().camps) mark(c.x + 1.5, c.y + 1.5, '🏴', z >= 3 ? 'bárbaros' : '', 14);
     if (L.fief && typeof Reign !== 'undefined') for (const [vi, f] of Object.entries(Reign.R().fiefs)) { const v = World.villages[vi], p = G.people[f.pid]; if (v) mark(v.x + 2.5, v.y - 2.5, f.rebel ? '🏴' : '🏰', p ? `${['Barão', 'Conde', 'Marquês'][f.rank || 0]} ${p.name}` : '', 13); }
     g.restore();
   };
