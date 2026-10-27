@@ -89,6 +89,17 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Correções: estabilidade
+
+- Um só rei por reino: quem assume o trono (herança, golpe, nova dinastia, revolta ou conquista) tira o título dos antigos.
+- O governador que morre deixa o cargo na hora: a família assume interinamente e há eleição no mês seguinte.
+- O tesouro nunca fica negativo: o rombo vira dívida com o banco do reino.
+- O resultado das eleições e as vilas em anarquia continuam iguais depois de carregar o jogo.
+- Os acampamentos de bárbaros limpos não voltam ao carregar e somem com a nova dinastia.
+- O mês de um jogo antigo não roda mais num jogo novo, e as caravanas não usam rotas de outro jogo.
+- O resumo do mês inclui o que os negócios, o banco, os soldos e os prêmios mudaram no seu ouro.
+- Viajantes e caravanas seguem as estradas com uma busca leve (o quadro de 117 ms sumiu).
+
 ## Novidades: um mundo vivo, leis, mercenários, Jogos e um jogo mais leve
 
 - **⚡ Desempenho:** a virada do mês não trava mais o jogo. Antes ela levava de 70 a 250 ms de uma vez; agora o essencial roda na hora (menos de 1 ms) e o resto é dividido em pedaços pequenos nos quadros seguintes. O minimapa é refeito aos poucos, e as buscas de famílias, moradores, lojas e rotas ficam guardadas. Antes de salvar, o mês termina de rodar. O jogo salvo continua pequeno (cerca de 120 KB comprimido depois de 10 anos de jogo).

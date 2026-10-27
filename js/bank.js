@@ -61,11 +61,13 @@ const Bank = {
       const k = this.K(ci);
       if (k.gone || (E.added || []).some(a => a.type === 'bank' && a.civ === ci)) return;
       let best = k.pos && !Graves.spotErr(null, k.pos.x, k.pos.y, true, BANK_W, BANK_H) ? k.pos : null;
-      for (const [r0, r1, strict] of [[7, 16, true], [7, 30, false]]) {
+      for (const [r0, r1, strict] of [[7, 16, true], [7, 30, false], [6, 48, null]]) {
         if (best) break;
         let bd = 1e9;
         for (let y = cp.y - r1; y <= cp.y + r1; y++) for (let x = cp.x - r1; x <= cp.x + r1; x++) {
           const d = U.dist(x + 2.5, y + 2, cp.x, cp.y); if (d < r0 || d > r1 || d >= bd) continue;
+          // última tentativa: aceita tirar árvores e pedras (sem prédio, estrada ou água)
+          if (strict === null) { if (Graves.spotErr(null, x, y, true, BANK_W, BANK_H)) continue; bd = d; best = { x, y }; continue; }
           if (!World.areaOk(x - 1, y - 1, BANK_W + 2, BANK_H + 2) || !World.areaFree(x - 1, y - 1, BANK_W + 2, BANK_H + 2)) continue;
           if (Towns.onRoad(x, y, BANK_W, BANK_H) || (strict && World.terr[World.idx(x + 2, y + 2)] !== ci)) continue;
           bd = d; best = { x, y };
@@ -77,7 +79,7 @@ const Bank = {
       k.pos = { x: best.x, y: best.y };
     });
     // acampamentos dos bárbaros que nasceram das falências
-    for (const c of this.B().camps) if (!World.camps.some(s => s.x === c.x && s.y === c.y)) this.addCamp(c.x, c.y);
+    for (const c of this.B().camps) if (!World.camps.some(s => s.x === c.x && s.y === c.y)) { const s = this.addCamp(c.x, c.y); if (c.cleared) Object.assign(s, { cleared: true, left: c.left || 0, respawnDay: c.respawnDay || 0, hidden: true, blocks: false }); }
     World.chunks = new Map();
   },
   // fundar o banco do seu reino: escolher o lugar e o nome
@@ -205,7 +207,7 @@ const Bank = {
     let red = false;
     if (expect < 0) {
       const need = -expect;
-      if (this.has(c.id) && K.reserve >= need && K.debt + need <= cap) { K.reserve -= need; K.debt += need; if (mine) Game.note(`🏦 ${K.name} cobriu o rombo de ${need} 🪙 do tesouro de ${CIV_DEFS[c.id].short} (dívida: ${K.debt} 🪙).`); }
+      if (this.has(c.id) && K.reserve >= need && K.debt + need <= cap) { K.reserve -= need; K.debt += need; c.happy = Math.min(100, c.happy + 4.5); if (mine) Game.note(`🏦 ${K.name} cobriu o rombo de ${need} 🪙 do tesouro de ${CIV_DEFS[c.id].short} (dívida: ${K.debt} 🪙).`); }
       else red = true;
     }
     if (K.debt > cap) red = true;
@@ -282,6 +284,9 @@ const Bank = {
     }
     return null;
   },
+  // a nova dinastia expulsa os bárbaros: os acampamentos daquele reino deixam de voltar
+  dropCamps(ci) { const B = this.B(); for (const c of B.camps.filter(x => x.ci === ci)) { const s = World.camps.find(k => k.x === c.x && k.y === c.y); if (s) { s.cleared = true; s.respawnDay = 1e9; s.hidden = true; s.blocks = false; } } B.camps = B.camps.filter(x => x.ci !== ci); },
+  syncCamps() { for (const c of this.B().camps) { const s = World.camps.find(k => k.x === c.x && k.y === c.y); if (s) { c.cleared = s.cleared; c.left = s.left; c.respawnDay = s.respawnDay; } } if (this.B().camps.length > 12) this.B().camps.splice(0, this.B().camps.length - 12); },
   addCamp(x, y) { for (let j = y; j < y + 3; j++) for (let i = x; i < x + 3; i++) World.obj[World.idx(i, j)] = 0; const s = World.addStruct('camp', x, y, 3, 3, 'bandit', { cleared: false, left: 5, respawnDay: 0, barb: true }); World.camps.push(s); return s; },
   anarchyTick(c) {
     const A = c.anarchy;
@@ -297,14 +302,15 @@ const Bank = {
     const ci = c.id, A = c.anarchy; if (!A) return;
     c.anarchy = null;
     World.villages.forEach(v => { if (v.anarch === ci) { if (v.free && v.civ === ci) v.free = false; delete v.anarch; } });
-    if (byPlayer) return;
+    const old0 = People.get(A.leader); if (old0 && old0.alive && old0.rank === 'ruler') old0.rank = 'knight';
+    if (byPlayer) { this.dropCamps(ci); return; }
     const fams = Object.values(Families.F()).filter(f => !f.player && f.civ === ci && Families.adults(f).length).sort((a, b) => Families.influence(b) - Families.influence(a));
     const f = fams[0], head = f ? Families.head(f) : null;
     const old = People.get(A.leader); if (old && old.alive && old.rank === 'ruler') old.rank = 'knight';
     if (head && head.alive) Succession.seat(c, head, 'ruler');
     else { const p = People.create({ rank: 'ruler', civ: ci, home: { type: 'castle', civ: ci }, age: U.rint(30, 50) }); Succession.seat(c, p, 'ruler'); }
     c.tax = 0.1; c.garrison = 6; c.treasury = 150; c.happy = 40; c.atWar = false; c.relation = Math.max(c.relation || 0, -20);
-    const K = this.K(ci); K.reserve = 200 + c.pop; K.debt = 0; K.crisis = 0;
+    const K = this.K(ci); K.reserve = 200 + c.pop; K.debt = 0; K.crisis = 0; this.dropCamps(ci);
     Heraldry.apply();
     UI.msg(`👑 Fim da anarquia em ${CIV_DEFS[ci].short}: ${c.rulerName} fundou uma nova dinastia${f ? ` (${Families.name(f)})` : ''}.`, 'gold', true);
     Diplo.chronicle(`👑 ${c.rulerName} acabou com a anarquia e fundou uma nova dinastia em ${CIV_DEFS[ci].name}.`, true);

@@ -46,7 +46,7 @@ const Perf = {
     if (!this.miniJob) { if (!this.miniDirty || !World.mini) return; this.miniDirty = false; const c = document.createElement('canvas'); c.width = WORLD_W; c.height = WORLD_H; const g = c.getContext('2d'); this.miniJob = { c, g, img: g.createImageData(WORLD_W, WORLD_H), y: 0 }; }
     const J = this.miniJob, t0 = performance.now(), d = J.img.data;
     while (J.y < WORLD_H && performance.now() - t0 < budget) {
-      for (let r = 0; r < 8 && J.y < WORLD_H; r++, J.y++) for (let x = 0, i = J.y * WORLD_W; x < WORLD_W; x++, i++) { const [rr, gg, bb] = World.miniColor(i); d[i * 4] = rr; d[i * 4 + 1] = gg; d[i * 4 + 2] = bb; d[i * 4 + 3] = 255; }
+      for (let r = 0; r < 2 && J.y < WORLD_H; r++, J.y++) for (let x = 0, i = J.y * WORLD_W; x < WORLD_W; x++, i++) { const [rr, gg, bb] = World.miniColor(i); d[i * 4] = rr; d[i * 4 + 1] = gg; d[i * 4 + 2] = bb; d[i * 4 + 3] = 255; }
     }
     if (J.y >= WORLD_H) { J.g.putImageData(J.img, 0, 0); World.mini = J.c; this.miniJob = null; }
   },
@@ -66,7 +66,10 @@ const Perf = {
   drain(budget) {
     const t0 = performance.now();
     while (this.queue.length && (performance.now() - t0 < budget)) { this.runTask(this.queue.shift()); this.dirty(); }
-    if (!this.queue.length && this.notes) { if (this.notes.length && G.ledger && G.ledger[0]) G.ledger[0].notes.push(...this.notes); this.notes = null; }
+    if (!this.queue.length && this.month) {
+      const M = this.month; this.month = null; const dg = P.gold - M.gold, notes = this.notes || []; this.notes = null;
+      if (dg || notes.length) { G.ledger = G.ledger || []; let e = G.ledger.find(x => x.day === M.day); if (!e) { e = { day: M.day, gold: 0, got: [], notes: [] }; G.ledger.unshift(e); if (G.ledger.length > 30) G.ledger.length = 30; } e.gold += dg; e.notes.push(...notes); if (dg) UI.msg(`📒 Fim do mês: ${dg > 0 ? '+' : ''}${dg} 🪙 em negócios, banco, soldos e prêmios (Diário → Contas).`, dg < 0 ? 'bad' : ''); }
+    } else if (!this.queue.length && this.notes) this.notes = null;
   },
   flush() { let n = 0; while (this.queue.length && n++ < 500) this.drain(1e9); },
   update(dt) { this.dirty(); this.miniStep(3); if (this.queue.length) this.drain(6); },
@@ -90,12 +93,12 @@ const Perf = {
     Perf.miniDirty = true; Perf.miniJob = null;
   };
   // caravanas: a rota entre dois castelos é a mesma por um bom tempo (as estradas mudam pouco)
-  const fp0 = World.findPath.bind(World), routes = new Map();
+  const fp0 = World.findPath.bind(World), routes = Perf.routes = new Map();
   Caravans.dayTick = (dt0 => function (...a) {
     World.findPath = function (ax, ay, bx, by, ...rest) {
       const k = [ax, ay, bx, by].join(','), r = routes.get(k);
-      if (r && G.day - r.day < 36) return r.path.slice();
-      const p = fp0(ax, ay, bx, by, ...rest); if (p) routes.set(k, { day: G.day, path: p.slice() }); return p;
+      if (r && r.day <= G.day && G.day - r.day < 36) return r.path.slice();
+      const rp = World.roadPath ? World.roadPath(ax, ay, bx, by) : null, p = rp && rp.length >= 20 ? rp : fp0(ax, ay, bx, by, ...rest); if (p) routes.set(k, { day: G.day, path: p.slice() }); return p;
     };
     try { return dt0.apply(this, a); } finally { World.findPath = fp0; }
   })(Caravans.dayTick);
@@ -103,15 +106,18 @@ const Perf = {
   const ug0 = NpcRoads.upgradeTick.bind(NpcRoads);
   NpcRoads.upgradeTick = function (per) {
     if (!Perf.slicing) return ug0(per);
-    const all = World.villages, caps = World.capitals, n = all.length;
-    for (let k0 = 0; k0 < n; k0 += 6) Perf.queue.push(Object.assign(() => { const part = new Array(n), cp = []; for (let k = k0; k < Math.min(n, k0 + 6); k++) part[k] = all[k]; World.villages = part; World.capitals = cp; try { ug0(per); } finally { World.villages = all; World.capitals = caps; } }, { label: 'NpcRoads.upgradeTick(vilas)' }));
-    Perf.queue.push(Object.assign(() => { World.villages = []; try { ug0(per); } finally { World.villages = all; } }, { label: 'NpcRoads.upgradeTick(castelos)' }));
+    const n = World.villages.length;
+    for (let k0 = 0; k0 < n; k0 += 6) Perf.queue.push(Object.assign(() => { const all = World.villages, caps = World.capitals, part = new Array(all.length); for (let k = k0; k < Math.min(all.length, k0 + 6); k++) part[k] = all[k]; World.villages = part; World.capitals = []; try { ug0(per); } finally { World.villages = all; World.capitals = caps; } }, { label: 'NpcRoads.upgradeTick(vilas)' }));
+    Perf.queue.push(Object.assign(() => { const all = World.villages; World.villages = []; try { ug0(per); } finally { World.villages = all; } }, { label: 'NpcRoads.upgradeTick(castelos)' }));
   };
+  const mp0 = World.miniPixel.bind(World);
+  World.miniPixel = function (i) { if (Perf.miniJob) Perf.miniDirty = true; return mp0(i); };
   // a cada mês e a cada quadro os índices se refazem (mudanças de casa feitas em qualquer lugar entram na hora certa)
   const et0 = Game.econTick.bind(Game);
   Game.econTick = function () {
     if (!Perf.slicing) Perf.flush(); Perf.dirty();
     const was = Perf.slicing; Perf.slicing = was || Perf.live; let r; try { r = et0(); } finally { Perf.slicing = was; }
+    if (Perf.queue.length) Perf.month = { day: G.day, gold: P.gold };
     Perf.dirty(); return r;
   };
   for (const [o, n] of [[Towns, 'dayTick'], [Families, 'dayTick'], [Lifesim, 'monthTick'], [Diplo, 'tickDay'], [Caravans, 'dayTick'], [Battles, 'dayTick'], [Biz, 'dayTick'], [Market, 'dayTick'], [Content, 'monthTick'], [Society, 'monthTick'], [Politics, 'monthTick'], [Bank, 'monthTick'], [Commerce, 'monthTick'], [Reign, 'monthTick'], [Religion, 'monthTick'], [VillageWorks, 'monthTick'], [News, 'monthTick']]) if (o) Perf.defer(o, n, (Object.entries({ Towns, Families, Lifesim, Diplo, Caravans, Battles, Biz, Market, Content, Society, Politics, Bank, Commerce, Reign, Religion, VillageWorks, News }).find(([, v]) => v === o) || ['?'])[0] + '.' + n);
@@ -130,7 +136,9 @@ const Perf = {
   const sn0 = Game.snapshot.bind(Game);
   Game.snapshot = function (...a) { Perf.flush(); return sn0(...a); };
   const ld0 = Game.load.bind(Game);
-  Game.load = function (...a) { Perf.queue = []; Perf.notes = null; return ld0(...a); };
+  Perf.reset = () => { Perf.queue = []; Perf.notes = null; Perf.month = null; Perf.slicing = false; Perf.miniJob = null; Perf.miniDirty = false; Perf.routes.clear(); Perf.dirty(); };
+  Game.load = function (...a) { Perf.reset(); return ld0(...a); };
+  for (const n of ['newGame', 'toMenu']) { const f = Game[n].bind(Game); Game[n] = function (...a) { Perf.reset(); return f(...a); }; }
   const cu0 = Content2.update.bind(Content2);
-  Content2.update = function (dt) { cu0(dt); Perf.update(dt); };
+  Content2.update = function (dt) { try { cu0(dt); } finally { Perf.update(dt); } };
 }

@@ -141,4 +141,6 @@ const Travel = {
   Content2.update = function (dt) { cu0(dt); Travel.update(dt); };
   const ld0 = Game.load.bind(Game);
   Game.load = function (...a) { Travel.shown.clear(); Travel.routes.clear(); return ld0(...a); };
+  const ng0 = Game.newGame.bind(Game);
+  Game.newGame = function (...a) { Travel.shown.clear(); Travel.routes.clear(); return ng0(...a); };
 }

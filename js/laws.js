@@ -97,7 +97,7 @@ const Laws = {
       const sev = { multa: 1, prisao: 2, exilio: 3, forca: 4 }[v];
       if (v === 'multa') { const c = G.civs[World.villages[cs.vi].civ]; if (c) c.treasury += 60; if (p) p.purse = Math.max(0, People.purse(p) - 60); }
       if (v === 'prisao' && p) p.jail = G.day + 6;
-      if (v === 'exilio' && p) { p.home = { type: 'wild' }; People.addAff(p, -40); }
+      if (v === 'exilio' && p) { p.home = { type: 'wild' }; p.shop = null; People.addAff(p, -40); }
       if (v === 'forca' && p && p.alive) { People.die(p, 'enforcado por ordem do rei'); this.rep('clero', -1); }
       if (cs.guilty) { L.justice += sev >= 3 && !cs.grave ? 0 : 2; this.rep(cs.g, 1 + sev * 0.3); if (sev >= 3 && !cs.grave) { this.rep('povo', -1); fam(-10); } else fam(-4 * sev); }
       else { L.justice -= 1 + sev; fam(-8 * sev); this.rep(p ? (typeof Society !== 'undefined' ? Society.groupOf(p) : 'povo') : 'povo', -sev * 0.7); L.wrong.push({ name: cs.name, day: G.day }); }

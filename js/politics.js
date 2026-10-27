@@ -69,12 +69,12 @@ const Politics = {
   val(vi, p) { const s = this.score(vi, p.id); return s.d * 1.2 + s.f + s.r * 0.3; },
   registerTick(vi, force) {
     const v = World.villages[vi], E = Society.E(vi); if (!v || E.tie) return;
-    Society.candidates(vi);
     if (!force && E.next - G.day > 3) return;
+    Society.candidates(vi);
     const cur = v.chief !== undefined && v.chief !== 'player' ? G.people[v.chief] : null;
     const add = (p, why) => { if (!p || E.reg.includes(p.id) || E.reg.length >= 3) return; E.reg.push(p.id); if (why) Rumors.atV(vi, `${p.name} ${why}.`); };
     if (cur && cur.alive && cur.home.type === 'village' && cur.home.idx === vi && (force || Math.random() < 0.8)) add(cur, 'vai tentar a reeleição');
-    for (const p of this.pool(vi).filter(p => p !== cur && !E.reg.includes(p.id)).sort((a, b) => this.val(vi, b) - this.val(vi, a)).slice(0, 4)) if (force ? E.reg.length < 2 : Math.random() < 0.3) add(p, `se candidatou a governador de ${v.name}`);
+    for (const p of this.pool(vi).filter(p => p !== cur && !E.reg.includes(p.id)).sort((a, b) => this.deeds(vi, b.id) + this.fame(b.id) - this.deeds(vi, a.id) - this.fame(a.id)).slice(0, 6).sort((a, b) => this.val(vi, b) - this.val(vi, a)).slice(0, 4)) if (force ? E.reg.length < 2 : Math.random() < 0.3) add(p, `se candidatou a governador de ${v.name}`);
     // ninguém se inscreveu: o conselho da vila indica o morador com mais feitos e fama
     if (force && !E.reg.length && !(E.me || v.lord === 'player')) { const p = this.pool(vi).sort((a, b) => this.val(vi, b) - this.val(vi, a))[0]; add(p, 'foi indicado pelo conselho da vila'); }
   },

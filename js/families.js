@@ -503,7 +503,7 @@ const Families = {
       const w = cands.find(x => x.home.idx === m.home.idx) || cands.find(x => this.civOf(x) === civ);
       if (!w) continue;
       People.marry(m, w);
-      w.home = { type: 'village', idx: m.home.idx };
+      w.home = { type: 'village', idx: m.home.idx }; if (typeof Perf !== 'undefined') Perf.resDirty();
       if (w.met || m.met) UI.msg(`💍 ${m.name} e ${w.name} se casaram. Ela agora é ${w.name} ${w.surname}.`);
     }
     // vilas cheias mandam jovens casais para vilas com espaço
@@ -515,6 +515,7 @@ const Families = {
       const mover = res.find(p => p.age >= 18 && p.age < 35 && !SHOP_RANKS.includes(p.rank) && !p.kin && !p.job && !this.isChief(p) && p.spouse !== null);
       if (!mover) return;
       for (const p of res.filter(q => q === mover || q.id === mover.spouse || (q.parents.includes(mover.id) && q.age < 16))) p.home = { type: 'village', idx: dest.i };
+      if (typeof Perf !== 'undefined') Perf.resDirty();
     });
   },
   // nascimentos ficam mais raros em vilas lotadas

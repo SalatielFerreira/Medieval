@@ -119,7 +119,7 @@ UI.showMercs = function () { this.open('⚔️ Mercenários', `<div class="mercw
     cs0(pl);
     if (!G.coup) return;
     const d = MERC_CO.find(x => Mercs.co(x.id).emp === 'f:' + pl.fam); if (!d) return;
-    const k = Math.min(6, Math.ceil(Mercs.power(d.id) / 4)), m = Reign.main();
+    const k = Math.min(6, Math.ceil(Mercs.power(d.id) / 4)), m = Reign.main(); if (!m) return;
     for (let j = 0; j < k; j++) { const a = Math.random() * Math.PI * 2, s = freeSpotNear(P.x + Math.cos(a) * 8 * TILE, P.y + Math.sin(a) * 7 * TILE, 3 * TILE); const g = Game.spawn('guard', s.x, s.y, { civ: m.id, leash: 60, tag: 'coup' }); g.angry = true; g.target = P; g.aggroOv = 40; }
     UI.msg(`${d.icon} ${d.name} veio junto com os golpistas: ${k} mercenários a mais!`, 'bad', true);
   };

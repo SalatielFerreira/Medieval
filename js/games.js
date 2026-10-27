@@ -55,6 +55,7 @@ const Games = {
   },
   monthTick() {
     const S = this.S(), cd = Calendar.of(G.day);
+    G.gamesBout = null;
     if (S.on && G.day > S.day) this.resolve();
     if (cd.month === GAMES_MONTH && S.year !== cd.year) this.start();
   },
@@ -71,7 +72,7 @@ const Games = {
     else this.archery();
   },
   // arco e flecha: a marca corre de um lado para o outro; atire quando ela passar pelo centro (3 flechas)
-  archery() { G.arch = { shots: [], t0: performance.now(), period: Math.max(700, 1300 - P.level * 15) }; this.showArch(); },
+  archery() { this.S().me.archery = 0; G.arch = { shots: [], t0: performance.now(), period: Math.max(700, 1300 - P.level * 15) }; this.showArch(); },
   showArch() {
     const A = G.arch; A.t0 = performance.now();
     const pts = A.shots.reduce((a, n) => a + n, 0);
