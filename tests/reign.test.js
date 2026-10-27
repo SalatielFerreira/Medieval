@@ -39,7 +39,7 @@ module.exports = async () => {
       Object.assign(P.inv, { stone_block: 200, marble_block: 100, glass: 50, gold_bar: 20 }); Reign.upgradeCastle(1); ok(Reign.castleLv(1) === 2, 'o castelo não subiu de nível');
       const cs = World.structs.find(s => s.type === 'castle' && s.owner === 1); if (cs) World.drawStruct(document.createElement('canvas').getContext('2d'), cs, 10, 10, 1);
       Game.becomeRuler(5, 'teste'); UI.close(); Reign.monthTick(); ok(Reign.titleName().startsWith('Alt') || Reign.titleName().startsWith('Imper'), 'título maior: ' + Reign.titleName());
-      for (const t of ['council', 'aud', 'fiefs', 'spy', 'heirs', 'diplo', 'money', 'army', 'court']) { Reign.show(t); ok(UI.cur && UI.cur.fn === 'showReign', 'janela não abriu: ' + t); }
+      for (const t of ['council', 'aud', 'fiefs', 'spy', 'heirs', 'diplo', 'money', 'army', 'court']) { Reign.show(t); ok(UI.cur && UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:reign' && UI.sel.rgTab === t, 'janela não abriu: ' + t); }
       UI.close(); for (let k = 0; k < 3; k++) Game.onNewDay();
       return bad;
     });

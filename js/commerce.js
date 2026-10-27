@@ -433,7 +433,6 @@ const Commerce = {
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
     if (fn === 'showBiz' || fn === 'showBizShop') body = `<div class="act-row"><button data-act="bboard" data-t="biz">📊 Painel dos negócios</button><button data-act="bboard" data-t="contracts">📜 Encomendas</button></div>` + body;
-    if (fn === 'showKingdom') body = body.replace('<div class="kpg">', '<div class="kpg"><div class="act-row"><button data-act="bboard" data-t="biz">📊 Painel dos negócios</button><button data-act="bboard" data-t="contracts">📜 Encomendas</button><button data-act="bboard" data-t="guilds">🏛️ Guildas</button></div>');
     if (fn === 'showCastle' && args && args[0] !== undefined) {
       const ci = args[0], offs = Commerce.offers(ci), auc = Commerce.auction(ci);
       if (offs.length || auc) body += `<div class="card"><div class="sec">📜 Negócios com ${CIV_DEFS[ci].short}</div><p class="dt-desc">${offs.length ? `${offs.length} encomenda(s) aberta(s) daqui.` : ''} ${auc ? `Leilão de <b>${UI.esc(ITEMS[auc.item].name)}</b> neste castelo.` : ''}</p><div class="act-row"><button data-act="bboard" data-t="contracts">📜 Ver encomendas</button>${auc ? '<button data-act="bboard" data-t="market">🔨 Leilão</button>' : ''}</div></div>`;

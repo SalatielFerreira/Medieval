@@ -3839,3 +3839,51 @@ body.small .trd-col .sec span { display: none; }
 .soc-guests { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
 .soc-guests button { padding: 4px 10px; font-size: 13px; }
 .soc-guests button.on { background: #b8861b; color: #1a1006; }
+
+/* ---- uiplus: sino de avisos, ficha do item, finanças, conversa, camadas do mapa, chance na guerra ---- */
+.al-bell { position: fixed; left: 322px; top: 18px; z-index: 30; display: flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 18px; border: 1px solid rgba(214,174,96,.55); background: var(--glass); color: var(--gold-hi); font-size: 15px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,.45); }
+.al-bell b { font-size: 12px; min-width: 18px; padding: 1px 5px; border-radius: 9px; background: #6b4a1c; color: #fff; text-align: center; }
+.al-bell.urg b { background: #b23a2a; }
+.al-bell.urg { animation: alPulse 1.6s ease-in-out infinite; }
+.al-bell.hidden { display: none; }
+@keyframes alPulse { 50% { box-shadow: 0 0 0 4px rgba(178,58,42,.35), 0 3px 10px rgba(0,0,0,.45); } }
+body.small .al-bell { left: 10px; right: auto; top: 122px; padding: 3px 8px; font-size: 13px; }
+.al-list { display: flex; flex-direction: column; gap: 6px; }
+.al-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,.03); border-left: 3px solid #8a7550; }
+.al-row.u2 { border-left-color: #d6ae60; } .al-row.u3 { border-left-color: #d0503a; background: rgba(208,80,58,.08); }
+.al-ic { font-size: 20px; } .al-t { flex: 1; display: flex; flex-direction: column; gap: 2px; } .al-t small { color: #c9b48a; font-size: 11px; }
+.al-row button { padding: 5px 14px; }
+.iinfo { display: flex; flex-direction: column; gap: 10px; }
+.ii-head { display: flex; gap: 14px; align-items: center; padding: 10px 12px; border-radius: 10px; background: linear-gradient(90deg, rgba(214,174,96,.14), transparent); }
+.ii-head > div:last-child { display: flex; flex-direction: column; gap: 3px; } .ii-head b { font-family: 'Cinzel', Georgia, serif; font-size: 18px; color: var(--gold-hi); } .ii-head small { color: #c9b48a; }
+.ii-big { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid rgba(214,174,96,.45); background: rgba(0,0,0,.3); }
+.ii-big > * { transform: scale(1.5); }
+.ii-eff { display: flex; flex-wrap: wrap; gap: 4px; } .ii-eff span { font-size: 11px; padding: 2px 7px; border-radius: 9px; background: rgba(120,170,90,.18); color: #d6efc0; }
+.ii-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px; min-width: 0; }
+.iinfo, .iinfo .card { min-width: 0; overflow-wrap: anywhere; }
+.ii-sec { margin: 0; } .ii-row { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; font-size: 12.5px; line-height: 1.35; } .ii-row > span:first-child { width: 20px; text-align: center; flex: none; }
+.ii-mini { padding: 4px 2px 8px; }
+.ldi-bar .ldi-info { min-width: 0; width: 36px; height: 32px; padding: 0; }
+.fin-card .sec span { float: right; font-family: var(--ui-font); font-size: 12px; color: #d8c69c; }
+.fin-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 6px 0; }
+body.small .fin-cols { grid-template-columns: 1fr; }
+.fin-h { display: block; color: var(--gold); font-weight: 600; margin-bottom: 4px; border-bottom: 1px solid rgba(214,174,96,.25); padding-bottom: 2px; }
+.fin-r { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; padding: 2px 0; }
+.fin-card .ok, .war-odds .ok { color: #9fdc7c; } .fin-card .bad, .war-odds .bad { color: #f08a72; }
+.fin-chart { display: flex; align-items: flex-end; gap: 4px; height: 70px; padding: 6px; margin: 6px 0 2px; border-radius: 8px; background: rgba(0,0,0,.25); }
+.fin-chart i { flex: 1; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, #d6ae60, #7a5a26); }
+.fin-chart i.now { background: linear-gradient(180deg, #ffe9b0, #c9932f); }
+.fin-risk { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; } .fin-risk span { font-size: 11.5px; padding: 3px 8px; border-radius: 9px; background: rgba(208,80,58,.15); color: #f5c3b4; }
+.tk-x { margin: 6px 0; display: flex; flex-direction: column; gap: 6px; }
+.tk-x-lv small { display: block; font-size: 11px; color: #d8c69c; } .tk-x-lv b { color: var(--gold-hi); }
+.tk-x-bar { height: 6px; border-radius: 3px; background: rgba(0,0,0,.4); overflow: hidden; margin: 3px 0; } .tk-x-bar i { display: block; height: 100%; background: linear-gradient(90deg, #6aa84f, #b6e08a); }
+.tk-x-w { display: flex; flex-wrap: wrap; gap: 4px; } .tk-x-w span { font-size: 11px; padding: 2px 7px; border-radius: 9px; background: rgba(214,174,96,.16); color: #f1e4c6; }
+.tk-more { margin-top: 4px; font-size: 11.5px; } .tk-more summary { cursor: pointer; color: var(--gold); }
+.mv-layers { display: flex; flex-wrap: wrap; gap: 4px; }
+.mv-layers button { font-size: 11px; padding: 3px 8px; opacity: .55; }
+.mv-layers button.on { opacity: 1; border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(214,174,96,.4); }
+.war-odds p { margin: 4px 0; font-size: 13px; } .war-odds .sec span { float: right; font-size: 11px; color: #c9b48a; font-family: var(--ui-font); }
+.war-odds b { font-size: 15px; }
+.fin-card > .sec { display: flex; align-items: center; gap: 8px; text-align: left; } .fin-card > .sec span { margin-left: auto; float: none; }
+.war-odds { margin: 8px 0; }
+.ldi-bar .ldi-info { font-size: 16px; display: flex; align-items: center; justify-content: center; }

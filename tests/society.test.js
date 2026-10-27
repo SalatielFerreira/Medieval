@@ -39,7 +39,7 @@ module.exports = async () => {
       const kid = People.create({ rank: 'peasant', age: 18, sex: 'm', home: { type: 'player' } }); kid.kin = 'child';
       const bride = vil.find(p => p.sex === 'f' && p.spouse === null && p.age >= 16 && p.age < 30 && p !== sp); if (bride) { bride.aff = 40; const ar = Society.arrange(bride, kid.id); ok(ar && kid.spouse === bride.id, 'o casamento arranjado não aconteceu'); }
       // 5. eventos
-      const guests = vil.slice(6, 10); guests.forEach(p => p.aff = 15); Society.banquet(guests.map(p => p.id)); ok(guests.every(p => p.aff > 15), 'o banquete não deu amizade');
+      const guests = []; for (const p of vil.slice(6)) if (guests.length < 4 && !guests.some(g => Society.ties(g).foes.includes(p.id) || Society.ties(p).foes.includes(g.id))) guests.push(p); guests.forEach(p => p.aff = 15); Society.banquet(guests.map(p => p.id)); ok(guests.every(p => p.aff > 15), 'o banquete não deu amizade');
       const host = vil[11]; host.aff = 40; Society.invite(host, 'birthday'); ok(Society.S().invites.length, 'convite não chegou');
       const vv = World.villages[host.home.idx]; P.x = vv.x * TILE; P.y = vv.y * TILE; Society.attend(Society.S().invites.find(i => i.pid === host.id)); ok(host.aff > 40, 'comparecer não agradou');
       // 7. duelo de honra
@@ -49,7 +49,7 @@ module.exports = async () => {
       const vi = 0; Society.run(vi); ok(Society.E(vi).me, 'não se candidatou'); for (const p of People.residents(vi)) p.aff = 95; Society.E(vi).push = 60; World.villages[vi].lord = undefined; Society.election(vi); ok(World.villages[vi].lord === 'player', 'ganhar a eleição não deu o governo');
       // 9. jantar
       const dn = vil[14]; dn.aff = 30; Inv.add('stew', 1); const da = dn.aff; Society.dinner(dn); ok(dn.aff > da, 'o jantar não deu amizade');
-      for (const t of ['rep', 'friends', 'events', 'politics', 'secrets']) { Society.show(t); ok(UI.cur && UI.cur.fn === 'showSociety', 'janela não abriu: ' + t); }
+      for (const t of ['rep', 'friends', 'events', 'politics', 'secrets']) { Society.show(t); ok(UI.cur && UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:society' && UI.sel.socTab === t, 'janela não abriu: ' + t); }
       UI.close(); Society.visit(); Society.monthTick(); Game.onNewDay();
       return bad;
     });

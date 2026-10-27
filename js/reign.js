@@ -354,7 +354,7 @@ const Reign = {
   };
   // janelas
   const op0 = UI.open.bind(UI);
-  UI.open = function (title, body, fn, args, sub) { if (fn === 'showKingdom' && Reign.isKing()) body = body.replace('<div class="kpg">', '<div class="kpg"><div class="act-row"><button class="primary" data-act="rgTab" data-t="council">👑 Reinado</button></div>'); return op0(title, body, fn, args, sub); };
+  UI.open = function (title, body, fn, args, sub) { return op0(title, body, fn, args, sub); };
   const a0 = UI.act.bind(UI);
   UI.act = function (a, d) {
     if (!a.startsWith('rg')) return a0(a, d);

@@ -479,7 +479,6 @@ const Society = {
   // janelas: sociedade no Portfólio; testemunha na prisão
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
-    if (fn === 'showKingdom') body = body.replace('<div class="kpg">', '<div class="kpg"><div class="act-row"><button data-act="socTab" data-t="rep">🤝 Sociedade</button></div>');
     if (fn === 'showArrest' && G.people.some(p => p.alive && p.aff >= 90 && !p.kin) && !(G.urban.soc && G.urban.soc.witDay === G.day)) body = body.replace('</div>', '</div><div class="act-row"><button data-act="socWitness" data-c="' + args[0] + '">🧑‍⚖️ Chamar um confidente como testemunha (multa pela metade)</button></div>');
     return op0(title, body, fn, args, sub);
   };

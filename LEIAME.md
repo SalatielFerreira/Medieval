@@ -89,7 +89,19 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
-## Novidades: o reinado (Portfólio → 👑 Reinado)
+## Novidades: janelas mais úteis e organizadas
+
+- **🔔 Central de avisos:** um sino ao lado do seu retrato mostra quantas coisas precisam de você (pisca em vermelho quando é urgente): dilemas do conselho, audiências, complôs, barões revoltados, convites, encomendas com prazo, greves, parcelas atrasadas, quando você está sendo procurado, cônjuge carente, dívidas com amigos, eleições, leilões e guerras. Cada aviso tem um botão **Ir** que leva direto à janela certa.
+- **Portfólio → Gestão:** Avisos, Finanças do reino, Negócios, Sociedade e Reinado viraram páginas do menu lateral do Portfólio (sem botões soltos).
+- **💰 Finanças do reino:** extrato do mês (impostos, feudos, vassalos, tratados e alfândega contra soldo, decretos, orçamento, dívida e bobo), o saldo, em quantos meses o tesouro acaba, o gráfico do tesouro nos últimos 12 meses e os riscos (fome, revolta, inflação, guerra, guarnição fraca).
+- **📖 Ficha do item:** no inventário e nas oficinas. Mostra para que serve (receitas, construções e insumos), onde conseguir (natureza, caça, lavoura, criações, empreendimentos, oficinas e lojas), os 3 reinos que pagam mais, quem gosta e o efeito. Itens sem uso mostram "Sem uso direto" em vez de "Usar".
+- **Oficinas:** cada receita mostra o valor do que você faz, o custo dos ingredientes e o lucro.
+- **Construção:** cada obra mostra o que rende por mês, o que consome, os salários e em quantos meses se paga; o menu lateral mostra quantas dá para erguer agora (✓).
+- **Conversa:** barra até o próximo nível de amizade com o benefício que ele libera, o que a pessoa quer agora (presente favorito, luto, bebê, dívida, rivalidade, atenção) e o resto das etiquetas em "Mais sobre…".
+- **Mapa com camadas:** ligue e desligue seus negócios, favoritos, guerras, religiões, feiras e leilões e feudos.
+- **Conselho de guerra:** chance estimada de vitória no campo aberto, no assalto ao castelo ou defendendo as muralhas, e o que se ganha e se perde.
+
+## Novidades: o reinado (Portfólio → Gestão → 👑 Reinado)
 
 - **Conselho real:** tesoureiro, general, sacerdote e mestre espião, cada um com lealdade e ambição. Todo mês um deles traz um dilema (colheita perdida, terras para a igreja, soldo da tropa, espião capturado, empréstimo dos banqueiros, bandidos na fronteira, heresia, monopólio, nobre suspeito, muralhas, festa do padroeiro, imposto da nobreza) com consequências no tesouro, no povo e na reputação dos grupos. Sem resposta, o conselheiro decide por você. Conselheiros desleais e ambiciosos tramam.
 - **Audiências:** súditos de todos os grupos pedem justiça, favores e terras ou acusam alguém (dá para mandar investigar). Cada decisão mexe na reputação.
@@ -101,7 +113,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Exército:** até 3 generais (heróis e cavaleiros) com traços (Agressivo, Defensor, Estrategista, Veterano); a tropa tem moral e treinamento, que mudam a força no campo de batalha; com soldo atrasado e moral baixa, soldados desertam.
 - **Corte e legado:** bailes, torneios reais e bobo da corte; o castelo cresce em 5 níveis (mais torres e brasões, felicidade, fama e portão mais forte nos cercos); com 2 reinos você vira Alto Rei e com 3, Imperador; e a crônica do seu reinado registra cada decisão.
 
-## Novidades: sociedade (Portfólio → 🤝 Sociedade)
+## Novidades: sociedade (Portfólio → Gestão → 🤝 Sociedade)
 
 - **Rede de amizades:** cada morador tem amigos, desafetos, um melhor amigo e um confidente (aparecem na ficha). O que você faz com alguém respinga no círculo dele: ajudar agrada os amigos e irrita os desafetos; ofender espalha.
 - **Reputação por grupo:** nobreza, clero, povo, mercadores, guildas e submundo. Com +30 cada grupo abre uma porta (desconto em luxo, multas menores, o povo não te denuncia, preços melhores, recrutar mais fácil, mercado negro e informantes); com −30, fecha. Doações, esmolas, crimes, impostos, comércio e encomendas mexem nas notas.

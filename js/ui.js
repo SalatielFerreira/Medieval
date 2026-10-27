@@ -388,7 +388,7 @@ const UI = {
       <div class="ldi-l">
         <div class="ldi-sec"><span class="ldi-lab">Bolsos</span><div class="ldi-row">${quick}</div></div>
         <div class="ldi-sec grow"><span class="ldi-lab">Mochila</span><div class="ldi-grid" data-scroll="inv" data-drop="grid">${cells}</div></div>
-        <div class="ldi-bar"><button class="primary" data-act="iuse" ${use ? '' : 'disabled'}>${use || 'Usar'}</button>
+        <div class="ldi-bar"><button class="primary" data-act="iuse" ${use ? '' : 'disabled'}>${use || 'Sem uso direto'}</button>
           <span class="ldi-sel">${it ? `<b>${this.esc(it.name)}</b> ×${cellN}${cellN !== Inv.count(k) ? ` <small class="muted">de ${Inv.count(k)}</small>` : ''}` : '<span class="muted">Toque num item</span>'}</span>
           <button class="ldi-split" data-act="isplitopen" ${canSplit ? '' : 'disabled'} title="Dividir a pilha">✂️</button>
           <button class="ldi-trash" data-act="itrash" ${it ? '' : 'disabled'} title="Descartar">${icon('trash')}</button></div>
@@ -747,7 +747,7 @@ const UI = {
       <div class="act-row"><button class="primary" data-act="${BUILDINGS[S.build] ? 'build' : 'urban'}" data-k="${S.build}" ${b.can ? '' : 'disabled'}>${b.btn}</button></div>`;
     const ready = c => c[3].filter(k => { const x = this.binfo(k); return x.cost && x.can; }).length;
     const vil = c => c[0] === 'infra' || c[0] === 'obras';
-    const groups = [['Sua base', cats.filter(c => !vil(c)).map(c => [c[0], c[1], c[2], ready(c)])], ['Estradas e vilas', cats.filter(vil).map(c => [c[0], c[1], c[2]])]];
+    const groups = [['Sua base', cats.filter(c => !vil(c)).map(c => [c[0], c[1], c[2], ready(c) ? '✓' + ready(c) : ''])], ['Estradas e vilas', cats.filter(vil).map(c => [c[0], c[1], c[2]])]];
     this.open('Construção', `<div class="bld iconnav">${this.navHtml(groups, S.bcat, 'bcat', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail bld-dt">${detail}</div></div>`)}</div>`,
       'showBuild', [], 'Erga sua base, abra estradas e reforme as vilas');
     this.fitDetail('.bld-dt', cat[3], k => this.buildDetailHtml(k), S.bcat);
