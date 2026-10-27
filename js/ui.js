@@ -723,6 +723,7 @@ const UI = {
       .map(([k, ic, name, ks]) => [k, ic, name, (k === 'infra' ? ks.slice(0, 5).concat((this.expCats && this.expCats.infra) || [], ks.slice(5)) : ks.concat((this.expCats && this.expCats[k]) || [])).filter(x => BUILDINGS[x] || x.includes(':') || x === 'road')]);
     const auth = Urban.hasAny();
     if (auth) cats.push(['obras', '🏗️', 'Obras nas vilas', Object.keys(CIVIC).filter(k => k !== 'vwall').map(k => 'c:' + k)]); // o muro é um só: Defesa e exército
+    for (const c of cats) c[3] = Order.sortBuild(c[3]); // do mais fácil ao mais difícil
     this.buildCats = cats;
     const catOf = k => (cats.find(c => c[3].includes(k)) || cats[0])[0];
     if (S.build && S.build.startsWith('c:') && !auth) S.build = null;
@@ -1679,7 +1680,7 @@ const UI = {
       return Trade.row({ ic: UI.ii(it), name: it.name, sub: `você tem ${Inv.count(k)} · estoque ${raw ? c.stock[k] : '∞'}`, price: `${pr.buy} 🪙${this.trendIcon(civ, k)}`, off: !can,
         btns: Trade.btn(`data-act="trade2" data-k="${k}" data-n="1" data-m="buy"`, '1', can, 'main') + Trade.btn(`data-act="trade2" data-k="${k}" data-n="10" data-m="buy"`, '10', can) });
     });
-    const mine = Object.keys(P.inv).filter(k => sh.buys(ITEMS[k]) && Inv.sellable(k) > 0); // o que está equipado não entra
+    const mine = Object.keys(P.inv).filter(k => sh.buys(ITEMS[k]) && Inv.sellable(k) > 0).sort((a, b) => Order.itemValue(a) - Order.itemValue(b)); // o que está equipado não entra
     const sell = mine.map(k => {
       const it = ITEMS[k], pr = Game.priceFor(civ, k, owner), can = People.purse(owner) >= pr.sell, n = Inv.sellable(k);
       return Trade.row({ ic: UI.ii(it), name: it.name, sub: `você tem ${n}`, price: `${pr.sell} 🪙${this.trendIcon(civ, k)}`, off: !can,

@@ -89,6 +89,10 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: tudo em ordem, do mais fácil ao mais difícil
+
+- Todas as listas do jogo seguem a mesma regra: do mais barato (mais fácil) ao mais caro (mais difícil), pelo valor de mercado de tudo o que custa. Vale para cada categoria do menu Construção (a Moradia vai da Choupana ao Castelo, o último), as obras nas vilas, as receitas de cada oficina, as mercadorias das lojas (comprar e vender), o arsenal, os investimentos e as obras da coroa. As ferramentas grátis de Infraestrutura (tirar estrada, mudar, demolir) ficam no fim.
+
 ## Novidades: o dobro de tudo, assalto ao castelo e favoritos
 
 - **O dobro de construções:** Moradia 15 · Produção 20 · Fazenda e animais 20 · Empreendimentos 45 · Praça e decoração 20 · Cultura, fé e treino 10 · Baús e estábulo 10 · Defesa e exército 10 · Infraestrutura 15.

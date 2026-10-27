@@ -458,7 +458,7 @@ const INVESTMENTS = {
   quarry:  { name: 'Pedreiras',       icon: '🪨', desc: '+25% de pedra',                 cost: { gold: 120, wood: 20 },             res: 'stone' },
   mines:   { name: 'Minas de Ferro',  icon: '⛏️', desc: '+25% de minério de ferro',      cost: { gold: 200, wood: 30, stone: 20 },  res: 'iron_ore' },
   housing: { name: 'Moradias',        icon: '🏘️', desc: '+40 de capacidade populacional', cost: { gold: 150, wood: 40, stone: 20 } },
-  walls:   { name: 'Muralhas',        icon: '🏰', desc: '+6 de guarnição máxima',        cost: { gold: 300, stone: 80 } },
+  walls:   { name: 'Muralhas',        icon: '🏰', desc: 'Portão do castelo mais forte nos cercos',cost: { gold: 300, stone: 80 } },
 };
 
 const VILLAGE_NAMES = ['Pedravale', 'Vau do Corvo', 'Moinho Velho', 'Ribeirão', 'Altamira', 'Fonte Fria',
