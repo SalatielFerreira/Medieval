@@ -33,8 +33,42 @@ const Politics = {
   },
   rel(vi, who) { const R = People.residents(vi).filter(p => p.age >= 16); return R.length ? Math.round(R.reduce((a, r) => a + this.likes(r, who), 0) / R.length) : 0; },
   score(vi, who) { const d = this.deeds(vi, who), f = Math.round(this.fame(who)), r = this.rel(vi, who); return { d, f, r }; },
+  whoName(k) { return k === 'player' ? 'você' : G.people[+k] ? G.people[+k].name : '?'; },
+  // empate: numa vila de um reino, o rei decide; numa vila livre, quem já governava fica no cargo, e entre dois novos
+  // candidatos o governador anterior decide (sem ele, o ancião mais velho)
+  tieBreak(vi, tied) {
+    const v = World.villages[vi], c = !v.free && G.civs[v.civ] && !G.civs[v.civ].anarchy ? G.civs[v.civ] : null;
+    if (c) {
+      if (c.ruler === 'player') return { pending: true, by: 'rei' };
+      const w = this.pick(c.rulerId !== null ? People.get(c.rulerId) : null, tied, vi, c);
+      return { win: w, how: `${c.rulerName} desempatou a favor de ${this.whoName(w)}` };
+    }
+    const inc = v.lord === 'player' ? 'player' : v.chief !== undefined && v.chief !== 'player' ? String(v.chief) : null;
+    if (inc && tied.includes(inc)) return { win: inc, how: `${inc === 'player' ? 'você já governava e ficou' : `${this.whoName(inc)} já governava e ficou`} no cargo` };
+    if (inc === 'player') return { pending: true, by: 'governador' };
+    const prev = inc ? G.people[+inc] : null, dec = prev && prev.alive ? prev : Society.elders(vi)[0] || null, w = this.pick(dec, tied, vi, null);
+    return { win: w, how: `${dec ? dec === prev ? `o governador anterior, ${dec.name},` : `o ancião ${dec.name}` : 'a sorte'} desempatou a favor de ${this.whoName(w)}` };
+  },
+  // quem decide (um rei, o governador anterior ou um ancião) escolhe a família, os amigos e quem fez mais pela vila
+  pick(dec, tied, vi, c) {
+    const val = k => {
+      const base = this.deeds(vi, k) * 0.3 + this.fame(k) * 0.3;
+      if (k === 'player') return base + (dec ? dec.aff || 0 : 0) + (c ? (c.relation || 0) * 0.5 : 0);
+      const p = G.people[+k]; if (!p) return -999;
+      return base + (dec ? (p.fam === dec.fam ? 60 : 0) + this.likes(dec, p.id) : 0);
+    };
+    return tied.slice().sort((a, b) => val(b) - val(a))[0];
+  },
+  // a sua decisão no empate (como rei ou como governador anterior)
+  decide(vi, who) {
+    const E = Society.E(vi); if (!E.tie || !E.tie.ids.includes(who)) return;
+    Society.finishElection(vi, who, E.tie.res, `você, ${E.tie.by === 'rei' ? 'como rei' : 'como governador anterior'}, desempatou a favor de ${who === 'player' ? 'si mesmo' : this.whoName(who)}`);
+  },
+  ties() { return Object.keys(Society.S().elect).filter(vi => Society.S().elect[vi].tie && World.villages[vi]).map(Number); },
   // feitos dos moradores todo mês (ofício, governo e doações), e o tempo apaga um pouco
   monthTick() {
+    // empate esperando a sua decisão há um mês: o conselho da vila escolhe
+    for (const vi of this.ties()) { const E = Society.E(vi); if (G.day - E.tie.day >= 1) Society.finishElection(vi, this.pick(null, E.tie.ids, vi, null), E.tie.res, 'você não decidiu a tempo e o conselho da vila escolheu'); }
     const D = this.S().deeds;
     for (const vi in D) for (const k in D[vi]) { D[vi][k] *= 0.97; if (D[vi][k] < 0.5) delete D[vi][k]; }
     World.villages.forEach((v, vi) => {
@@ -202,7 +236,9 @@ const Politics = {
         ${who !== 'player' && E.support !== who ? `<button data-act="pol" data-op="support" data-v="${vi}" data-p="${who}">Apoiar</button>` : ''}</div>`;
     }).join('');
     const running = E.me || v.lord === 'player';
-    return `<div class="card pol-v"><div class="sec">🏘️ ${UI.esc(v.name)} <span>${v.free ? 'vila livre' : CIV_DEFS[v.civ].short} · eleição em ${Calendar.short(E.next)}</span></div>
+    const tie = E.tie ? `<div class="pol-tie"><b>⚖️ Empate: ${E.tie.by === 'rei' ? 'como rei' : 'como governador anterior'}, você decide quem governa</b><small>Se não decidir até ${Calendar.short(E.tie.day + 1)}, o conselho da vila escolhe.</small>
+      <div class="act-row">${E.tie.ids.map(k => `<button class="primary" data-act="pol" data-op="tie" data-v="${vi}" data-p="${k}">${k === 'player' ? 'Eu mesmo' : UI.esc(People.full(G.people[+k]))} (${E.tie.res[k]} votos)</button>`).join('')}</div></div>` : '';
+    return `<div class="card pol-v">${tie}<div class="sec">🏘️ ${UI.esc(v.name)} <span>${v.free ? 'vila livre' : CIV_DEFS[v.civ].short} · eleição em ${Calendar.short(E.next)}</span></div>
       <p class="dt-desc">Governador: <b>${UI.esc(chief)}</b>${v.lord === 'player' ? ' (você concorre à reeleição)' : ''} · mandato de ${POL_TERM} meses · anciãos: ${Society.elders(vi).map(p => UI.esc(p.name)).join(', ') || '—'}</p>
       <div class="pol-cands">${rows || '<p class="muted">Ninguém se candidatou ainda.</p>'}</div>
       <div class="act-row">${!running ? `<button class="primary" data-act="pol" data-op="run" data-v="${vi}" ${P.gold >= 50 ? '' : 'disabled'}>🗳️ Candidatar-se (50 🪙)</button>` : `<button data-act="pol" data-op="rally" data-v="${vi}" ${P.gold >= 40 ? '' : 'disabled'}>📣 Comício (40 🪙)</button>`}
@@ -210,7 +246,7 @@ const Politics = {
   },
   page() {
     const S = this.S(), here = World.villages.map((v, vi) => ({ v, vi, d: U.dist(P.x / TILE, P.y / TILE, v.x, v.y) })).filter(x => x.v && !x.v.ruin || x.v.lord === 'player');
-    const show = here.filter(x => x.v.lord === 'player' || Society.E(x.vi).me).concat(here.filter(x => x.v.lord !== 'player' && !Society.E(x.vi).me).sort((a, b) => a.d - b.d).slice(0, 4));
+    const show = here.filter(x => Society.E(x.vi).tie).concat(here.filter(x => !Society.E(x.vi).tie && (x.v.lord === 'player' || Society.E(x.vi).me))).concat(here.filter(x => x.v.lord !== 'player' && !Society.E(x.vi).me && !Society.E(x.vi).tie).sort((a, b) => a.d - b.d).slice(0, 4));
     let h = `<div class="card"><div class="sec">🗳️ Como funcionam as eleições</div><p class="dt-desc">O governador de cada vila é eleito pelo povo para um mandato de ${POL_TERM} meses (${POL_TERM} anos de vida). Pesa o que cada um fez pela vila (🏗️ obras, doações, festas, investimentos e bandidos derrotados por perto), o relacionamento com os moradores (💞) e a fama (⭐). Os anciãos votam com peso 3. Quem governa também precisa se reeleger.</p></div>`;
     h += show.map(x => this.villageCard(x.vi)).join('');
     // tronos
@@ -264,10 +300,25 @@ const Politics = {
     if (v.ruin >= 3 && !People.residents(vi).length) return;
     const wasMe = v.lord === 'player'; if (wasMe) E.me = true;
     const res = this.votes(vi), ids = Object.keys(res); if (!ids.length) { E.me = false; return; }
-    const win = ids.sort((a, b) => res[b] - res[a])[0], tot = ids.reduce((a, k) => a + res[k], 0);
+    ids.sort((a, b) => res[b] - res[a]);
+    const tied = ids.filter(k => res[k] === res[ids[0]]);
+    let win = ids[0], how = '';
+    if (tied.length > 1) {
+      const t = Politics.tieBreak(vi, tied);
+      if (t.pending) { E.tie = { ids: tied, res, day: G.day, by: t.by }; UI.banner('⚖️ Empate na eleição'); UI.msg(`⚖️ Empate na eleição de ${v.name} (${tied.map(k => Politics.whoName(k)).join(' × ')}): ${t.by === 'rei' ? 'como rei' : 'como governador anterior'}, você decide quem governa (Sociedade → Política).`, 'gold', true); return; }
+      win = t.win; how = t.how;
+    }
+    this.finishElection(vi, win, res, how);
+  };
+  // fecha a eleição: quem venceu assume (ou você continua, ou perde o cargo)
+  Society.finishElection = function (vi, win, res, how) {
+    const v = World.villages[vi], E = this.E(vi), wasMe = v.lord === 'player', ids = Object.keys(res);
+    const tot = ids.reduce((a, k) => a + res[k], 0);
+    delete E.tie;
+    if (how) { Politics.log(`⚖️ Empate em ${v.name}: ${how}.`); Rumors.atV(vi, `A eleição de ${v.name} empatou: ${how}.`); }
     const known = E.me || E.support !== null || U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 40 || (G.civs[v.civ] && G.civs[v.civ].ruler === 'player');
     if (win === 'player') {
-      if (wasMe) { UI.msg(`🗳️ Reeleito em ${v.name} com ${res.player} de ${tot} votos! Mais ${POL_TERM} meses de mandato.`, 'gold', true); Progress.diary(`🗳️ Reeleito governador de ${v.name}.`); }
+      if (wasMe) { UI.msg(`🗳️ Reeleito em ${v.name} com ${res.player} de ${tot} votos${how ? ` (${how})` : ''}! Mais ${POL_TERM} meses de mandato.`, 'gold', true); Progress.diary(`🗳️ Reeleito governador de ${v.name}.`); }
       else Chiefdom.grant(vi, `🗳️ O povo de ${v.name} te elegeu com ${res.player} de ${tot} votos!`);
       this.rep('povo', 4); Politics.log(`🗳️ Você ${wasMe ? 'foi reeleito' : 'venceu a eleição'} em ${v.name}.`);
     } else {
@@ -275,7 +326,7 @@ const Politics = {
       if (wasMe) { v.lord = undefined; UI.banner(`🗳️ Você perdeu ${v.name}`); UI.msg(`🗳️ ${p.name} venceu a eleição em ${v.name} (${res[win]} de ${tot} votos; você teve ${res.player}). Você deixou de ser governador.`, 'bad', true); Progress.diary(`🗳️ Perdeu a eleição em ${v.name}.`); Diplo.chronicle(`🗳️ ${People.full(p)} venceu ${G.name} ${G.surname || ''} na eleição de ${v.name}.`, true); }
       v.chief = p.id; v.elected = p.id; v.lordFam = p.fam;
       if (E.support === p.id) { People.addAff(p, 25); UI.msg(`🗳️ ${p.name}, que você apoiou, venceu a eleição de ${v.name}: agora é seu aliado (+25 de amizade).`, 'gold', true); }
-      else if (known && !wasMe) UI.msg(`🗳️ ${p.name} venceu a eleição de ${v.name} (${res[win]} de ${tot} votos).${E.me ? ` Você teve ${res.player}.` : ''}`, E.me ? 'bad' : '');
+      else if (known && !wasMe) UI.msg(`🗳️ ${p.name} venceu a eleição de ${v.name} (${res[win]} de ${tot} votos${how ? `; ${how}` : ''}).${E.me ? ` Você teve ${res.player}.` : ''}`, E.me ? 'bad' : '');
       Rumors.atV(vi, `${p.name} foi eleito governador de ${v.name} por ${POL_TERM} anos.`); Politics.log(`🗳️ ${People.full(p)} eleito em ${v.name}.`);
       Families.refresh();
     }
@@ -403,6 +454,7 @@ const Politics = {
       if (d.op === 'donate') Politics.donate(vi, 100);
       if (d.op === 'party') Politics.party(vi);
       if (d.op === 'support') Society.support(vi, +d.p);
+      if (d.op === 'tie') Politics.decide(vi, d.p);
       Society.show('politics'); return;
     }
     return a0(a, d);

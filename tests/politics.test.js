@@ -20,6 +20,26 @@ module.exports = async () => {
       Politics.donate(vi, 100); Politics.party(vi); ok(Politics.deeds(vi, 'player') > 0, 'doar e dar festa não contam como feitos');
       Society.show('politics'); ok(html().includes('Os tronos') && html().includes('pol-v'), 'página de política');
       Politics.monthTick();
+      // empates: o rei decide; na vila livre, quem já governa fica, e entre novos o governador anterior decide
+      const votes0 = Society.votes, tieOf = (vi2, ids) => { Society.votes = () => Object.fromEntries(ids.map(k => [String(k), 5])); const E2 = Society.E(vi2); E2.next = G.day; try { Society.election(vi2); } finally { Society.votes = votes0; } return E2; };
+      const civV = World.villages.findIndex((x, i) => i !== vi && !x.free && G.civs[x.civ].ruler === 'npc' && People.residents(i).filter(p => p.age >= 25).length >= 3);
+      if (civV >= 0) {
+        const vv = World.villages[civV], cs2 = People.residents(civV).filter(p => p.age >= 25).slice(0, 2); vv.lord = undefined;
+        const E2 = tieOf(civV, cs2.map(p => p.id)); ok(!E2.tie && cs2.some(p => vv.chief === p.id), 'o rei da IA não desempatou');
+        const kingV = civV, kc = G.civs[vv.civ], keep = kc.ruler; kc.ruler = 'player';
+        const E3 = tieOf(kingV, cs2.map(p => p.id)); ok(E3.tie && E3.tie.by === 'rei', 'como rei, o empate não ficou para você decidir');
+        Politics.decide(kingV, String(cs2[1].id)); ok(!E3.tie && vv.chief === cs2[1].id, 'a sua decisão como rei não valeu');
+        tieOf(kingV, cs2.map(p => p.id)); E3.tie.day = G.day - 1; Politics.monthTick(); ok(!E3.tie, 'o empate pendente não foi decidido depois de um mês');
+        kc.ruler = keep;
+        // vila livre
+        vv.free = true; const inc = cs2[0], nw = People.residents(civV).filter(p => p.age >= 25 && p !== inc).slice(0, 2);
+        vv.chief = inc.id; vv.elected = inc.id; tieOf(civV, [inc.id, nw[0].id]); ok(vv.chief === inc.id, 'na vila livre, quem já governava não ficou no empate');
+        vv.chief = inc.id; vv.elected = inc.id; tieOf(civV, nw.map(p => p.id)); ok(nw.some(p => vv.chief === p.id) && !Society.E(civV).tie, 'o governador anterior não desempatou entre os novos');
+        vv.lord = 'player'; const E4 = tieOf(civV, nw.map(p => p.id)); ok(E4.tie && E4.tie.by === 'governador', 'como governador anterior, o empate não ficou para você');
+        Politics.decide(civV, String(nw[0].id)); ok(vv.chief === nw[0].id && vv.lord !== 'player', 'a sua decisão como governador anterior não valeu');
+        vv.lord = 'player'; tieOf(civV, ['player', nw[0].id]); ok(vv.lord === 'player', 'você já governava, empatou e não ficou no cargo');
+        vv.free = false; vv.lord = undefined;
+      } else bad.push('sem vila para testar o empate');
       // suborno do círculo do rei
       const ci = 2, L = Politics.circlePeople(ci); ok(L.length === 4, 'o círculo do rei não tem 4 pessoas');
       const rnd = Math.random; Math.random = () => 0.01;

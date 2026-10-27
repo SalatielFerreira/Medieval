@@ -3918,3 +3918,5 @@ body.small .fin-cols { grid-template-columns: 1fr; }
 .pol-c.me .pol-bar i { background: linear-gradient(90deg, #c9932f, #ffe9b0); }
 .pol-c button { align-self: flex-start; padding: 3px 10px; font-size: 12px; }
 .pol-v .sec span { float: right; font-size: 11.5px; color: #c9b48a; font-family: var(--ui-font); }
+.pol-tie { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(214,174,96,.12); }
+.pol-tie b { color: var(--gold-hi); } .pol-tie small { color: #c9b48a; }

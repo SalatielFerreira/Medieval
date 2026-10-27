@@ -34,7 +34,8 @@ const UIP = {
       for (const i of S.invites) { const p = G.people[i.pid]; add('💌', `${p ? p.name : '?'} convida você para ${i.name} em ${World.villages[i.vi].name}.`, () => UIP.goPage('x:society', 'events'), 1, `até ${Calendar.short(i.until)}`); }
       const sp = Society.spouse(); if (sp && sp.rom < 45) add('💔', `${sp.name} sente a sua falta (romance ${Math.round(sp.rom)}).`, () => UI.showTalk(sp.id), 2);
       for (const p of G.people.filter(q => q.alive && q.lent)) add('💸', `Você deve ${p.lent} 🪙 a ${p.name} (amizade em risco).`, () => UI.showTalk(p.id), G.day - (p.lentDay || 0) >= 5 ? 2 : 1);
-      for (const [vi, E] of Object.entries(S.elect)) if (E.me) add('🗳️', `Você é candidato em ${World.villages[vi].name}: eleição em ${Calendar.short(E.next)}.`, () => UIP.goPage('x:society', 'politics'), 1);
+      for (const [vi, E] of Object.entries(S.elect)) if (E.tie) add('⚖️', `Empate na eleição de ${World.villages[vi].name}: você decide quem governa.`, () => UIP.goPage('x:society', 'politics'), 3, `até ${Calendar.short(E.tie.day + 1)}`);
+      for (const [vi, E] of Object.entries(S.elect)) if (E.me && !E.tie) add('🗳️', `Você é candidato em ${World.villages[vi].name}: eleição em ${Calendar.short(E.next)}.`, () => UIP.goPage('x:society', 'politics'), 1);
       const rv = Society.rivals(); if (rv.length) add('⚔️', `${rv.length} rival(is) podem desafiar você para um duelo.`, () => UIP.goPage('x:society', 'friends'), 1);
     }
     if (typeof Commerce !== 'undefined') {
