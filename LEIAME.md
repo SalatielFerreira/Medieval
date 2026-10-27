@@ -89,6 +89,18 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: o reinado (Portfólio → 👑 Reinado)
+
+- **Conselho real:** tesoureiro, general, sacerdote e mestre espião, cada um com lealdade e ambição. Todo mês um deles traz um dilema (colheita perdida, terras para a igreja, soldo da tropa, espião capturado, empréstimo dos banqueiros, bandidos na fronteira, heresia, monopólio, nobre suspeito, muralhas, festa do padroeiro, imposto da nobreza) com consequências no tesouro, no povo e na reputação dos grupos. Sem resposta, o conselheiro decide por você. Conselheiros desleais e ambiciosos tramam.
+- **Audiências:** súditos de todos os grupos pedem justiça, favores e terras ou acusam alguém (dá para mandar investigar). Cada decisão mexe na reputação.
+- **Vassalos e feudos:** entregue vilas a nobres. Eles pagam tributo e mandam soldados nas suas guerras; dê honrarias (Barão → Conde → Marquês) para manter a lealdade. Barões insatisfeitos se revoltam: negocie ou esmague a revolta em 3 meses, senão a vila se separa do reino.
+- **Espionagem e complôs:** infiltre espiões nos outros reinos (veja guarnição, tesouro e se planejam guerra contra você) e mande sabotar, roubar ou assassinar o herdeiro. Contra você: conselheiros, barões, um herdeiro impaciente ou um cônjuge estrangeiro podem tramar; o mestre espião, o bobo e a vigilância ajudam a descobrir; prenda, exile ou perdoe.
+- **Herdeiros:** escolha o tutor de cada filho (guerra, diplomacia, administração ou fé); adultos, eles ajudam o reino de acordo com o que estudaram. Filhos preteridos ficam ressentidos e podem tramar.
+- **Diplomacia:** tratados de comércio, de não agressão e de livre passagem; exija vassalagem de reinos fracos (tributo de 10% e soldados); peça reféns (o reino não ataca você); casamento real dos seus filhos com herdeiros de outros reinos, com aliança e direito ao trono (quando o rei de lá morrer, a coroa pode vir para você, ou começa uma guerra de sucessão).
+- **Economia de Estado:** orçamento de exército, corte, obras e igreja; desvalorizar a moeda (ouro na hora, inflação depois) ou fortalecê-la; alfândega de 0 a 15%.
+- **Exército:** até 3 generais (heróis e cavaleiros) com traços (Agressivo, Defensor, Estrategista, Veterano); a tropa tem moral e treinamento, que mudam a força no campo de batalha; com soldo atrasado e moral baixa, soldados desertam.
+- **Corte e legado:** bailes, torneios reais e bobo da corte; o castelo cresce em 5 níveis (mais torres e brasões, felicidade, fama e portão mais forte nos cercos); com 2 reinos você vira Alto Rei e com 3, Imperador; e a crônica do seu reinado registra cada decisão.
+
 ## Novidades: sociedade (Portfólio → 🤝 Sociedade)
 
 - **Rede de amizades:** cada morador tem amigos, desafetos, um melhor amigo e um confidente (aparecem na ficha). O que você faz com alguém respinga no círculo dele: ajudar agrada os amigos e irrita os desafetos; ofender espalha.

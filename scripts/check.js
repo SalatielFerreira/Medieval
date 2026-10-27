@@ -2,7 +2,8 @@
 // Verificação rápida do jogo, sem instalar nada (só o Node):
 //  1. a sintaxe de todos os arquivos de js/ (um erro de digitação quebra o jogo inteiro);
 //  2. a lista de carregamento do index.html (FILES) bate com os arquivos de js/ — sem arquivo faltando nem sobrando;
-//  3. nenhum nome de arquivo aparece duas vezes na lista.
+//  3. nenhum nome de arquivo aparece duas vezes na lista;
+//  4. nenhum nome global (const, let, class) é declarado em dois arquivos.
 // Uso: node scripts/check.js   (também roda no GitHub antes de publicar)
 'use strict';
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
@@ -32,6 +33,16 @@ else {
   for (const n of list) { if (seen.has(n)) err(`"${n}" aparece duas vezes em FILES (index.html)`); seen.add(n); }
   for (const n of list) if (!files.includes(n + '.js')) err(`FILES (index.html) carrega "${n}", mas js/${n}.js não existe`);
   for (const f of files) if (!seen.has(f.replace(/\.js$/, ''))) err(`js/${f} existe, mas não está na lista FILES do index.html (não é carregado)`);
+}
+
+// 4. nenhum nome global (const/let/class no começo da linha) declarado em dois arquivos: o segundo quebraria o carregamento
+const owner = {};
+for (const f of files) {
+  for (const x of fs.readFileSync(path.join(jsDir, f), 'utf8').matchAll(/^(?:const|let|class)\s+([A-Za-z_$][\w$]*)/gm)) {
+    const n = x[1];
+    if (owner[n] && owner[n] !== f) err(`"${n}" é declarado em js/${owner[n]} e de novo em js/${f} (o jogo para de carregar)`);
+    else owner[n] = f;
+  }
 }
 
 if (fail) { console.error(`\n${fail} problema(s) encontrado(s).`); process.exit(1); }
