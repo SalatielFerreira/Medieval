@@ -859,7 +859,7 @@ function drawHuman(ctx, x, y, o) {
   const tf = ctx.getTransform(), res = Math.max(1, Math.min(10, Math.round(Math.hypot(tf.a, tf.b) * s * 2) / 2));
   // a figura é a mesma para as duas direções (a da esquerda é o espelho): metade das figuras na memória
   const key = [fr.key, res, o.body, o.legs, o.skin, o.hair, o.hairStyle, o.beardStyle, o.beard, o.armor, o.helmet, o.cap, o.hood, o.crown, o.cape, o.outfit,
-    o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, !!(o.weapon || o.swing > 0 || o.rod)].join('|');
+    o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, o.regalia, !!(o.weapon || o.swing > 0 || o.rod)].join('|');
   let cv = HUMAN_CACHE.get(key);
   if (cv) { HUMAN_CACHE.delete(key); HUMAN_CACHE.set(key, cv); } // a mais usada fica (as esquecidas saem primeiro)
   if (!cv) {

@@ -89,6 +89,18 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: vilas em quarteirões, poder da nobreza, Jogos com pódios e a Bolsa
+
+- **Vilas organizadas:** as casas e os imóveis ficam alinhados em quarteirões, só dentro da área da vila, e a estrada rodeia cada um — de um imóvel para o outro só há estrada. Ruas a cada fileira, uma avenida pelo centro e uma estrada em volta da vila, por dentro da muralha (as estradas de fora chegam nela). Os lotes vazios esperam as casas que a vila ganha ao crescer. Todo mês, o que os moradores, as famílias e as obras constroem fora do traçado ganha um lote. O que você mesmo mudou de lugar fica onde você pôs.
+- **Fundar vila custa 100.000 Salin para todos:** o herói, os reis e agora também as famílias (antes elas fundavam com 500). Sem esse dinheiro, ninguém funda vila nova.
+- **Aposta até 100.000** na arena (ficha nova de 100.000).
+- **Peças de leilão diferenciadas:** a Coroa de Cristal aparece como uma coroa de cristais na cabeça (não mais como elmo); o Elmo de Dragão tem chifres e espinhos; a Cota de Mithril brilha com runas; o Escudo de Dragão leva o brasão dourado; as armas raras brilham na lâmina; e quem veste uma peça de leilão tem um cintilar em volta. Na mochila, elas têm moldura dourada.
+- **Jogos dos Sete Reinos com sete provas**, a maioria de luta: duelo de espadas, luta sem armas (só os punhos), Desafio dos Três (três duelos seguidos), Duelo dos Campeões (contra o herói mais forte dos reinos), justa, arco e flecha e a nova corrida a cavalo. Quando você termina todas, os Jogos se encerram na hora com a **cerimônia dos pódios**: ouro, prata e bronze em cada prova, com prêmio (1.500 / 800 / 400) e fama para os três colocados — também para os heróis dos outros reinos. Os pódios dos anos anteriores ficam guardados.
+- **Cada título de nobreza dá mais poder no reino que o concedeu** (somando do Cavaleiro ao Duque): desconto nas lojas, voz nas eleições das vilas, feudos (as vilas maiores do reino pagam renda ao nobre), relação com a coroa que cresce sozinha, multas menores e, para o Duque, foro de nobreza (não paga multa no reino) e o direito de erguer muralha e portão em qualquer vila do reino. Os poderes aparecem no castelo e em Portfólio → Coroa e títulos.
+- **Deixar o poder** (Portfólio → Coroa e títulos): renunciar ao trono de um reino, deixar o governo de uma vila (o morador mais respeitado assume até a eleição do mês seguinte) ou renunciar a um título de nobreza.
+- **Banco com mais aplicações:** 📊 Bolsa dos Reinos (ações de cinco companhias, preço que muda todo mês com as guerras, a colheita e os naufrágios, e dividendos), 🏛️ Fundo das Guildas (rende em média 1% ao mês, quase sem risco), 👑 renda vitalícia (você entrega uma quantia ao Tesouro e recebe 2,2% dela todo mês, para sempre), 🛡️ seguro das expedições (a perdida devolve 70%) e títulos do Tesouro de 1 e de 24 meses.
+- **Correção ao abrir o jogo:** o menu e o "continuar" só aparecem depois que todos os arquivos do jogo carregaram. Antes, num carregamento rápido, o jogo salvo podia abrir sem os módulos do fim (e algumas coisas ficavam fora do lugar).
+
 ## Novidades: tela de passagem e o cavalo na porta
 
 - **Tela de passagem animada** ao entrar e sair de imóveis (uma porta que se abre), de cavernas (a luz de uma tocha) e do campo de batalha (espadas que se cruzam), com o nome do lugar. Dura menos de meio segundo e só some depois de o lugar novo estar desenhado — nada aparece pela metade.
@@ -106,7 +118,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **Cada responsável vende o seu,** do mais barato ao mais caro: o açougueiro vende carnes, o vidreiro vende vidro e lunetas, o mago vende pergaminhos e cajados, a casa da moeda vende lingotes... Nos prédios que já têm função própria (depósitos, capela, observatório, posto de muda), o balcão continua fazendo o que fazia, e o responsável vende pela conversa ("Negociar").
 - 23 ofícios novos (fundidor, vidreiro, açougueiro, sapateiro, monge, escrivão...), cada um com a roupa do ofício. Campos, cercas, enfeites e as casas dos moradores continuam sem interior.
 
-## Novidades: quantias de 1 a 5000 e aposta até 50.000
+## Novidades: quantias de 1 a 5000 e aposta até 50.000 (hoje 100.000)
 
 - **Todo botão de quantia de dinheiro** ganhou **1** e **5000**: depositar e sacar (casa e banco), aplicar, expedições, investir em famílias e vilas, dinheiro do banco, pagar dívida, doar e retirar do tesouro, cofre, tesouro do reino, doações na igreja e presentes em moedas. Os mensageiros de paz e de guerra ajustam a oferta de 1 em 1 e de 5000 em 5000.
 - **Arena:** a aposta vai até **50.000 Salin** (fichas de 1 a 50.000).

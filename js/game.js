@@ -2306,4 +2306,6 @@ const Resume = {
   const typing = t => t && t.closest && t.closest('input, textarea, [contenteditable="true"]');
   for (const ev of ['selectstart', 'copy', 'cut', 'dragstart']) document.addEventListener(ev, e => { if (!typing(e.target)) e.preventDefault(); });
 }
-if (document.readyState === 'complete') Game.boot(); else window.addEventListener('load', () => Game.boot());
+// com o carregador do index.html, espera o último arquivo (senão o menu e o "continuar" chegariam antes dos módulos do fim)
+if (window.GAME_LOADER && !window.GAME_LOADED) window.addEventListener('gameloaded', () => Game.boot(), { once: true });
+else if (document.readyState === 'complete') Game.boot(); else window.addEventListener('load', () => Game.boot());

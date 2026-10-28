@@ -13,7 +13,7 @@ const FAMILY_BIZ = {
 const RANK_INCOME = { knight: 7, merchant: 12, smith: 10, lumber: 8, mason: 8, innkeeper: 10, hunter: 6, mercenary: 5, peasant: 3, wanderer: 1 };
 const NOBLE_RANKS = ['ruler', 'consort', 'heir'];
 const SHOP_RANKS = ['merchant', 'smith', 'lumber', 'mason', 'innkeeper'];
-const FOUND_COST = { gold: 100000 }; // fundar uma vila: o mesmo preço para o herói e para os reis NPC
+const FOUND_COST = { gold: 100000 }; // fundar uma vila: o mesmo preço para o herói, para os reis NPC e para as famílias (sem esse dinheiro, ninguém funda)
 const MAX_FOUNDED = 12;
 // limite suave da população: acima disso nascem cada vez menos crianças
 const POP_SOFT = 900, POP_HARD = 1250;
@@ -207,10 +207,10 @@ const Families = {
 
   // ------------------------------------------------------------ vilas novas com o nome da família
   canFound(f) {
-    if (f.founded !== null || f.noble || f.wealth < 700 || this.adults(f).length < 3 || G.founded.length >= MAX_FOUNDED) return false;
+    if (f.founded !== null || f.noble || f.wealth < FOUND_COST.gold || this.adults(f).length < 3 || G.founded.length >= MAX_FOUNDED) return false;
     if (f.seat === null || f.seat === 'castle') return false;
     const res = People.residents(f.seat).length;
-    return res >= this.vcap(World.villages[f.seat]) - 4 || f.wealth >= 1100;
+    return res >= this.vcap(World.villages[f.seat]) - 4 || f.wealth >= FOUND_COST.gold * 1.5;
   },
   vcap(v) { return 18 + (v.level || 1) * 6 + (typeof VillageWorks !== 'undefined' ? VillageWorks.capOf(World.villages.indexOf(v)) : 0); },
   // procura um lugar livre dentro do território
@@ -289,7 +289,7 @@ const Families = {
     if (known) UI.msg(`🏘️ ${c.rulerName} fundou a vila de ${v.name} aqui perto.`, 'gold');
     return v;
   },
-  // uma família funda a "Vila <Sobrenome>"
+  // uma família funda a "Vila <Sobrenome>" (só com o preço da fundação na bolsa, o mesmo do herói e dos reis)
   found(f) {
     const seat = World.villages[f.seat];
     const spot = this.site(seat.civ, seat.x, seat.y);
@@ -298,7 +298,7 @@ const Families = {
     const v = this.makeVillage(spec);
     G.founded.push(spec);
     const vi = World.villages.indexOf(v);
-    f.founded = vi; f.seat = vi; f.wealth -= 500;
+    f.founded = vi; f.seat = vi; f.wealth -= FOUND_COST.gold;
     // a família inteira se muda, e algumas famílias de vilas cheias vão junto
     for (const p of this.members(f)) if (p.home.type === 'village' && !p.capanga && !p.job) p.home = { type: 'village', idx: vi };
     this.settle(v, vi, 2);

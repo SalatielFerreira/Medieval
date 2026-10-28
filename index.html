@@ -43,7 +43,7 @@
   // Carregador do jogo: lê a versão publicada (version.json) e carrega o CSS e os scripts com "?v=versão",
   // assim o navegador nunca usa arquivos antigos guardados no cache depois de uma atualização.
   (function () {
-    var FILES = ['util', 'icons', 'icons2', 'bicons', 'dialog', 'data', 'heraldry', 'world', 'biomes', 'people', 'entities', 'audio', 'dungeon', 'features', 'diplomacy', 'farming', 'combat2', 'life', 'progress', 'families', 'court', 'crown', 'royalcourt', 'market', 'siege', 'urban', 'events', 'homes', 'arena', 'interior', 'war', 'faith', 'input', 'ui', 'content', 'content2', 'lifesim', 'graves', 'villageworks', 'ambience', 'mapview', 'menu', 'game', 'workplaces', 'statecraft', 'beasts', 'arsenal', 'heroes', 'gate', 'economy', 'finance', 'defense', 'rivalry', 'chronicle', 'windows', 'profile', 'expansion', 'expbuild', 'expdraw', 'assault', 'favorites', 'religion', 'commerce', 'society', 'reign', 'bank', 'politics', 'personas', 'laws', 'mercs', 'games', 'travel', 'book', 'uiplus', 'perf', 'integrity', 'order', 'workplaces2', 'rcache', 'transition'];
+    var FILES = ['util', 'icons', 'icons2', 'bicons', 'dialog', 'data', 'heraldry', 'world', 'biomes', 'people', 'entities', 'audio', 'dungeon', 'features', 'diplomacy', 'farming', 'combat2', 'life', 'progress', 'families', 'court', 'crown', 'royalcourt', 'market', 'siege', 'urban', 'events', 'homes', 'arena', 'interior', 'war', 'faith', 'input', 'ui', 'content', 'content2', 'lifesim', 'graves', 'villageworks', 'ambience', 'mapview', 'menu', 'game', 'workplaces', 'statecraft', 'beasts', 'arsenal', 'heroes', 'gate', 'economy', 'finance', 'defense', 'rivalry', 'chronicle', 'windows', 'profile', 'expansion', 'expbuild', 'expdraw', 'assault', 'favorites', 'religion', 'commerce', 'society', 'reign', 'bank', 'politics', 'personas', 'laws', 'mercs', 'games', 'travel', 'book', 'uiplus', 'perf', 'integrity', 'order', 'workplaces2', 'rcache', 'transition', 'regalia', 'nobility', 'bank2', 'townplan'];
     var base = window.GAME_BASE || '';
     function load(v) {
       window.GAME_VERSION = v;
@@ -52,7 +52,11 @@
       var started = false;
       function scripts() {
         if (started) return; started = true;
-        FILES.forEach(function (f) { var sc = document.createElement('script'); sc.src = base + 'js/' + f + '.js' + q; sc.async = false; document.body.appendChild(sc); });
+        // o jogo só começa (menu ou continuar) depois que o último arquivo carregou: nenhum módulo fica de fora
+        window.GAME_LOADER = true;
+        FILES.forEach(function (f, i) { var sc = document.createElement('script'); sc.src = base + 'js/' + f + '.js' + q; sc.async = false;
+          if (i === FILES.length - 1) sc.onload = sc.onerror = function () { window.GAME_LOADED = true; window.dispatchEvent(new Event('gameloaded')); };
+          document.body.appendChild(sc); });
       }
       css.onload = scripts; css.onerror = scripts; setTimeout(scripts, 4000);
       document.head.appendChild(css);

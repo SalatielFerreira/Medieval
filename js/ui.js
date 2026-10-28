@@ -2365,7 +2365,7 @@ const UI = {
     const sal = n => `${n.toLocaleString('pt-BR')} <i class="ar-coin">🪙</i>`;
     const betBox = `<div class="card ar-bet"><div class="sec">💰 Sua aposta <span>até ${ARENA_MAX_BET.toLocaleString('pt-BR')} Salin · você tem ${P.gold.toLocaleString('pt-BR')}</span></div>
       <div class="ar-betrow"><b class="ar-betv">${sal(bet)}</b><input type="range" id="betAmt" min="0" max="${max}" step="${max > 10000 ? 100 : max > 500 ? 25 : 1}" value="${bet}" data-act-input="abet"></div>
-      <div class="ar-chips">${[0, 1, 50, 250, 1000, 5000, 10000, 50000].map(n => `<button class="ar-chip ${bet === Math.min(n, max) && (n <= max || n === ARENA_MAX_BET) ? 'on' : ''}" data-act="abetset" data-c="${ci}" data-n="${n}" ${n > P.gold && n !== 0 ? 'disabled' : ''}>${n ? n.toLocaleString('pt-BR') : 'Sem aposta'}</button>`).join('')}</div></div>`;
+      <div class="ar-chips">${[0, 1, 50, 250, 1000, 5000, 10000, 50000, 100000].map(n => `<button class="ar-chip ${bet === Math.min(n, max) && (n <= max || n === ARENA_MAX_BET) ? 'on' : ''}" data-act="abetset" data-c="${ci}" data-n="${n}" ${n > P.gold && n !== 0 ? 'disabled' : ''}>${n ? n.toLocaleString('pt-BR') : 'Sem aposta'}</button>`).join('')}</div></div>`;
     let page = '';
     if (tab === 'lutar') {
       page = this.pageHead('⚔️', 'Lutar na arena', 'Ninguém morre: quem cai primeiro perde')
