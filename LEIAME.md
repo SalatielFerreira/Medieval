@@ -89,6 +89,11 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: tela de passagem e o cavalo na porta
+
+- **Tela de passagem animada** ao entrar e sair de imóveis (uma porta que se abre), de cavernas (a luz de uma tocha) e do campo de batalha (espadas que se cruzam), com o nome do lugar. Dura menos de meio segundo e só some depois de o lugar novo estar desenhado — nada aparece pela metade.
+- **Quem entra montado sai montado:** o cavalo espera na porta e você já sai em cima dele (quem entra a pé sai a pé).
+
 ## Novidades: assassinos só ao ar livre, menu limpo e desenho mais leve
 
 - **Assassinos só no mundo aberto:** dentro de qualquer imóvel nenhum aparece; quem vinha atrás de você fica do lado de fora e volta para a fila, e eles só reaparecem quando você sai.

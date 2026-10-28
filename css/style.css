@@ -3980,3 +3980,37 @@ body.small .bk-page { min-height: 0; padding: 22px 18px 32px; }
 body.small .ph-t { min-width: 0; flex: 1 1 auto; overflow: hidden; }
 body.small .ph-t h2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 420px) { body.small .ph .ph-nav { display: none; } }
+
+/* ================================================================ Tela de passagem (entrar e sair de imóveis, cavernas e batalhas) */
+.trans { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, #2a1c10 0%, #120c07 60%, #070504 100%); opacity: 1; }
+.trans.hidden { display: none; }
+.trans.on .tr-card { animation: trIn .28s cubic-bezier(.2, 1.4, .4, 1) both; }
+.trans.out { opacity: 0; transition: opacity .25s ease-out; }
+.tr-card { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.tr-art { position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+.tr-ic { position: relative; z-index: 2; font-size: 46px; filter: drop-shadow(0 0 14px rgba(255, 190, 90, .6)); animation: trPulse .9s ease-in-out infinite; }
+.tr-t { font-family: 'Cinzel', Georgia, serif; font-size: 20px; letter-spacing: 2px; color: #ffe9b0; text-shadow: 0 2px 8px rgba(0, 0, 0, .8); }
+.tr-n { font-family: Georgia, serif; font-size: 14px; color: #d6c39a; min-height: 18px; }
+.tr-bar { width: 180px; height: 4px; margin-top: 6px; border-radius: 2px; background: rgba(214, 174, 96, .18); overflow: hidden; }
+.tr-bar i { display: block; height: 100%; width: 40%; border-radius: 2px; background: linear-gradient(90deg, transparent, #ffd54a, transparent); animation: trBar .7s linear infinite; }
+/* porta: duas folhas de madeira que se abrem */
+.a-door .tr-l, .a-door .tr-r { position: absolute; top: 10px; width: 46px; height: 100px; background: repeating-linear-gradient(90deg, #6b4423 0 10px, #5a381c 10px 12px); border: 3px solid #3a2410; box-shadow: inset 0 0 12px rgba(0, 0, 0, .5); }
+.a-door .tr-l { left: 13px; border-radius: 40px 0 0 0; transform-origin: left center; animation: trDoorL .55s ease-out both; }
+.a-door .tr-r { right: 13px; border-radius: 0 40px 0 0; transform-origin: right center; animation: trDoorR .55s ease-out both; }
+/* espadas que se cruzam */
+.a-swords .tr-l, .a-swords .tr-r { position: absolute; top: 8px; left: 57px; width: 6px; height: 104px; border-radius: 3px; background: linear-gradient(#e8eef4, #9aa4ae 70%, #6b4423 72%, #4a2e16); }
+.a-swords .tr-l { animation: trSwL .4s cubic-bezier(.3, 1.6, .5, 1) both; }
+.a-swords .tr-r { animation: trSwR .4s cubic-bezier(.3, 1.6, .5, 1) both; }
+/* tocha: um círculo de luz que respira */
+.a-torch .tr-l { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(255, 170, 60, .55), transparent 65%); animation: trGlow .8s ease-in-out infinite alternate; }
+.a-torch .tr-r { display: none; }
+@keyframes trIn { from { transform: scale(.82); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes trPulse { 50% { transform: scale(1.1); } }
+@keyframes trBar { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+@keyframes trDoorL { from { transform: perspective(300px) rotateY(0); } to { transform: perspective(300px) rotateY(70deg); } }
+@keyframes trDoorR { from { transform: perspective(300px) rotateY(0); } to { transform: perspective(300px) rotateY(-70deg); } }
+@keyframes trSwL { from { transform: rotate(-80deg) translateX(-30px); opacity: 0; } to { transform: rotate(-35deg); opacity: 1; } }
+@keyframes trSwR { from { transform: rotate(80deg) translateX(30px); opacity: 0; } to { transform: rotate(35deg); opacity: 1; } }
+@keyframes trGlow { from { transform: scale(.85); opacity: .7; } to { transform: scale(1.1); opacity: 1; } }
+body.small .tr-t { font-size: 16px; }

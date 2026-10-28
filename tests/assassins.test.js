@@ -19,8 +19,8 @@ module.exports = async () => {
     if (inside.n) fails.push(`${inside.n} assassino(s) dentro do imóvel`);
     if (inside.queue < 5) fails.push(`a fila de assassinos foi gasta lá dentro (${inside.queue})`);
     await page.evaluate(() => Places.exit(true));
-    await wait(15000);
-    const out = await page.evaluate(() => G.ents.filter(e => !e.dead && e.tag === 'assassin').length);
+    // cada segundo há 15% de chance de um surgir: espera até um aparecer (no máximo 45 s)
+    let out = 0; for (let k = 0; k < 45 && !out; k++) { await wait(1000); out = await page.evaluate(() => G.ents.filter(e => !e.dead && e.tag === 'assassin').length); }
     if (!out) fails.push('fora do imóvel os assassinos não voltaram a aparecer');
     await page.evaluate(() => { UIP.bell(); const b = document.getElementById('alertBell'); if (b) b.classList.remove('hidden'); UI.talkEl.style.display = 'flex'; Game.toMenu(); });
     await wait(500);
