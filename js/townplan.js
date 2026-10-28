@@ -82,7 +82,15 @@ const TownPlan = {
         for (let j = s.y; j < s.y + s.h; j++) for (let i = s.x; i < s.x + s.w; i++) { const k = World.idx(i, j); World.sgrid[k] = s.id; World.obj[k] = 0; if (World.tiles[k] === T.ROAD && E.mine[k] === undefined) { const g = Urban.groundOf(k); World.tiles[k] = g; E.roads[k] = g; } }
         const ok = ox + ',' + oy, nk = s.x + ',' + s.y;
         if (G.storage && G.storage[ok]) { G.storage[nk] = G.storage[ok]; delete G.storage[ok]; }
-        if (s.fam !== undefined) { const f = Families.get(s.fam), bz = f && f.biz.find(q => q.type === s.type && q.x === ox && q.y === oy); if (bz) { bz.x = s.x; bz.y = s.y; } }
+        if (s.fam !== undefined) {
+          const f = Families.get(s.fam), bz = f && f.biz.find(q => q.type === s.type && q.x === ox && q.y === oy);
+          if (bz) {
+            bz.x = s.x; bz.y = s.y;
+            // o negócio da família volta no lugar novo ao carregar: a chave dele (e a do responsável) acompanha
+            const old = s.okey; s.okey = s.type + '@' + s.x + ',' + s.y;
+            if (old !== s.okey) { for (const p of G.people) if (p.shop === old) p.shop = s.okey; if (Shops._map) Shops._map = null; }
+          }
+        }
         Urban.record('move', s, ox, oy);
         World.structTouch(s);
       }
@@ -146,7 +154,14 @@ const TownPlan = {
     if (n || full) { World.chunks.clear(); World.buildMinimap(); }
     return n;
   },
-  monthTick() { let n = 0; World.villages.forEach((v, vi) => { if (v) n += this.organize(vi, false); }); if (n) World.buildMinimap(); },
+  // durante o jogo, cada vila é um pedaço próprio do mês (arrumar todas de uma vez travava um quadro)
+  monthTick() {
+    if (typeof Perf !== 'undefined' && Perf.slicing) {
+      World.villages.forEach((v, vi) => { if (v) Perf.queue.push(Object.assign(() => { if (World.villages[vi] && this.organize(vi, false)) World.buildMinimap(); }, { label: 'TownPlan.organize' })); });
+      return;
+    }
+    let n = 0; World.villages.forEach((v, vi) => { if (v) n += this.organize(vi, false); }); if (n) World.buildMinimap();
+  },
 };
 
 {

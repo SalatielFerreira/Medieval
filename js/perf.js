@@ -61,11 +61,16 @@ const Perf = {
   runTask(t) {
     const led = Game.ledger; Game.ledger = this.notes || (this.notes = []); this.slicing = true;
     const t0 = performance.now();
-    try { t(); } catch (e) { console.warn('mês em fatias', e); } finally { this.slicing = false; Game.ledger = led; const d = performance.now() - t0; if (this.stats) this.stats[t.label] = Math.max(this.stats[t.label] || 0, d); }
+    try { t(); } catch (e) { console.warn('mês em fatias', e); } finally { this.slicing = false; Game.ledger = led; const d = performance.now() - t0; this.cost.set(t.label, Math.max(d, (this.cost.get(t.label) || 0) * 0.7)); if (this.stats) this.stats[t.label] = Math.max(this.stats[t.label] || 0, d); }
   },
+  // quanto cada tipo de pedaço costuma levar: um pedaço pesado não começa no fim do tempo do quadro (fica para o próximo)
+  cost: new Map(),
   drain(budget) {
     const t0 = performance.now();
-    while (this.queue.length && (performance.now() - t0 < budget)) { this.runTask(this.queue.shift()); this.dirty(); }
+    for (let first = true; this.queue.length; first = false) {
+      const el = performance.now() - t0; if (el >= budget || (!first && el + (this.cost.get(this.queue[0].label) || 0) > budget * 1.5)) break;
+      this.runTask(this.queue.shift()); this.dirty();
+    }
     if (!this.queue.length && this.month) {
       const M = this.month; this.month = null; const dg = P.gold - M.gold, notes = this.notes || []; this.notes = null;
       if (dg || notes.length) { G.ledger = G.ledger || []; let e = G.ledger.find(x => x.day === M.day); if (!e) { e = { day: M.day, gold: 0, got: [], notes: [] }; G.ledger.unshift(e); if (G.ledger.length > 30) G.ledger.length = 30; } e.gold += dg; e.notes.push(...notes); if (dg) UI.msg(`📒 Fim do mês: ${dg > 0 ? '+' : ''}${dg} 🪙 em negócios, banco, soldos e prêmios (Diário → Contas).`, dg < 0 ? 'bad' : ''); }
@@ -124,7 +129,8 @@ const Perf = {
   // dentro das vilas e das famílias, cada subsistema vira uma fatia própria
   for (const [o, n, l] of [[Towns, 'settle', 'Towns.settle'], [NpcRoads, 'tick', 'NpcRoads.tick'], [NpcRoads, 'upgradeTick', 'NpcRoads.upgradeTick'], [NpcRoads, 'travelTick', 'NpcRoads.travelTick'],
     [NPCWork, 'monthTick', 'NPCWork.monthTick'], [NPCWork, 'clearTick', 'NPCWork.clearTick'], [Faith, 'monthTick', 'Faith.monthTick'], [People, 'purseTick', 'People.purseTick'], [Ports, 'monthTick', 'Ports.monthTick'],
-    [Shops, 'ensure', 'Shops.ensure'], [Trips, 'monthTick', 'Trips.monthTick'], [Families, 'crownTick', 'Families.crownTick'], [Laws, 'monthTick', 'Laws.monthTick'], [Mercs, 'monthTick', 'Mercs.monthTick'], [Games, 'monthTick', 'Games.monthTick']]) Perf.defer(o, n, l);
+    [Shops, 'ensure', 'Shops.ensure'], [Trips, 'monthTick', 'Trips.monthTick'], [Families, 'crownTick', 'Families.crownTick'], [Laws, 'monthTick', 'Laws.monthTick'], [Mercs, 'monthTick', 'Mercs.monthTick'], [Games, 'monthTick', 'Games.monthTick'],
+    [Mind, 'monthTick', 'Mind.monthTick'], [Birth, 'monthTick', 'Birth.monthTick'], [Careers, 'monthTick', 'Careers.monthTick'], [Loans, 'monthTick', 'Loans.monthTick'], [Crime, 'monthTick', 'Crime.monthTick'], [Heroes, 'monthTick', 'Heroes.monthTick']]) Perf.defer(o, n, l);
   // a virada do mês "ao vivo" é a que acontece no laço do jogo
   // a virada inteira (envelhecer, guardas, arena, casas) também entra em fatias
   const nd0 = Game.onNewDay.bind(Game);

@@ -524,17 +524,25 @@ const NpcRoads = {
     }
     const byCiv = new Map();
     for (let i = 0; i < World.tiles.length; i++) { if (World.tiles[i] !== T.ROAD) continue; const t = World.terr[i]; if (!(t >= 0)) continue; (byCiv.get(t) || byCiv.set(t, []).get(t)).push(i); }
+    // durante o jogo, cada reino é um pedaço próprio do mês
     for (const [ci, tiles] of byCiv) {
-      const c = G.civs[ci]; if (!c || c.dead) continue;
-      const vs = World.villages.filter(v => v && !v.free && v.civ === ci && !v.ruin), avg = vs.length ? vs.reduce((a, v) => a + (v.level || 1), 0) / vs.length : 1;
-      const max = Math.min(5, 1 + Math.floor((avg + 1) / 2)), cp = World.capitals[ci];
-      // no seu reino os moradores fazem por conta própria; nos outros, o rei paga
-      const pay = L => { if (c.ruler === 'player') return true; const p = 3 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; };
-      const cand = tiles.filter(i => (World.roadLv[i] || 1) < max).map(i => [World.roadLv[i] || 1, cp ? U.dist(i % WORLD_W, (i / WORLD_W) | 0, cp.x, cp.y) : 0, i]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-      let n = 0; for (const [, , i] of cand) { if (n >= 40) break; if (up(i, max, pay)) n++; else if (c.ruler !== 'player' && c.treasury < 310) break; }
-      total += n;
+      if (typeof Perf !== 'undefined' && Perf.slicing) Perf.queue.push(Object.assign(() => this.travelCiv(ci, tiles, up), { label: 'NpcRoads.travelTick(reino)' }));
+      else total += this.travelCiv(ci, tiles, up);
     }
     return total;
+  },
+  // um reino melhora as 40 estradas mais gastas (as de nível mais baixo, mais perto do castelo primeiro)
+  travelCiv(ci, tiles, up) {
+    const c = G.civs[ci]; if (!c || c.dead) return 0;
+    const vs = World.villages.filter(v => v && !v.free && v.civ === ci && !v.ruin), avg = vs.length ? vs.reduce((a, v) => a + (v.level || 1), 0) / vs.length : 1;
+    const max = Math.min(5, 1 + Math.floor((avg + 1) / 2)), cp = World.capitals[ci];
+    // no seu reino os moradores fazem por conta própria; nos outros, o rei paga
+    const pay = L => { if (c.ruler === 'player') return true; const p = 3 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; };
+    // a ordem (nível, distância, bloco) vira um número só: a ordenação de números é bem mais rápida que a de listas
+    const keys = []; for (const i of tiles) { if (World.tiles[i] !== T.ROAD) continue; const L = World.roadLv[i] || 1; if (L >= max) continue; const dx = cp ? i % WORLD_W - cp.x : 0, dy = cp ? ((i / WORLD_W) | 0) - cp.y : 0; keys.push(L * 1e13 + (dx * dx + dy * dy) * 1e6 + i); }
+    const cand = Float64Array.from(keys).sort();
+    let n = 0; for (const k of cand) { if (n >= 40) break; const i = k % 1e6; if (up(i, max, pay)) n++; else if (c.ruler !== 'player' && c.treasury < 310) break; }
+    return n;
   },
   // por mês: cada vila liga até n construções (as que não acharam caminho tentam de novo daqui a um ano)
   tick(n = 2) {

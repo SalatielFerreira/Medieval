@@ -383,9 +383,16 @@ const War = {
     if (P.hp < P.maxHp * 0.3) P.hp = Math.round(P.maxHp * 0.3);
   },
   // sem campo de batalha possível (mundo antigo, sem mar em volta): o conselho decide pela força
+  // a chuva, a tempestade e a nevasca no reino atacado atrapalham quem atacou (quem declarou a guerra)
+  weather(wc) {
+    const w = Diplo.D().wars.find(x => Diplo.pairKey(x.a, x.b) === Diplo.pairKey(wc.side, wc.enemy)), r = { mine: 1, foe: 1 };
+    if (!w || typeof Clima === 'undefined') return r;
+    if (w.a === wc.side) r.mine = Clima.atk(wc.enemy); else r.foe = Clima.atk(wc.side);
+    return r;
+  },
   simulate(wc) {
     const mine = this.power(this.armyOf(wc.side, wc.own ? wc.cfg : null), this.heroPower()), foe = this.power(this.armyOf(wc.enemy));
-    const win = mine * U.rnd(0.8, 1.2) > foe;
+    const wx = this.weather(wc), win = mine * wx.mine * U.rnd(0.8, 1.2) > foe * wx.foe;
     G.civs[wc.enemy].garrison = Math.max(0, G.civs[wc.enemy].garrison - (win ? 6 : 2)); G.civs[wc.side].garrison = Math.max(0, G.civs[wc.side].garrison - (win ? 2 : 6));
     G.warCall = null; this.badge(null);
     G.place = { kind: 'battle', fake: true, side: wc.side, enemy: wc.enemy, own: wc.own, reward: wc.reward, start: { [wc.side]: 0, [wc.enemy]: 0 }, keep: { x0: 0, y0: 0, w: 0, h: 0, tiles: [], obj: [] }, back: { x: P.x, y: P.y }, id: -1 };

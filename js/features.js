@@ -251,7 +251,8 @@ const Season = {
     W.t -= dt;
     if (W.t <= 0) {
       const s = this.idx(), r = Math.random();
-      W.type = s === 3 ? (r < 0.55 ? 'snow' : 'clear') : (r < [0.3, 0.12, 0.38][s] ? (r < 0.06 ? 'storm' : 'rain') : 'clear');
+      const ck = typeof Clima !== 'undefined' ? Clima.rainHere(s) : null, storm = typeof Clima !== 'undefined' && (Clima.here() >= 0 && Clima.kind(Clima.here()) === 'tempestade') ? 0.45 : 0.06; // o tempo do mês no reino onde o herói está
+      W.type = s === 3 ? (r < (ck === null ? 0.55 : ck) ? 'snow' : 'clear') : (r < (ck === null ? [0.3, 0.12, 0.38][s] : ck) ? (r < storm ? 'storm' : 'rain') : 'clear');
       // chuva e tempestade passam na metade do tempo do tempo bom
       W.t = W.type === 'clear' ? U.rnd(60, 160) : U.rnd(30, 80);
     }

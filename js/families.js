@@ -252,7 +252,15 @@ const Families = {
     else {
       const others = [...World.villages.filter(o => o !== v).map(o => ({ x: o.x, y: o.y - 1 })), ...World.capitals.map(c => c.door)]
         .sort((a, b) => U.dist(a.x, a.y, vx, vy) - U.dist(b.x, b.y, vx, vy));
-      const path = others.length ? World.findPath(vx, vy - 1, others[0].x, others[0].y) : null;
+      // a estrada mais perto (que já leva às outras vilas) é o destino: o caminho fica curto e o cálculo, leve
+      let to = others[0];
+      for (let r = 8, done = false; r <= 30 && !done; r++) for (let j = -r; j <= r && !done; j++) for (let k = -r; k <= r; k++) {
+        if (Math.max(Math.abs(j), Math.abs(k)) !== r) continue;
+        const tx = vx + k, ty = vy - 1 + j; if (!World.inb(tx, ty)) continue;
+        if (World.tiles[World.idx(tx, ty)] === T.ROAD && (!to || U.dist(tx, ty, vx, vy) < U.dist(to.x, to.y, vx, vy))) { to = { x: tx, y: ty }; done = true; break; }
+      }
+      let path = to ? World.findPath(vx, vy - 1, to.x, to.y) : null;
+      if (!path && to && to !== others[0]) path = World.findPath(vx, vy - 1, others[0].x, others[0].y);
       if (path) { World.carveRoad(path); spec.road = path; }
     }
     Towns.build(v, vi); // casas de crescimento (níveis 2 e 4 a 10), poço e muralhas, como nas outras vilas

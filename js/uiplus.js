@@ -209,6 +209,7 @@ const UIP = {
     let pm = War.power(mine, wc.cfg.capangas ? War.heroPower() : 2), pf = War.power(foe);
     if (typeof Reign !== 'undefined' && G.civs[wc.side].ruler === 'player') { const A = Reign.R().army; pm *= 1 + A.training / 350 + (A.morale - 50) / 300 + Reign.generals().length * 0.04; }
     if (typeof Heroes !== 'undefined') { pm += Heroes.of(wc.side).slice(0, 2).length * 3; pf += Heroes.of(wc.enemy).slice(0, 2).length * 3; }
+    if (War.weather) { const wx = War.weather(wc); pm *= wx.mine; pf *= wx.foe; }
     const walls = 1.5;
     const field = U.clamp(pm / (pm + pf), 0.03, 0.97), attack = U.clamp(pm / (pm + pf * walls), 0.03, 0.97), defend = U.clamp(pm * walls / (pm * walls + pf), 0.03, 0.97);
     const spy = typeof Reign !== 'undefined' && Reign.R().spies[wc.enemy];
@@ -219,7 +220,7 @@ const UIP = {
     const lines = wc.assault === 'defend' ? [`🏰 Defender as muralhas: ${pc(o.defend)}`, 'Vencer: o inimigo perde o exército e deixa ouro. Perder: o seu reino cai.']
       : wc.own ? [`⚔️ Campo aberto: ${pc(o.field)} — vencer tira soldados do inimigo, toma uma vila e força a paz; perder custa ouro e uma vila.`, `🏰 Assalto ao castelo: ${pc(o.attack)} — vencer dá o reino inteiro; perder custa 20% do tesouro.`]
         : [`⚔️ Chance: ${pc(o.field)} — vencer rende a recompensa e relação; perder, só um agradecimento.`];
-    return `<div class="card war-odds"><div class="sec">🎯 Chance estimada de vitória <span>${o.spy ? '🗡️ com dados do seu espião' : 'estimativa (sem espião lá)'}</span></div>${lines.map(l => `<p>${l}</p>`).join('')}<small class="muted">Conta soldados, arqueiros, cavaleiros, catapultas, treino, moral, generais, heróis e muralhas. A sorte também luta.</small></div>`;
+    return `<div class="card war-odds"><div class="sec">🎯 Chance estimada de vitória <span>${o.spy ? '🗡️ com dados do seu espião' : 'estimativa (sem espião lá)'}</span></div>${lines.map(l => `<p>${l}</p>`).join('')}${typeof Clima !== 'undefined' && War.weather && (War.weather(wc).mine < 1 || War.weather(wc).foe < 1) ? `<p>${CLIMA[Clima.kind(War.weather(wc).mine < 1 ? wc.enemy : wc.side)].icon} ${CLIMA[Clima.kind(War.weather(wc).mine < 1 ? wc.enemy : wc.side)].name}: ${War.weather(wc).mine < 1 ? '<b class="bad">você ataca na lama</b>' : '<b class="ok">o inimigo ataca na lama</b>'} (−${Math.round((1 - Math.min(War.weather(wc).mine, War.weather(wc).foe)) * 100)}% de força para quem ataca).</p>` : ''}<small class="muted">Conta soldados, arqueiros, cavaleiros, catapultas, treino, moral, generais, heróis, muralhas e o tempo do mês. A sorte também luta.</small></div>`;
   },
   // ---------------------------------------------------------------- 7. camadas do mapa
   layers() { const L = G.settings.mapLayers = G.settings.mapLayers || { biz: true, fav: true, war: true, faith: false, fair: true, fief: true }; for (const k of ['bank', 'elec', 'crisis', 'barb']) if (L[k] === undefined) L[k] = true; return L; },
@@ -232,7 +233,7 @@ const UIP = {
   UI.navHtml = function (groups, cur, act, body) {
     if (act === 'knav' && !groups.some(g => g[0] === 'Gestão')) {
       const n = UIP.alerts().length, king = typeof Reign !== 'undefined' && Reign.isKing();
-      const items = [['x:alerts', '🔔', 'Avisos', n, UIP.alerts().some(a => a.urg >= 3)], king ? ['x:finance', '💰', 'Finanças do reino'] : null, ['x:board', '📊', 'Negócios', Biz.list().length], ['x:society', '🤝', 'Sociedade'], ['x:merc', '⚔️', 'Mercenários', typeof Mercs !== 'undefined' ? Mercs.mine().length || '' : ''], ['x:games', '🏅', 'Jogos', typeof Games !== 'undefined' && Games.S().on ? '!' : ''], king ? ['x:reign', '👑', 'Reinado', Reign.R().dilemma ? '!' : ''] : null].filter(Boolean);
+      const items = [['x:alerts', '🔔', 'Avisos', n, UIP.alerts().some(a => a.urg >= 3)], ...(typeof Board !== 'undefined' ? Board.navItems() : []), king ? ['x:finance', '💰', 'Finanças do reino'] : null, ['x:board', '📊', 'Negócios', Biz.list().length], ['x:society', '🤝', 'Sociedade'], ['x:merc', '⚔️', 'Mercenários', typeof Mercs !== 'undefined' ? Mercs.mine().length || '' : ''], ['x:games', '🏅', 'Jogos', typeof Games !== 'undefined' && Games.S().on ? '!' : ''], king ? ['x:reign', '👑', 'Reinado', Reign.R().dilemma ? '!' : ''] : null].filter(Boolean);
       groups = [groups[0], ['Gestão', items], ...groups.slice(1)];
     }
     return nh0(groups, cur, act, body);

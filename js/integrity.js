@@ -59,27 +59,33 @@ World.roadPath = function (ax, ay, bx, by, maxNodes) {
   const isRoad = i => { const t = World.tiles[i]; return t === T.ROAD || t === T.BRIDGE; };
   const near = (x, y) => { let best = -1, bd = 1e9; for (let r = 0; r <= 10 && best < 0; r++) for (let j = -r; j <= r; j++) for (let k = -r; k <= r; k++) { if (Math.max(Math.abs(j), Math.abs(k)) !== r) continue; const tx = x + k, ty = y + j; if (!World.inb(tx, ty)) continue; const i = World.idx(tx, ty); if (isRoad(i)) { const d = j * j + k * k; if (d < bd) { bd = d; best = i; } } } return best; };
   const s = near(ax, ay), e = near(bx, by); if (s < 0 || e < 0) return null;
-  const prev = new Map([[s, -1]]), q = [s]; let found = s === e;
-  for (let h = 0; h < q.length && !found; h++) {
-    if (q.length > (maxNodes || 60000)) return null;
+  // listas do tamanho do mapa guardadas entre as buscas; a "marca" da busca atual diz quem já foi visto (sem limpar tudo)
+  const N = WORLD_W * WORLD_H, B = World._rp && World._rp.n === N ? World._rp : (World._rp = { n: N, prev: new Int32Array(N), seen: new Uint32Array(N), q: new Int32Array(N), mark: 0 });
+  if (++B.mark >= 0xffffffff) { B.seen.fill(0); B.mark = 1; }
+  const prev = B.prev, seen = B.seen, q = B.q, mk = B.mark, lim = maxNodes || 60000, tiles = World.tiles, road = T.ROAD, bridge = T.BRIDGE;
+  seen[s] = mk; prev[s] = -1; q[0] = s; let qn = 1, found = s === e;
+  for (let h = 0; h < qn && !found; h++) {
+    if (qn > lim) return null;
     const i = q[h], x = i % WORLD_W, y = (i / WORLD_W) | 0;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-      const nx = x + dx, ny = y + dy; if (!World.inb(nx, ny)) continue;
-      const n = World.idx(nx, ny); if (prev.has(n) || !isRoad(n)) continue;
-      prev.set(n, i); if (n === e) { found = true; break; } q.push(n);
+    for (let d = 0; d < 8; d++) {
+      const nx = x + RP_DX[d], ny = y + RP_DY[d]; if (nx < 0 || ny < 0 || nx >= WORLD_W || ny >= WORLD_H) continue;
+      const n = ny * WORLD_W + nx; if (seen[n] === mk) continue; const t = tiles[n]; if (t !== road && t !== bridge) continue;
+      seen[n] = mk; prev[n] = i; if (n === e) { found = true; break; } q[qn++] = n;
     }
   }
   if (!found) return null;
-  const out = []; for (let i = e; i !== -1; i = prev.get(i)) out.push(i); // do fim para o começo (como World.findPath)
+  const out = []; for (let i = e; i !== -1; i = prev[i]) out.push(i); // do fim para o começo (como World.findPath)
   return out;
 };
+const RP_DX = [1, -1, 0, 0, 1, 1, -1, -1], RP_DY = [0, 0, 1, -1, 1, -1, 1, -1];
 
 {
   // quem assume o trono tira o título dos outros
   const se0 = Succession.seat.bind(Succession);
-  Succession.seat = function (c, p, rank) { const r = se0(c, p, rank); if (c && rank === 'ruler') { for (const q of G.people) if (q !== p && q.alive && q.rank === 'ruler' && q.civ === c.id) q.rank = 'knight'; } return r; };
+  Succession.seat = function (c, p, rank) { const r = se0(c, p, rank); if (c && rank === 'ruler') { if (p && c.ruler !== 'player') p.civ = c.id; // o rei passa a ser do reino que herdou (um herdeiro casado fora era de outro)
+ for (const q of G.people) if (q !== p && q.alive && q.rank === 'ruler' && q.civ === c.id) q.rank = 'knight'; } return r; };
   const su0 = People.succeed.bind(People);
-  People.succeed = function (ci, heir, old) { const r = su0(ci, heir, old); Integrity.oneKing(ci); return r; };
+  People.succeed = function (ci, heir, old) { const was = heir ? heir.civ : -1, r = su0(ci, heir, old), c = G.civs[ci], k = c && c.ruler === 'npc' ? G.people[c.rulerId] : null; if (k) k.civ = ci; Integrity.oneKing(ci); if (was >= 0 && was !== ci && G.civs[was]) Integrity.oneKing(was); return r; };
   const br0 = Game.becomeRuler.bind(Game);
   Game.becomeRuler = function (ci, how) { const r = br0(ci, how); Integrity.oneKing(ci); return r; };
   for (const [o, n] of [[Game, 'rebellion'], [Game, 'conquer']]) { const f = o[n]; if (typeof f !== 'function') continue; o[n] = function (...a) { const r = f.apply(this, a); const c = a[0] && typeof a[0] === 'object' ? a[0] : G.civs[a[0]]; if (c) Integrity.oneKing(c.id); return r; }; }
@@ -89,6 +95,9 @@ World.roadPath = function (ax, ay, bx, by, maxNodes) {
     const was = p && p.alive, vis = was ? World.villages.map((v, i) => v.chief === p.id ? i : -1).filter(i => i >= 0) : [];
     const r = die0(p, cause);
     for (const vi of vis) Integrity.vacate(vi);
+    // rei da IA que morre: se ninguém assumiu, o herdeiro (ou um cavaleiro) assume na hora
+    // (logo depois de quem chamou terminar: num golpe, o golpista senta no trono logo após a morte do rei)
+    if (was && p.rank === 'ruler') { const c = G.civs[p.civ]; queueMicrotask(() => { if (c && G.civs[c.id] === c && c.ruler === 'npc' && !c.dead && c.rulerId === p.id && !p.alive) Integrity.crown(c); }); }
     return r;
   };
   // tesouro conferido depois de cada pedaço do mês e no fim da virada

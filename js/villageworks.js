@@ -96,7 +96,9 @@ const VillageWorks = {
       if (chief) { P.gold += rent; mine += rent; }
       else if (c) { c.treasury += rent; if (king) mine += rent; }
       if (attract && Math.random() < Math.min(0.6, attract) && People.residents(vi).length < Families.vcap(v)) {
-        Families.settle(v, vi, 1);
+        // durante o jogo, a mudança da família é um pedaço próprio do mês (procurar quem se muda é pesado)
+        if (typeof Perf !== 'undefined' && Perf.slicing) Perf.queue.push(Object.assign(() => { if (World.villages[vi] === v) Families.settle(v, vi, 1); }, { label: 'Families.settle' }));
+        else Families.settle(v, vi, 1);
         if (chief || king) Game.note(`👪 Uma família nova se mudou para ${v.name}, atraída pelas obras da vila.`, 'gold');
       }
     });

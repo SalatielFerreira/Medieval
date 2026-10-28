@@ -119,7 +119,7 @@ const Diplo = {
         const friend = [w.a, w.b].find(x => G.civs[x].ruler !== 'player' && (G.civs[x].relation >= 35 || Court.levelIn(x) >= 0));
         if (friend !== undefined && !G.civs[friend === w.a ? w.b : w.a].atWar) { invited = true; War.invite(friend, friend === w.a ? w.b : w.a); }
       }
-      const sa = this.strength(w.a) + U.rnd(0, 8), sb = this.strength(w.b) + U.rnd(0, 8);
+      const sa = this.strength(w.a) * (typeof Clima !== 'undefined' ? Clima.atk(w.b) : 1) + U.rnd(0, 8), sb = this.strength(w.b) + U.rnd(0, 8); // quem ataca sofre com a chuva do reino atacado
       const [win, lose] = sa >= sb ? [w.a, w.b] : [w.b, w.a];
       const L = G.civs[lose], Wn = G.civs[win];
       L.garrison = Math.max(0, L.garrison - U.rint(1, 3));

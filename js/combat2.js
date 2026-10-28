@@ -154,7 +154,7 @@ const Battles = {
     for (const e of G.ents) if (e.tag && e.tag.startsWith(`bat${b.id}_`)) e.dead = true;
     if (winner === null) {
       // sem o jogador por perto, a força decide
-      winner = Diplo.strength(b.a) + U.rnd(0, 6) >= Diplo.strength(b.b) + U.rnd(0, 6) ? b.a : b.b;
+      winner = Diplo.strength(b.a) * (typeof Clima !== 'undefined' ? Clima.atk(b.b) : 1) + U.rnd(0, 6) >= Diplo.strength(b.b) + U.rnd(0, 6) ? b.a : b.b;
     }
     const loser = winner === b.a ? b.b : b.a;
     G.civs[loser].garrison = Math.max(0, G.civs[loser].garrison - 3);
