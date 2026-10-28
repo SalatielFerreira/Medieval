@@ -305,7 +305,7 @@ const UIP = {
     if (!this.cv) return;
     const g = this.cv.getContext('2d'), dpr = window.devicePixelRatio || 1, z = this.z, X = tx => (tx - this.ox) * z, Y = ty => (ty - this.oy) * z;
     g.save(); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.textAlign = 'center'; g.textBaseline = 'middle';
-    const mark = (tx, ty, ic, label, size) => { const x = X(tx), y = Y(ty); if (x < -30 || y < -30 || x > this.cw + 30 || y > this.ch + 30) return; g.font = `${size || 14}px sans-serif`; g.fillText(ic, x, y); if (label && z >= 2) { g.font = '600 10px "Segoe UI", sans-serif'; g.lineWidth = 3; g.strokeStyle = 'rgba(14,10,6,0.85)'; g.strokeText(label, x, y + 13); g.fillStyle = '#ffe9a8'; g.fillText(label, x, y + 13); } };
+    const mark = (tx, ty, ic, label, size) => { if (typeof Fog !== 'undefined' && !Fog.seen(Math.floor(tx), Math.floor(ty))) return; /* o que fica na neblina não aparece */ const x = X(tx), y = Y(ty); if (x < -30 || y < -30 || x > this.cw + 30 || y > this.ch + 30) return; g.font = `${size || 14}px sans-serif`; g.fillText(ic, x, y); if (label && z >= 2) { g.font = '600 10px "Segoe UI", sans-serif'; g.lineWidth = 3; g.strokeStyle = 'rgba(14,10,6,0.85)'; g.strokeText(label, x, y + 13); g.fillStyle = '#ffe9a8'; g.fillText(label, x, y + 13); } };
     if (L.biz) for (const s of Biz.list()) mark(s.x + s.w / 2, s.y + s.h / 2, '💼', z >= 4 ? BUILDINGS[s.type].name : '', 12);
     World.capitals.forEach((cp, ci) => {
       if (!G.civs[ci]) return;

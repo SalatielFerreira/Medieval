@@ -655,7 +655,7 @@ const Game = {
       const terrain = P.mounted ? Math.max(0.7, World.speedAt(P.x, P.y)) : World.speedAt(P.x, P.y);
       const L2 = an && !k.KeyW && !k.KeyS && !k.KeyA && !k.KeyD ? Math.min(1, L * 1.15) : 1; // inclinação do analógico
       const slow = (P.blocking ? 0.45 : 1) * (P.charging ? 0.65 : 1) * (Farm.has('mead') ? 1.1 : 1);
-      const sp = (P.sailing ? 175 : 135 * terrain * Ride.speed()) * (run ? 1.6 : 1) * (heavy ? 0.5 : 1) * slow * Math.min(1, L2) * dt;
+      const sp = (P.sailing ? 175 * (typeof Sea !== 'undefined' ? Sea.speed() : 1) : 135 * terrain * Ride.speed()) * (run ? 1.6 : 1) * (heavy ? 0.5 : 1) * slow * Math.min(1, L2) * dt;
       moveEnt(P, dx / L * sp, dy / L * sp);
       if (dx) P.dir = dx < 0 ? -1 : 1;
       P.mdx = dx; P.mdy = dy;
@@ -1298,8 +1298,8 @@ const Game = {
     c.alive = false; c.becamePlayer = true;
     for (const e of G.ents) if (e.npc === c) e.dead = true;
     G.spawned.delete(c.id);
+    Progress.endHero(this.lastCause || 'em combate'); // a geração que termina entra na história com o nome dela
     G.name = c.name;
-    Progress.endHero(this.lastCause || 'em combate');
     Progress.diary(`👑 ${c.name} assumiu o legado de ${oldName}.`);
     const lvl = Math.max(1, Math.floor(P.level / 2)) + (c.prof === 'scholar' ? 4 : 0);
     Object.assign(P, { sex: c.sex, age: c.age, hairBase: c.hair, skin: c.skin, dead: false, level: lvl, xp: 0, maxHp: 100 + (lvl - 1) * 10 });

@@ -89,6 +89,17 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: navegação, masmorras fundas, neblina, cavalaria, companheiros, música e o placar da dinastia
+
+- **⛵ Navegação de verdade:** no estaleiro de todo porto, compre uma Caravela (rápida, porão de 120) ou um Galeão (grande, porão de 300, enfrenta piratas). O navio é mais rápido que o barco a remo e se embarca em qualquer margem. No porto, compre mercadorias para o porão pelo preço daquele reino e venda em outro porto. Zarpe para outros portos ou para as ilhas grandes: no caminho vêm tempestades (o casco sofre e a carga pode ir ao mar) e piratas (lutar, fugir ou pagar). Navegando em alto-mar, piratas atacam de barco, e a tempestade castiga o casco — sem casco, o navio afunda e você vai parar na praia. Conserto no porto.
+- **🕳️ Masmorras com andares:** cada caverna tem 3 andares (o covil do dragão, 4), com escada vigiada por um guardião. A cada andar, criaturas mais fortes e baús mais ricos. O chefe mora no último andar e, na primeira vez, deixa um item lendário que só existe lá: Martelo do Rei Troll, Lâmina do Rei Morto (rouba vida), Arco da Viúva Negra e Presa do Dragão.
+- **🌫️ Mapa com neblina:** em jogo novo, o mapa e o minimapa só mostram o que você já viu. O Mapa do Tesouro marca um X longe dali (cave com a pá em cima dele), e a Carta do Reino (correio, observatório e prefeitura) revela o território de um reino. Jogos salvos de antes continuam com o mapa todo à vista.
+- **🐎 Cavalaria:** o galope dá força ao golpe (até +60%). Com lança, é uma carga de verdade (até +150%), que joga o inimigo para trás. O arco a cavalo acerta mais forte. Há uma Lança de Cavalaria nova (forja, liça e campo de treino).
+- **🤝 Companheiros com história:** cada capanga tem lealdade e o jeito dele. Eles pedem coisas (pagamento, arma melhor, visitar a família, caçar bandidos, festa na taverna): atender sobe a lealdade, recusar ou esquecer derruba. O leal luta melhor; sem lealdade, o capanga vai embora levando ouro, ou passa para o inimigo numa guerra. E eles se apaixonam, entre si ou por você.
+- **🎵 Música por lugar e momento:** temas novos para a vila, a taverna, o inverno e o mar, além do campo, da noite, da caverna e da batalha.
+- **🏆 Conquistas novas e placar da dinastia:** 20 conquistas novas (masmorras, lendários, tesouros, mapa, cargas, bando fiel, tratados, Bolsa, Jogos, navios, piratas...) e um placar com o que cada geração alcançou, lado a lado e com pontos (no livro da crônica e em Portfólio → Linhagens).
+- **Correção:** quando o herdeiro assume, a geração que terminou entra na crônica (e no cemitério) com o nome dela. Antes, ficava com o nome do herdeiro.
+
 ## Novidades: inventário arrumado e cada construção com a sua função
 
 - **Inventário:** a seção de bolsos saiu da janela — o bolso agora é um atalho: escolha "Bolso 1" ou "Bolso 2" nos botões do item, e ele continua na mochila com a marquinha B1/B2 (os bolsos seguem na tela, teclas 1 e 2). Os botões do item ficam organizados num painel (usar, bolsos, dividir, ficha e descartar), com o nome e o que o item faz.

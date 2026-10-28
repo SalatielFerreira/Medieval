@@ -472,6 +472,8 @@ const MapView = {
       if (G.civs[c].atWar) label('⚔', x + s / 2 + 8, y - s / 2, `bold ${s * 0.5}px sans-serif`, '#ff6b6b');
     }
 
+    // neblina: o que você ainda não viu fica escuro; os X dos mapas do tesouro aparecem por cima
+    if (typeof Fog !== 'undefined') { Fog.drawOver(g, X(0), Y(0), WORLD_W * z, WORLD_H * z); Fog.drawX(g, X, Y, U.clamp(z * 1.2, 5, 12)); }
     // marcação e rota
     const px = X(P.x / TILE), py = Y(P.y / TILE);
     if (G.ping) {

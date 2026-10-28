@@ -50,13 +50,18 @@ const Dungeon = {
   },
 
   // ------------------------------------------------------------ entrar e sair
-  enter(cave) {
-    if (G.dungeon) return;
+  // floor: o andar (1 = o primeiro); up = chegando de baixo (aparece na escada que desce)
+  depth(cave) { return cave.theme === 'dragon' ? 4 : 3; },
+  enter(cave, floor, up) {
+    const deeper = floor !== undefined && !!G.dungeon;
+    if (G.dungeon && !deeper) return;
+    floor = floor || 1;
+    const W = World, depth = this.depth(cave);
+    if (!deeper) {
     Urban.stop();
     if (P.mounted) { P.mounted = false; }
     if (G.siege) Game.endSiege('Você entrou na caverna e o cerco foi abandonado.');
     if (G.duel) Arena.lose('saiu da arena');
-    const W = World;
     this.stash = {
       tiles: W.tiles, obj: W.obj, objHp: W.objHp, terr: W.terr, sgrid: W.sgrid, elev: W.elev, structs: W.structs, regrow: W.regrow,
       mini: W.mini, villages: W.villages, capitals: W.capitals, camps: W.camps, islands: W.islands, caves: W.caves, start: W.start, startCabin: W.startCabin,
@@ -64,8 +69,10 @@ const Dungeon = {
     };
     for (const e of this.stash.ents) if (e.npc) G.spawned.delete(e.npc.id);
     this.stash.ents = this.stash.ents.filter(e => !e.npc);
+    }
     const st = this.state(cave.cave), th = CAVE_THEMES[cave.theme];
-    const rng = U.mulberry32(WORLD_SEED + cave.cave * 977 + 13);
+    st.deep = Math.max(st.deep || 1, floor);
+    const rng = U.mulberry32(WORLD_SEED + cave.cave * 977 + 13 + (floor - 1) * 7919);
     const N = WORLD_W * WORLD_H;
     W.tiles = new Uint8Array(N).fill(T.CWALL); W.obj = new Uint8Array(N); W.objHp = new Uint8Array(N);
     W.terr = new Int8Array(N).fill(-1); W.sgrid = new Int16Array(N).fill(-1); W.elev = new Float32Array(N);
@@ -104,11 +111,13 @@ const Dungeon = {
       for (const [dx, dy] of DIRS4) { const ni = W.idx(cx + dx, cy + dy); if (dist[ni] < 0 && W.tiles[ni] === T.CFLOOR) { dist[ni] = dist[c] + 1; q.push(ni); } }
     }
     for (let i = 0; i < N; i++) if (W.tiles[i] === T.CFLOOR && dist[i] < 0) W.tiles[i] = T.CWALL;
-    const floor = q.slice();
-    const far = floor.reduce((b, i) => dist[i] > dist[b] ? i : b, floor[0]);
-    W.addStruct('cave_exit', ent.x, ent.y, 1, 1, 'wild', {});
+    const cells = q.slice();
+    const far = cells.reduce((b, i) => dist[i] > dist[b] ? i : b, cells[0]);
+    W.addStruct(floor > 1 ? 'cave_up' : 'cave_exit', ent.x, ent.y, 1, 1, 'wild', {});
+    // a escada para o andar de baixo fica no ponto mais longe (no último andar, ali mora o chefe)
+    if (floor < depth) { const fx = far % WORLD_W, fy = (far / WORLD_W) | 0; W.obj[far] = 0; W.addStruct('cave_down', fx, fy, 1, 1, 'wild', {}); }
     // minérios nas paredes
-    for (const i of floor) {
+    for (const i of cells) {
       if (dist[i] < 6) continue;
       const x = i % WORLD_W, y = (i / WORLD_W) | 0;
       if (!DIRS4.some(([dx, dy]) => W.tile(x + dx, y + dy) === T.CWALL)) continue;
@@ -117,31 +126,42 @@ const Dungeon = {
       if (o) { W.obj[i] = o; W.objHp[i] = OBJ[o].hp; }
     }
     // baús de tesouro nos pontos mais afastados
-    const spots = floor.filter(i => dist[i] > 14 && !W.obj[i]).sort(() => rng() - 0.5);
+    const spots = cells.filter(i => dist[i] > 14 && !W.obj[i] && i !== far).sort(() => rng() - 0.5);
     const chests = [];
     for (const i of spots) {
       if (chests.length >= 4) break;
       if (chests.some(j => U.dist(i % WORLD_W, (i / WORLD_W) | 0, j % WORLD_W, (j / WORLD_W) | 0) < 10)) continue;
       chests.push(i);
     }
-    chests.forEach((i, k) => W.addStruct('tchest', i % WORLD_W, (i / WORLD_W) | 0, 1, 1, 'wild', { tid: k, opened: st.opened.includes(k) }));
+    chests.forEach((i, k) => { const tid = (floor - 1) * 10 + k; W.addStruct('tchest', i % WORLD_W, (i / WORLD_W) | 0, 1, 1, 'wild', { tid, opened: st.opened.includes(tid) }); });
     W.buildMinimap();
     // monstros espalhados (menos se a caverna já foi limpa)
     G.ents = G.ents.filter(e => e.kind === 'ally');
-    const mobN = st.cleared ? 5 : 16;
-    const mobSpots = floor.filter(i => dist[i] > 9).sort(() => rng() - 0.5).slice(0, mobN);
+    // quanto mais fundo, mais criaturas e mais fortes
+    const mobN = (st.cleared ? 5 : 16) + (floor - 1) * 3, power = 1 + (floor - 1) * 0.35;
+    const mobSpots = cells.filter(i => dist[i] > 9 && i !== far).sort(() => rng() - 0.5).slice(0, mobN);
     for (const i of mobSpots) {
       const kind = U.pick(th.mobs);
-      Game.spawn(kind, (i % WORLD_W + 0.5) * TILE, (((i / WORLD_W) | 0) + 0.8) * TILE, { leash: 8, archer: kind === 'skeleton' && Math.random() < 0.35 });
+      const m = Game.spawn(kind, (i % WORLD_W + 0.5) * TILE, (((i / WORLD_W) | 0) + 0.8) * TILE, { leash: 8, archer: kind === 'skeleton' && Math.random() < 0.35 });
+      if (m && power > 1) { m.maxHp = m.hp = Math.round(m.hp * power); m.dmg = Math.round((m.dmg || 0) * (1 + (floor - 1) * 0.2)); }
     }
-    if (!st.cleared) Game.spawn(th.boss, (far % WORLD_W + 0.5) * TILE, (((far / WORLD_W) | 0) + 0.8) * TILE, { leash: 14 });
-    G.dungeon = { idx: cave.cave, name: cave.cname, theme: cave.theme };
-    P.x = (ent.x + 0.5) * TILE; P.y = (ent.y + 1.8) * TILE; P.sailing = false; P.fishing = null;
-    if (World.blockedAt(P.x, P.y, 8)) P.y = (ent.y + 0.9) * TILE;
+    // guardião de cada andar, perto da escada que desce
+    if (floor < depth && (!st.guards || !st.guards.includes(floor))) {
+      const near = cells.filter(i => dist[i] > dist[far] - 8 && i !== far).sort((a, b) => dist[b] - dist[a])[0];
+      if (near !== undefined) { const gk = U.pick(th.mobs.filter(k => k !== 'bat')) || th.mobs[0]; const gd = Game.spawn(gk, (near % WORLD_W + 0.5) * TILE, (((near / WORLD_W) | 0) + 0.8) * TILE, { leash: 6 });
+        if (gd) { gd.maxHp = gd.hp = Math.round(gd.hp * 3.2 * power); gd.dmg = Math.round((gd.dmg || 0) * 1.7); gd.floorGuard = floor; gd.nameTag = 'Guardião do ' + floor + 'º andar'; } }
+    }
+    if (!st.cleared && floor === depth) Game.spawn(th.boss, (far % WORLD_W + 0.5) * TILE, (((far / WORLD_W) | 0) + 0.8) * TILE, { leash: 14 });
+    G.dungeon = { idx: cave.cave, name: cave.cname, theme: cave.theme, floor, depth, cave };
+    const at0 = up ? { x: far % WORLD_W, y: (far / WORLD_W) | 0 } : ent;
+    P.x = (at0.x + 0.5) * TILE; P.y = (at0.y + 1.8) * TILE; P.sailing = false; P.fishing = null;
+    if (World.blockedAt(P.x, P.y, 8)) P.y = (at0.y + 0.9) * TILE;
+    if (World.blockedAt(P.x, P.y, 8)) { const s = freeSpotNear(P.x, P.y, 60); P.x = s.x; P.y = s.y; }
     for (const a of G.ents) if (a.kind === 'ally') { const s = freeSpotNear(P.x, P.y, 40); a.x = s.x; a.y = s.y; a.target = null; }
     G.ping = null;
-    UI.banner('🕯️ ' + cave.cname);
-    UI.msg(st.cleared ? 'Esta caverna já foi limpa, mas ainda há criaturas e minérios.' : `Algo terrível habita o fundo desta caverna... (${CREATURES[th.boss].name})`, st.cleared ? '' : 'bad');
+    UI.banner(`🕯️ ${cave.cname}${depth > 1 ? ` · ${floor}º andar de ${depth}` : ''}`);
+    if (floor === 1) UI.msg(st.cleared ? `Esta caverna já foi limpa, mas ainda há criaturas e minérios nos seus ${depth} andares.` : `Algo terrível habita o ${depth}º andar, lá no fundo desta caverna... (${CREATURES[th.boss].name})`, st.cleared ? '' : 'bad');
+    else UI.msg(floor === depth ? (st.cleared ? 'O fundo da caverna. O chefe já foi derrotado.' : `☠️ O último andar. ${CREATURES[th.boss].name} está perto...`) : `${floor}º andar: as criaturas aqui são mais fortes. Um guardião vigia a escada que desce.`, floor === depth && !st.cleared ? 'bad' : '');
     Sound.play('chest');
   },
   exit(toHome) {

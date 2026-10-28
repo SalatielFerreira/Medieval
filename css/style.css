@@ -4160,3 +4160,28 @@ body:not(.small) .ldi-itx small { font-size: 12.5px; }
   .ldi-doll { flex: none; min-height: 250px; }
   .ldi-doll .pd-col { gap: 5px; }
 }
+
+/* ---------------------------------------------------------------- placar da dinastia */
+.lgc-scroll { overflow-x: auto; margin: 8px 0; }
+.lgc { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.lgc th { padding: 6px 6px; color: #bfa36a; font-weight: 600; text-align: center; border-bottom: 1px solid rgba(214, 174, 96, .3); white-space: nowrap; }
+.lgc th small { display: block; font-size: 9.5px; color: #8a7a5a; font-weight: 400; }
+.lgc td { padding: 7px 6px; text-align: center; border-bottom: 1px solid rgba(214, 174, 96, .1); color: #e8d8b4; }
+.lgc td:first-child { text-align: left; white-space: nowrap; }
+.lgc td:first-child small { display: block; color: #8a7a5a; font-size: 11px; }
+.lgc tr.now td { background: rgba(214, 174, 96, .08); }
+.lgc td.best { color: #ffe08a; font-weight: 700; }
+.lgc td.best::before { content: '🏆 '; font-size: 10px; }
+.lgc td.pts { font-weight: 700; color: #ffe9b0; }
+.bk-bar { display: block; width: 70%; height: 6px; margin: 2px auto 0; border-radius: 3px; background: rgba(90, 60, 20, .25); overflow: hidden; }
+.bk-bar i { display: block; height: 100%; background: #b8862a; }
+
+/* ---------------------------------------------------------------- navegação */
+.sea-yard, .sea-trade, .sea-go { margin-bottom: 10px; }
+.sea-tb td, .sea-tb th { padding: 4px 6px; }
+.sea-tb .act-row { justify-content: flex-end; }
+.sea-dests { flex-wrap: wrap; }
+.sea-dests button small { color: #a99a7c; margin-left: 4px; }
+.sea-log { list-style: none; padding: 0; margin: 8px 0; display: flex; flex-direction: column; gap: 6px; }
+.sea-log li { padding: 7px 10px; border-radius: 8px; background: rgba(0, 0, 0, .25); border-left: 3px solid #4a7ab0; }
+.sea-pir { border-top: 3px solid #a83030; }
