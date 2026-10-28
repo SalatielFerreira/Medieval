@@ -260,7 +260,7 @@ const UIP = {
   // 2. ficha do item no inventário e nas oficinas; o botão "Usar" sem uso some
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
-    if (fn === 'showInventory' && this.sel.inv && ITEMS[this.sel.inv]) body = body.replace('<button class="ldi-split"', `<button class="ldi-info" data-act="iinfo" data-k="${this.sel.inv}" title="Ficha do item">📖</button><button class="ldi-split"`);
+    if (fn === 'showInventory' && this.sel.inv && ITEMS[this.sel.inv]) body = body.replace('<button class="ldi-a ldi-trash"', `<button class="ldi-a ldi-info" data-act="iinfo" data-k="${this.sel.inv}" title="Ficha do item"><span class="ldi-ai">📖</span><span>Ficha</span></button><button class="ldi-a ldi-trash"`);
     if (fn === 'showWarCouncil' && G.warCall) { const i = body.indexOf('<div class="kgrid two">'); body = i >= 0 ? body.slice(0, i) + UIP.oddsCard(G.warCall) + body.slice(i) : body + UIP.oddsCard(G.warCall); }
     return op0(title, body, fn, args, sub);
   };

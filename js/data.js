@@ -13,6 +13,7 @@ const EQUIP_SLOTS = [
   { key: 'torso',  name: 'Gibão',      sub: 'Torso' },
   { key: 'legs',   name: 'Calções',    sub: 'Pernas' },
   { key: 'feet',   name: 'Botas',      sub: 'Pés' },
+  { key: 'ring',   name: 'Anel',       sub: 'Dedo' },
   { key: 'shield', name: 'Escudo',     sub: 'Braço' },
 ];
 const ARMOR_SLOTS = ['head', 'torso', 'legs', 'feet', 'shield'];
@@ -193,7 +194,6 @@ const RECIPES = [
   { out: 'hoe',           n: 1, cost: { wood: 3, stone: 2 },                    station: null },
   { out: 'stone_shovel',  n: 1, cost: { wood: 3, stone: 3 },                    station: null },
   { out: 'bone_knife',    n: 1, cost: { bone: 3, wood: 1, rope: 1 },            station: null },
-  { out: 'arrow',         n: 6, cost: { wood: 1, stone: 1 },                    station: null },
   { out: 'short_bow',     n: 1, cost: { wood: 4, rope: 2 },                     station: 'bancada' },
   { out: 'yew_bow',       n: 1, cost: { yew_wood: 4, rope: 2, resin: 1 },       station: 'bancada' },
   { out: 'silk_hood',     n: 1, cost: { spider_silk: 4, cloth: 1 },             station: 'bancada' },

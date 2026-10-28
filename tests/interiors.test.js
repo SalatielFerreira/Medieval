@@ -10,7 +10,8 @@ module.exports = async () => {
       const v = World.villages[0], vi = 0, out = [];
       v.lord = 'player';
       const spot = (w, h) => { for (let rr = 8; rr < 70; rr++) for (let k = 0; k < 48; k++) { const a = k / 48 * 6.283, x = Math.round(v.x + Math.cos(a) * rr), y = Math.round(v.y + Math.sin(a) * rr); if (World.areaOk(x - 1, y - 1, w + 2, h + 4) && World.areaFree(x - 1, y - 1, w + 2, h + 4)) return { x, y }; } };
-      for (const [type, row] of Object.entries(WP2)) {
+      // (produção e fazenda ficam sem lado de dentro: buildroles.test.js)
+      for (const [type, row] of Object.entries(WP2).filter(([t]) => !BR.PROD.includes(t) && !BR.FARM.includes(t))) {
         const mine = row[3] === 'player', d = mine ? BUILDINGS[type] : CIVIC[type];
         if (!d) { out.push(`${type}: não existe no jogo`); continue; }
         const sp = spot(d.w, d.h); if (!sp) { out.push(`${type}: sem lugar livre para o teste`); continue; }
@@ -28,7 +29,7 @@ module.exports = async () => {
         if (!rows) out.push(`${type}: a loja do responsável não tem mercadoria`);
         UI.close();
       }
-      return { n: Object.keys(WP2).length, out };
+      return { n: Object.keys(WP2).filter(t => !BR.PROD.includes(t) && !BR.FARM.includes(t)).length, out };
     });
     fails.push(...r.out);
     console.log(`    ${r.n} construções conferidas`);

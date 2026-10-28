@@ -359,10 +359,10 @@ const UI = {
     const order = ['Recursos', 'Materiais', 'Comida', 'Sementes', 'Ferramentas', 'Armas', 'Armaduras', 'Diversos'];
     const keys = this.invKeys(order), S = this.sel;
     const eqOf = k => Object.keys(P.equip).find(s => P.equip[s] === k);
-    const glyph = { weapon: '⚔️', tool: '⛏️', tool2: '🪓', head: '🪖', torso: '👕', legs: '👖', feet: '🥾', shield: '🛡️' };
+    const glyph = { weapon: '⚔️', tool: '⛏️', tool2: '🪓', head: '🪖', torso: '👕', legs: '👖', feet: '🥾', ring: '💍', shield: '🛡️' };
     const slot = key => {
       const sl = EQUIP_SLOTS.find(x => x.key === key), k = P.equip[key], it = k && ITEMS[k];
-      return `<div class="pd-slot ${it ? 'full' : ''} ${it && S.inv === k ? 'on' : ''}" data-drop="equip" data-slot="${key}" ${it ? `data-drag="eq" data-k="${k}" data-act="isel"` : ''} title="${sl.name} — ${sl.sub}${it ? ': ' + it.name + ' (arraste para fora para tirar)' : ' (arraste um item para cá)'}">
+      return `<div class="pd-slot ${it ? 'full' : ''} ${it && S.inv === k ? 'on' : ''}" data-drop="equip" data-slot="${key}" ${it ? `data-drag="eq" data-k="${k}" data-act="isel"` : ''} data-tip="${it ? this.esc(it.name) : `${sl.name} (vazio)`}">
         <span class="pd-ic">${it ? UI.ii(it) : `<i class="pd-empty">${glyph[key]}</i>`}</span>${it && P.inv[k] > 1 ? `<span class="tn">${P.inv[k]}</span>` : ''}<small>${key === 'tool2' ? 'Ferram. 2' : sl.name}</small></div>`;
     };
     this.showInventoryGrid(keys, slot, eqOf, Game.playerTitle(), Store.weight(), Store.capacity());
@@ -372,30 +372,27 @@ const UI = {
     if (!S.inv || !P.inv[S.inv]) S.inv = keys[0] || null;
     // casas fixas como numa mochila de verdade: cada item fica onde você colocou (as vazias também aparecem)
     if (!S.cell || Inv.baseOf(S.cell) !== S.inv || !Inv.cellN(S.cell)) S.cell = S.inv;
-    const cells = Inv.bag().map((c, i) => { const k = c && Inv.baseOf(c), it = k && ITEMS[k];
-      return it ? `<div class="tile ${S.cell === c ? 'on' : ''} ${c !== k ? 'split' : ''}" data-act="isel" data-k="${k}" data-c="${c}" data-i="${i}" data-drag="inv" data-drop="tile" title="${it.name}">${UI.ii(it)}<span class="tn">${Inv.cellN(c)}</span></div>`
+    // os itens nos bolsos continuam na mochila (o bolso é um atalho): a marquinha B1/B2 mostra em qual
+    const cells = Inv.bag().map((c, i) => { const k = c && Inv.baseOf(c), it = k && ITEMS[k], q = it && c === k ? P.quick.indexOf(k) : -1;
+      return it ? `<div class="tile ${S.cell === c ? 'on' : ''}" data-act="isel" data-k="${k}" data-c="${c}" data-i="${i}" data-drag="inv" data-drop="tile" data-tip="${this.esc(it.name)}">${UI.ii(it)}<span class="tn">${Inv.cellN(c)}</span>${q >= 0 ? `<span class="tq">B${q + 1}</span>` : ''}</div>`
         : `<div class="tile empty" data-drop="tile" data-i="${i}"></div>`; }).join('');
-    const quick = [0, 1].map(q => {
-      const k = P.quick[q], it = k && ITEMS[k];
-      return `<div class="tile qtile ${it && S.inv === k ? 'on' : ''}" data-drop="quick" data-q="${q}" ${it ? `data-drag="quick" data-k="${k}" data-act="isel"` : ''}>${it ? `${UI.ii(it)}<span class="tn">${Inv.count(k)}</span>` : ''}</div>`;
-    }).join('');
-    // o botão principal muda conforme o item escolhido
+    // os botões mudam conforme o item escolhido
     const k = S.inv, it = k && ITEMS[k], eq = k && eqOf(k);
-    const cellN = it ? Inv.cellN(S.cell || k) : 0, canSplit = it && cellN >= 2 && !eq && !P.quick.includes(k);
+    const cellN = it ? Inv.cellN(S.cell || k) : 0, canSplit = it && cellN >= 2 && !eq;
     const use = !it ? '' : it.food || it.heal ? (it.food ? 'Comer' : 'Usar') : it.slot ? (eq ? 'Tirar' : it.slot === 'tool' ? 'Empunhar' : 'Equipar') : it.seed ? 'Plantar' : it.use ? 'Usar' : '';
+    const pocketOk = it && !!(it.food || it.heal || it.tool), inQ = it ? P.quick.indexOf(k) : -1;
     const xpPct = U.clamp(P.xp / Game.xpNext() * 100, 0, 100);
+    const ab = (act, ic, label, ok, cls, extra) => `<button class="ldi-a ${cls || ''}" data-act="${act}" ${extra || ''} ${ok ? '' : 'disabled'}><span class="ldi-ai">${ic}</span><span>${label}</span></button>`;
     const body = `<div class="ldi">
       <div class="ldi-l">
-        <div class="ldi-sec"><span class="ldi-lab">Bolsos</span><div class="ldi-row">${quick}</div></div>
         <div class="ldi-sec grow"><span class="ldi-lab">Mochila</span><div class="ldi-grid" data-scroll="inv" data-drop="grid">${cells}</div></div>
-        <div class="ldi-bar"><button class="primary" data-act="iuse" ${use ? '' : 'disabled'}>${use || 'Sem uso direto'}</button>
-          <span class="ldi-sel">${it ? `<b>${this.esc(it.name)}</b> ×${cellN}${cellN !== Inv.count(k) ? ` <small class="muted">de ${Inv.count(k)}</small>` : ''}` : '<span class="muted">Toque num item</span>'}</span>
-          <button class="ldi-split" data-act="isplitopen" ${canSplit ? '' : 'disabled'} title="Dividir a pilha">✂️</button>
-          <button class="ldi-trash" data-act="itrash" ${it ? '' : 'disabled'} title="Descartar">${icon('trash')}</button></div>
-        ${canSplit && S.splitting === S.cell ? `<div class="ldi-splitbox"><span>Separar</span>
-          <input type="range" id="splitN" min="1" max="${cellN - 1}" value="${Math.floor(cellN / 2)}" oninput="document.getElementById('splitV').textContent=this.value + ' | ' + (${cellN} - this.value)">
-          <b id="splitV">${Math.floor(cellN / 2)} | ${cellN - Math.floor(cellN / 2)}</b>
-          <button class="primary" data-act="isplit">Dividir</button><button data-act="isplitopen">✕</button></div>` : ''}
+        <div class="ldi-act">
+          <div class="ldi-item">${it ? `<span class="ldi-iic">${UI.ii(it)}</span><span class="ldi-itx"><b>${this.esc(it.name)}</b><small>${cellN}${cellN !== Inv.count(k) ? ` de ${Inv.count(k)}` : ''} · ${this.esc(it.cat)}${this.itemDesc(it) ? ' · ' + this.itemDesc(it) : ''}</small></span>` : '<span class="muted">Toque num item para ver o que dá para fazer com ele</span>'}</div>
+          <div class="ldi-btns">${ab('iuse', '✋', use || 'Sem uso direto', !!use, 'primary')}
+            ${pocketOk ? [0, 1].map(q => ab('ipocket', inQ === q ? '✓' : '👝', inQ === q ? `No bolso ${q + 1}` : `Bolso ${q + 1}`, true, inQ === q ? 'on' : '', `data-q="${q}"`)).join('') : ''}
+            ${ab('isplit', '➗', 'Dividir', canSplit, '', `title="Divide a pilha em duas metades (${Math.ceil(cellN / 2)} e ${Math.floor(cellN / 2)})"`)}
+            <button class="ldi-a ldi-trash" data-act="itrash" ${it ? '' : 'disabled'} title="Descartar">${icon('trash')}<span>Descartar</span></button></div>
+        </div>
       </div>
       <div class="ldi-r">
         <div class="ldi-head"><span class="ldi-lv">${String(P.level).padStart(2, '0')}</span>
@@ -403,7 +400,7 @@ const UI = {
           <span class="ldi-chip">🍎 ${Math.round(P.hunger)}</span><span class="ldi-chip">⚡ ${Math.round(P.stamina)}</span></div>
         <div class="ldi-doll"><div class="pd-col">${slot('weapon')}${slot('shield')}${slot('tool')}${slot('tool2')}</div>
           <div class="pd-mid"><canvas id="invDoll" width="120" height="170"></canvas></div>
-          <div class="pd-col">${slot('head')}${slot('torso')}${slot('legs')}${slot('feet')}</div></div>
+          <div class="pd-col">${slot('head')}${slot('torso')}${slot('legs')}${slot('feet')}${slot('ring')}</div></div>
         <div class="ldi-stats"><span title="Vida">❤ ${Math.ceil(P.hp)}/${P.maxHp}</span><span title="Dano">⚔ ${Math.round(Game.pDmg())}</span><span title="Defesa">🛡 ${Game.pDef()}</span><span title="Carga" class="${w > cap ? 'bad' : ''}">🎒 ${w}/${cap}</span></div>
       </div></div>`;
     this.open('Inventário', body, 'showInventory', [], `${P.gold} 🪙`);
@@ -600,7 +597,7 @@ const UI = {
       const info = ITEMS[k] || GROUP_INFO[k], have = Inv.count(k);
       return `<div class="req-row"><span>${UI.ii(info)}</span><span>${info.name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;
     }).join('');
-    return `<div class="dt-head"><div class="dt-ic">${UI.ii(it)}</div><div><div class="dt-name">${it.name}${r.n > 1 ? ' ×' + r.n : ''}</div><div class="dt-cat">${it.cat}</div></div></div>
+    return `<div class="dt-head"><div class="dt-ic">${UI.ii(it)}</div><div><div class="dt-name">${it.name}</div><div class="dt-cat">${it.cat}${r.n > 1 ? ` · rende ${r.n}` : ''}</div></div></div>
       <div><div class="sec">Materiais</div><div class="req">${req}</div></div>
       <div><div class="sec">Onde conseguir</div><div class="src-list">${Object.keys(r.cost).map(k => {
         const info = ITEMS[k] || GROUP_INFO[k];
@@ -683,7 +680,7 @@ const UI = {
         const it = ITEMS[r.out], can = maxOf(r) > 0, so = stOk(r);
         const st = so && can ? ['ok', 'Pode criar'] : !so ? ['st', STATIONS[r.station].name.split(' ')[0]] : ['mat', 'Falta material'];
         rows += `<button class="rrow ${S.craft === i ? 'on' : ''}" data-act="csel" data-r="${i}"><span class="ri">${UI.ii(it)}</span>
-          <span><b>${it.name}${r.n > 1 ? ' ×' + r.n : ''}</b><small>${this.itemDesc(it) || it.cat}</small></span><span class="rs ${st[0]}">${st[1]}</span></button>`;
+          <span><b>${it.name}</b><small>${r.n > 1 ? `rende ${r.n} · ` : ''}${this.itemDesc(it) || it.cat}</small></span><span class="rs ${st[0]}">${st[1]}</span></button>`;
       }
     }
     if (!rows) rows = '<p class="muted">Nenhuma receita com esses filtros.</p>';
@@ -1807,13 +1804,13 @@ const UI = {
       <small class="muted">${(STANCES[p.stance] || STANCES.normal).desc}. Capangas ganham experiência derrotando inimigos (quem dá o golpe final leva mais).</small>
       <div class="sec" style="margin-top:10px">Equipamento</div><div class="equip6">`;
     for (const sl of EQUIP_SLOTS) {
-      if (sl.key === 'tool' || sl.key === 'tool2') continue;
+      if (sl.key === 'tool' || sl.key === 'tool2' || sl.key === 'ring') continue;
       const k = p.equip[sl.key], it = k && ITEMS[k];
       h += `<div class="eslot ${it ? 'full' : ''}"><span class="eic">${it ? UI.ii(it) : '·'}</span><div class="info"><small>${sl.name}</small><b>${it ? it.name : 'Nada'}</b><small>${it ? (it.dmg ? 'Dano ' + it.dmg : 'Defesa +' + it.def) : ''}</small></div>
         ${it ? `<button data-act="tk" data-op="cun" data-k="${sl.key}" data-id="${id}">✕</button>` : ''}</div>`;
     }
     h += '</div><h3>Da sua mochila</h3><div class="list">';
-    const keys = Object.keys(P.inv).filter(k => ITEMS[k].slot && ITEMS[k].slot !== 'tool');
+    const keys = Object.keys(P.inv).filter(k => ITEMS[k].slot && ITEMS[k].slot !== 'tool' && ITEMS[k].slot !== 'ring');
     if (!keys.length) h += '<p class="muted">Você não tem armas nem armaduras para entregar.</p>';
     for (const k of keys) {
       const it = ITEMS[k];
@@ -2601,14 +2598,15 @@ const UI = {
       case 'setslot': G.slot = +d.n; break;
       case 'export': if (!G.dungeon) Saves.download(Game.snapshot()); return;
       case 'dipl': Diplo.playerAction(+d.c, +d.o, d.x); break;
-      case 'isel': this.sel.inv = d.k; this.sel.cell = d.c || d.k; if (this.sel.splitting !== this.sel.cell) this.sel.splitting = null; break;
-      case 'isplitopen': this.sel.splitting = this.sel.splitting === this.sel.cell ? null : this.sel.cell; break;
+      case 'isel': this.sel.inv = d.k; this.sel.cell = d.c || d.k; break;
+      // dividir: metade para cada lado (num ímpar, a pilha escolhida fica com a parte maior: 7 vira 4 e 3)
       case 'isplit': {
-        const el = document.getElementById('splitN'), n = el ? +el.value : 0;
-        const id = Inv.split(this.sel.cell || this.sel.inv, n);
-        if (id) { this.sel.splitting = null; this.sel.cell = id; Sound.play('ui'); this.msg(`Pilha dividida: ${n} separados.`); }
+        const cell = this.sel.cell || this.sel.inv, have = Inv.cellN(cell), n = Math.floor(have / 2);
+        if (n >= 1 && Inv.split(cell, n)) { Sound.play('ui'); this.msg(`Pilha dividida: ${have - n} e ${n}.`); }
         break;
       }
+      // bolso: o item fica na mochila e o bolso vira o atalho (tocar de novo tira do bolso)
+      case 'ipocket': { const k = this.sel.inv, q = +d.q; if (!k) break; if (P.quick[q] === k) P.quick[q] = null; else Game.setQuick(q, k); Sound.play('ui'); break; }
       // botão "Usar" da mochila do celular: come, equipa/tira ou escolhe a semente
       case 'iuse': {
         const k = this.sel.inv, it = k && ITEMS[k]; if (!it) break;

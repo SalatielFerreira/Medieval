@@ -49,7 +49,6 @@ Object.assign(ART_SHAPES, {
   lute: (m, d, l) => `<ellipse cx="12" cy="21" rx="8" ry="7" transform="rotate(-35 12 21)" fill="${m}" stroke="${d}" stroke-width="1.3"/><circle cx="12" cy="21" r="2.2" fill="${d}"/><path d="M15 17 L27 5" stroke="#5a3418" stroke-width="2.6" stroke-linecap="round"/><path d="M26 4 L30 6 L28 8" stroke="#5a3418" stroke-width="2" fill="none"/><path d="M9 24 L26 6" stroke="${l}" stroke-width=".5"/>`,
   flute: (m, d, l) => `<path d="M5 26 L27 6" stroke="${m}" stroke-width="4" stroke-linecap="round"/><path d="M5 26 L27 6" stroke="${l}" stroke-width="1" stroke-linecap="round" opacity=".6"/>${[0, 1, 2, 3].map(k => `<circle cx="${12 + k * 3.4}" cy="${19.6 - k * 3.1}" r="0.9" fill="${d}"/>`).join('')}`,
   drum: (m, d, l) => `<ellipse cx="16" cy="10" rx="11" ry="4" fill="${l}" stroke="${d}" stroke-width="1.2"/><path d="M5 10 L5 23 Q16 29 27 23 L27 10 Q16 16 5 10 Z" fill="${m}" stroke="${d}" stroke-width="1.2"/><path d="M5 12 L11 25 L16 13 L21 25 L27 12" stroke="${l}" stroke-width="1" fill="none"/><path d="M20 4 L28 0 M24 6 L31 3" stroke="#6a4423" stroke-width="1.6" stroke-linecap="round"/>`,
-  dice: (m, d, l) => `<rect x="4" y="10" width="13" height="13" rx="2.4" fill="${m}" stroke="${d}" stroke-width="1.2"/><rect x="15" y="5" width="13" height="13" rx="2.4" transform="rotate(15 21 11)" fill="${l}" stroke="${d}" stroke-width="1.2"/><circle cx="8" cy="14" r="1.2" fill="${d}"/><circle cx="13" cy="19" r="1.2" fill="${d}"/><circle cx="10.5" cy="16.5" r="1.2" fill="${d}"/><circle cx="19" cy="9" r="1.2" fill="${d}"/><circle cx="24" cy="13" r="1.2" fill="${d}"/>`,
   hat: (m, d, l) => `<ellipse cx="16" cy="25" rx="13" ry="3.6" fill="${d}"/><path d="M8 24 Q12 14 14 9 Q17 2 24 5 Q19 7 20 14 Q22 20 24 24 Z" fill="${m}" stroke="${d}" stroke-width="1.2"/><path d="M9 21 Q16 23 23 21" stroke="${l}" stroke-width="1.8" fill="none"/><path d="M15 13 L16.4 15.6 L19 16 L17 18 L17.6 21 L15 19.4" fill="${l}" opacity=".8"/>`,
   robe: (m, d, l) => `<path d="M10 4 L22 4 L25 12 L23 28 L9 28 L7 12 Z" fill="${m}" stroke="${d}" stroke-width="1.3"/><path d="M10 4 L16 11 L22 4" stroke="${l}" stroke-width="1.4" fill="none"/><path d="M16 11 L16 28" stroke="${d}" stroke-width="1"/><path d="M7 12 L3 22 L7 23 M25 12 L29 22 L25 23" stroke="${d}" stroke-width="1.2" fill="${m}"/><rect x="9" y="16" width="14" height="2" fill="${l}"/>`,
   halberd: (m, d, l) => `<path d="M7 30 L22 5" stroke="#6a4423" stroke-width="2.4" stroke-linecap="round"/><path d="M19 9 Q26 8 28 13 L21 15 Z" fill="${m}" stroke="${d}" stroke-width="1.1"/><path d="M20 9 L16 7 L18 12 Z" fill="${d}"/><path d="M22 5 L25 1 L23.5 6 Z" fill="${l}" stroke="${d}" stroke-width=".8"/>`,
@@ -285,7 +284,6 @@ const EXP_ITEMS = [
   ['lute', 'Alaúde', '🪕', 'Diversos', 90, { use: 'play' }, ['lute', 'oak']],
   ['flute', 'Flauta de Osso', '🪈', 'Diversos', 30, { use: 'play' }, ['flute', 'bone']],
   ['war_drum', 'Tambor de Guerra', '🥁', 'Diversos', 70, { use: 'drum' }, ['drum', 'red']],
-  ['dice', 'Dados de Osso', '🎲', 'Diversos', 6, { use: 'dice' }, ['dice', 'bone']],
   ['chess_set', 'Tabuleiro de Xadrez', '♟️', 'Diversos', 60, { gift: true }, ['frame', 'black']],
   ['perfume', 'Perfume de Lavanda', '🧴', 'Diversos', 70, { gift: true }, ['bottle', 'lavender']],
   ['pearl_necklace', 'Colar de Pérolas', '📿', 'Diversos', 240, { gift: true }, ['necklace', 'white']],
@@ -359,7 +357,7 @@ const EXP_RECIPES = [
   ['pitchfork', 1, { wood: 3, iron_bar: 1 }, 'forja'], ['crossbow', 1, { hardwood: 3, iron_bar: 2, rope: 2 }, 'serraria'],
   ['heavy_crossbow', 1, { hardwood: 4, steel_bar: 3, chain_links: 1, rope: 2 }, 'serraria'],
   ['bolt', 10, { wood: 2, iron_bar: 1, feather: 1 }, 'serraria'], ['war_drum', 1, { plank: 3, leather: 2, dye_red: 1 }, 'serraria'],
-  ['tower_shield', 1, { hardwood: 5, iron_bar: 2, leather: 2 }, 'serraria'], ['torch', 3, { wood: 1, pitch: 1 }, null],
+  ['tower_shield', 1, { hardwood: 5, iron_bar: 2, leather: 2 }, 'serraria'],
   // fundição: ligas e metais raros
   ['brass_bar', 1, { copper_ore: 2, zinc_ore: 1, coal: 1 }, 'fundicao'], ['pewter_bar', 1, { tin_ore: 2, lead_ore: 1, coal: 1 }, 'fundicao'],
   ['electrum_bar', 1, { silver_bar: 1, gold_bar: 1, coal: 1 }, 'fundicao'], ['mithril_bar', 1, { mithril_ore: 3, coal: 3, sulfur: 1 }, 'fundicao'],
@@ -445,7 +443,7 @@ const EXP_RECIPES = [
   ['dragon_shield', 1, { dragon_scale: 5, steel_bar: 2 }, 'armeiro'],
   // pedreiro e o resto
   ['stone_block', 2, { stone: 4 }, 'bancada'], ['stone_block', 3, { granite: 2 }, 'bancada'], ['marble_block', 1, { marble: 2 }, 'bancada'],
-  ['dice', 2, { bone: 1 }, null], ['perfume', 1, { lavender: 4, rose_petals: 2, vial: 1 }, 'alquimia'],
+  ['perfume', 1, { lavender: 4, rose_petals: 2, vial: 1 }, 'alquimia'],
   ['war_horn', 1, { goat_horn: 1, brass_bar: 1 }, 'ourives'],
   // usos a mais: sílex, salitre, presas, veneno, pó de sepultura, conchas, cerdas e as ligas
   ['arrow', 8, { wood: 1, flint: 1, feather: 1 }, null], ['torch', 4, { wood: 2, flint: 1, resin: 1 }, null],
@@ -483,7 +481,7 @@ for (const k in CREATURE_EXTRA) if (CREATURES[k]) CREATURES[k].drops = Object.as
 
 // ------------------------------------------------------------------ cada loja com a mercadoria nova
 const EXP_SELLS = {
-  store: ['torch', 'soap', 'dice', 'flute', 'pumpkin_seed', 'onion_seed', 'turnip_seed', 'bean_seed', 'garlic_seed', 'pea_seed', 'onion', 'garlic', 'beans', 'jam', 'candied_apple', 'lantern', 'toy_horse', 'rag_doll'],
+  store: ['torch', 'soap', 'flute', 'pumpkin_seed', 'onion_seed', 'turnip_seed', 'bean_seed', 'garlic_seed', 'pea_seed', 'onion', 'garlic', 'beans', 'jam', 'candied_apple', 'lantern', 'toy_horse', 'rag_doll'],
   lumber: ['bark', 'acorn', 'pinecone', 'birch_sap', 'pitch', 'saw', 'carpenter_hammer'],
   quarry: ['flint', 'limestone', 'granite', 'marble', 'stone_block', 'quicklime'],
   smith: ['sickle', 'shears', 'tongs', 'pitchfork', 'hunting_trap', 'skinning_knife', 'dagger', 'buckler', 'bronze_shield', 'chain_links', 'bellows', 'padded_cap', 'gambeson'],
@@ -491,7 +489,7 @@ const EXP_SELLS = {
   mine: ['sulfur', 'saltpeter', 'zinc_ore', 'lead_ore', 'quartz', 'obsidian', 'mithril_ore'],
   bakery: ['garlic_bread', 'olive_bread', 'nut_bread', 'pancakes', 'fruit_tart'],
   mill: ['bone_meal', 'pumpkin_seed', 'bean_seed', 'pea_seed'],
-  inn: ['hop_ale', 'mulled_wine', 'spiced_mead', 'roast_duck', 'bean_stew', 'onion_soup', 'shepherd_pie', 'pumpkin_soup', 'rabbit_stew', 'venison_steak', 'pea_soup', 'porridge', 'turnip_mash', 'dice', 'lute'],
+  inn: ['hop_ale', 'mulled_wine', 'spiced_mead', 'roast_duck', 'bean_stew', 'onion_soup', 'shepherd_pie', 'pumpkin_soup', 'rabbit_stew', 'venison_steak', 'pea_soup', 'porridge', 'turnip_mash', 'lute'],
   weaver: ['silk_cocoon', 'felt', 'silk_thread', 'red_cloth', 'blue_cloth', 'padded_pants', 'gambeson', 'rag_doll'],
   brewer: ['hops', 'hop_ale', 'spiced_mead', 'brandy'],
   trade: ['olive_oil', 'perfume', 'pearl_necklace', 'stained_glass', 'compass', 'spyglass', 'dye_blue', 'brass_bar'],
@@ -536,7 +534,6 @@ const Expansion = {
       case 'play': this.play(k); break;
       case 'drum': Farm.addBuff('courage'); for (const a of Game.allies()) a.hp = Math.min(a.maxHp, a.hp + 20); UI.msg('🥁 O tambor ressoa: coragem para você e os seus.', 'gold'); break;
       case 'horn': Farm.addBuff('courage'); for (const a of Game.allies()) a.dmg = (a.dmgBase || (a.dmgBase = a.dmg)) * 1.2; UI.msg('📯 O toque da corneta incendeia os seus soldados (+20% de dano).', 'gold'); break;
-      case 'dice': this.dice(); break;
       case 'holy': { spend(); Farm.addBuff('holy'); const L = G.ents.filter(e => !e.dead && ['skeleton', 'skel_king'].includes(e.kind) && U.dist(e.x, e.y, P.x, P.y) < 6 * TILE); for (const e of L) Game.damage(e, 120, P); G.piety = (G.piety || 0) + 2; UI.msg(L.length ? `💧 A água benta queima ${L.length} mortos-vivos!` : '💧 Você se benze com a água benta (+2 de fé).', 'gold'); break; }
       case 'incense': spend(); G.piety = (G.piety || 0) + 3; Farm.addBuff('blessed'); UI.msg('🕯️ O incenso perfuma o ar: +3 de fé e bênção.', 'gold'); break;
       case 'relic': spend(); G.piety = (G.piety || 0) + 25; Court.addFame(10); UI.msg('✝️ Você doou a relíquia à Igreja: +25 de fé e +10 de fama.', 'gold'); break;
@@ -551,12 +548,6 @@ const Expansion = {
     const g = (tav ? U.rint(20, 60) : U.rint(2, 10)) + (k === 'lute' ? 15 : 0) + this.worn('charm') * 4;
     P.gold += g; Court.addFame(tav ? 2 : 0); Farm.addBuff('charm');
     UI.msg(tav ? `🎶 A taverna inteira canta junto! Você ganhou ${g} 🪙 e +2 de fama.` : `🎶 Você toca à beira da estrada e ganha ${g} 🪙 de quem passa.`, 'gold');
-  },
-  dice() {
-    if (P.gold < 10) { UI.msg('Aposta mínima: 10 🪙.'); return; }
-    const win = Math.random() < 0.47 + this.luck() * 0.08;
-    P.gold += win ? 10 : -10; Sound.play(win ? 'coin' : 'ui');
-    UI.msg(win ? '🎲 Seis e seis! Você ganhou 10 🪙.' : '🎲 Um e dois... Você perdeu 10 🪙.', win ? 'gold' : 'bad');
   },
 };
 

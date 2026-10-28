@@ -89,6 +89,22 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: inventário arrumado e cada construção com a sua função
+
+- **Inventário:** a seção de bolsos saiu da janela — o bolso agora é um atalho: escolha "Bolso 1" ou "Bolso 2" nos botões do item, e ele continua na mochila com a marquinha B1/B2 (os bolsos seguem na tela, teclas 1 e 2). Os botões do item ficam organizados num painel (usar, bolsos, dividir, ficha e descartar), com o nome e o que o item faz.
+- **Dividir automático:** um toque divide a pilha em duas metades (num ímpar, 7 vira 4 e 3), sem escolher quantidade e sem a tesourinha no item.
+- **Balão com o nome do item** junto do cursor ao parar o mouse sobre ele (na mochila e no equipamento).
+- **💍 Anel:** espaço novo embaixo das botas. Anel de Prata: 5% mais barato nas lojas. Anel de Ouro: +1 de fama por mês e mais charme (as pessoas gostam 25% mais do que você faz por elas). Anel de Gema: +3 de defesa.
+- **Criação:** uma só receita de Tocha (rende 4) e de Flecha (rende 8, com madeira, sílex e pena); o nome na lista é só o do item e quanto rende aparece embaixo.
+- **Os Dados de Osso saíram do jogo** (item, receita, lojas e o uso); em jogos salvos antigos eles somem ao carregar.
+- **🔨 Produção:** interação direta, sem lado de dentro e sem responsável — só fabricar. A ficha da construção mostra, embaixo do custo, tudo o que ela pode produzir.
+- **🐄 Fazenda e animais:** sem lado de dentro; ao interagir abre a loja do responsável (o que o imóvel produz) e, na mesma janela, o botão para cuidar do lugar (colher, recolher, animais). O responsável anda livre pelo mapa, não fica parado na frente.
+- **📚 Cultura, fé e treino:** lado de dentro, responsável e loja (livros na biblioteca, armas no campo de treino, arcos e flechas no estande...); o que cada um já fazia continua lá dentro.
+- **🛡️ Defesa e exército** foi para as **Obras nas vilas**: só se constrói onde você governa (vila sua ou o seu reino), com os mesmos interiores, fabricação e lojas.
+- **🛣️ Infraestrutura:** saíram o Atracadouro, o Guindaste de Obra e o Moinho de Vento (os que você já tem continuam funcionando).
+- **🏗️ Obras nas vilas:** a Feira, o Pomar Comunitário, o Pasto de Ovelhas, o Apiário, o Galinheiro, o Lenhador, a Pocilga, a Fonte Sagrada e a Feira do Gado ganharam lado de dentro, responsável e loja; na capela, o padre vende velas, incenso e água benta. O portão se emenda no muro, e a Estrebaria vende cavalos, carroças e o que eles usam (e compra o seu cavalo).
+- **Inventário no celular em pé:** uma coluna só, com a mochila e os botões em cima e o boneco com todos os espaços embaixo.
+
 ## Novidades: estações e clima, tratados, árvore da dinastia e painel do reino
 
 - **Estações que mudam o jogo:** no ❄️ inverno a comida fica 25% mais cara (e vende 20% mais caro), a neve deixa as estradas 20% mais lentas e o frio tira um pouco da prosperidade das vilas; no 🍂 outono a colheita enriquece as vilas, enche o tesouro de cada reino (imposto da colheita) e os armazéns de trigo, e a comida fica 15% mais barata.

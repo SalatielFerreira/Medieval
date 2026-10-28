@@ -10,7 +10,7 @@ const Ranged = {
   shoot(aim) {
     const a = this.ammo();
     if (!a) {
-      if (G.realTime - (this.warn || 0) > 2.5) { this.warn = G.realTime; UI.msg('Sem flechas! Crie Flechas (madeira + pedra) ou Flechas de Ferro na forja.', 'bad'); }
+      if (G.realTime - (this.warn || 0) > 2.5) { this.warn = G.realTime; UI.msg('Sem flechas! Crie Flechas (madeira, sílex e pena) ou Flechas de Ferro na forja.', 'bad'); }
       P.atkCd = 0.5; return false;
     }
     Inv.add(a, -1);

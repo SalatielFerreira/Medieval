@@ -56,7 +56,7 @@ const WP2 = {
   vinn2:      ['innkeeper', 'w_inn', 'wood', 'npc', '🛏️', 'Pousada', ['beer', 'mead', 'wine', 'cider', 'stew', 'bread', 'cooked_meat', 'cheese']],
   vpost:      ['courier', 'w_shop', 'wood', 'npc', '✉️', 'Correio', ['parchment', 'paper', 'ink', 'candle', 'treasure_map', 'compass']],
   vguard:     ['sergeant', 'barracks', 'stone', 'npc', '🛡️', 'Posto da Guarda', ['arrow', 'iron_arrow', 'torch', 'rope', 'iron_spear', 'wood_shield', 'leather_cap', 'gambeson']],
-  vorphan:    ['caretaker', 'school', 'wood', 'npc', '🧸', 'Orfanato', ['rag_doll', 'toy_horse', 'flute', 'dice', 'bread', 'candied_apple']],
+  vorphan:    ['caretaker', 'school', 'wood', 'npc', '🧸', 'Orfanato', ['rag_doll', 'toy_horse', 'flute', 'bread', 'candied_apple']],
   vpawn:      ['pawnbroker', 'w_shop', 'wood', 'npc', '💍', 'Casa de Penhores', ['silver_ring', 'gold_ring', 'gem_ring', 'silver_brooch', 'ancient_coin', 'pearl_necklace', 'amber_amulet', 'lucky_charm']],
   vinfirm:    ['healer', 'clinic', 'wood', 'npc', '🩹', 'Enfermaria', ['herbal_salve', 'healing_potion', 'greater_healing', 'antidote', 'herbal_tea', 'herb', 'tonic']],
   vcraft:     ['artisan', 'w_lumber', 'wood', 'npc', '🛠️', 'Oficina dos Artesãos', ['wooden_chair', 'cask', 'leather_bag', 'lute', 'flute', 'chess_set', 'toy_horse', 'carpenter_hammer', 'saw']],

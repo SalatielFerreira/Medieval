@@ -10,8 +10,10 @@ module.exports = async () => {
       UI.msg = () => {}; UI.banner = () => {};
       Game.becomeRuler(0, 'teste'); UI.close(); UI.showBuild(); UI.close();
       const list = UI.buildCats.find(c => c[0] === 'obras')[3];
-      ok(list.length === 70, `obras nas vilas: ${list.length} (meta 70)`);
-      const names = list.map(k => CIVIC[k.slice(2)] && CIVIC[k.slice(2)].name); ok(new Set(names).size === names.length, 'obra com nome repetido');
+      // 70 obras da vila e as 10 construções de Defesa e exército
+      ok(list.filter(k => k.startsWith('c:')).length === 70, `obras nas vilas: ${list.filter(k => k.startsWith('c:')).length} (meta 70)`);
+      ok(list.filter(k => BR.DEF.includes(k)).length === 10, 'a Defesa não está nas obras');
+      const names = list.filter(k => k.startsWith('c:')).map(k => CIVIC[k.slice(2)] && CIVIC[k.slice(2)].name); ok(new Set(names).size === names.length, 'obra com nome repetido');
       for (const [k, d] of Object.entries(VWORKS)) {
         for (const i in d.cost) ok(ITEMS[i], `${d.name}: material ${i} não existe`);
         ok(d.rent || d.stock || d.pm || d.cap || d.attract, `${d.name} não rende nada`);

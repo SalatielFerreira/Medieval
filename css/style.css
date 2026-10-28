@@ -3430,7 +3430,7 @@ body:not(.small) .kpg.kdesk .ar-tt b { font-size: 18px; }
   background: rgba(0, 0, 0, .35); border: 1px solid rgba(214, 174, 96, .4); font-size: 13px; }
 .ldi-splitbox input[type=range] { flex: 1; min-width: 80px; accent-color: #e0a526; }
 .ldi-splitbox b { min-width: 64px; text-align: center; color: #ffe9a8; font-variant-numeric: tabular-nums; }
-.tile.split::after { content: '✂'; position: absolute; left: 4px; top: 2px; font-size: 10px; color: #d6ae60; opacity: .85; }
+
 .tlist { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
 /* contas dos empreendimentos */
 .bz-acc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 6px 0 10px; }
@@ -4125,3 +4125,38 @@ body.small .tr-t { font-size: 16px; }
 .rb-hit:hover + .rb-dot { opacity: 1; }
 .rb-tab summary { cursor: pointer; color: #d8c8a0; padding: 6px 0; }
 .rb-scroll { overflow-x: auto; }
+
+/* ---------------------------------------------------------------- inventário: o item escolhido e os botões */
+.ldi-act { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 10px; background: rgba(0, 0, 0, .28); border: 1px solid rgba(214, 174, 96, .22); }
+.ldi-item { display: flex; align-items: center; gap: 8px; min-height: 34px; }
+.ldi-item > .muted { font-size: 12px; }
+.ldi-iic { flex: none; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 22px; border-radius: 8px; background: rgba(214, 174, 96, .12); border: 1px solid rgba(214, 174, 96, .3); }
+.ldi-itx { min-width: 0; display: flex; flex-direction: column; }
+.ldi-itx b { color: #ffe9b0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ldi-itx small { color: #bfa36a; font-size: 11px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ldi-btns { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.ldi-a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 6px 10px; font-size: 13px; border-radius: 9px; white-space: nowrap; }
+.ldi-a .ldi-ai { font-size: 15px; line-height: 1; }
+.ldi-a.primary { grid-column: span 2; }
+.ldi-a.on { color: #2a1a06; font-weight: 700; background: linear-gradient(180deg, #ffe08a, #d29a2a); border-color: #ffe9a8; }
+.ldi-a.ldi-trash { color: #f0a090; }
+.ldi-a.ldi-trash .ico { width: 15px; height: 15px; }
+.ldi-a:disabled { opacity: .45; }
+.ldi .tile .tq { position: absolute; left: 3px; top: 2px; font-size: 9px; font-weight: 800; padding: 0 3px; border-radius: 4px; background: #d29a2a; color: #2a1a06; line-height: 1.4; }
+body:not(.small) .ldi-a { min-height: 42px; font-size: 14px; }
+body:not(.small) .ldi-iic { width: 42px; height: 42px; font-size: 28px; }
+body:not(.small) .ldi-itx b { font-size: 16px; }
+body:not(.small) .ldi-itx small { font-size: 12.5px; }
+/* balão com o nome do item, junto do cursor */
+.itip { position: fixed; z-index: 9999; pointer-events: none; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #ffe9b0;
+  background: rgba(20, 14, 8, .95); border: 1px solid rgba(214, 174, 96, .6); box-shadow: 0 4px 14px rgba(0, 0, 0, .5); white-space: nowrap; }
+.itip.hidden { display: none; }
+/* celular em pé: uma coluna (mochila e botões em cima, o boneco com todos os espaços embaixo) */
+@media (max-width: 560px) and (orientation: portrait) {
+  .ldi { grid-template-columns: minmax(0, 1fr); overflow-y: auto; align-content: start; }
+  .ldi-l, .ldi-r { min-height: auto; }
+  .ldi-sec.grow { flex: none; }
+  .ldi-grid { overflow: visible; }
+  .ldi-doll { flex: none; min-height: 250px; }
+  .ldi-doll .pd-col { gap: 5px; }
+}

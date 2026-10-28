@@ -78,11 +78,11 @@ const Inv = {
     this.normStacks(k);
     return true;
   },
-  // a mochila tem casas fixas (P.bag): cada item fica onde você colocou. Itens nos bolsos ou equipados saem da
+  // a mochila tem casas fixas (P.bag): cada item fica onde você colocou. Itens equipados saem da
   // mochila; quando voltam (ou chegam itens novos) ocupam a primeira casa livre. São 18 casas (crescem de 6 em 6 se precisar).
   bag() {
-    const out = new Set([...P.quick, ...Object.values(P.equip)].filter(Boolean));
-    // item equipado ou no bolso vai inteiro: as partes separadas se juntam de novo
+    const out = new Set(Object.values(P.equip).filter(Boolean));
+    // item equipado vai inteiro: as partes separadas se juntam de novo (o item no bolso continua na mochila: o bolso é um atalho)
     if (P.stacks) for (const k of out) delete P.stacks[k];
     const want = Object.keys(P.inv).filter(k => P.inv[k] > 0 && ITEMS[k] && !out.has(k));
     for (const k of [...want]) { this.normStacks(k); for (const x of this.extras(k)) want.push(this.stackId(k, x.id)); }
@@ -211,7 +211,7 @@ const Game = {
   resetPlayer(x, y) {
     Object.assign(P, {
       x, y, r: 10, hp: 100, maxHp: 100, stamina: 100, hunger: 100, maxSt: 100, maxHu: 100, statPts: 0, gold: 20, level: 1, xp: 0,
-      inv: {}, equip: { weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null }, bag: [],
+      inv: {}, equip: { weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null, ring: null }, bag: [],
       quick: [null, null], sailing: false, fishing: null, sex: 'm', age: 25, hairBase: '#5a3a1a', skin: '#f0c896',
       aim: 0, dir: 1, atkCd: 0, swing: 0, hurt: 0, moving: false, anim: 0, dead: false, toolAnim: null,
       horse: null, cart: false, mounted: false, stepT: 0, bagLvl: 1, invOrder: [], stacks: {}, stackSeq: 0,
@@ -330,8 +330,9 @@ const Game = {
     Object.assign(P, s.player);
     P.mounted = false; P.hx = P.x - 30; P.hy = P.y;
     P.quick = [(P.quick || [])[0] || null, (P.quick || [])[1] || null];
-    P.equip = Object.assign({ weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null }, P.equip || {});
+    P.equip = Object.assign({ weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null, ring: null }, P.equip || {});
     P.bag = P.bag || []; P.stacks = P.stacks || {}; P.stackSeq = P.stackSeq || 0;
+    if (typeof InvPlus !== 'undefined') InvPlus.clean(); // itens que saíram do jogo (jogo salvo antigo)
     (s.vlife || []).forEach((l, i) => { if (World.villages[i]) Object.assign(World.villages[i], l); });
     Towns.init(); Towns.applyAll();
     Arena.init(); Faith.init();
