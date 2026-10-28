@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: assassinos só ao ar livre, menu limpo e desenho mais leve
+
+- **Assassinos só no mundo aberto:** dentro de qualquer imóvel nenhum aparece; quem vinha atrás de você fica do lado de fora e volta para a fila, e eles só reaparecem quando você sai.
+- **Menu limpo:** o sino de avisos e o botão "Conversar" não ficam mais por cima da tela do menu.
+- **Prédios e cavalos desenhados uma vez e copiados:** cada prédio vira uma figura pronta (os animados — fogo, bandeiras, plantações — são refeitos 10 vezes por segundo) e os quadros do galope dos cavalos ficam guardados (16 vezes mais rápido).
+
 ## Novidades: interior em todas as construções novas
 
 - **43 construções ganharam o lado de dentro e um responsável** que vende o que tem a ver com o lugar. Suas: Fundição, Vidraria, Tinturaria, Lagar, Vinícola, Serraria, Torre do Mago, Sirgaria, Rancho, Estábulo de Guerra, Oficina de Cerco, Moinho de Vento, Celeiro, Armazém Grande, Casa de Gelo, Capela, Observatório e Posto de Muda. Das vilas: Lavanderia, Cestaria, Forno, Pesqueiro, Sapataria, Carvoaria, Açougue, Peixaria, Olaria, Queijaria, Pousada, Correio, Posto da Guarda, Orfanato, Casa de Penhores, Enfermaria, Oficina dos Artesãos, Prefeitura, Guilda, Casa da Moeda, Mercado Coberto, Termas, Mosteiro, Universidade e Catedral.

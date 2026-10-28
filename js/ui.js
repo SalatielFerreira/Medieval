@@ -2735,7 +2735,7 @@ const UI = {
     this.refresh();
   },
 
-  showMainMenu() { Menu.show(); },
+  showMainMenu() { const bell = document.getElementById('alertBell'); if (bell) bell.classList.add('hidden'); if (this.talkEl) this.talkEl.style.display = 'none'; Menu.show(); },
   // tela de carregamento enquanto o mundo é gerado (a geração leva alguns segundos)
   loading(text, fn) {
     const el = document.getElementById('loading'), bar = el.querySelector('.ld-bar i'), lab = el.querySelector('small');

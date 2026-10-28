@@ -203,13 +203,14 @@ const Sieges = {
   // durante o ataque, perto do jogador, as tropas e máquinas aparecem
   update(dt) {
     this.updateBoulders(dt);
+    if (G.place) for (const e of G.ents) if (!e.dead && e.tag === 'assassin' && !e.inRoom) { e.dead = true; G.assassins = (G.assassins || 0) + 1; }
     if (G.dungeon) return;
     for (const s of World.capitals.map(c => c.struct)) if (s && s.gateBroken && !(G.siege && G.siege.civ === s.owner) && !(G.assaults || []).some(a => a.state === 'attack' && a.target.civ === s.owner && a.gate <= 0)) s.gateBroken = false;
     this.t = (this.t || 0) - dt;
     if (this.t > 0 || G.dungeon) return;
     this.t = 1;
     // assassinos contratados por conspiradores
-    if (G.assassins > 0 && !G.dungeon && Math.random() < 0.15) {
+    if (G.assassins > 0 && !G.dungeon && !G.place && !G.siege && !G.duel && !G.honor && Math.random() < 0.15) { // só no mundo aberto: dentro dos imóveis a fila espera você sair
       G.assassins--;
       const a = Math.random() * Math.PI * 2, sp = freeSpotNear(P.x + Math.cos(a) * 300, P.y + Math.sin(a) * 220, 2 * TILE);
       const e = Game.spawn('bandit', sp.x, sp.y, { leash: 40, tag: 'assassin' }); e.angry = true; e.aggroOv = 30; e.target = P;

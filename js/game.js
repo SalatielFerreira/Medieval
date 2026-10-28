@@ -262,7 +262,7 @@ const Game = {
     G.state = 'play'; G.paused = false; G.ping = null; UI.showGameUI(true);
   },
 
-  toMenu() { Resume.clear(); Urban.stop(); UI.close(); if (G.place) Places.exit(true); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
+  toMenu() { const bell = document.getElementById('alertBell'); if (bell) bell.classList.add('hidden'); if (UI.talkEl) UI.talkEl.style.display = 'none'; Resume.clear(); Urban.stop(); UI.close(); if (G.place) Places.exit(true); if (G.dungeon) Dungeon.exit(true); G.state = 'menu'; G.ents = []; UI.prompt(null); UI.showGameUI(false); UI.showMainMenu(); },
 
   // ================================================================ salvar / carregar (3 espaços)
   saveInfo() { return Saves.list().filter(Boolean).sort((a, b) => b.savedAt - a.savedAt)[0] || null; },
