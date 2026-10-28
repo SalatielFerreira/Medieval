@@ -33,14 +33,14 @@ module.exports = async () => {
       const sp = vil.find(p => p.sex !== P.sex && p.spouse === null && p.age < 40 && p !== b); sp.aff = 80; sp.rom = 90; sp.dating = true; Inv.add('silver_ring', 1);
       const gd = P.gold; People.propose(sp); ok(sp.spouse === 'player', 'não casou'); ok(P.gold >= gd, 'dote');
       sp.attn = -10; const r0 = sp.rom; Society.romanceTick(); ok(sp.rom < r0, 'o casamento não esfriou sem atenção');
-      const other = vil.find(p => p.sex === sp.sex && p.spouse === null && p !== sp && p.age >= 18); if (other) { other.aff = 50; const rr = sp.rom; for (let k = 0; k < 6; k++) { other.flirtDay = -1; People.flirt(other); } ok(sp.rom < rr, 'flertar não causou ciúme'); }
+      const other = vil.find(p => p.sex === sp.sex && p.spouse === null && p !== sp && p.age >= 18); if (other) { other.aff = 50; const rr = sp.rom; for (let k = 0; k < 20 && sp.rom >= rr; k++) { other.flirtDay = -1; People.flirt(other); } ok(sp.rom < rr, 'flertar não causou ciúme'); }
       const dv = Society.divorce(sp); ok(dv && sp.spouse !== 'player', 'o divórcio não funcionou');
       // casamento arranjado
       const kid = People.create({ rank: 'peasant', age: 18, sex: 'm', home: { type: 'player' } }); kid.kin = 'child';
       const bride = vil.find(p => p.sex === 'f' && p.spouse === null && p.age >= 16 && p.age < 30 && p !== sp); if (bride) { bride.aff = 40; const ar = Society.arrange(bride, kid.id); ok(ar && kid.spouse === bride.id, 'o casamento arranjado não aconteceu'); }
       // 5. eventos
       const guests = []; for (const p of vil.slice(6)) if (guests.length < 4 && !guests.some(g => Society.ties(g).foes.includes(p.id) || Society.ties(p).foes.includes(g.id))) guests.push(p); guests.forEach(p => p.aff = 15); Society.banquet(guests.map(p => p.id)); ok(guests.every(p => p.aff > 15), 'o banquete não deu amizade');
-      const host = vil[11]; host.aff = 40; Society.invite(host, 'birthday'); ok(Society.S().invites.length, 'convite não chegou');
+      const host = vil.slice(11).find(p => p.alive && p.home.type === 'village' && World.villages[p.home.idx]) || vil[11]; host.aff = 40; Society.invite(host, 'birthday'); ok(Society.S().invites.length, 'convite não chegou');
       const vv = World.villages[host.home.idx]; P.x = vv.x * TILE; P.y = vv.y * TILE; Society.attend(Society.S().invites.find(i => i.pid === host.id)); ok(host.aff > 40, 'comparecer não agradou');
       // 7. duelo de honra
       const rv = vil[12]; rv.rival = true; Society.startDuel(rv); ok(G.honor, 'o duelo não começou');

@@ -89,6 +89,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: interior em todas as construções novas
+
+- **43 construções ganharam o lado de dentro e um responsável** que vende o que tem a ver com o lugar. Suas: Fundição, Vidraria, Tinturaria, Lagar, Vinícola, Serraria, Torre do Mago, Sirgaria, Rancho, Estábulo de Guerra, Oficina de Cerco, Moinho de Vento, Celeiro, Armazém Grande, Casa de Gelo, Capela, Observatório e Posto de Muda. Das vilas: Lavanderia, Cestaria, Forno, Pesqueiro, Sapataria, Carvoaria, Açougue, Peixaria, Olaria, Queijaria, Pousada, Correio, Posto da Guarda, Orfanato, Casa de Penhores, Enfermaria, Oficina dos Artesãos, Prefeitura, Guilda, Casa da Moeda, Mercado Coberto, Termas, Mosteiro, Universidade e Catedral.
+- **Cada responsável vende o seu,** do mais barato ao mais caro: o açougueiro vende carnes, o vidreiro vende vidro e lunetas, o mago vende pergaminhos e cajados, a casa da moeda vende lingotes... Nos prédios que já têm função própria (depósitos, capela, observatório, posto de muda), o balcão continua fazendo o que fazia, e o responsável vende pela conversa ("Negociar").
+- 23 ofícios novos (fundidor, vidreiro, açougueiro, sapateiro, monge, escrivão...), cada um com a roupa do ofício. Campos, cercas, enfeites e as casas dos moradores continuam sem interior.
+
 ## Novidades: quantias de 1 a 5000 e aposta até 50.000
 
 - **Todo botão de quantia de dinheiro** ganhou **1** e **5000**: depositar e sacar (casa e banco), aplicar, expedições, investir em famílias e vilas, dinheiro do banco, pagar dívida, doar e retirar do tesouro, cofre, tesouro do reino, doações na igreja e presentes em moedas. Os mensageiros de paz e de guerra ajustam a oferta de 1 em 1 e de 5000 em 5000.
