@@ -1153,7 +1153,7 @@ const UI = {
       sec = `<div class="kgrid two"><div class="card"><div class="sec">Tesouro do reino</div><div class="bignum">${c.treasury} 🪙</div>
           <div class="act-row"><button data-act="kgold" data-c="${ci}" data-n="-100" ${c.treasury >= 100 ? '' : 'disabled'}>Sacar 100</button><button data-act="kgold" data-c="${ci}" data-n="-all" ${c.treasury > 0 ? '' : 'disabled'}>Sacar tudo</button></div></div>
         <div class="card"><div class="sec">Seu ouro pessoal</div><div class="bignum">${P.gold} 🪙</div>
-          <div class="act-row"><button data-act="kgold" data-c="${ci}" data-n="100" ${P.gold >= 100 ? '' : 'disabled'}>Depositar 100</button><button data-act="kgold" data-c="${ci}" data-n="all" ${P.gold > 0 ? '' : 'disabled'}>Depositar tudo</button></div></div></div>
+          <div class="act-row">${[1, 100, 1000, 5000].map(n => `<button data-act="kgold" data-c="${ci}" data-n="${n}" ${P.gold >= n ? '' : 'disabled'}>Depositar ${n}</button>`).join('')}<button data-act="kgold" data-c="${ci}" data-n="all" ${P.gold > 0 ? '' : 'disabled'}>Depositar tudo</button></div></div></div>
         <div class="card"><div class="sec">Armazéns do reino</div><table class="trade"><tr><th>Recurso</th><th>Estoque</th><th>Produção/dia</th><th>Você tem</th><th></th></tr>${KINGDOM_RES.map(k => `<tr>
           <td>${UI.ii(k)} ${ITEMS[k].name}</td><td><b>${c.stock[k] || 0}</b></td><td class="ok">+${fc.prod[k]}</td><td>${Inv.count(k)}</td>
           <td><button data-act="kres" data-c="${ci}" data-k="${k}" data-n="-10" ${(c.stock[k] || 0) >= 10 ? '' : 'disabled'}>Retirar 10</button><button data-act="kres" data-c="${ci}" data-k="${k}" data-n="10" ${Inv.count(k) >= 10 ? '' : 'disabled'}>Depositar 10</button></td></tr>`).join('')}</table></div>`;
@@ -1787,9 +1787,8 @@ const UI = {
     const keys = Object.keys(P.inv).filter(k => !Object.values(P.equip).includes(k) || P.inv[k] > 1)
       .sort((a, b) => (b === p.fav) - (a === p.fav) || ITEMS[b].price - ITEMS[a].price);
     let h = `${this.personScene(p, `O que você quer dar para ${UI.esc(p.name)}? Presentes valiosos agradam mais, e o favorito agrada muito mais.`, 'purple')}
-      <div class="btns"><button data-act="tk" data-op="gold" data-n="10" data-id="${id}" ${P.gold >= 10 ? '' : 'disabled'}>🪙 10 moedas</button>
-      <button data-act="tk" data-op="gold" data-n="50" data-id="${id}" ${P.gold >= 50 ? '' : 'disabled'}>🪙 50 moedas</button>
-      <button data-act="tk" data-op="gold" data-n="100" data-id="${id}" ${P.gold >= 100 ? '' : 'disabled'}>🪙 100 moedas</button></div><div class="list">`;
+      <div class="btns">${[1, 10, 50, 100, 1000, 5000].map(n => `<button data-act="tk" data-op="gold" data-n="${n}" data-id="${id}" ${P.gold >= n ? '' : 'disabled'}>🪙 ${n} ${n === 1 ? 'moeda' : 'moedas'}</button>`).join('')}</div>
+      <small class="muted">A amizade sobe até +25 por presente em dinheiro (125 moedas já dão o máximo).</small><div class="list">`;
     if (!keys.length) h += '<p class="muted">Sua mochila está vazia.</p>';
     for (const k of keys) {
       const it = ITEMS[k];
@@ -2343,7 +2342,7 @@ const UI = {
         + card('', '🥖', 'Esmola aos pobres', `${beggars ? beggars + (beggars === 1 ? ' mendigo vive' : ' mendigos vivem') + ' aqui.' : 'Algumas famílias passam necessidade.'} A esmola ajuda a vila a prosperar.`,
           `<button class="primary" data-act="chalms" data-v="${vi === undefined ? '' : vi}" ${C.almsDay === G.day || P.gold < 30 ? 'disabled' : ''}>${C.almsDay === G.day ? '✔ Já deu este mês' : '🥖 Dar esmola — 30 🪙'}</button>`)
         + card('', '💛', 'Doação à igreja', 'Aumenta a devoção e a felicidade do reino, e conta como serviço para os títulos.',
-          [10, 50, 200].map(n => `<button data-act="donate" data-c="${ci}" data-n="${n}" ${P.gold >= n ? '' : 'disabled'}>💛 Doar ${n}</button>`).join(''))
+          [1, 10, 50, 200, 5000].map(n => `<button data-act="donate" data-c="${ci}" data-n="${n}" ${P.gold >= n ? '' : 'disabled'}>💛 Doar ${n}</button>`).join(''))
         + card(C.tithe ? 'on' : '', '⛪', 'Dízimo', C.tithe ? 'Você paga 5% do seu ouro todo mês (no máximo 100) e ganha +2 de devoção.' : 'Pagar 5% do seu ouro todo mês (no máximo 100), em troca de devoção.',
           `<button data-act="chtithe" data-v="${C.tithe ? 0 : 1}">${C.tithe ? '⏹️ Parar o dízimo' : '⛪ Começar a pagar'}</button>`);
     } else {
@@ -2358,15 +2357,15 @@ const UI = {
   },
 
   // ------------------------------------------------------------ arena e torneios
-  // arena: menu de ícones (Lutar, Apostar, Torneio); a aposta vai até 5000 Salin e vale para tudo
+  // arena: menu de ícones (Lutar, Apostar, Torneio); a aposta vai até 50000 Salin e vale para tudo
   showArena(ci) {
     const S = this.sel, tr = Arena.tourney(), card = Arena.fightCard(ci), horse = !!P.horse;
     const tab = ['lutar', 'apostar', 'torneio'].includes(S.atab) ? S.atab : 'lutar';
     const max = Math.min(ARENA_MAX_BET, P.gold), bet = S.abet = U.clamp(Math.round(S.abet || 0), 0, max);
     const sal = n => `${n.toLocaleString('pt-BR')} <i class="ar-coin">🪙</i>`;
     const betBox = `<div class="card ar-bet"><div class="sec">💰 Sua aposta <span>até ${ARENA_MAX_BET.toLocaleString('pt-BR')} Salin · você tem ${P.gold.toLocaleString('pt-BR')}</span></div>
-      <div class="ar-betrow"><b class="ar-betv">${sal(bet)}</b><input type="range" id="betAmt" min="0" max="${max}" step="${max > 500 ? 25 : 5}" value="${bet}" data-act-input="abet"></div>
-      <div class="ar-chips">${[0, 50, 250, 1000, 2500, 5000].map(n => `<button class="ar-chip ${bet === Math.min(n, max) && (n <= max || n === 5000) ? 'on' : ''}" data-act="abetset" data-c="${ci}" data-n="${n}" ${n > P.gold && n !== 0 ? 'disabled' : ''}>${n ? n.toLocaleString('pt-BR') : 'Sem aposta'}</button>`).join('')}</div></div>`;
+      <div class="ar-betrow"><b class="ar-betv">${sal(bet)}</b><input type="range" id="betAmt" min="0" max="${max}" step="${max > 10000 ? 100 : max > 500 ? 25 : 1}" value="${bet}" data-act-input="abet"></div>
+      <div class="ar-chips">${[0, 1, 50, 250, 1000, 5000, 10000, 50000].map(n => `<button class="ar-chip ${bet === Math.min(n, max) && (n <= max || n === ARENA_MAX_BET) ? 'on' : ''}" data-act="abetset" data-c="${ci}" data-n="${n}" ${n > P.gold && n !== 0 ? 'disabled' : ''}>${n ? n.toLocaleString('pt-BR') : 'Sem aposta'}</button>`).join('')}</div></div>`;
     let page = '';
     if (tab === 'lutar') {
       page = this.pageHead('⚔️', 'Lutar na arena', 'Ninguém morre: quem cai primeiro perde')

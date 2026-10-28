@@ -224,8 +224,8 @@ const ExpBuild = {
   vaultUI() {
     const V = this.V();
     UI.open('🔒 Cofre', `<p>No cofre: <b>${V.gold} 🪙</b> · no bolso: <b>${P.gold} 🪙</b>. O ouro do cofre não é roubado e rende 1% ao mês (até 50 🪙).</p>
-      <div class="act-row"><button data-act="vault" data-op="in" data-n="100" ${P.gold >= 100 ? '' : 'disabled'}>Guardar 100</button><button data-act="vault" data-op="in" data-n="all" ${P.gold > 0 ? '' : 'disabled'}>Guardar tudo</button>
-      <button data-act="vault" data-op="out" data-n="100" ${V.gold >= 100 ? '' : 'disabled'}>Tirar 100</button><button data-act="vault" data-op="out" data-n="all" ${V.gold > 0 ? '' : 'disabled'}>Tirar tudo</button></div>`, 'showVault', [], 'Seu ouro a salvo');
+      <div class="act-row">${[1, 100, 1000, 5000].map(n => `<button data-act="vault" data-op="in" data-n="${n}" ${P.gold >= n ? '' : 'disabled'}>Guardar ${n}</button>`).join('')}<button data-act="vault" data-op="in" data-n="all" ${P.gold > 0 ? '' : 'disabled'}>Guardar tudo</button>
+      </div><div class="act-row">${[1, 100, 1000, 5000].map(n => `<button data-act="vault" data-op="out" data-n="${n}" ${V.gold >= n ? '' : 'disabled'}>Tirar ${n}</button>`).join('')}<button data-act="vault" data-op="out" data-n="all" ${V.gold > 0 ? '' : 'disabled'}>Tirar tudo</button></div>`, 'showVault', [], 'Seu ouro a salvo');
   },
   // ---- posto de muda
   relayUI(s) {

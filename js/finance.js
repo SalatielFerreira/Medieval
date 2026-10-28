@@ -133,8 +133,8 @@ const Fin = {
     if (sub === 'poupanca') {
       body = `<div class="card"><div class="sec">🏦 Poupança <span>rende 1% ao mês</span></div>
         <p class="dt-desc">O ouro guardado rende todo mês e fica a salvo de ladrões e cobradores. Já rendeu, somando tudo, <b>${D.earned} 🪙</b> entre juros, empréstimos e investimentos.</p>
-        <div class="sec">Depositar</div><div class="act-row">${[100, 500, 1000].map(n => btn('dep', n, `+${n}`, P.gold >= n)).join('')}${btn('dep', 'all', 'Tudo', P.gold > 0)}</div>
-        <div class="sec" style="margin-top:8px">Sacar</div><div class="act-row">${[100, 500, 1000].map(n => btn('wd', n, `−${n}`, D.save >= n)).join('')}${btn('wd', 'all', 'Tudo', D.save > 0)}</div></div>`;
+        <div class="sec">Depositar</div><div class="act-row">${[1, 100, 500, 1000, 5000].map(n => btn('dep', n, `+${n}`, P.gold >= n)).join('')}${btn('dep', 'all', 'Tudo', P.gold > 0)}</div>
+        <div class="sec" style="margin-top:8px">Sacar</div><div class="act-row">${[1, 100, 500, 1000, 5000].map(n => btn('wd', n, `−${n}`, D.save >= n)).join('')}${btn('wd', 'all', 'Tudo', D.save > 0)}</div></div>`;
     } else if (sub === 'emprestar') {
       const asks = D.asks.map((a, i) => { const p = G.people[a.pid]; if (!p) return ''; const t = this.trust(p);
         return `<div class="crow"><span class="ri">${p.sex === 'm' ? '👨' : '👩'}</span><span><b>${UI.esc(People.full(p))}</b><small>${People.title(p)} · ${UI.esc(People.homeName(p))} · quer ${a.amount} 🪙 para ${a.why}</small>
@@ -147,7 +147,7 @@ const Fin = {
       const here = World.villages.map((v, i) => ({ v, i, d: U.dist(P.x / TILE, P.y / TILE, v.x, v.y) })).sort((a, b) => (b.v.lord === 'player') - (a.v.lord === 'player') || (this.vinv(b.i) > 0) - (this.vinv(a.i) > 0) || a.d - b.d).slice(0, 10);
       const vl = here.map(({ v, i }) => { const n = this.vinv(i);
         return '<div class="crow"><span class="ri">🏘️</span><span><b>' + UI.esc(v.name) + '</b><small>nível ' + (v.level || 1) + ' · ' + (v.free ? 'vila livre' : CIV_DEFS[v.civ].short) + (v.lord === 'player' ? ' · você governa' : '') + ' · poder econômico ' + Math.round(VillageEcon.power(i)) + (n ? ' · você investiu ' + n + ' 🪙' : '') + '</small></span>'
-          + '<span class="act-row">' + [100, 500, 1000].map(k => '<button data-act="fin" data-op="vinv" data-v="' + i + '" data-n="' + k + '" ' + (P.gold >= k ? '' : 'disabled') + '>+' + k + '</button>').join('') + (n ? '<button data-act="fin" data-op="vout" data-v="' + i + '">Retirar (−20%)</button>' : '') + '</span></div>'; }).join('');
+          + '<span class="act-row">' + [1, 100, 500, 1000, 5000].map(k => '<button data-act="fin" data-op="vinv" data-v="' + i + '" data-n="' + k + '" ' + (P.gold >= k ? '' : 'disabled') + '>+' + k + '</button>').join('') + (n ? '<button data-act="fin" data-op="vout" data-v="' + i + '">Retirar (−20%)</button>' : '') + '</span></div>'; }).join('');
       const kl = G.civs.filter(c => c.ruler !== 'player' && CIV_DEFS[c.id]).map(c => { const has = this.hasLicense(c.id), err = this.licenseErr(c.id);
         return '<div class="crow"><span class="ri">📜</span><span><b>' + CIV_DEFS[c.id].name + '</b><small>' + (has ? 'licença de comércio: seus empreendimentos funcionam nas vilas do reino (10% do lucro de imposto)' : 'sem licença · relação ' + Math.round(c.relation || 0) + (c.atWar ? ' · em guerra' : '')) + '</small></span>'
           + '<span class="act-row">' + (has ? '<b class="ok">✓</b>' : '<button data-act="fin" data-op="lic" data-v="' + c.id + '" ' + (err ? 'disabled title="' + err + '"' : '') + '>Licença ' + FIN_LICENSE + ' 🪙</button>') + '</span></div>'; }).join('');
@@ -161,7 +161,7 @@ const Fin = {
         <span class="act-row"><button data-act="fin" data-op="out" data-v="${f.id}">Resgatar (−10%)</button></span></div>`; }).join('');
       const list = fams.map(f => { const nm = this.bizOf(f).slice(0, 3).join(', '), inv = this.invested(f);
         return `<div class="crow"><span class="ri">🏛️</span><span><b>${UI.esc(Families.name(f))}</b><small>${nm} · riqueza ${Math.round(f.wealth || 0)} 🪙 · rende cerca de ${(this.rate(f) * 100).toFixed(1)}% ao mês${inv ? ` · você já investiu ${inv} 🪙` : ''}</small></span>
-          <span class="act-row">${[100, 500, 1000].map(n => `<button data-act="fin" data-op="inv" data-v="${f.id}" data-n="${n}" ${P.gold >= n && inv + n <= FIN_INVEST_CAP ? '' : 'disabled'}>+${n}</button>`).join('')}</span></div>`; }).join('');
+          <span class="act-row">${[1, 100, 500, 1000, 5000].map(n => `<button data-act="fin" data-op="inv" data-v="${f.id}" data-n="${n}" ${P.gold >= n && inv + n <= FIN_INVEST_CAP ? '' : 'disabled'}>+${n}</button>`).join('')}</span></div>`; }).join('');
       body = `${mine ? `<div class="card"><div class="sec">📈 Seus investimentos</div>${mine}</div>` : ''}
         <div class="card"><div class="sec">🏛️ Negócios das famílias <span>até ${FIN_INVEST_CAP} 🪙 em cada uma</span></div>${list || '<p class="muted">Nenhuma família com negócios ainda.</p>'}
         <p class="dt-desc">Todo mês a família te paga uma parte do lucro (há meses fracos, sem nada). Se ela perder os negócios, você recupera metade do que investiu.</p></div>`;

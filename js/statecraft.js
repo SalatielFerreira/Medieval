@@ -36,7 +36,7 @@ const Envoy = {
     UI.open('📜 Mensageiro de paz', `<p>Mandar um mensageiro a <b>${UI.esc(o.rulerName)}</b> de ${CIV_DEFS[other].name} pedindo a paz${mine !== null ? ` entre ${CIV_DEFS[mine].short} e ${CIV_DEFS[other].short}` : ''}, com uma oferta em ouro ${mine !== null ? 'do tesouro do reino' : 'do seu bolso'}.</p>
       <div class="card"><p class="dt-desc">${mine !== null ? 'Tesouro' : 'Seu ouro'}: <b>${have} 🪙</b> · Força deles: ${Math.round(Diplo.strength(other))}${mine !== null ? ` · a sua: ${Math.round(Diplo.strength(mine))}` : ''} · Relação: ${Math.round(mine !== null ? Diplo.rel(mine, other) : o.relation)}</p>
       <h3 style="margin:8px 0">Oferta: ${gold} 🪙 <small class="${cls}">(parece ${m})</small></h3>
-      <div class="act-row">${step(-1000, '−1000')}${step(-100, '−100')}${step(100, '+100')}${step(1000, '+1000')}
+      <div class="act-row">${step(-5000, '−5000')}${step(-1000, '−1000')}${step(-100, '−100')}${step(-1, '−1')}${step(1, '+1')}${step(100, '+100')}${step(1000, '+1000')}${step(5000, '+5000')}
         <button data-act="envoy" data-op="amt" data-c="${mine === null ? '' : mine}" data-o="${other}" data-g="${Math.min(have, need)}">Oferta justa</button></div>
       <small class="muted">Quanto mais generosa a oferta, maior a chance de aceitarem. Se recusarem, o mensageiro volta com o ouro, menos 10% da viagem; uma oferta insultuosa ainda os irrita.</small></div>
       <div class="act-row"><button class="primary" data-act="envoy" data-op="send" data-c="${mine === null ? '' : mine}" data-o="${other}" data-g="${gold}" ${gold > 0 ? '' : 'disabled'}>📜 Mandar o mensageiro com ${gold} 🪙</button></div>`, 'showEnvoy', [mine, other, gold], 'Ouro em troca da paz');

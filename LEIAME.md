@@ -89,6 +89,11 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: quantias de 1 a 5000 e aposta até 50.000
+
+- **Todo botão de quantia de dinheiro** ganhou **1** e **5000**: depositar e sacar (casa e banco), aplicar, expedições, investir em famílias e vilas, dinheiro do banco, pagar dívida, doar e retirar do tesouro, cofre, tesouro do reino, doações na igreja e presentes em moedas. Os mensageiros de paz e de guerra ajustam a oferta de 1 em 1 e de 5000 em 5000.
+- **Arena:** a aposta vai até **50.000 Salin** (fichas de 1 a 50.000).
+
 ## Correções: estabilidade
 
 - Um só rei por reino: quem assume o trono (herança, golpe, nova dinastia, revolta ou conquista) tira o título dos antigos.

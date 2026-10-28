@@ -66,7 +66,7 @@ const WarEnvoy = {
       <div class="act-row"><button class="danger" data-act="wenvoy" data-op="war" data-c="${mine === null ? '' : mine}" data-o="${other}">⚔️ Levar a declaração de guerra</button></div></div>
       <div class="card"><div class="sec">💰 Ultimato: ${gold} 🪙 ou guerra</div>
       <p class="dt-desc">Exigir ouro em troca de não haver guerra. Quanto mais forte você for perto deles (e quanto menos pedir), maior a chance de pagarem; se recusarem, a guerra começa. ${ratio >= 1.5 ? 'Eles parecem intimidados.' : ratio >= 1 ? 'As forças são parecidas.' : 'Eles são mais fortes: dificilmente vão pagar.'}</p>
-      <div class="act-row">${step(-500, '−500')}${step(-100, '−100')}${step(100, '+100')}${step(500, '+500')}
+      <div class="act-row">${step(-5000, '−5000')}${step(-500, '−500')}${step(-100, '−100')}${step(-1, '−1')}${step(1, '+1')}${step(100, '+100')}${step(500, '+500')}${step(5000, '+5000')}
         <button class="danger" data-act="wenvoy" data-op="ult" data-c="${mine === null ? '' : mine}" data-o="${other}" data-g="${gold}">📜 Mandar o ultimato</button></div></div>`, 'showWarEnvoy', [mine, other, gold], 'Declaração de guerra ou ultimato');
   },
   send(mine, other, kind, gold) {
