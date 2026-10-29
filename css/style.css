@@ -1604,7 +1604,7 @@ body.win-open #touch, body.dlg-open #touch { display: none !important; }
 .ldi-doll .pd-ic { font-size: 18px; }
 .ldi-doll .pd-slot small { font-size: 7.5px; }
 .ldi-doll .pd-mid { display: flex; justify-content: center; align-items: center; min-height: 0; }
-.ldi-doll #invDoll { height: min(150px, 100%); width: auto; image-rendering: pixelated; }
+.ldi-doll #invDoll { height: 255px; width: auto; image-rendering: pixelated; background: none; border-radius: 0; } /* só o boneco, sem quadro, 1,5× o tamanho de antes (170 px) */
 .ldi-stats { display: flex; justify-content: space-between; gap: 6px; padding: 5px 10px; border-radius: 9px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(214, 174, 96, .2); font-size: 11.5px; font-weight: 600; color: #e8d8b4; font-variant-numeric: tabular-nums; }
 .ldi-row { grid-template-columns: repeat(6, 1fr); flex: 1; padding-right: 0; }
 .ldi-sec:first-child { padding-right: 6px; }
@@ -1622,7 +1622,7 @@ body:not(.small) .ldi-doll .pd-col { gap: 8px; }
 body:not(.small) .ldi-doll .pd-slot { width: 62px; height: 62px; }
 body:not(.small) .ldi-doll .pd-ic { font-size: 26px; }
 body:not(.small) .ldi-doll .pd-slot small { font-size: 9.5px; }
-body:not(.small) .ldi-doll #invDoll { height: min(300px, 100%); }
+body:not(.small) .ldi-doll #invDoll { height: 255px; }
 body:not(.small) .ldi-head { padding: 8px 12px; }
 body:not(.small) .ldi-lv { font-size: 26px; }
 body:not(.small) .ldi-who b { font-size: 16px; }
@@ -4157,7 +4157,7 @@ body:not(.small) .ldi-itx small { font-size: 12.5px; }
   .ldi-l, .ldi-r { min-height: auto; }
   .ldi-sec.grow { flex: none; }
   .ldi-grid { overflow: visible; }
-  .ldi-doll { flex: none; min-height: 250px; }
+  .ldi-doll { flex: none; min-height: 330px; }
   .ldi-doll .pd-col { gap: 5px; }
 }
 

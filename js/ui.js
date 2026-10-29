@@ -9,7 +9,7 @@ const PANEL_ICONS = {
   showAnimals: 'food', showPTavern: 'coin', showCaravan: 'coin', showBattle: 'sword', showDiary: 'book', showProf: 'star',
 };
 // janelas principais, na ordem da barra de botões (as setas do cabeçalho pulam de uma para a outra)
-const MAIN_WINDOWS = [['showInventory', 'Mochila'], ['showCrafting', 'Criar'], ['showBuild', 'Construir'], ['showKingdom', 'Portfólio'], ['showMap', 'Mapa'], ['showDiary', 'Diário'], ['showSettings', 'Ajustes']];
+const MAIN_WINDOWS = [['showInventory', 'Mochila'], ['showBuild', 'Construir'], ['showKingdom', 'Portfólio'], ['showMap', 'Mapa'], ['showDiary', 'Diário'], ['showSettings', 'Ajustes']];
 const WIDE_PANELS = ['showPort', 'showArena', 'showInventory', 'showCrafting', 'showBuild', 'showDiary', 'showTree', 'showKingdom', 'showSettings', 'showTalk', 'showChapel'];
 
 const UI = {
@@ -119,7 +119,7 @@ const UI = {
     const tb = document.getElementById('toolbar');
     tb.classList.add('glass');
     const btn = (fn, ic, label, key) => `<button data-tb="${fn}" title="${label} (${key})">${icon(ic)}<small>${label}</small></button>`;
-    tb.innerHTML = btn('showInventory', 'backpack', 'Mochila', 'I') + btn('showCrafting', 'hammer', 'Criar', 'C') +
+    tb.innerHTML = btn('showInventory', 'backpack', 'Mochila', 'I') +
       btn('showBuild', 'build', 'Construir', 'B') + btn('showKingdom', 'crown', 'Portfólio', 'K') +
       btn('showMap', 'map', 'Mapa', 'M') + btn('showDiary', 'book', 'Diário', 'J') + '<span class="sep"></span>' + btn('showSettings', 'gear', 'Ajustes', 'Esc');
     tb.addEventListener('click', e => {
@@ -343,7 +343,7 @@ const UI = {
     const slot = key => {
       const sl = EQUIP_SLOTS.find(x => x.key === key), k = P.equip[key], it = k && ITEMS[k];
       return `<div class="pd-slot ${it ? 'full' : ''} ${it && S.inv === k ? 'on' : ''}" data-drop="equip" data-slot="${key}" ${it ? `data-drag="eq" data-k="${k}" data-act="isel"` : ''} data-tip="${it ? this.esc(it.name) : `${sl.name} (vazio)`}">
-        <span class="pd-ic">${it ? UI.ii(it) : `<i class="pd-empty">${glyph[key]}</i>`}</span>${it && P.inv[k] > 1 ? `<span class="tn">${P.inv[k]}</span>` : ''}<small>${key === 'tool2' ? 'Ferram. 2' : sl.name}</small></div>`;
+        <span class="pd-ic">${it ? UI.ii(it) : `<i class="pd-empty">${glyph[key]}</i>`}</span>${it && P.inv[k] > 1 ? `<span class="tn">${P.inv[k]}</span>` : ''}<small>${key === 'tool2' ? 'Ferramenta' : sl.name}</small></div>`;
     };
     this.showInventoryGrid(keys, slot, eqOf, Game.playerTitle(), Store.weight(), Store.capacity());
   },
@@ -617,7 +617,7 @@ const UI = {
   // Criar: filtros por estação, lista de receitas e painel com ingredientes
   // criação: a janela C mostra só o que se faz à mão; cada estação (fogueira, bancada, forja...) mostra só as suas receitas
   showCrafting(station) {
-    const S = this.sel, st = station || null;
+    const S = this.sel, st = station || 'bancada'; // não há mais a Criação com as mãos: tudo se faz nas estações
     const near = {};
     for (const k in STATIONS) near[k] = Game.nearStation(k);
     const stOk = r => r.station === null || near[r.station];
@@ -2720,7 +2720,7 @@ const HELP_HTML = `
 <tr><td>Clique numa pessoa</td><td>Conversar com ela</td></tr>
 <tr><td>E</td><td>Interagir com as coisas: cabana, lojas, taverna, castelo, forja, portão... (para conversar, clique na pessoa)</td></tr>
 <tr><td>I</td><td>Inventário (equipar e comer)</td></tr>
-<tr><td>C</td><td>Criação de itens</td></tr>
+
 <tr><td>B</td><td>Construção</td></tr>
 <tr><td>K</td><td>Gerenciar seu reino</td></tr>
 <tr><td>M</td><td>Mapa do mundo</td></tr>
@@ -2733,7 +2733,7 @@ const HELP_HTML = `
 <h3>Primeiros passos</h3>
 <ol>
 <li>Colete <b>madeira</b> nas árvores e <b>pedra</b> nas rochas (com as mãos já dá, mas é lento).</li>
-<li>Crie um <b>Machado</b> e uma <b>Picareta de Pedra</b> (C) e empunhe a ferramenta certa (Q). A picareta de pedra quebra <b>carvão, cobre e estanho</b>.</li>
+<li>Construa uma <b>Bancada</b>, crie nela um <b>Machado</b> e uma <b>Picareta de Pedra</b> e empunhe a ferramenta certa (Q). A picareta de pedra quebra <b>carvão, cobre e estanho</b>.</li>
 <li>Funda <b>bronze</b> (cobre + estanho + carvão) na forja. A picareta de bronze quebra <b>ferro</b>; a de ferro, <b>prata e ouro</b>; a de aço, <b>gemas</b>.</li>
 <li>Colha <b>linho</b> para fazer corda e tecido. Com corda e madeira faça uma <b>Vara de Pesca</b> e, na bancada, um <b>Barco a Remo</b>.</li>
 <li>Construa uma <b>Fogueira</b>, uma <b>Bancada</b> e uma <b>Forja</b> (B) perto da sua cabana.</li>

@@ -11,6 +11,10 @@ const RINGS = {
 };
 for (const k in RINGS) if (ITEMS[k]) { ITEMS[k].slot = 'ring'; ITEMS[k].ringFx = RINGS[k]; }
 
+// a janela Criação saiu: as ferramentas e armas que se faziam com as mãos agora se fazem na Bancada
+for (const r of RECIPES) if (!r.station) r.station = 'bancada';
+if (BUILDINGS.workbench) BUILDINGS.workbench.desc = 'Ferramentas e armas simples (machado, picareta, pá, enxada, vara de pesca, tocha, lança, faca, porrete e flechas), tecidos, roupas de linho e couro, machadinhas e barcos.';
+
 const InvPlus = {
   ring() { return P.equip && P.equip.ring; },
   // tira dos lugares do herói os itens que não existem mais

@@ -24,8 +24,9 @@ module.exports = async () => {
       Inv.add('gem_ring', 1); const d0 = Game.pDef(); Game.equip('gem_ring'); ok(P.equip.ring === 'gem_ring' && Game.pDef() === d0 + 3, 'o anel de gema não dá defesa');
       Inv.add('silver_ring', 1); const k = Object.keys(ITEMS).find(x => ITEMS[x].cat === 'Comida' && ITEMS[x].price >= 20), p0 = Game.priceFor(0, k, { aff: 0 }).buy; Game.equip('silver_ring'); ok(Game.priceFor(0, k, { aff: 0 }).buy < p0, 'o anel de prata não dá desconto');
       // receitas e dados
-      ok(RECIPES.filter(r => r.out === 'torch' && !r.station).length === 1 && RECIPES.find(r => r.out === 'torch' && !r.station).n === 4, 'tocha: deveria haver só a receita de 4');
-      ok(RECIPES.filter(r => r.out === 'arrow' && !r.station).length === 1 && RECIPES.find(r => r.out === 'arrow' && !r.station).n === 8, 'flecha: deveria haver só a receita de 8');
+      ok(RECIPES.filter(r => r.out === 'torch' && r.station === 'bancada').length === 1 && RECIPES.find(r => r.out === 'torch' && r.station === 'bancada').n === 4, 'tocha: deveria haver só a receita de 4 (na bancada)');
+      ok(RECIPES.filter(r => r.out === 'arrow' && r.station === 'bancada' && r.n === 8).length === 1, 'flecha: deveria haver a receita de 8 na bancada');
+      ok(!RECIPES.some(r => !r.station), 'ainda há receita feita com as mãos');
       ok(!ITEMS.dice && !Object.values(SHOPS).some(s => s.sells && s.sells.includes('dice')), 'os Dados de Osso ainda existem');
       UI.showCrafting(null); ok(!/Tocha ×|Flecha ×/.test(html()), 'a criação ainda mostra ×N no nome');
       return bad;

@@ -510,7 +510,7 @@ const Game = {
       if (UI.isOpen()) { UI.close(); return; }
       UI.showSettings(); return;
     }
-    const map = { KeyI: 'showInventory', KeyC: 'showCrafting', KeyB: 'showBuild', KeyK: 'showKingdom', KeyM: 'showMap', KeyJ: 'showDiary' };
+    const map = { KeyI: 'showInventory', KeyB: 'showBuild', KeyK: 'showKingdom', KeyM: 'showMap', KeyJ: 'showDiary' };
     if (map[code]) {
       if (UI.cur && UI.cur.fn === map[code]) UI.close();
       else { G.placing = null; Urban.stop(); UI[map[code]](); }

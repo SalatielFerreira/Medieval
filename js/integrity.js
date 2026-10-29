@@ -110,6 +110,8 @@ const RP_DX = [1, -1, 0, 0, 1, 1, -1, -1], RP_DY = [0, 0, 1, -1, 1, -1, 1, -1];
   const mt0 = Lifesim.monthTick.bind(Lifesim);
   Lifesim.monthTick = function () { mt0(); Integrity.monthTick(); };
   Perf.defer(Integrity, 'monthTick', 'Integrity.monthTick');
+  // quem sai em viagem: um pedaço próprio do mês (escolher destino e motivo de cada morador é pesado)
+  Perf.defer(Travel, 'depart', 'Travel.depart');
   // fundar vila e construir negócio das famílias viram pedaços próprios do mês (eram os mais pesados)
   const fo0 = Families.found.bind(Families);
   Families.found = function (f) { if (Perf.slicing) { Perf.queue.push(Object.assign(() => fo0(f), { label: 'Families.found' })); return true; } return fo0(f); };

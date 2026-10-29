@@ -27,7 +27,6 @@ Abra o jogo pelo endereço publicado (GitHub Pages) e use o botão **Instalar o 
 | G | Montar aríete ou catapulta durante um cerco |
 | E | Conversar com pessoas e interagir (cabana, lojas, taverna, castelo, forja...) |
 | I | Inventário (equipar e comer) |
-| C | Criação de itens |
 | B | Construção |
 | K | Gerenciar o reino |
 | M | Mapa do mundo |
