@@ -39,10 +39,11 @@ const Menu = {
     const m = document.getElementById('menu');
     m.innerHTML = `<canvas id="menuBg"></canvas>
       <div class="menu-wrap" id="menuWrap">
-        <div class="menu-title"><h1>MED<span class="mt-i">I</span>EVAL</h1><div class="mt-line"></div><h4>Os Sete Reinos</h4></div>
+        <div class="menu-title"><h1>MED<span class="mt-i">I</span>EVAL</h1><div class="mt-line"></div><h4>O Último Reino</h4></div>
         <div class="menu-card" id="menuCard"></div>
       </div>
       <div class="upd-modal hidden" id="updModal"></div>`;
+    I18N.mount(m);
     m.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (b) this.act(b.dataset.m, b.dataset); });
     m.addEventListener('input', e => {
       if (e.target.id === 'heroName') { this.hero.name = e.target.value; this.nameTag(); }
@@ -177,6 +178,7 @@ const Menu = {
   createCard() {
     const h = this.hero;
     if (h.surname === undefined) h.surname = U.pick(SURNAMES);
+    if (h.name === 'Aventureiro') h.name = I18N.t('Aventureiro'); // o nome sugerido no idioma do jogo
     const picker = (key, list, label, id) => `<div class="cr-row" ${id ? `id="${id}"` : ''}><label>${label}</label><div class="picker"><button data-m="cyc" data-k="${key}" data-d="-1">‹</button><b id="pk_${key}">${list.find(x => x[0] === h[key])[1]}</b><button data-m="cyc" data-k="${key}" data-d="1">›</button></div></div>`;
     // cores: um seletor discreto por linha (‹ bolinha da cor ›), no mesmo jeito do penteado e da barba
     const cpick = (key, label) => { const list = this.colorList(key), i = Math.max(0, list.findIndex(c => c[0] === h[key]));
@@ -196,8 +198,7 @@ const Menu = {
             <label><span>Sobrenome da família</span><input id="heroSurname" maxlength="16" placeholder="Sobrenome da família" value="${UI.esc(h.surname || '')}"></label></div>
           <div class="cr-row"><label>Sexo</label><div class="seg"><button class="${h.sex === 'm' ? 'on' : ''}" data-m="set" data-k="sex" data-v="m">♂ Masculino</button><button class="${h.sex === 'f' ? 'on' : ''}" data-m="set" data-k="sex" data-v="f">♀ Feminino</button></div></div>
           <div class="cr-row"><label>Idade <b id="ageVal">${h.age} anos</b></label><input type="range" id="heroAge" min="16" max="80" value="${h.age}"></div>
-          <div class="cr-row"><label>Dificuldade</label><div class="seg">${Object.entries(DIFFICULTY).map(([k, d]) => `<button class="${h.diff === k ? 'on' : ''}" data-m="set" data-k="diff" data-v="${k}">${d.name}</button>`).join('')}</div>
-            <small class="cr-diff" id="diffNote">${DIFFICULTY[h.diff].desc}</small></div>
+          <div class="cr-row"><label>Dificuldade</label><div class="seg">${Object.entries(DIFFICULTY).map(([k, d]) => `<button class="${h.diff === k ? 'on' : ''}" data-m="set" data-k="diff" data-v="${k}" title="${UI.esc(d.desc)}">${d.name}</button>`).join('')}</div></div>
           <div class="cr-row"><label>Espaço de salvamento</label><div class="seg">${Saves.list().map((inf, i) => `<button class="${slot === i + 1 ? 'on' : ''} ${inf ? 'occ' : ''}" data-m="set" data-k="slot" data-v="${i + 1}" title="${inf ? 'Ocupado: ' + UI.esc(inf.name) : 'Vazio'}">${i + 1}<span class="sl-st">${inf ? ' · ocupado' : ' · livre'}</span></button>`).join('')}</div></div>
         </div>
         <div class="cr-col">
@@ -253,6 +254,8 @@ const Menu = {
     else if (a === 'back') this.mainCard();
     else if (a === 'slots') this.slotsCard();
     else if (a === 'install') this.install();
+    else if (a === 'langMenu') document.getElementById('langList').classList.toggle('hidden');
+    else if (a === 'lang') I18N.set(d.v);
     else if (a === 'updnow') this.updateNow(d.v);
     else if (a === 'upddismiss') { if (d.v) this.dismissed = d.v; document.getElementById('updModal').classList.add('hidden'); }
     else if (a === 'export') Saves.exportSlot(+d.n);
@@ -271,7 +274,6 @@ const Menu = {
       this.hero[d.k] = d.k === 'slot' ? +d.v : d.v;
       const card = document.getElementById('menuCard');
       for (const b of card.querySelectorAll(`[data-k="${d.k}"]`)) b.classList.toggle('on', b.dataset.v === d.v);
-      if (d.k === 'diff') document.getElementById('diffNote').textContent = DIFFICULTY[d.v].desc;
       if (d.k === 'sex') {
         if (d.v === 'f' && this.hero.tunic === '#3d6b8f') this.hero.tunic = '#8f3d5e';
         if (d.v === 'm' && this.hero.tunic === '#8f3d5e') this.hero.tunic = '#3d6b8f';

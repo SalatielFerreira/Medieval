@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>MEDIEVAL — Os Sete Reinos</title>
+  <title>MEDIEVAL — O Último Reino</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23241a11'/%3E%3Ctext x='32' y='49' font-size='44' text-anchor='middle' fill='%23f2c45a'%3E%E2%9A%9C%3C/text%3E%3C/svg%3E">
   <!-- app instalável (PWA): ícone, nome e cores quando instalado no computador ou no celular -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -43,8 +43,11 @@
   // Carregador do jogo: lê a versão publicada (version.json) e carrega o CSS e os scripts com "?v=versão",
   // assim o navegador nunca usa arquivos antigos guardados no cache depois de uma atualização.
   (function () {
-    var FILES = ['util', 'icons', 'icons2', 'bicons', 'dialog', 'data', 'heraldry', 'world', 'biomes', 'people', 'entities', 'audio', 'dungeon', 'features', 'diplomacy', 'farming', 'combat2', 'life', 'progress', 'families', 'court', 'crown', 'royalcourt', 'market', 'siege', 'urban', 'events', 'homes', 'arena', 'interior', 'war', 'faith', 'input', 'ui', 'content', 'content2', 'lifesim', 'graves', 'villageworks', 'ambience', 'mapview', 'menu', 'game', 'workplaces', 'statecraft', 'beasts', 'arsenal', 'heroes', 'gate', 'economy', 'finance', 'defense', 'rivalry', 'chronicle', 'windows', 'profile', 'expansion', 'expbuild', 'expdraw', 'assault', 'favorites', 'religion', 'commerce', 'society', 'reign', 'bank', 'politics', 'personas', 'laws', 'mercs', 'games', 'travel', 'book', 'uiplus', 'perf', 'integrity', 'order', 'workplaces2', 'rcache', 'transition', 'regalia', 'nobility', 'bank2', 'townplan', 'clima', 'pacts', 'lineage', 'realmboard', 'invplus', 'buildroles', 'fog', 'depths', 'cavalry', 'music', 'legacy', 'sea', 'wildbeasts', 'orders', 'lawsplus', 'outlaw', 'horses'];
+    var FILES = ['i18n', 'util', 'icons', 'icons2', 'bicons', 'dialog', 'data', 'heraldry', 'world', 'biomes', 'people', 'entities', 'audio', 'dungeon', 'features', 'diplomacy', 'farming', 'combat2', 'life', 'progress', 'families', 'court', 'crown', 'royalcourt', 'market', 'siege', 'urban', 'events', 'homes', 'arena', 'interior', 'war', 'faith', 'input', 'ui', 'content', 'content2', 'lifesim', 'graves', 'villageworks', 'ambience', 'mapview', 'menu', 'game', 'workplaces', 'statecraft', 'beasts', 'arsenal', 'heroes', 'gate', 'economy', 'finance', 'defense', 'rivalry', 'chronicle', 'windows', 'profile', 'expansion', 'expbuild', 'expdraw', 'assault', 'favorites', 'religion', 'commerce', 'society', 'reign', 'bank', 'politics', 'personas', 'laws', 'mercs', 'games', 'travel', 'book', 'uiplus', 'perf', 'integrity', 'order', 'workplaces2', 'rcache', 'transition', 'regalia', 'nobility', 'bank2', 'townplan', 'clima', 'pacts', 'lineage', 'realmboard', 'invplus', 'buildroles', 'fog', 'depths', 'cavalry', 'music', 'legacy', 'sea', 'wildbeasts', 'orders', 'lawsplus', 'outlaw', 'horses'];
     var base = window.GAME_BASE || '';
+    // idioma escolhido no menu: o arquivo de tradução entra logo depois de i18n.js (português é o original)
+    var lang = 'pt'; try { lang = new URLSearchParams(location.search).get('lang') || localStorage.getItem('medieval_lang') || 'pt'; } catch (e) {}
+    if (['en', 'es'].indexOf(lang) >= 0) FILES.splice(1, 0, 'lang_' + lang);
     function load(v) {
       window.GAME_VERSION = v;
       var q = v === 'local' ? '' : '?v=' + encodeURIComponent(v);

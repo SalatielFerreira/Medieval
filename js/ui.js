@@ -177,12 +177,14 @@ const UI = {
     // guarda a rolagem das áreas internas para a janela não "pular" ao atualizar
     const scrolls = {};
     if (this.cur && this.cur.fn === fn) for (const el of this.panel.querySelectorAll('[data-scroll], .pb')) scrolls[el.dataset.scroll || 'pb'] = el.scrollTop;
-    // histórico: ao abrir outra janela a partir desta, guarda esta para o botão "Voltar"
+    // histórico: ao abrir OUTRA janela a partir desta, guarda esta para o botão "Voltar". O que se faz dentro da
+    // mesma janela (dividir itens, trocar de aba, escolher um item...) não conta: Voltar sai direto da janela.
     this.hist = this.hist || [];
-    const prim = a => (a || []).filter(x => x === null || typeof x !== 'object').join('|');
-    if (this.cur && !this.navBack && (this.cur.fn !== fn || prim(this.cur.args) !== prim(args))) {
-      this.hist.push({ fn: this.cur.fn, args: this.cur.args, title: this.cur.fn === 'showMap' ? 'Mapa' : this.curTitle });
-      if (this.hist.length > 20) this.hist.shift();
+    if (this.cur && !this.navBack && this.cur.fn !== fn) {
+      // voltando a uma janela que já está no caminho: o caminho é cortado ali (sem dar voltas)
+      const at = this.hist.findIndex(h => h.fn === fn);
+      if (at >= 0) this.hist.length = at;
+      else { this.hist.push({ fn: this.cur.fn, args: this.cur.args, title: this.cur.fn === 'showMap' ? 'Mapa' : this.curTitle }); if (this.hist.length > 20) this.hist.shift(); }
     }
     if (MapView.isOpen) MapView.hide(); // a janela abre por cima do mapa (e Voltar leva de volta a ele)
     this.cur = { fn, args: args || [] };

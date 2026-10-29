@@ -31,8 +31,9 @@ else {
   const list = [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]);
   const seen = new Set();
   for (const n of list) { if (seen.has(n)) err(`"${n}" aparece duas vezes em FILES (index.html)`); seen.add(n); }
+  // os arquivos de idioma (lang_xx.js) entram pelo carregador só quando o idioma é escolhido
   for (const n of list) if (!files.includes(n + '.js')) err(`FILES (index.html) carrega "${n}", mas js/${n}.js não existe`);
-  for (const f of files) if (!seen.has(f.replace(/\.js$/, ''))) err(`js/${f} existe, mas não está na lista FILES do index.html (não é carregado)`);
+  for (const f of files) if (!f.startsWith('lang_') && !seen.has(f.replace(/\.js$/, ''))) err(`js/${f} existe, mas não está na lista FILES do index.html (não é carregado)`);
 }
 
 // 4. nenhum nome global (const/let/class no começo da linha) declarado em dois arquivos: o segundo quebraria o carregamento

@@ -30,7 +30,7 @@ async function open(opts = {}) {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e.stack || e.message).slice(0, 400)));
   page.on('dialog', d => d.accept());
-  await page.goto(`http://localhost:${port}/`, { waitUntil: 'load' });
+  await page.goto(`http://localhost:${port}/${opts.query || ""}`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof G !== 'undefined' && G.state === 'menu' && (window.GAME_LOADED || !window.GAME_LOADER), { timeout: 60000 }); // todos os arquivos carregados
   if (opts.newGame !== false) {
     await page.evaluate(o => { Menu.hide(); return Game.newGame(Object.assign({ name: 'Teste', surname: 'Silva', sex: 'm', age: 25, hair: '#5a3a1a', skin: '#f0c896', slot: 3, diff: 'normal' }, o), null); }, opts.hero || {});

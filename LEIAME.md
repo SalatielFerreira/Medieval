@@ -1,4 +1,4 @@
-# MEDIEVAL — Os Sete Reinos
+# MEDIEVAL — O Último Reino
 
 RPG medieval 2D (visão de cima, estilo pixel art) feito em HTML5 Canvas e JavaScript puro, sem nenhuma instalação.
 
@@ -88,6 +88,15 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Tesouro do reino separado do ouro pessoal.
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
+
+## Novidades: o nome "O Último Reino" e o jogo em inglês e espanhol
+
+- O jogo agora se chama **MEDIEVAL — O Último Reino**.
+- **Idioma**: no canto do menu inicial, o botão com a bandeira troca o jogo inteiro para inglês ou espanhol (começa em português). A escolha fica guardada.
+- Como funciona: o jogo continua escrito em português; tudo o que vai para a tela passa por `js/i18n.js`, que procura a tradução em `js/lang_en.js` ou `js/lang_es.js`. Depois de mudar ou acrescentar textos, rode `node scripts/i18n-extract.js && node scripts/i18n-build.js` (só os textos novos são traduzidos). Correções à mão vão em `scripts/i18n/fix_en.json` e `fix_es.json`.
+- A tela de criar o herói não mostra mais o texto embaixo dos botões de dificuldade (ele aparece ao parar o mouse no botão).
+- A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem o dobro do tamanho.
+- O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
 ## Novidades: feras errantes, ordens de cavalaria, leis na rua, vida de fora da lei e haras
 

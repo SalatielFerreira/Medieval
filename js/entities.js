@@ -756,6 +756,17 @@ function humanBody(ctx, o, dir, t) {
     ctx.beginPath(); ctx.arc(0.6, -31, 5, Math.PI * 1.22, Math.PI * 1.62); ctx.stroke();
     ctx.globalAlpha = 0.35; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.arc(0.6, -31, 4.1, Math.PI * 1.3, Math.PI * 1.55); ctx.stroke(); ctx.restore();
   }
+  // ---- braço da frente: manga, punho e mão com polegar (antes da barba: a barba longa cai na frente do braço)
+  let fhx, fhy;
+  if (holding) { fhx = 6.6; fhy = -15; }
+  else { const fa = o.moving ? Math.sin(t * 12) * 0.55 : 0.05; fhx = 4.6 + Math.sin(fa) * 6; fhy = -21 + Math.cos(fa) * 8.6; }
+  const ex = (3.8 + fhx) / 2 + 0.6, ey = (-21.2 + fhy) / 2 + 0.4;
+  limb2(ctx, 3.8, -21.2, ex, ey, fhx, fhy, fem ? 3.1 : 3.6, C(sleeve));
+  limb(ctx, 4.6, -20.6, ex + 0.2, ey, 1, S(sleeve, 0.18));
+  if (fem && !o.armor) { ell(ctx, 4, -21.4, 2.6, 2.2, C(sleeve)); ell(ctx, 4.6, -22, 1.2, 0.8, S(sleeve, 0.2)); }   // ombro bufante
+  limb(ctx, ex + (fhx - ex) * 0.62, ey + (fhy - ey) * 0.62, fhx, fhy - 0.3, 3.7, o.armor ? S(o.armor, 0.12) : trim);   // punho
+  ell(ctx, fhx, fhy + 0.5, 1.45, 1.6, S(skin, -0.06)); ell(ctx, fhx + 0.4, fhy + 0.1, 0.6, 0.5, S(skin, 0.12));
+  ell(ctx, fhx + 1.1, fhy - 0.2, 0.55, 0.75, S(skin, -0.12));                    // polegar
   // ---- barba e bigode, com textura
   const bs = o.beardStyle || (o.beard ? 'short' : 'none');
   if (bs !== 'none' && !o.hood) {
@@ -826,17 +837,6 @@ function humanBody(ctx, o, dir, t) {
     ctx.fillStyle = C('#d0303a'); ctx.fillRect(-0.7, -35.6, 1.4, 1.4); ctx.fillStyle = C('#3a6ad0'); ctx.fillRect(-4, -35.4, 1.1, 1.1); ctx.fillRect(3, -35.4, 1.1, 1.1);
     ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(-4.6, -36.6, 8, 0.4);
   }
-  // ---- braço da frente: manga, punho e mão com polegar
-  let fhx, fhy;
-  if (holding) { fhx = 6.6; fhy = -15; }
-  else { const fa = o.moving ? Math.sin(t * 12) * 0.55 : 0.05; fhx = 4.6 + Math.sin(fa) * 6; fhy = -21 + Math.cos(fa) * 8.6; }
-  const ex = (3.8 + fhx) / 2 + 0.6, ey = (-21.2 + fhy) / 2 + 0.4;
-  limb2(ctx, 3.8, -21.2, ex, ey, fhx, fhy, fem ? 3.1 : 3.6, C(sleeve));
-  limb(ctx, 4.6, -20.6, ex + 0.2, ey, 1, S(sleeve, 0.18));
-  if (fem && !o.armor) { ell(ctx, 4, -21.4, 2.6, 2.2, C(sleeve)); ell(ctx, 4.6, -22, 1.2, 0.8, S(sleeve, 0.2)); }   // ombro bufante
-  limb(ctx, ex + (fhx - ex) * 0.62, ey + (fhy - ey) * 0.62, fhx, fhy - 0.3, 3.7, o.armor ? S(o.armor, 0.12) : trim);   // punho
-  ell(ctx, fhx, fhy + 0.5, 1.45, 1.6, S(skin, -0.06)); ell(ctx, fhx + 0.4, fhy + 0.1, 0.6, 0.5, S(skin, 0.12));
-  ell(ctx, fhx + 1.1, fhy - 0.2, 0.55, 0.75, S(skin, -0.12));                    // polegar
   // ---- escudo erguido
   if (o.shieldUp && o.shield) {
     poly(ctx, [4.6, -26, 13.2, -26, 13.2, -17.4, 8.9, -9.4, 4.6, -17.4], S(o.shield, -0.4));
