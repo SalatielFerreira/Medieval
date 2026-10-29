@@ -18,9 +18,12 @@ const BR = {
   FARM: ['farm', 'garden', 'orchard', 'flaxfield', 'herbgarden', 'mushroom', 'coop', 'pen', 'pigsty', 'dovecote', 'fishpond', 'beehive'],
   CULT: ['library', 'oratory', 'training', 'archery', 'stage', 'watchtower'],
   DEF: ['barracks', 'archer_tower', 'armory', 'spikes', 'wall_wood', 'wall_stone'],
+  PRACA: ['well_p', 'fountain', 'statue', 'lamppost', 'bench', 'pergola', 'sundial', 'flagpole_p', 'flowerbed', 'hedge', 'fence'],
+  // repetidas com as obras da vila (fica a da vila): poço, chafariz, estátua, lampião, torre de vigia e capela
+  DUP: ['well_p', 'fountain', 'statue', 'lamppost', 'watchtower', 'chapel_p'],
   INFRA_OUT: ['crane', 'windmill', 'dock'],
 };
-for (const [k, c] of [['PROD', 'producao'], ['FARM', 'fazenda'], ['CULT', 'cultura'], ['DEF', 'defesa']]) BR[k] = BR[k].concat((UI.expCats && UI.expCats[c]) || []).filter(t => BUILDINGS[t]);
+for (const [k, c] of [['PROD', 'producao'], ['FARM', 'fazenda'], ['CULT', 'cultura'], ['DEF', 'defesa'], ['PRACA', 'praca']]) BR[k] = BR[k].concat((UI.expCats && UI.expCats[c]) || []).filter(t => BUILDINGS[t]);
 
 // ofícios novos
 Object.assign(RANKS, {
@@ -83,6 +86,16 @@ const BR_ROOMS = {
 // a Estrebaria da vila também vende o que os cavalos usam
 const BR_STABLE_ITEMS = ['saddle', 'horsehair', 'horseshoe', 'rope', 'leather', 'wheat', 'barley', 'apple', 'carrot', 'hay'];
 const BR_HORSE = 240, BR_CART = 170;
+
+// as Obras da vila separadas por tipo (o que não estiver aqui vai para Moradia e comércio)
+const OBRAS_CATS = [
+  ['ob_casa', '🏘️', 'Moradia e comércio', ['vhouse', 'vtenement', 'store', 'tavern', 'vinn', 'vinn2', 'vmarket', 'vhmarket', 'vtrade', 'vpost', 'vpawn', 'vfishshop', 'vmint', 'port', 'bank']],
+  ['ob_prod', '🔨', 'Produção', ['smith', 'lumber', 'quarry', 'vbakery', 'voven', 'vmill', 'vsawmill', 'vmine', 'vweaver', 'vbrewery', 'vbasket', 'vcharcoal', 'vlaundry', 'vshoe', 'vbutcher', 'vpotter', 'vcheese', 'vfishery', 'vcraft', 'vguild']],
+  ['ob_faz', '🐄', 'Fazenda e animais', ['field', 'vgarden2', 'vapiary', 'vbarley', 'vflax', 'vorchard', 'vhens', 'vpasture', 'vwood', 'vpigs', 'vstable', 'vgranary', 'vcattle']],
+  ['ob_praca', '⛲', 'Praça e decoração', ['well', 'vlamp', 'vgarden', 'vfountain', 'vstatue']],
+  ['ob_cult', '📚', 'Cultura, fé e treino', ['chapel', 'vcross', 'vspring', 'cemetery', 'vschool', 'vuniv', 'vmonastery', 'vcathedral', 'vorphan', 'vclinic', 'vinfirm', 'vbath', 'vthermae', 'vhall', 'arena']],
+  ['ob_def', '🛡️', 'Defesa e exército', ['vgate', 'vtower', 'vguard']],
+];
 
 const BuildRoles = {
   shopOf: {},
@@ -213,13 +226,24 @@ const BuildRoles = {
     try { sb0(); } finally { this.open = o1; this.fitDetail = f1; [this.sel.bcat, this.sel.build] = keep; }
     let cats = this.buildCats;
     const auth = Urban.hasAny();
-    cats = cats.filter(c => c[0] !== 'defesa').map(c => c[0] === 'infra' ? [c[0], c[1], c[2], c[3].filter(k => !BR.INFRA_OUT.includes(k))] : c);
-    if (auth) { const ob = cats.find(c => c[0] === 'obras'); if (ob) ob[3] = Order.sortBuild(ob[3].concat(BR.DEF)); }
+    // Praça e decoração e Cultura, fé e treino também são obras da vila: saem da sua base e entram nas Obras
+    const obras = cats.find(c => c[0] === 'obras');
+    cats = cats.filter(c => !['defesa', 'praca', 'cultura', 'obras'].includes(c[0])).map(c => c[0] === 'infra' ? [c[0], c[1], c[2], c[3].filter(k => !BR.INFRA_OUT.includes(k))] : c);
+    if (auth) {
+      // as obras separadas por tipo; as suas de praça, cultura e defesa entram junto (menos as repetidas)
+      const civ = obras ? obras[3] : [], used = new Set();
+      const extra = { ob_praca: BR.PRACA, ob_cult: BR.CULT, ob_def: BR.DEF };
+      const groups = OBRAS_CATS.map(([k, ic, name, list]) => {
+        const mine = civ.filter(x => list.includes(x.slice(2))); mine.forEach(x => used.add(x));
+        return [k, ic, name, (extra[k] || []).filter(b => !BR.DUP.includes(b)).concat(mine)];
+      });
+      const rest = civ.filter(x => !used.has(x)); if (rest.length) groups[0][3] = groups[0][3].concat(rest);
+      for (const g of groups) { g[3] = Order.sortBuild(g[3]); if (g[3].length) cats.push(g); }
+    }
     this.buildCats = cats;
-    // a escolha anterior saiu do menu (a Defesa sem autoridade, a infraestrutura retirada): volta ao começo
+    // a categoria escolhida saiu do menu (Defesa, Praça, Cultura ou Obras antigas): vai para onde a construção está agora
     const S = this.sel;
-    if (!cats.some(c => c[0] === S.bcat)) S.bcat = 'moradia';
-    if (BR.DEF.includes(S.build) && S.bcat === 'defesa') S.bcat = auth ? 'obras' : 'moradia';
+    if (!cats.some(c => c[0] === S.bcat)) { const w = cats.find(c => c[3].includes(S.build)); S.bcat = w ? w[0] : 'moradia'; }
     return BuildRoles.renderBuild(out);
   };
   // ficha da construção: o que a produção fabrica (embaixo do custo) e o que a fazenda vende
@@ -230,7 +254,9 @@ const BuildRoles = {
     let extra = '';
     if (BR.PROD.includes(k)) { const p = BuildRoles.products(k); if (p.length) extra = `<div><div class="sec">🛠️ Pode produzir <span>${p.length} ${p.length === 1 ? 'item' : 'itens'}</span></div>${chips(p)}</div>`; }
     else if (BR.FARM.includes(k) && BuildRoles.shopOf[k]) extra = `<div><div class="sec">🧺 O responsável vende</div>${chips(SHOPS[BuildRoles.shopOf[k]].sells)}</div>`;
-    else if (BR.DEF.includes(k)) extra = '<small class="ok">🏗️ Obra da vila: só onde você governa (uma vila sua ou o seu reino).</small>';
+    else if (BR.DEF.includes(k) || BR.PRACA.includes(k) || BR.CULT.includes(k)) extra = '<small class="ok">🏗️ Obra da vila: só onde você governa (uma vila sua ou o seu reino).</small>';
+    const cat = (UI.buildCats || []).find(c => c[3].includes(k));
+    if (cat && cat[0].startsWith('ob_') && UI.buildPower && !h.includes(UI.buildPower)) extra += UI.buildPower;
     if (!extra) return h;
     const at = h.indexOf('<small class="muted">Depois de clicar');
     return at >= 0 ? h.slice(0, at) + extra + h.slice(at) : h + extra;
@@ -240,7 +266,7 @@ const BuildRoles = {
   Game.canBuild = function (k, tx, ty) {
     const e = cb0(k, tx, ty); if (e) return e;
     const b = BUILDINGS[k];
-    if (BR.DEF.includes(k) && !Urban.authority(Math.floor(tx + b.w / 2), Math.floor(ty + b.h / 2))) return 'Defesa é obra da vila: construa numa vila que você governa ou no seu reino';
+    if ((BR.DEF.includes(k) || BR.PRACA.includes(k) || BR.CULT.includes(k)) && !Urban.authority(Math.floor(tx + b.w / 2), Math.floor(ty + b.h / 2))) return 'É obra da vila: construa numa vila que você governa ou no seu reino';
     return null;
   };
   // ---------------------------------------------------------------- o portão se emenda no muro
@@ -272,7 +298,7 @@ BuildRoles.renderBuild = function (first) {
   const detail = `<div class="cdt-in">${UI.buildDetailHtml(S.build)}</div>
     <div class="act-row"><button class="primary" data-act="${BUILDINGS[S.build] ? 'build' : 'urban'}" data-k="${S.build}" ${b.can ? '' : 'disabled'}>${b.btn}</button></div>`;
   const ready = c => c[3].filter(k => { const x = UI.binfo(k); return x.cost && x.can; }).length;
-  const vil = c => c[0] === 'infra' || c[0] === 'obras';
+  const vil = c => c[0] === 'infra' || c[0] === 'obras' || c[0].startsWith('ob_');
   const groups = [['Sua base', cats.filter(c => !vil(c)).map(c => [c[0], c[1], c[2], ready(c) ? '✓' + ready(c) : ''])], ['Estradas e vilas', cats.filter(vil).map(c => [c[0], c[1], c[2]])]];
   UI.open('Construção', `<div class="bld iconnav">${UI.navHtml(groups, S.bcat, 'bcat', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail bld-dt">${detail}</div></div>`)}</div>`,
     'showBuild', [], (first && first[4]) || 'Erga sua base, abra estradas e reforme as vilas');

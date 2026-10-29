@@ -44,8 +44,9 @@ module.exports = async () => {
       UI.showBuild(); ok(!UI.buildCats.some(c => c[0] === 'defesa'), 'a Defesa ainda está no seu menu');
       ok(!UI.buildCats.flatMap(c => c[3]).some(k => BR.INFRA_OUT.includes(k)), 'a infraestrutura retirada ainda aparece');
       const px = Math.floor(P.x / TILE), py = Math.floor(P.y / TILE); ok(Game.canBuild('barracks', px + 3, py + 3) !== null, 'quartel construído fora de uma vila sua');
-      Game.becomeRuler(v.civ, 't'); UI.close(); UI.sel.bcat = 'obras'; UI.sel.build = 'barracks'; UI.showBuild();
-      ok(UI.buildCats.find(c => c[0] === 'obras')[3].includes('barracks') && UI.sel.build === 'barracks', 'a Defesa não está nas Obras');
+      ok(Game.canBuild('library', px + 3, py + 3) !== null, 'biblioteca construída fora de uma vila sua');
+      Game.becomeRuler(v.civ, 't'); UI.close(); UI.sel.bcat = 'ob_def'; UI.sel.build = 'barracks'; UI.showBuild();
+      ok(UI.buildCats.find(c => c[0] === 'ob_def')[3].includes('barracks') && UI.sel.build === 'barracks', 'a Defesa não está nas Obras');
       // Estrebaria: cavalos
       UI.showShop('stable', 0); ok(html().includes('Comprar um cavalo'), 'a Estrebaria não vende cavalos');
       P.gold = 1000; Ride.buy('horse', BR_HORSE); ok(P.horse, 'não comprou o cavalo');

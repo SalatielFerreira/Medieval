@@ -11,8 +11,9 @@ module.exports = async () => {
       UI.msg = () => {}; UI.banner = () => {};
       UI.showBuild(); UI.close();
       const cats = Object.fromEntries(UI.buildCats.map(c => [c[0], c[3].length]));
-      // a Defesa foi para as Obras nas vilas e saíram da Infraestrutura o Atracadouro, o Guindaste e o Moinho de Vento
-      const want = { moradia: 15, producao: 20, fazenda: 20, negocios: 45, praca: 20, cultura: 10, guarda: 10, infra: 12 };
+      // Defesa, Praça e Cultura foram para as Obras nas vilas e saíram da Infraestrutura o Atracadouro, o Guindaste e o Moinho de Vento
+      const want = { moradia: 15, producao: 20, fazenda: 20, negocios: 45, guarda: 10, infra: 12 };
+      ok(!cats.praca && !cats.cultura, 'Praça e Cultura ainda aparecem sem ser governador ou rei');
       for (const k in want) ok(cats[k] === want[k], `${k}: ${cats[k]} construções (meta ${want[k]})`);
       ok(Object.keys(ITEMS).length >= 440, 'itens: ' + Object.keys(ITEMS).length);
       const noArt = Object.keys(ITEMS).filter(k => !itemArt(k)); ok(!noArt.length, 'itens sem ícone: ' + noArt.join(', '));
