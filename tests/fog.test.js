@@ -9,7 +9,7 @@ module.exports = async () => {
       const bad = [], ok = (c, m) => { if (!c) bad.push(m); };
       UI.msg = () => {}; UI.banner = () => {}; P.god = true;
       ok(G.fogOn && Fog.pct() < 15, `jogo novo sem neblina (${Fog.pct()}% visto)`);
-      const p0 = Fog.pct(); Fog.reveal(P.x / TILE + 60, P.y / TILE, 20); ok(Fog.pct() > p0, 'revelar não clareou');
+      const seenN = () => G.fog.reduce((a, v) => a + v, 0), p0 = seenN(); Fog.reveal(P.x / TILE + 90, P.y / TILE, 20); ok(seenN() > p0, 'revelar não clareou');
       ok(Fog.seen(Math.floor(P.x / TILE), Math.floor(P.y / TILE)), 'o lugar do herói não está visto');
       ok(MapView.places().length < 7 + World.villages.length, 'a lista do mapa mostra lugares nunca vistos');
       // mapa do tesouro

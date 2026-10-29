@@ -6,7 +6,7 @@
 //  • 📜 Carta do Reino (correio, observatório e prefeitura): clareia todo o território do reino onde foi comprada.
 // Jogos salvos de antes da neblina continuam com o mapa todo à vista.
 const FOG_CELL = 4;      // blocos por casa da neblina
-const FOG_R = 26;        // raio (em blocos) do que se vê em volta do herói (no barco e a cavalo, mais)
+const FOG_R = 52;        // raio (em blocos) do que se vê em volta do herói (no barco e a cavalo, mais)
 
 const Fog = {
   cv: null, g: null, n: 0, W: 0, H: 0, t: 0,
@@ -45,7 +45,7 @@ const Fog = {
   update(dt) {
     if (!this.on() || G.place || !G.fog) return;
     this.t -= dt; if (this.t > 0) return; this.t = 0.25;
-    const r = FOG_R + (P.sailing ? 12 : P.mounted ? 6 : 0) + (Season.idx() === 3 ? -4 : 0);
+    const r = FOG_R + (P.sailing ? 24 : P.mounted ? 12 : 0) + (Season.idx() === 3 ? -8 : 0);
     if (this.reveal(P.x / TILE, P.y / TILE, r)) this.dirty = true;
   },
   // por cima do mapa: o escuro do que não foi visto (bordas suaves)

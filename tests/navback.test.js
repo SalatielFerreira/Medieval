@@ -1,5 +1,5 @@
 // Botão Voltar das janelas: só conta a troca de janela (ações dentro da mesma janela não viram passos),
-// o círculo da neblina no dobro do tamanho e a barba na frente do braço.
+// o círculo da neblina quatro vezes maior que o original e a barba na frente do braço.
 'use strict';
 const { open } = require('./harness');
 module.exports = async () => {
@@ -20,7 +20,7 @@ module.exports = async () => {
       UI.showInventory(); UI.showCrafting(); UI.showInventory(); ok(UI.hist.length === 0, 'voltar à janela do caminho acumulou passos');
       UI.close();
       // neblina: o raio dobrou
-      ok(FOG_R === 26, `o raio da neblina é ${FOG_R}`);
+      ok(FOG_R === 52, `o raio da neblina é ${FOG_R}`);
       return out;
     });
     fails.push(...r);
