@@ -12,7 +12,8 @@ module.exports = async () => {
       UI.showBuild(); UI.close();
       const cats = Object.fromEntries(UI.buildCats.map(c => [c[0], c[3].length]));
       // Defesa, Praça e Cultura foram para as Obras nas vilas e saíram da Infraestrutura o Atracadouro, o Guindaste e o Moinho de Vento
-      const want = { moradia: 15, producao: 20, fazenda: 20, negocios: 45, guarda: 10, infra: 12 };
+      const want = { moradia: 9, producao: 20, fazenda: 20, negocios: 45, guarda: 7, infra: 10 };
+      ok(!UI.buildCats.flatMap(c => c[3]).some(k => BR.OUT.includes(k) || BR.INFRA_OUT.includes(k)), 'construção retirada ainda aparece no menu');
       ok(!cats.praca && !cats.cultura, 'Praça e Cultura ainda aparecem sem ser governador ou rei');
       for (const k in want) ok(cats[k] === want[k], `${k}: ${cats[k]} construções (meta ${want[k]})`);
       ok(Object.keys(ITEMS).length >= 440, 'itens: ' + Object.keys(ITEMS).length);

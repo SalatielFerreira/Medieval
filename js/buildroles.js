@@ -21,7 +21,9 @@ const BR = {
   PRACA: ['well_p', 'fountain', 'statue', 'lamppost', 'bench', 'pergola', 'sundial', 'flagpole_p', 'flowerbed', 'hedge', 'fence'],
   // repetidas com as obras da vila (fica a da vila): poço, chafariz, estátua, lampião, torre de vigia e capela
   DUP: ['well_p', 'fountain', 'statue', 'lamppost', 'watchtower', 'chapel_p'],
-  INFRA_OUT: ['crane', 'windmill', 'dock'],
+  INFRA_OUT: ['crane', 'windmill', 'dock', 'sewer', 'cistern'],
+  // fora do menu (as que você já construiu continuam funcionando)
+  OUT: ['hut', 'tent', 'treehouse', 'longhouse', 'stonetower', 'villa', 'big_chest', 'granary_p', 'icehouse'],
 };
 for (const [k, c] of [['PROD', 'producao'], ['FARM', 'fazenda'], ['CULT', 'cultura'], ['DEF', 'defesa'], ['PRACA', 'praca']]) BR[k] = BR[k].concat((UI.expCats && UI.expCats[c]) || []).filter(t => BUILDINGS[t]);
 
@@ -228,7 +230,7 @@ const BuildRoles = {
     const auth = Urban.hasAny();
     // Praça e decoração e Cultura, fé e treino também são obras da vila: saem da sua base e entram nas Obras
     const obras = cats.find(c => c[0] === 'obras');
-    cats = cats.filter(c => !['defesa', 'praca', 'cultura', 'obras'].includes(c[0])).map(c => c[0] === 'infra' ? [c[0], c[1], c[2], c[3].filter(k => !BR.INFRA_OUT.includes(k))] : c);
+    cats = cats.filter(c => !['defesa', 'praca', 'cultura', 'obras'].includes(c[0])).map(c => [c[0], c[1], c[2], c[3].filter(k => !BR.INFRA_OUT.includes(k) && !BR.OUT.includes(k))]);
     if (auth) {
       // as obras separadas por tipo; as suas de praça, cultura e defesa entram junto (menos as repetidas)
       const civ = obras ? obras[3] : [], used = new Set();
