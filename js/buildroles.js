@@ -21,9 +21,11 @@ const BR = {
   PRACA: ['well_p', 'fountain', 'statue', 'lamppost', 'bench', 'pergola', 'sundial', 'flagpole_p', 'flowerbed', 'hedge', 'fence'],
   // repetidas com as obras da vila (fica a da vila): poço, chafariz, estátua, lampião, torre de vigia e capela
   DUP: ['well_p', 'fountain', 'statue', 'lamppost', 'watchtower', 'chapel_p'],
-  INFRA_OUT: ['crane', 'windmill', 'dock', 'sewer', 'cistern'],
+  INFRA_OUT: ['crane', 'windmill', 'dock', 'sewer', 'cistern', 'relay', 'u:road2', 'u:road3', 'u:road4', 'u:road5'], // também saíram o Posto de Muda (os já construídos continuam) e subir o nível das estradas (o jogo sobe sozinho, conforme a economia)
   // fora do menu (as que você já construiu continuam funcionando)
   OUT: ['hut', 'tent', 'treehouse', 'longhouse', 'stonetower', 'villa', 'big_chest', 'granary_p', 'icehouse'],
+  // fora das Obras (as que você já construiu continuam funcionando): a Barraca de Feira e o Oratório
+  OBRAS_OUT: ['market_stall', 'oratory'],
 };
 for (const [k, c] of [['PROD', 'producao'], ['FARM', 'fazenda'], ['CULT', 'cultura'], ['DEF', 'defesa'], ['PRACA', 'praca']]) BR[k] = BR[k].concat((UI.expCats && UI.expCats[c]) || []).filter(t => BUILDINGS[t]);
 
@@ -101,7 +103,7 @@ const OBRAS_CLASSES = [
   ['faz', '🐄', 'Fazenda e animais', ['c:field', 'c:vgarden2', 'c:vapiary', 'c:vbarley', 'c:vflax', 'c:vorchard', 'c:vhens', 'c:vpasture', 'c:vwood', 'c:vpigs', 'c:vstable', 'c:vgranary', 'c:vcattle']],
   ['praca', '⛲', 'Praça e decoração', ['c:well', 'c:vlamp', 'c:vgarden', 'c:vfountain', 'c:vstatue', 'PRACA']],
   ['cult', '📚', 'Cultura e educação', ['c:vschool', 'c:vuniv', 'library', 'stage', 'observatory', 'c:arena']],
-  ['fe', '⛪', 'Fé', ['c:chapel', 'c:vcross', 'c:vspring', 'c:vmonastery', 'c:vcathedral', 'oratory', 'stone_circle']],
+  ['fe', '⛪', 'Fé', ['c:chapel', 'c:vcross', 'c:vspring', 'c:vmonastery', 'c:vcathedral', 'stone_circle']],
   ['def', '🛡️', 'Defesa e treino', ['c:vgate', 'c:vtower', 'c:vguard', 'DEF', 'training', 'archery', 'tiltyard']],
 ];
 // Produção, Fazenda e animais, Empreendimentos e Baús e estábulo também separados por classe (o que não estiver aqui vai para a última)
@@ -148,23 +150,43 @@ const BuildRoles = {
     for (const r of RECIPES) if (st.includes(r.station) && ITEMS[r.out] && !seen.has(r.out)) { seen.add(r.out); out.push(r.out); }
     return out;
   },
-  // quem cuida da construção de fazenda (anda livre pelo mapa)
-  keeper(s) { return Shops.keeper(s); },
-  // fazenda e animais: a loja do responsável + o que se fazia ali
-  openFarm(s) {
-    const sk = this.shopOf[s.type]; if (!sk) return false;
-    Shops.ensure();
-    const k = this.keeper(s);
-    UI.sel.brFarm = s.id;
-    if (k) UI.showShop(sk, Work.vi(s), k.id);
-    else UI.open(`${SHOPS[sk].icon} ${SHOPS[sk].name}`, `<p class="muted">Ninguém está cuidando deste lugar agora. Um morador da vila mais perto assume logo.</p>${this.farmBar(s)}`, 'brFarm', [s.id]);
-    return true;
+  // ---------------------------------------------------------------- fazenda e animais: só recolher (sem lado de dentro)
+  // o reino que compra a produção: o do chão da construção ou o da vila de reino mais perto
+  realmOf(s) {
+    const x = Math.floor(s.x + s.w / 2), y = Math.floor(s.y + s.h / 2), t = World.inb(x, y) ? World.terr[World.idx(x, y)] : -1;
+    if (t >= 0 && G.civs[t] && !G.civs[t].dead) return t;
+    let b = -1, bd = 1e9; World.villages.forEach(v => { if (!v || v.free || !G.civs[v.civ] || G.civs[v.civ].dead) return; const d = U.dist(x, y, v.x, v.y); if (d < bd) { bd = d; b = v.civ; } });
+    return b;
   },
-  farmBar(s) {
-    const k = this.keeper(s);
-    return `<div class="card br-farm"><div class="sec">${UI.esc(BUILDINGS[s.type] ? BUILDINGS[s.type].name : '')} <span>${k ? `responsável: ${UI.esc(People.full(k))} — anda pelo mapa, mas sempre atende aqui` : 'sem responsável'}</span></div>
-      <div class="act-row"><button class="primary" data-act="brfarm" data-s="${s.id}">🧺 Cuidar do lugar (colher, recolher, animais)</button></div></div>`;
+  // vende o que está guardado pelo preço de mercado; o tesouro do reino paga (o que ele não puder pagar fica guardado)
+  autoSell(s) {
+    const ci = this.realmOf(s), c = G.civs[ci]; if (!c || !s.goods) return 0;
+    let got = 0;
+    for (const k of Object.keys(s.goods)) {
+      if (!ITEMS[k] || !(s.goods[k] > 0)) continue;
+      const pr = Game.price(ci, k).sell, n = Math.min(s.goods[k], Math.floor(Math.max(0, c.treasury) / pr));
+      if (n <= 0) continue;
+      c.treasury -= n * pr; got += n * pr; s.goods[k] -= n; if (!s.goods[k]) delete s.goods[k];
+      if (c.stock[k] !== undefined) c.stock[k] += n;
+    }
+    P.gold += got;
+    return got;
   },
+  farmHtml(s) {
+    const B = BUILDINGS[s.type], g = s.goods || {}, goods = Object.keys(g).filter(k => ITEMS[k] && g[k] > 0), animals = s.type === 'coop' || s.type === 'pen';
+    const rel = this.related(s.type, 'fazenda'), ci = this.realmOf(s);
+    return `<div class="card br-farm"><div class="sec">🧺 Produção guardada <span>${goods.reduce((a, k) => a + g[k], 0)}</span></div>
+      <div class="chips">${goods.length ? goods.map(k => `<span class="chip">${UI.ii(k)} ${g[k]} ${ITEMS[k].name}</span>`).join('') : '<span class="muted">Nada ainda: volte no mês que vem.</span>'}</div>
+      <div class="act-row"><button class="primary" data-act="brcollect" data-s="${s.id}" ${goods.length ? '' : 'disabled'}>🧺 Recolher tudo</button>${animals ? `<button data-act="branimals" data-s="${s.id}">${s.type === 'coop' ? '🐔' : '🐄'} Comprar animais</button>` : ''}</div>
+      <label class="chk"><input type="checkbox" data-act="brauto" data-s="${s.id}" ${s.autosell ? 'checked' : ''}> Vender a produção automaticamente${G.civs[ci] ? ` (preço de mercado de ${CIV_DEFS[ci].short}; o dinheiro vai direto para você)` : ''}</label></div>
+      <div class="card"><div class="sec">${rel[0]}</div><div class="chips">${rel[1].map(k => `<span class="chip">${UI.ii(k)} ${ITEMS[k].name}</span>`).join('')}</div></div>`;
+  },
+};
+// a janela da construção de fazenda: o que está guardado, recolher e vender sozinha
+UI.showFarmBld = function (sid) {
+  const s = World.structs[sid]; if (!s || s.removed) { this.close(); return; }
+  const B = BUILDINGS[s.type];
+  this.open(B ? B.name : s.type, BuildRoles.farmHtml(s), 'showFarmBld', [sid], 'Recolha a produção ou deixe que ela se venda sozinha');
 };
 
 {
@@ -206,7 +228,8 @@ const BuildRoles = {
   Shops.isShop = function (s) {
     if (!s || s.removed || s.hidden) return false;
     if (BR.PROD.includes(s.type) && s.owner === 'player') return false;
-    // fazenda (sua) e cultura (sua) sem planta própria: responsável da vila mais perto
+    // fazenda e animais (sua): ninguém cuida, você recolhe; cultura (sua) sem planta própria: responsável da vila mais perto
+    if (BR.FARM.includes(s.type) && s.owner === 'player') return false;
     if (BuildRoles.shopOf[s.type] && s.owner === 'player' && !WORKPLACES[s.type]) return Work.vi(s) >= 0;
     if (s.type === 'chapel') return s.village !== undefined && Work.vi(s) >= 0;
     return is0(s);
@@ -229,23 +252,17 @@ const BuildRoles = {
   const ta0 = UI.talkAct.bind(UI);
   UI.talkAct = function (d) {
     const p = d && d.op === 'shopnpc' ? People.get(+d.id) : null, s = p && p.shop && Shops.byKey(p.shop), sk = s && BuildRoles.shopOf[s.type];
-    if (sk) { if (BR.FARM.includes(s.type)) UI.sel.brFarm = s.id; this.showShop(sk, Work.vi(s), p.id); return; }
+    if (sk) { this.showShop(sk, Work.vi(s), p.id); return; }
     return ta0(d);
   };
-  // ---------------------------------------------------------------- interagir com a fazenda: a loja (com o que se fazia ali)
+  // ---------------------------------------------------------------- interagir com a fazenda: recolher
   const us0 = Game.useStruct.bind(Game);
-  BuildRoles.oldUse = us0;
   Game.useStruct = function (s) {
-    if (s && s.owner === 'player' && BR.FARM.includes(s.type) && !G.place && BuildRoles.openFarm(s)) return;
+    if (s && s.owner === 'player' && BR.FARM.includes(s.type) && !G.place) { UI.showFarmBld(s.id); return; }
     return us0(s);
   };
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
-    if (fn === 'showShop' && this.sel.brFarm !== undefined) {
-      const s = World.structs[this.sel.brFarm];
-      if (s && !s.removed && args && args[0] === BuildRoles.shopOf[s.type]) body = BuildRoles.farmBar(s) + body;
-      else this.sel.brFarm = undefined;
-    } else if (fn !== 'brFarm') this.sel.brFarm = undefined;
     // a Estrebaria vende cavalos e carroças
     if (fn === 'showShop' && args && args[0] === 'stable') {
       body = `<div class="card br-horse"><div class="sec">🐴 Cavalos e carroças</div><div class="act-row">
@@ -258,7 +275,13 @@ const BuildRoles = {
   };
   const a0 = UI.act.bind(UI);
   UI.act = function (a, d) {
-    if (a === 'brfarm') { const s = World.structs[+d.s]; UI.sel.brFarm = undefined; UI.close(); if (s) BuildRoles.oldUse(s); return; }
+    if (a === 'brcollect') { const s = World.structs[+d.s]; if (s) { Biz.collect(s); Sound.play('pickup'); this.showFarmBld(s.id); } return; }
+    if (a === 'branimals') { this.showAnimals(+d.s); return; }
+    if (a === 'brauto') {
+      const s = World.structs[+d.s]; if (!s) return; s.autosell = !s.autosell;
+      if (s.autosell) { const g = BuildRoles.autoSell(s); if (g) { this.msg(`🪙 Produção vendida: você recebeu ${g} 🪙.`, 'gold'); Sound.play('coin'); } }
+      this.showFarmBld(s.id); return;
+    }
     return a0(a, d);
   };
   // ---------------------------------------------------------------- menu Construção
@@ -284,7 +307,7 @@ const BuildRoles = {
     }
     if (auth) {
       // uma categoria só (Obras nas vilas), com a lista em classes: cada classe do mais fácil ao mais difícil
-      const civ = new Set(obras ? obras[3] : []), have = k => (k.startsWith('c:') ? civ.has(k) : !!BUILDINGS[k]) && !BR.DUP.includes(k), used = new Set(), list = [];
+      const civ = new Set(obras ? obras[3] : []), have = k => (k.startsWith('c:') ? civ.has(k) : !!BUILDINGS[k]) && !BR.DUP.includes(k) && !BR.OBRAS_OUT.includes(k), used = new Set(), list = [];
       const classes = OBRAS_CLASSES.map(([k, ic, name, keys]) => [k, ic, name, keys.flatMap(x => x === 'PRACA' ? BR.PRACA : x === 'DEF' ? BR.DEF : [x]).filter(have)]);
       for (const c of classes) c[3].forEach(x => used.add(x));
       const rest = [...civ].filter(x => !used.has(x) && have(x)); classes.find(c => c[0] === 'serv')[3].push(...rest);
@@ -386,10 +409,24 @@ Object.assign(BuildRoles, {
     const tags = D ? [`📐 ${D.w}×${D.h}`, solid ? '🧱 sólida' : '👣 dá para andar por cima', `🏠 você tem ${this.owned(k)}`] : [];
     const req = b.cost ? Object.entries(b.cost).map(([c, n]) => { const have = Inv.count(c); return `<div class="req-row"><span>${UI.ii(c)}</span><span>${ITEMS[c].name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`; }).join('') : '';
     const rel = cat ? this.related(k, cat[0]) : null;
+    // empreendimentos: o lucro estimado por mês (2 funcionários) e em quanto tempo se paga
+    const pf = cat && cat[0] === 'negocios' && typeof UIP !== 'undefined' ? UIP.bizProfit(k) : null;
+    const prof = pf ? `<div class="br-profit"><span>${pf.net > 0 ? '📈' : '📉'}</span><span><b>Lucro estimado:</b> <b class="${pf.net > 0 ? 'ok' : 'bad'}">${pf.net} 🪙</b> por mês${pf.months ? ` · se paga em ~${pf.months} ${pf.months === 1 ? 'mês' : 'meses'}` : ''}</span></div>` : '';
     const chip = i => typeof i === 'string' ? `<span class="chip">${UI.ii(i)} ${ITEMS[i].name}</span>` : `<span class="chip">${i[0]} ${UI.esc(i[1])}</span>`;
     return `<div class="dt-head"><div class="dt-ic">${b.icon}</div><div><div class="dt-name">${b.name}</div><div class="dt-cat">${cat ? cat[2] : b.sub}${kd ? ` · ${kd[1]} ${kd[2]}` : ''}</div></div></div>
       ${tags.length ? `<div class="chips">${tags.map(x => `<span class="chip">${x}</span>`).join('')}</div>` : !b.cost ? `<p class="dt-desc">${b.desc || ''}</p>` : ''}
       ${req ? `<div><div class="sec">Custo</div><div class="req">${req}</div></div>` : ''}
+      ${prof}
       ${rel ? `<div class="br-rel"><div class="sec">${rel[0]}${rel[1].length ? ` <span>${rel[1].length}</span>` : ''}</div>${rel[1].length ? `<div class="chips">${rel[1].map(chip).join('')}</div>` : `<small class="muted">${rel[2]}</small>`}</div>` : ''}`;
   },
 });
+// todo mês, depois da produção: o que está marcado para vender sozinho é vendido
+{
+  const et0 = Game.econTick.bind(Game);
+  Game.econTick = function (...a) {
+    const r = et0(...a); let g = 0;
+    for (const s of World.structs) if (s && s.autosell && s.owner === 'player' && !s.removed && BR.FARM.includes(s.type)) g += BuildRoles.autoSell(s);
+    if (g) this.note(`🧺 Produção da fazenda e dos animais vendida sozinha: +${g} 🪙.`);
+    return r;
+  };
+}

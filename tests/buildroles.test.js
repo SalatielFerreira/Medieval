@@ -22,10 +22,10 @@ module.exports = async () => {
       UI.sel.bcat = 'producao'; UI.sel.build = 'forge'; UI.showBuild(); ok(html().includes('Pode produzir'), 'a ficha da produção não mostra o que produz');
       // fazenda
       for (const k of BR.FARM) {
-        const s = at(k); Shops.ensure(); const kp = Shops.keeper(s);
-        ok(!Places.def(s), `${k}: fazenda com lado de dentro`); ok(kp, `${k}: fazenda sem responsável`);
-        if (kp) ok(!Shops.workOf(kp), `${k}: o responsável fica parado no imóvel`);
-        Game.useStruct(s); ok(UI.cur && UI.cur.fn === 'showShop' && html().includes('Cuidar do lugar'), `${k}: não abriu a loja com o que se fazia ali`);
+        // só recolher (com a opção de vender sozinho): sem lado de dentro e sem responsável
+        const s = at(k); Shops.ensure();
+        ok(!Places.def(s), `${k}: fazenda com lado de dentro`); ok(!Shops.keeper(s), `${k}: fazenda ainda tem responsável`);
+        Game.useStruct(s); ok(UI.cur && UI.cur.fn === 'showFarmBld' && html().includes('Recolher tudo') && html().includes('automaticamente'), `${k}: não abriu a janela de recolher`);
         UI.close(); World.removeStruct(s);
       }
       // cultura

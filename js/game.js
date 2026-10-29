@@ -1746,7 +1746,7 @@ const Game = {
     const gold0 = P.gold, inv0 = Object.assign({}, P.inv);
     this.ledger = [];
     const farms = World.structs.filter(s => s.owner === 'player' && s.type === 'farm' && !s.removed).length, crop = Season.cur().farm;
-    if (farms && crop) { Inv.add('wheat', farms * crop); this.note(`🌾 Suas fazendas produziram ${farms * crop} de trigo.`); }
+    if (farms && crop) { for (const s of World.structs) if (s.owner === 'player' && s.type === 'farm' && !s.removed) { s.goods = s.goods || {}; s.goods.wheat = (s.goods.wheat || 0) + crop; } this.note(`🌾 Suas fazendas produziram ${farms * crop} de trigo (recolha nelas).`); }
     else if (farms) this.note('❄️ No inverno as fazendas não produzem.');
     const allies = this.allies(), caps = G.people.filter(p => p.alive && p.capanga);
     const upkeep = caps.length * 4; // seguidores e guardas recebem soldo

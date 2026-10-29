@@ -15,6 +15,7 @@ module.exports = async () => {
       ok(list.filter(k => k.startsWith('c:')).length === 70, `obras nas vilas: ${list.filter(k => k.startsWith('c:')).length} (meta 70)`);
       ok(list.filter(k => BR.DEF.includes(k)).length === 10, 'a Defesa não está nas obras');
       ok(!list.some(k => BR.DUP.includes(k)), 'ainda há obra repetida: ' + list.filter(k => BR.DUP.includes(k)).join());
+      ok(!list.includes('market_stall') && !list.includes('oratory'), 'a Barraca de Feira ou o Oratório ainda estão nas Obras');
       ok(new Set(list).size === list.length, 'obra repetida na lista');
       const nm = k => k.startsWith('c:') ? CIVIC[k.slice(2)].name : BUILDINGS[k].name, all = list.map(nm); ok(new Set(all).size === all.length, 'nome repetido nas obras: ' + all.filter((n, i) => all.indexOf(n) !== i).join());
       ok(cls.every(Boolean), 'obra sem classe');

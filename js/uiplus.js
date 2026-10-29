@@ -164,14 +164,20 @@ const UIP = {
     return h;
   },
   // ---------------------------------------------------------------- 5. o que uma construção rende
+  // lucro estimado de um empreendimento por mês (2 funcionários): produção vendida − salários − insumos
+  bizProfit(k) {
+    const d = BIZ_TYPES[k], B = BUILDINGS[k]; if (!d) return null;
+    const out = d.out || {}, gross = Object.entries(out).reduce((a, [i, n]) => a + (ITEMS[i] ? ITEMS[i].price * n * 0.6 : 0), 0) * 2 + (d.gold || 0) * 2 * 1.3;
+    const wages = d.slots * d.wage, inputs = typeof BIZ_INPUTS !== 'undefined' && BIZ_INPUTS[k] ? Object.entries(BIZ_INPUTS[k]).reduce((a, [i, n]) => a + ITEMS[i].price * n * 2 * 0.8, 0) : 0;
+    const net = Math.round(gross - wages - inputs), val = B ? Order.costValue(B.cost) : 0;
+    return { wages, inputs, net, months: net > 0 ? Math.max(1, Math.ceil(val / net)) : null };
+  },
   buildYield(k) {
     const B = BUILDINGS[k]; if (!B) return '';
     const val = Order.costValue(B.cost), rows = [];
     const ex = typeof EXPB !== 'undefined' && EXPB[k] ? EXPB[k].fn : null;
     if (BIZ_TYPES[k]) {
-      const d = BIZ_TYPES[k], out = d.out || {}, gross = Object.entries(out).reduce((a, [i, n]) => a + (ITEMS[i] ? ITEMS[i].price * n * 0.6 : 0), 0) * 2 + (d.gold || 0) * 2 * 1.3;
-      const wages = d.slots * d.wage, inputs = typeof BIZ_INPUTS !== 'undefined' && BIZ_INPUTS[k] ? Object.entries(BIZ_INPUTS[k]).reduce((a, [i, n]) => a + ITEMS[i].price * n * 2 * 0.8, 0) : 0;
-      const net = Math.round(gross - wages - inputs);
+      const d = BIZ_TYPES[k], out = d.out || {}, { wages, inputs, net } = this.bizProfit(k);
       rows.push(['📦', 'Produz', Object.entries(out).map(([i, n]) => `${n * 2} ${ITEMS[i] ? ITEMS[i].name : i}`).join(', ') + (d.gold ? `${Object.keys(out).length ? ' · ' : ''}~${Math.round(d.gold * 2.6)} 🪙 de serviço` : '') + ' por mês (2 funcionários)']);
       if (inputs) rows.push(['🧺', 'Consome', Object.entries(BIZ_INPUTS[k]).map(([i, n]) => `${n * 2} ${ITEMS[i].name}`).join(', ') + ` (~${Math.round(inputs)} 🪙)`]);
       rows.push(['👷', 'Salários', `${wages} 🪙 por mês`]);

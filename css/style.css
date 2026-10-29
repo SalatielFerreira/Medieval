@@ -1733,6 +1733,8 @@ body.small .ph { border-radius: 0 !important; } /* barra do título também sem 
 .bld-dt .cdt-in { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; zoom: 1 !important; }
 .bld-dt .cdt-in > * { flex: none; }
 .bld-dt .br-rel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.bld-dt .br-profit { display: flex; gap: 8px; align-items: center; padding: 7px 10px; font-size: 13px; background: rgba(0, 0, 0, 0.28); border-radius: 8px; }
+.br-farm .chk { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; }
 .bld-dt .br-rel .chips { overflow-y: auto; min-height: 0; align-content: flex-start; padding-right: 2px; }
 
 /* telas pequenas: categorias numa barra vertical só de ícones, todas à vista */

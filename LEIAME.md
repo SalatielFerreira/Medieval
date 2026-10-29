@@ -97,6 +97,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: fazenda que se vende sozinha e menu mais enxuto
+
+- **Fazenda e animais só para recolher:** ao interagir abre a produção guardada, o botão Recolher tudo e a opção de vender a produção automaticamente (preço de mercado do reino do lugar; o tesouro dele paga). No Galinheiro e no Curral também dá para comprar animais. Essas construções não têm mais responsável. A Fazenda de trigo agora guarda a colheita nela, como as outras.
+- **Lucro estimado** na ficha dos empreendimentos (por mês, com 2 funcionários, e em quanto tempo se paga).
+- **Saíram do menu:** a Barraca de Feira e o Oratório (Obras), o Posto de Muda e as reformas de estrada (Infraestrutura: o próprio jogo melhora as estradas conforme a economia). Os que você já construiu continuam funcionando.
+
 ## Novidades: ficha das construções no mesmo padrão e janela mais rápida
 
 - **Ficha igual em todas as janelas:** ícone, nome, janela e classe; tamanho, se é sólida e quantas você tem; o custo; e os produtos ligados ao imóvel — em Produção o que dá para fabricar, em Fazenda e animais o que se colhe ou recolhe, em Empreendimentos o que o seu estabelecimento produz e vende, em Baús e estábulo e nas Obras o que se compra ali. Saiu o texto de descrição. A letra tem sempre o mesmo tamanho e só a lista de produtos rola quando é comprida.
