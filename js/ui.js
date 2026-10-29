@@ -103,25 +103,18 @@ const UI = {
     clock.innerHTML = `
       <div class="clk-top"><span class="clk-ic" id="clkIcon"></span><span class="clk-txt"><b id="clkDay">Dezembro</b><small id="clkPhase"></small></span><span class="clk-pie" id="clkPie"><i></i></span></div>
       <div class="clk-zone" id="clkZone"></div>`;
-    // bolsos embaixo da data (telas grandes): um botão para cada bolso com item; clicar usa o item
-    let pk = document.getElementById('pockets');
-    if (!pk) { pk = document.createElement('div'); pk.id = 'pockets'; clock.after(pk); }
-    pk.innerHTML = [0, 1].map(q => `<button class="pk-b glass hidden" data-pk="${q}" id="pk${q}"><span class="pk-ic" id="pkIc${q}"></span><span class="pk-tx"><b id="pkN${q}"></b><small id="pkS${q}"></small></span><span class="pk-n" id="pkC${q}"></span></button>`).join('');
-    pk.addEventListener('click', e => { const b = e.target.closest('[data-pk]'); if (b && G.state === 'play' && !G.paused) { Game.useQuick(+b.dataset.pk); this.updateHUD(); } });
+    document.getElementById('pockets')?.remove();
     const quick = document.getElementById('quick');
     quick.classList.add('glass');
     quick.innerHTML = `<div class="q-row">
         <div class="q-tool" data-qt="1" id="qToolBox" title="Ferramenta em mãos — clique ou Q para trocar"><span class="q-ic" id="qToolIc"></span><b id="qToolName"></b><em id="qToolSub"></em></div>
         <div class="q-load" id="qLoadBox" title="Carga da mochila"><span id="qLoadT"></span><div class="q-lbar"><i id="qLoad"></i></div></div></div>
       <div class="q-row">
-        <div class="q-slots" title="Bolsos: teclas ${Keys.label('quick1')} e ${Keys.label('quick2')} (arraste comidas e ferramentas para cá na Mochila)">${[0, 1].map(q => `<div class="q-slot" data-qs="${q}"><span class="q-ic" id="qs${q}"></span><span class="q-n" id="qn${q}"></span></div>`).join('')}</div>
         <div class="q-ord" data-qo="1" id="qOrdBox" title="Ordem aos capangas — clique ou T para trocar"><b id="qOrder"></b></div></div>`;
     quick.addEventListener('click', e => {
       if (G.state !== 'play' || G.paused) return;
       if (e.target.closest('[data-qt]')) Game.cycleTool();
       if (e.target.closest('[data-qo]')) Orders.cycle();
-      const qs = e.target.closest('[data-qs]');
-      if (qs) Game.useQuick(+qs.dataset.qs);
     });
     const tb = document.getElementById('toolbar');
     tb.classList.add('glass');
@@ -336,21 +329,6 @@ const UI = {
     txt('qToolName', tit ? tit.name : 'Mãos livres');
     { const tb = $('qToolBox'), tt = `${tit ? tit.name + ' (' + TOOL_NAMES[tit.tool] + ' · ' + TIER_NAMES[tit.tier] + ')' : 'Mãos livres'} — clique ou Q para trocar`; if (tb.title !== tt) tb.title = tt; }
     txt('qToolSub', tit ? `${TOOL_NAMES[tit.tool]} · ${TIER_NAMES[tit.tier]}` : 'Sem ferramenta');
-    for (let q = 0; q < 2; q++) {
-      const k = P.quick[q], it = k && ITEMS[k], b = $('pk' + q);
-      if (b) {
-        b.classList.toggle('hidden', !it);
-        if (it) {
-          html('pkIc' + q, UI.ii(it)); txt('pkN' + q, it.name); txt('pkC' + q, it.tool ? '' : '×' + Inv.count(k));
-          txt('pkS' + q, it.tool ? (P.equip.tool === k ? 'em mãos' : 'empunhar') : it.food || it.heal ? (it.food ? 'comer' : 'usar') : 'usar');
-          const tt = `Bolso ${q + 1}: ${it.name} — clique ou tecla ${Keys.label('quick' + (q + 1))}`; if (b.title !== tt) b.title = tt;
-          b.classList.toggle('on', !!it.tool && P.equip.tool === k);
-        }
-      }
-      html('qs' + q, k ? UI.ii(k) : '');
-      txt('qn' + q, k ? Inv.count(k) : '');
-      $('qs' + q).parentNode.classList.toggle('empty', !k || Inv.count(k) <= 0);
-    }
   },
 
   // ------------------------------------------------------------ painéis
@@ -374,15 +352,13 @@ const UI = {
     if (!S.inv || !P.inv[S.inv]) S.inv = keys[0] || null;
     // casas fixas como numa mochila de verdade: cada item fica onde você colocou (as vazias também aparecem)
     if (!S.cell || Inv.baseOf(S.cell) !== S.inv || !Inv.cellN(S.cell)) S.cell = S.inv;
-    // os itens nos bolsos continuam na mochila (o bolso é um atalho): a marquinha B1/B2 mostra em qual
-    const cells = Inv.bag().map((c, i) => { const k = c && Inv.baseOf(c), it = k && ITEMS[k], q = it && c === k ? P.quick.indexOf(k) : -1;
-      return it ? `<div class="tile ${S.cell === c ? 'on' : ''}" data-act="isel" data-k="${k}" data-c="${c}" data-i="${i}" data-drag="inv" data-drop="tile" data-tip="${this.esc(it.name)}">${UI.ii(it)}<span class="tn">${Inv.cellN(c)}</span>${q >= 0 ? `<span class="tq">B${q + 1}</span>` : ''}</div>`
+    const cells = Inv.bag().map((c, i) => { const k = c && Inv.baseOf(c), it = k && ITEMS[k];
+      return it ? `<div class="tile ${S.cell === c ? 'on' : ''}" data-act="isel" data-k="${k}" data-c="${c}" data-i="${i}" data-drag="inv" data-drop="tile" data-tip="${this.esc(it.name)}">${UI.ii(it)}<span class="tn">${Inv.cellN(c)}</span></div>`
         : `<div class="tile empty" data-drop="tile" data-i="${i}"></div>`; }).join('');
     // os botões mudam conforme o item escolhido
     const k = S.inv, it = k && ITEMS[k], eq = k && eqOf(k);
     const cellN = it ? Inv.cellN(S.cell || k) : 0, canSplit = it && cellN >= 2 && !eq;
     const use = !it ? '' : it.food || it.heal ? (it.food ? 'Comer' : 'Usar') : it.slot ? (eq ? 'Tirar' : it.slot === 'tool' ? 'Empunhar' : 'Equipar') : it.seed ? 'Plantar' : it.use ? 'Usar' : '';
-    const pocketOk = it && !!(it.food || it.heal || it.tool), inQ = it ? P.quick.indexOf(k) : -1;
     const xpPct = U.clamp(P.xp / Game.xpNext() * 100, 0, 100);
     const ab = (act, ic, label, ok, cls, extra) => `<button class="ldi-a ${cls || ''}" data-act="${act}" ${extra || ''} ${ok ? '' : 'disabled'}><span class="ldi-ai">${ic}</span><span>${label}</span></button>`;
     const body = `<div class="ldi">
@@ -391,7 +367,6 @@ const UI = {
         <div class="ldi-act">
           <div class="ldi-item">${it ? `<span class="ldi-iic">${UI.ii(it)}</span><span class="ldi-itx"><b>${this.esc(it.name)}</b><small>${cellN}${cellN !== Inv.count(k) ? ` de ${Inv.count(k)}` : ''} · ${this.esc(it.cat)}${this.itemDesc(it) ? ' · ' + this.itemDesc(it) : ''}</small></span>` : '<span class="muted">Toque num item para ver o que dá para fazer com ele</span>'}</div>
           <div class="ldi-btns">${ab('iuse', '✋', use || 'Sem uso direto', !!use, 'primary')}
-            ${pocketOk ? [0, 1].map(q => ab('ipocket', inQ === q ? '✓' : '👝', inQ === q ? `No bolso ${q + 1}` : `Bolso ${q + 1}`, true, inQ === q ? 'on' : '', `data-q="${q}"`)).join('') : ''}
             ${ab('isplit', '➗', 'Dividir', canSplit, '', `title="Divide a pilha em duas metades (${Math.ceil(cellN / 2)} e ${Math.floor(cellN / 2)})"`)}
             <button class="ldi-a ldi-trash" data-act="itrash" ${it ? '' : 'disabled'} title="Descartar">${icon('trash')}<span>Descartar</span></button></div>
         </div>
@@ -511,7 +486,6 @@ const UI = {
     const k = d.k, it = ITEMS[k];
     const where = t ? t.drop : null;
     const fits = (x, slot) => ITEMS[x].slot === slot || (ITEMS[x].slot === 'tool' && slot === 'tool2');
-    const pocketOk = x => !!(ITEMS[x].food || ITEMS[x].heal || ITEMS[x].tool);
     const bagAt = t && where === 'tile' ? +t.i : null;
     const eqSlot = Object.keys(P.equip).find(s => P.equip[s] === k);
     if (where === 'trash') { this.discard(k, d.c); return; }
@@ -528,9 +502,6 @@ const UI = {
       if (where === 'equip') {
         if (!fits(k, t.slot)) { this.msg(it.slot ? `${it.name} vai no espaço ${EQUIP_SLOTS.find(x => x.key === it.slot).name}.` : `${it.name} não é equipável.`, 'bad'); return; }
         const old = P.equip[t.slot]; Game.equip(k, t.slot); b[from] = old || null; Sound.play('ui');
-      } else if (where === 'quick') {
-        if (!pocketOk(k)) { this.msg('Nos bolsos vão comidas, remédios e ferramentas.', 'bad'); return; }
-        const old = P.quick[+t.q]; Game.setQuick(+t.q, k); b[from] = old || null;
       } else if (bagAt !== null && bagAt !== from) { const other = b[bagAt]; b[bagAt] = cell; b[from] = other || null; this.sel.cell = cell; }
     } else if (d.kind === 'eq') {
       if (where === 'equip') {
@@ -538,23 +509,7 @@ const UI = {
         if (!fits(k, t.slot)) { this.msg(`${it.name} não vai nesse espaço.`, 'bad'); return; }
         const other = P.equip[t.slot]; P.equip[eqSlot] = other && fits(other, eqSlot) ? other : null; P.equip[t.slot] = k;
         if (other && !fits(other, eqSlot)) Inv.toBag(other);
-      } else if (where === 'quick') {
-        if (!pocketOk(k)) { this.msg('Nos bolsos vão comidas, remédios e ferramentas.', 'bad'); return; }
-        const old = P.quick[+t.q]; P.equip[eqSlot] = null; Game.setQuick(+t.q, k); if (old) Inv.toBag(old);
       } else { P.equip[eqSlot] = null; Inv.toBag(k, bagAt); this.msg(`Você tirou ${it.name}.`); }
-    } else if (d.kind === 'quick') {
-      const from = P.quick.indexOf(k);
-      if (where === 'quick') { const to = +t.q, other = P.quick[to]; P.quick[to] = k; P.quick[from] = other || null; }
-      else if (where === 'equip') {
-        if (!fits(k, t.slot)) { this.msg(`${it.name} não vai nesse espaço.`, 'bad'); return; }
-        const old = P.equip[t.slot]; P.quick[from] = null; Game.equip(k, t.slot); if (old) Inv.toBag(old);
-      } else {
-        // de volta para a mochila; se a casa tem outro item que cabe no bolso, eles trocam
-        P.quick[from] = null;
-        const b = Inv.bag(), other = bagAt !== null ? b[bagAt] : null;
-        if (other && pocketOk(other)) { b[bagAt] = k; P.quick[from] = other; }
-        else Inv.toBag(k, bagAt);
-      }
     }
     this.sel.inv = k;
     this.refresh();
@@ -2546,8 +2501,6 @@ const UI = {
       case 'open': this[d.fn](); return;
       case 'equip': Game.equip(d.k); break;
       case 'unequip': P.equip[d.k] = null; break;
-      case 'quick': Game.setQuick(+d.q, d.k); break;
-      case 'unquick': P.quick[+d.q] = null; break;
       case 'eat': Game.eat(d.k); break;
       case 'craft': Game.craft(+d.r, +d.n); break;
       case 'build': this.close(); Game.startPlacing(d.k); return;
@@ -2607,8 +2560,6 @@ const UI = {
         if (n >= 1 && Inv.split(cell, n)) { Sound.play('ui'); this.msg(`Pilha dividida: ${have - n} e ${n}.`); }
         break;
       }
-      // bolso: o item fica na mochila e o bolso vira o atalho (tocar de novo tira do bolso)
-      case 'ipocket': { const k = this.sel.inv, q = +d.q; if (!k) break; if (P.quick[q] === k) P.quick[q] = null; else Game.setQuick(q, k); Sound.play('ui'); break; }
       // botão "Usar" da mochila do celular: come, equipa/tira ou escolhe a semente
       case 'iuse': {
         const k = this.sel.inv, it = k && ITEMS[k]; if (!it) break;

@@ -329,7 +329,7 @@ const Game = {
     this.resetPlayer(s.player.x, s.player.y);
     Object.assign(P, s.player);
     P.mounted = false; P.hx = P.x - 30; P.hy = P.y;
-    P.quick = [(P.quick || [])[0] || null, (P.quick || [])[1] || null];
+    P.quick = [null, null]; // o bolso saiu do jogo (jogos salvos antigos chegam com ele vazio)
     P.equip = Object.assign({ weapon: null, tool: null, tool2: null, head: null, torso: null, legs: null, feet: null, ring: null }, P.equip || {});
     P.bag = P.bag || []; P.stacks = P.stacks || {}; P.stackSeq = P.stackSeq || 0;
     if (typeof InvPlus !== 'undefined') InvPlus.clean(); // itens que saíram do jogo (jogo salvo antigo)
@@ -412,13 +412,6 @@ const Game = {
     if (P.fishing) P.fishing = null;
     UI.msg('Em mãos: ' + (P.equip.tool ? ITEMS[P.equip.tool].name : 'nenhuma ferramenta'));
   },
-  useQuick(slot) {
-    const k = P.quick[slot];
-    if (!k) { UI.msg(`O espaço ${slot + 1} da algibeira está vazio. Use o inventário (I) para guardar itens nele.`); return; }
-    if (Inv.count(k) <= 0) { UI.msg(`Acabou: ${ITEMS[k].name}.`, 'bad'); return; }
-    if (ITEMS[k].tool) { this.wield(k); return; }
-    this.eat(k);
-  },
   // empunha a ferramenta (sem aviso: o ícone na mão já mostra)
   wield(k) { if (P.equip.tool !== k) { if (P.equip.tool2 === k) P.equip.tool2 = P.equip.tool; P.equip.tool = k; if (P.fishing) P.fishing = null; } },
   // dá para usar esta ferramenta agora? (árvore ou rocha por perto, terra para arar, água para pescar/encher)
@@ -447,11 +440,6 @@ const Game = {
     if (this.nearestInteract() || (G.place && Places.nearFurn())) return true;
     if (G.ents.some(c => c.kind === 'caravan' && !c.dead && !c.hostileToPlayer && U.dist(c.x, c.y, P.x, P.y) < 2.4 * TILE)) return true;
     return !!this.boatAction();
-  },
-  setQuick(slot, k) {
-    for (let s = 0; s < P.quick.length; s++) if (P.quick[s] === k) P.quick[s] = null;
-    for (const s in P.equip) if (P.equip[s] === k) P.equip[s] = null;
-    P.quick[slot] = k;
   },
   gainXp(n) {
     if (Farm.has('wisdom')) n = Math.ceil(n * 1.3);
@@ -546,7 +534,6 @@ const Game = {
     else if (code === 'KeyG') Sieges.deploy(Inv.count('ram') > 0 ? 'ram' : 'catapult');
     else if (code === 'KeyT') Orders.cycle();
     else if (code === 'KeyJ') UI.toggle('showDiary');
-    else if (/^Digit[1-2]$/.test(code)) this.useQuick(+code.slice(5) - 1);
   },
 
   // ================================================================ atualização

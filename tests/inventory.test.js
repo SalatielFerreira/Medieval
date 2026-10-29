@@ -14,8 +14,9 @@ module.exports = async () => {
       ok(html().includes('data-slot="ring"'), 'falta o espaço do anel');
       const slots = [...UI.panel.querySelectorAll('.pd-col')[1].querySelectorAll('[data-slot]')].map(e => e.dataset.slot); ok(slots.indexOf('ring') === slots.indexOf('feet') + 1, 'o anel não fica embaixo das botas');
       ok(UI.panel.querySelector('.tile[data-tip]'), 'o item não tem o balão com o nome');
-      // bolso: atalho, o item continua na mochila
-      UI.act('ipocket', { q: '0' }); ok(P.quick[0] === 'bread' && Inv.bag().includes('bread') && html().includes('B1'), 'o bolso tirou o item da mochila');
+      // o bolso saiu do jogo: nem botão na mochila, nem atalho ao lado do relógio
+      ok(!UI.panel.querySelector('[data-act="ipocket"]') && !/Bolso \d/.test(html()), 'a mochila ainda tem os botões de bolso');
+      ok(!document.getElementById('pockets') && typeof Game.useQuick === 'undefined', 'o bolso ainda existe no jogo');
       // dividir automático
       UI.act('isplit', {}); const parts = Inv.bag().filter(c => c && Inv.baseOf(c) === 'bread').map(c => Inv.cellN(c)).sort().join(); ok(parts === '3,4', 'dividir 7 não deu 4 e 3: ' + parts);
       ok(!UI.panel.querySelector('#splitN'), 'o dividir ainda pede a quantidade');

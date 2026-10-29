@@ -683,9 +683,6 @@ const Expansion = {
   // poção de foco: energia cheia
   const e0 = Game.eat.bind(Game);
   Game.eat = function (k) { const it = ITEMS[k], had = Inv.count(k); e0(k); if (it && it.stamina && Inv.count(k) < had) P.stamina = Game.maxSt(); };
-  // itens de usar também funcionam nos bolsos rápidos
-  const q0 = Game.useQuick.bind(Game);
-  Game.useQuick = function (q) { const k = P.quick[q], it = k && ITEMS[k]; if (it && it.use && !it.food && !it.heal) { Expansion.use(k); return; } return q0(q); };
   // usar itens pelo inventário (pergaminhos, instrumentos...)
   const ua0 = UI.act.bind(UI);
   UI.act = function (a, d) {

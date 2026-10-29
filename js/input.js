@@ -33,7 +33,6 @@ const Pad = {
     if (!b[7] && was(7)) Moves.release();
     if (hit(8)) UI.toggle('showMap');
     if (hit(9)) UI.showSettings();
-    [12, 13].forEach((i, q) => { if (hit(i)) Game.useQuick(q); });
     this.prev = b;
   },
 };
@@ -49,8 +48,6 @@ const Touch = {
         <button class="tc-b tc-main" data-tc="atk" data-tcl="atk" aria-label="Atacar">${icon('sword')}</button>
         <button class="tc-b" data-tc="use" data-tcl="use" aria-label="Interagir">${icon('hand')}</button>
         <button class="tc-b" data-tc="run" data-tcl="run" aria-label="Correr">${icon('run')}</button>
-        <button class="tc-b tc-bag hidden" data-tc="q0" data-tcl="q0" aria-label="Algibeira 1"></button>
-        <button class="tc-b tc-bag hidden" data-tc="q1" data-tcl="q1" aria-label="Algibeira 2"></button>
         <button class="tc-b tc-dig hidden" data-tc="dig" data-tcl="dig" aria-label="Pá: cavar ou aterrar"></button>
       </div>`;
     const stick = document.getElementById('tcStick'), knob = document.getElementById('tcKnob');
@@ -76,14 +73,9 @@ const Touch = {
         if (k === 'use') Game.interact();
         if (k === 'dig') Dig.toggle();
         if (k === 'run') { G.touchSprint = !G.touchSprint; b.classList.toggle('on', G.touchSprint); }
-        if (k === 'q0' || k === 'q1') {
-          const it = P.quick[+k[1]] && ITEMS[P.quick[+k[1]]];
-          if (it && it.tool) { Game.wield(P.quick[+k[1]]); G.keys.Space = true; Game.playerAction(false, true); } // empunha e já trabalha; segurar continua
-          else Game.useQuick(+k[1]);
-        }
       });
       const up = () => {
-        if (k === 'atk' || k === 'q0' || k === 'q1') G.keys.Space = false;
+        if (k === 'atk') G.keys.Space = false;
       };
       b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
     });
@@ -93,7 +85,7 @@ const Touch = {
 
   // ------------------------------------------------------------ posição e tamanho que você escolheu (Ajustes → Controles)
   // Fica em G.settings.touchLayout: { stick: { x, y, s }, atk: {...} } — x e y são o centro em fração da tela, s o tamanho.
-  KEYS: { stick: 'Joystick', atk: 'Atacar', use: 'Interagir', run: 'Correr', q0: 'Bolso 1', q1: 'Bolso 2', dig: 'Pá' },
+  KEYS: { stick: 'Joystick', atk: 'Atacar', use: 'Interagir', run: 'Correr', dig: 'Pá' },
   items() { return [...document.querySelectorAll('#touch [data-tcl]')]; },
   applyLayout(L) {
     L = L === false ? null : L || this.layout || G.settings.touchLayout || null;
@@ -219,15 +211,6 @@ const Touch = {
       if (on && b.dataset.k !== mode) { b.dataset.k = mode; b.innerHTML = `<span class="tc-it">${UI.ii(mode === 'fill' ? 'dirt' : mode === 'fillsand' ? 'sand' : 'stone_shovel')}</span><small>${mode === 'fill' ? 'Terra' : mode === 'fillsand' ? 'Areia' : 'Cavar'}</small>`; }
       b.classList.toggle('on', on && mode !== 'dig');
     }
-    for (const q of [0, 1]) {
-      const b = el.querySelector(`[data-tc="q${q}"]`), k = P.quick[q], it = k && ITEMS[k], n = k ? Inv.count(k) : 0;
-      b.classList.toggle('hidden', !this.editing && (!it || n <= 0));
-      if (!it || n <= 0) { if (this.editing && !b.dataset.k) b.innerHTML = '<span class="tc-it">👝</span>'; continue; }
-      const key = k + ':' + n;
-      if (b.dataset.k !== key) { b.dataset.k = key; b.innerHTML = `<span class="tc-it">${UI.ii(k)}</span><span class="tc-n">${n}</span>`; b.title = it.name; }
-      b.classList.toggle('off', !!it.tool && !Game.toolUsable(k));
-      b.classList.toggle('eq', !!it.tool && P.equip.tool === k);
-    }
   },
   show(on) {
     this.on = on;
@@ -244,7 +227,6 @@ const KEY_ACTIONS = [
   ['run', 'Correr', 'ShiftLeft'], ['attack', 'Atacar e coletar', 'Space'], ['heavy', 'Golpe forte (segure e solte)', 'KeyV'], ['block', 'Bloquear com o escudo', 'KeyX'],
   ['dodge', 'Esquivar', 'KeyZ'], ['interact', 'Interagir com as coisas (portas, baús, prédios)', 'KeyE'], ['eat', 'Comer a melhor comida', 'KeyF'], ['tool', 'Trocar a ferramenta', 'KeyQ'], ['dig', 'Pá: cavar ou aterrar', 'KeyY'],
   ['ride', 'Montar no cavalo', 'KeyR'], ['orders', 'Ordens aos capangas', 'KeyT'], ['siege', 'Aríete ou catapulta (cerco)', 'KeyG'],
-  ['quick1', 'Usar o bolso 1', 'Digit1'], ['quick2', 'Usar o bolso 2', 'Digit2'],
   ['inventory', 'Mochila', 'KeyI'], ['craft', 'Criar', 'KeyC'], ['build', 'Construir', 'KeyB'], ['kingdom', 'Portfólio', 'KeyK'], ['map', 'Mapa', 'KeyM'], ['diary', 'Diário', 'KeyJ'],
 ];
 const Keys = {
