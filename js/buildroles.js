@@ -104,7 +104,7 @@ const OBRAS_CLASSES = [
   ['fe', '⛪', 'Fé', ['c:chapel', 'c:vcross', 'c:vspring', 'c:vmonastery', 'c:vcathedral', 'oratory', 'stone_circle']],
   ['def', '🛡️', 'Defesa e treino', ['c:vgate', 'c:vtower', 'c:vguard', 'DEF', 'training', 'archery', 'tiltyard']],
 ];
-// Produção, Fazenda e animais e Empreendimentos também separados por classe (o que não estiver aqui vai para a última)
+// Produção, Fazenda e animais, Empreendimentos e Baús e estábulo também separados por classe (o que não estiver aqui vai para a última)
 const BR_CLASSES = {
   producao: [
     ['coz', '🔥', 'Cozinha e bebidas', ['campfire', 'oven', 'smokehouse', 'quern', 'brewery', 'winepress']],
@@ -126,6 +126,11 @@ const BR_CLASSES = {
     ['com', '🍞', 'Comida e bebida', ['biz_bakery', 'biz_butcher', 'biz_brewery', 'biz_cooper']],
     ['ofi', '🔨', 'Ofícios', ['biz_ropery', 'biz_tannery', 'biz_weaver', 'biz_dyer', 'biz_cobbler', 'biz_tailor', 'biz_pottery', 'biz_carpentry', 'biz_bowyer', 'biz_glass', 'biz_chandler', 'biz_smithy', 'biz_smelter', 'biz_armorer', 'biz_jeweler', 'biz_shipyard']],
     ['srv', '🛒', 'Comércio e serviços', ['biz_shop', 'ptavern', 'biz_inn', 'biz_barber', 'biz_bathhouse', 'biz_bank', 'biz_apothecary', 'biz_perfumer', 'biz_scribe', 'biz_magic', 'biz_theatre']],
+  ],
+  guarda: [
+    ['itens', '📦', 'Guardar itens', ['chest', 'warehouse', 'cellar']],
+    ['ouro', '💰', 'Guardar ouro', ['vault']],
+    ['bichos', '🐴', 'Animais e carga', ['stable', 'kennel', 'cartshed']],
   ],
 };
 
