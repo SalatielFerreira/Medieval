@@ -12,6 +12,11 @@ module.exports = async () => {
       UI.showInventory(); for (let k = 0; k < 5; k++) { UI.sel.inv = k; UI.cur.args = [k]; UI.showInventory(); }
       ok(UI.hist.length === 0, `ações dentro do inventário viraram ${UI.hist.length} passos do Voltar`);
       UI.act('wback', {}); ok(UI.panel.classList.contains('hidden'), 'Voltar não saiu do inventário direto para o jogo');
+      // dividir de verdade (cada divisão dá um aviso) e Voltar sai de primeira
+      Inv.add('bread', 40); UI.sel.inv = 'bread'; UI.sel.cell = 'bread'; UI.showInventory();
+      for (let k = 0; k < 4; k++) { UI.act('isplit', {}); UI.msg('aviso de rotina ' + k); }
+      ok(UI.hist.length === 0, `dividir itens virou ${UI.hist.length} passos do Voltar`);
+      UI.act('wback', {}); ok(UI.panel.classList.contains('hidden'), 'depois de dividir, Voltar não saiu de primeira');
       // de janela para janela: Voltar volta para a anterior
       UI.showInventory(); UI.showCrafting(); UI.showCrafting(); ok(UI.hist.length === 1, `inventário → criar deveria ter 1 passo (tem ${UI.hist.length})`);
       UI.act('wback', {}); ok(UI.cur && UI.cur.fn === 'showInventory', 'Voltar não voltou para o inventário');

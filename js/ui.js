@@ -226,7 +226,7 @@ const UI = {
   // avisos em janelinhas flutuantes no canto: ícone, texto, fechar e uma barrinha do tempo restante.
   // Só aparecem na tela os de problema ('bad') e os importantes (big = true); os de rotina ficam só no histórico.
   msg(text, cls, big) {
-    if (cls !== 'bad' && !big) { this.hist = this.hist || []; this.hist.push({ day: G.day, text }); if (this.hist.length > 60) this.hist.shift(); return; }
+    if (cls !== 'bad' && !big) { this.msgLog = this.msgLog || []; this.msgLog.push({ day: G.day, text }); if (this.msgLog.length > 60) this.msgLog.shift(); return; } // (lista própria: a do Voltar é só de janelas)
     const last = this.log.lastElementChild;
     if (last && last.dataset.t === text && !last.classList.contains('out')) {
       const n = (+last.dataset.n || 1) + 1; last.dataset.n = n; last.querySelector('.tc-n').textContent = '×' + n;
@@ -2479,7 +2479,8 @@ const UI = {
       case 'cwork': Crown.startWork(+d.c, d.k); break;
       // volta para a janela de onde você veio
       case 'wback': {
-        const prev = (this.hist || []).pop();
+        let prev = (this.hist || []).pop();
+        while (prev && typeof this[prev.fn] !== 'function') prev = this.hist.pop(); // só janelas contam
         if (!prev) { this.close(); return; }
         this.navBack = true;
         try { this[prev.fn](...(prev.args || [])); } finally { this.navBack = false; }
