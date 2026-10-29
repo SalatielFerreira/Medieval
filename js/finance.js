@@ -349,6 +349,6 @@ const Fin = {
     const foreign = t >= 0 && G.civs[t] && G.civs[t].ruler !== 'player';
     if (!foreign) return err;
     if (!Fin.hasLicense(t)) return err || 'Para abrir um empreendimento em ' + CIV_DEFS[t].name + ', compre a licença de comércio (casa → Finanças → Vilas e reinos)';
-    return err === 'Perto demais de uma cidade' ? null : err;
+    return err === 'Encostado demais em outra construção' || err === Urban.foreignErr(t) ? null : err;
   };
 }

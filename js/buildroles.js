@@ -7,7 +7,7 @@
 //    não fica parado na frente: anda livre pelo mapa, como qualquer morador.
 //  • 💼 Empreendimentos, ⛲ Praça e decoração, 📦 Baús e estábulo: como sempre foram.
 //  • 📚 Cultura, fé e treino: lado de dentro, responsável e loja; o que cada um já fazia continua lá dentro.
-//  • 🛡️ Defesa e exército: saem do seu menu e vão para as Obras nas vilas (só onde você governa: vila ou reino),
+//  • 🛡️ Defesa e exército: saem do seu menu e vão para as Obras (a janela só aparece para governador ou rei),
 //    com os mesmos interiores, fabricação e lojas.
 //  • 🛣️ Infraestrutura: saem o Atracadouro, o Guindaste de Obra e o Moinho de Vento.
 //  • 🏗️ Obras nas vilas: todo prédio tem lado de dentro, responsável e loja do que ele é (ficam ao ar livre a muralha,
@@ -29,10 +29,10 @@ for (const [k, c] of [['PROD', 'producao'], ['FARM', 'fazenda'], ['CULT', 'cultu
 
 // ofícios novos
 Object.assign(RANKS, {
-  farmer: { m: 'Lavrador', f: 'Lavradora', order: 6 }, minstrel: { m: 'Menestrel', f: 'Menestrel', order: 6 }, herald: { m: 'Arauto', f: 'Arauta', order: 6 },
+  farmer: { m: 'Lavrador', f: 'Lavradora', order: 6 }, landlord: { m: 'Senhorio', f: 'Senhoria', order: 6 }, minstrel: { m: 'Menestrel', f: 'Menestrel', order: 6 }, herald: { m: 'Arauto', f: 'Arauta', order: 6 },
 });
-Object.assign(RANK_LOOK, { farmer: '#7a8a3a', minstrel: '#8a3a6a', herald: '#6a2a2a' });
-if (typeof PEOPLE_OUTFIT !== 'undefined') Object.assign(PEOPLE_OUTFIT, { farmer: PEOPLE_OUTFIT.farmer || 'patched', minstrel: PEOPLE_OUTFIT.minstrel || 'coat', herald: PEOPLE_OUTFIT.herald || 'coat' });
+Object.assign(RANK_LOOK, { landlord: '#6a5a3a', farmer: '#7a8a3a', minstrel: '#8a3a6a', herald: '#6a2a2a' });
+if (typeof PEOPLE_OUTFIT !== 'undefined') Object.assign(PEOPLE_OUTFIT, { farmer: PEOPLE_OUTFIT.farmer || 'patched', minstrel: PEOPLE_OUTFIT.minstrel || 'coat', landlord: PEOPLE_OUTFIT.landlord || 'coat', herald: PEOPLE_OUTFIT.herald || 'coat' });
 
 // lojas: prédio → [ícone, nome, ofício, o que vende]
 const BR_SHOPS = {
@@ -77,6 +77,7 @@ const BR_SHOPS = {
   vspring:     ['💧', 'Fonte Sagrada', 'hermit', ['holy_water', 'herb', 'candle', 'herbal_tea']],
   vcattle:     ['🐂', 'Feira do Gado', 'rancher', ['meat', 'milk', 'leather', 'wool', 'cheese', 'butter', 'saddle']],
   chapel:      ['⛪', 'Capela', 'priest', ['candle', 'incense', 'holy_water', 'rosary']],
+  vtenement:   ['🏘️', 'Casas de Aluguel', 'landlord', ['candle', 'bread', 'cloth', 'wool_cloth', 'rope', 'torch', 'plank', 'nails', 'roof_tile', 'clay']],
 };
 // lado de dentro de quem ainda não tinha: [planta, tema]
 const BR_ROOMS = {
@@ -84,6 +85,7 @@ const BR_ROOMS = {
   library: ['school', 'wood'], oratory: ['shrine', 'chapel'],
   vmarket: ['w_shop', 'wood'], vorchard: ['granary', 'wood'], vpasture: ['stable', 'wood'], vapiary: ['cellar', 'wood'], vhens: ['coop', 'wood'],
   vwood: ['w_lumber', 'wood'], vpigs: ['stable', 'wood'], vspring: ['shrine', 'stone'], vcattle: ['stable', 'wood'],
+  vtenement: ['w_inn', 'wood'],
 };
 // a Estrebaria da vila também vende o que os cavalos usam
 const BR_STABLE_ITEMS = ['saddle', 'horsehair', 'horseshoe', 'rope', 'leather', 'wheat', 'barley', 'apple', 'carrot', 'hay'];
@@ -149,6 +151,11 @@ const BuildRoles = {
     BuildRoles.shopOf[type] = key;
     SHOP_KEEPER[type] = rank;
   }
+  // obras com responsável que ainda não abriam a loja dele: Observatório, Torre de Arqueiros e Quartel
+  for (const t of ['observatory', 'archer_tower', 'barracks']) { const sk = SHOP_KEEPER[t] && RANKS[SHOP_KEEPER[t]] && RANKS[SHOP_KEEPER[t]].shop; if (sk && SHOPS[sk] && !BuildRoles.shopOf[t]) BuildRoles.shopOf[t] = sk; }
+  // nas obras não se produz nada: o Estábulo de Guerra não rende mais crina (só os cavaleiros nas batalhas)
+  if (typeof EXPB !== 'undefined' && EXPB.war_stable && EXPB.war_stable.fn) delete EXPB.war_stable.fn.farm;
+  if (BUILDINGS.war_stable) BUILDINGS.war_stable.desc = BUILDINGS.war_stable.desc.replace(' e crina todo mês', '');
   // a Estrebaria (obra da vila) vende mais coisas de cavalo
   if (SHOPS.stable) for (const k of has(BR_STABLE_ITEMS)) if (!SHOPS.stable.sells.includes(k)) SHOPS.stable.sells.push(k);
   // ---------------------------------------------------------------- fazenda e animais: sem lado de dentro
@@ -267,14 +274,6 @@ const BuildRoles = {
     if (!extra) return h;
     const at = h.indexOf('<small class="muted">Depois de clicar');
     return at >= 0 ? h.slice(0, at) + extra + h.slice(at) : h + extra;
-  };
-  // defesa: só onde você manda
-  const cb0 = Game.canBuild.bind(Game);
-  Game.canBuild = function (k, tx, ty) {
-    const e = cb0(k, tx, ty); if (e) return e;
-    const b = BUILDINGS[k];
-    if ((BR.DEF.includes(k) || BR.PRACA.includes(k) || BR.CULT.includes(k)) && !Urban.authority(Math.floor(tx + b.w / 2), Math.floor(ty + b.h / 2))) return 'É obra da vila: construa numa vila que você governa ou no seu reino';
-    return null;
   };
   // ---------------------------------------------------------------- o portão se emenda no muro
   const dw0 = World.drawWall.bind(World);

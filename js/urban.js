@@ -62,6 +62,18 @@ const Urban = {
     if (o.village !== undefined && World.villages[o.village] && World.villages[o.village].lord === 'player') return true;
     return typeof o.owner === 'number' && !!G.civs[o.owner] && G.civs[o.owner].ruler === 'player';
   },
+  // o reino (que não é o seu) dono deste chão: o índice dele, ou -1 (terra livre, vila independente, reino seu ou a vila
+  // que você governa, mesmo dentro do reino de outro)
+  foreignRealm(tx, ty, w, h) {
+    if (this.authority(Math.floor(tx + w / 2), Math.floor(ty + h / 2))) return -1;
+    for (const [x, y] of [[tx, ty], [tx + w - 1, ty], [tx, ty + h - 1], [tx + w - 1, ty + h - 1], [Math.floor(tx + w / 2), Math.floor(ty + h / 2)]]) {
+      if (!World.inb(x, y)) continue;
+      const t = World.terr[World.idx(x, y)], c = t >= 0 ? G.civs[t] : null;
+      if (c && !c.dead && c.ruler !== 'player') return t;
+    }
+    return -1;
+  },
+  foreignErr(ci) { return `Aqui é terra de ${CIV_DEFS[ci].name}: só o rei de lá constrói aqui`; },
   // vila ou castelo de outra pessoa (onde só o governador ou o rei mexem)
   foreignTown(tx, ty) {
     if (this.authority(tx, ty)) return null;
@@ -235,10 +247,11 @@ const Urban = {
       if (def.chief && !s && v.lord !== 'player') return `Só o governador de ${v.name} pode erguer a muralha`; // nem o rei: a muralha é do governador da vila
       return null;
     }
-    // construções do jogador: fora da sua vila ou reino, longe das cidades dos outros
+    // construções do jogador: em todo o mapa e nas vilas independentes, menos dentro de um reino que não é seu
+    { const fr = this.foreignRealm(tx, ty, def.w, def.h); if (fr >= 0) return this.foreignErr(fr); }
     if (!a) for (const o of World.structs) {
-      if (o === s || o.hidden || o.removed || (typeof o.owner !== 'number' && o.owner !== 'bandit') || this.ownStruct(o)) continue;
-      if (tx < o.x + o.w + 2 && tx + def.w > o.x - 2 && ty < o.y + o.h + 2 && ty + def.h > o.y - 2) return 'Perto demais de uma cidade';
+      if (o === s || o.hidden || o.removed || o.mine || (typeof o.owner !== 'number' && o.owner !== 'bandit') || this.ownStruct(o)) continue;
+      if (tx < o.x + o.w + 1 && tx + def.w > o.x - 1 && ty < o.y + o.h + 1 && ty + def.h > o.y - 1) return 'Encostado demais em outra construção';
     }
     return null;
   },

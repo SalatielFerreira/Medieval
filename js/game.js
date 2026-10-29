@@ -1094,9 +1094,11 @@ const Game = {
     const cx = (tx + b.w / 2) * TILE, cy = (ty + b.h / 2) * TILE;
     if (U.dist(cx, cy, P.x, P.y) > 8 * TILE) return 'Longe demais';
     if (b.blocks && P.x + P.r > tx * TILE && P.x - P.r < (tx + b.w) * TILE && P.y > ty * TILE && P.y - P.r < (ty + b.h) * TILE) return 'Você está no caminho';
+    // em todo o mapa e nas vilas independentes, pode; só não dentro de um reino que não é seu
+    const fr = Urban.foreignRealm(tx, ty, b.w, b.h); if (fr >= 0) return Urban.foreignErr(fr);
     if (!Urban.authority(Math.floor(tx + b.w / 2), Math.floor(ty + b.h / 2))) for (const s of World.structs) {
-      if (s.hidden || s.removed || (typeof s.owner !== 'number' && s.owner !== 'bandit') || Urban.ownStruct(s)) continue; // nas suas vilas e no seu reino, pode
-      if (tx < s.x + s.w + 2 && tx + b.w > s.x - 2 && ty < s.y + s.h + 2 && ty + b.h > s.y - 2) return 'Perto demais de uma cidade';
+      if (s.hidden || s.removed || s.mine || (typeof s.owner !== 'number' && s.owner !== 'bandit') || Urban.ownStruct(s)) continue; // nas suas vilas e no seu reino, pode
+      if (tx < s.x + s.w + 1 && tx + b.w > s.x - 1 && ty < s.y + s.h + 1 && ty + b.h > s.y - 1) return 'Encostado demais em outra construção';
     }
     return null;
   },

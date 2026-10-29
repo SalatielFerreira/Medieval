@@ -97,6 +97,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: construa em qualquer lugar
+
+- **Base e obras em todo o mapa:** dá para construir na terra livre e nas vilas independentes; só não dentro de um reino que não é seu (a não ser na vila que você governa). Fica só um bloco de folga das construções dos outros.
+- **A obra fora de onde você governa é sua:** a renda dela vai para você todo mês, só você demole ou muda de lugar, e o responsável vem da vila mais perto ("Sua Padaria", "Seu Correio"). Na sua vila ou numa vila do seu reino, a obra continua sendo da vila. Muralha, portão, banco, porto, cemitério e arena seguem as regras de antes.
+- **Obras só com loja e serviços:** as Casas de Aluguel ganharam interior, um senhorio e loja; o Observatório, a Torre de Arqueiros e o Quartel abrem a loja do responsável; o Estábulo de Guerra não rende mais crina (nas obras não se produz nada).
+
 ## Novidades: as vilas da IA também constroem
 
 - **Governadores da IA erguem as Obras nas vilas:** as vilas que a IA comanda constroem sozinhas as obras da janela Obras nas vilas (comércio, serviços, produção, fazenda, praça, cultura, fé e defesa), uma de cada vez, num lote do traçado da vila, e cada obra entra na crônica.
