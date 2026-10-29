@@ -693,7 +693,8 @@ const UI = {
         <span><b>${b.name}</b><small>${sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
     }).join('');
     const mine = Urban.myVillages(), kings = G.civs.filter(c => c.ruler === 'player');
-    this.buildPower = kings.length || mine.length ? `<small class="ok">Você manda em: ${[...kings.map(c => '👑 ' + CIV_DEFS[c.id].short + ' (reino todo)'), ...mine.map(x => '🏘️ ' + this.esc(x.v.name))].join(' · ')}</small>`
+    // quem governa já sabe onde manda (a categoria das obras só aparece para ele): o aviso fica só para quem não governa
+    this.buildPower = kings.length || mine.length ? ''
       : '<small class="muted">Para mexer nos imóveis e estradas das vilas, torne-se governador de uma vila (fundando, conquistando ou pedindo ao rei) ou rei.</small>';
     this.buildCatKey = S.bcat;
     const b = this.binfo(S.build);

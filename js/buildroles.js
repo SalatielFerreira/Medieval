@@ -105,6 +105,8 @@ const OBRAS_CLASSES = [
 
 const BuildRoles = {
   shopOf: {},
+  // o nome da categoria das obras: no reino para o rei, na vila para o governador
+  obrasName() { return G.civs.some(c => c.ruler === 'player') ? 'Obras no reino' : 'Obras na vila'; },
   isProd(t) { return BR.PROD.includes(t); },
   isFarm(t) { return BR.FARM.includes(t); },
   // o que uma construção de produção fabrica (pelas receitas das estações dela)
@@ -243,7 +245,7 @@ const BuildRoles = {
       for (const c of classes) c[3].forEach(x => used.add(x));
       const rest = [...civ].filter(x => !used.has(x) && have(x)); classes.find(c => c[0] === 'serv')[3].push(...rest);
       for (const [k, , , keys] of classes) for (const x of Order.sortBuild([...new Set(keys)])) { if (UI.buildClass[x]) continue; UI.buildClass[x] = k; list.push(x); }
-      cats.push(['obras', '🏗️', 'Obras nas vilas', list]);
+      cats.push(['obras', '🏗️', BuildRoles.obrasName(), list]);
     }
     this.buildCats = cats;
     // a categoria escolhida saiu do menu (Defesa, Praça, Cultura ou Obras antigas): vai para onde a construção está agora
@@ -256,14 +258,12 @@ const BuildRoles = {
   UI.buildDetailHtml = function (k) {
     let h = bd0(k);
     const kc = UI.buildClass && UI.buildClass[k], kd = kc && OBRAS_CLASSES.find(x => x[0] === kc);
-    if (kd) h = h.replace('<div class="dt-cat">Obras nas vilas</div>', `<div class="dt-cat">Obras nas vilas · ${kd[1]} ${kd[2]}</div>`);
+    if (kd) { const on = BuildRoles.obrasName(); h = h.replace(`<div class="dt-cat">${on}</div>`, `<div class="dt-cat">${on} · ${kd[1]} ${kd[2]}</div>`); }
     const chips = list => `<div class="chips br-prod">${list.slice(0, 24).map(i => `<span class="chip">${UI.ii(i)} ${ITEMS[i].name}</span>`).join('')}${list.length > 24 ? `<span class="chip">+${list.length - 24}</span>` : ''}</div>`;
     let extra = '';
     if (BR.PROD.includes(k)) { const p = BuildRoles.products(k); if (p.length) extra = `<div><div class="sec">🛠️ Pode produzir <span>${p.length} ${p.length === 1 ? 'item' : 'itens'}</span></div>${chips(p)}</div>`; }
     else if (BR.FARM.includes(k) && BuildRoles.shopOf[k]) extra = `<div><div class="sec">🧺 O responsável vende</div>${chips(SHOPS[BuildRoles.shopOf[k]].sells)}</div>`;
-    else if (BR.DEF.includes(k) || BR.PRACA.includes(k) || BR.CULT.includes(k)) extra = '<small class="ok">🏗️ Obra da vila: só onde você governa (uma vila sua ou o seu reino).</small>';
     const cat = (UI.buildCats || []).find(c => c[3].includes(k));
-    if (cat && cat[0] === 'obras' && UI.buildPower && !h.includes(UI.buildPower)) extra += UI.buildPower;
     if (!extra) return h;
     const at = h.indexOf('<small class="muted">Depois de clicar');
     return at >= 0 ? h.slice(0, at) + extra + h.slice(at) : h + extra;

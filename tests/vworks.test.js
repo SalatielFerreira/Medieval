@@ -20,7 +20,13 @@ module.exports = async () => {
       ok(cls.every(Boolean), 'obra sem classe');
       ok(cls.every((c, i) => !i || c === cls[i - 1] || !cls.slice(0, i).includes(c)), 'as classes estão misturadas na lista');
       ok(UI.buildClass['c:vpost'] === 'serv' && UI.buildClass['c:vfountain'] === 'praca' && UI.buildClass['library'] === 'cult' && UI.buildClass['c:chapel'] === 'fe' && UI.buildClass['c:smith'] === 'prod' && UI.buildClass['c:field'] === 'faz' && UI.buildClass['barracks'] === 'def', 'obra na classe errada');
-      UI.sel.bcat = 'obras'; UI.showBuild(); ok(UI.panel.querySelectorAll('.grp').length >= 8, 'a janela das obras não mostra os títulos das classes'); UI.close();
+      ok(UI.buildCats.find(c => c[0] === 'obras')[2] === 'Obras no reino', 'para o rei, a categoria não se chama Obras no reino');
+      UI.sel.bcat = 'obras'; UI.showBuild(); ok(UI.panel.querySelectorAll('.grp').length >= 8, 'a janela das obras não mostra os títulos das classes');
+      ok(!/Você manda em|Obra da vila: só onde/.test(UI.panel.innerText), 'a janela das obras ainda repete onde você manda');
+      ok(/Obras no reino · /.test(UI.panel.innerText), 'a ficha da obra não mostra a classe'); UI.close();
+      { const c = G.civs[0], r0 = c.ruler; c.ruler = 'npc'; const v0 = World.villages.findIndex(v => v && v.civ === 0), ch = World.villages[v0].chief, lo = World.villages[v0].lord; World.villages[v0].lord = 'player'; World.villages[v0].chief = 'player';
+        UI.showBuild(); UI.close(); ok(UI.buildCats.find(c => c[0] === 'obras') && UI.buildCats.find(c => c[0] === 'obras')[2] === 'Obras na vila', 'para o governador, a categoria não se chama Obras na vila');
+        c.ruler = r0; World.villages[v0].chief = ch; World.villages[v0].lord = lo; UI.showBuild(); UI.close(); }
       for (const k0 of OBRAS_CLASSES.map(c => c[0])) { const vs = list.filter(k => UI.buildClass[k] === k0).map(k => Order.buildValue(k)).filter(v => v !== null); for (let i = 1; i < vs.length; i++) if (vs[i] < vs[i - 1]) { bad.push('obras fora de ordem na classe ' + k0); break; } }
       for (const [k, d] of Object.entries(VWORKS)) {
         for (const i in d.cost) ok(ITEMS[i], `${d.name}: material ${i} não existe`);
