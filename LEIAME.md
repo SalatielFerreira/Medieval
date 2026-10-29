@@ -97,6 +97,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: as vilas da IA também constroem
+
+- **Governadores da IA erguem as Obras nas vilas:** as vilas que a IA comanda constroem sozinhas as obras da janela Obras nas vilas (comércio, serviços, produção, fazenda, praça, cultura, fé e defesa), uma de cada vez, num lote do traçado da vila, e cada obra entra na crônica.
+- **Cada vila pensa do seu jeito:** o ofício do governador costuma dar o gosto dele (o comerciante prefere comércio, o padre a fé, o cavaleiro a defesa, o lavrador a fazenda...), cada vila tem as suas manias e a sorte faz o resto. O que falta (armazém, taverna, capela, poço) pesa mais; em guerra, a defesa; reino pobre, o que dá dinheiro; reino rico, fé, cultura e praça.
+- **Conforme o dinheiro:** cada vila tem um caixa de obras que enche todo mês com o poder econômico dela, o nível e os aluguéis das obras; o rei da IA manda uma verba quando sobra dinheiro no tesouro (metade em guerra). O governador escolhe um projeto e junta dinheiro até poder pagar.
+- **Conforme o tamanho:** obra grande só em vila grande (Universidade a partir do nível 6, Catedral do 8...), algumas pedem outra antes (a Catedral pede a Capela, a Universidade a Escola), peixe só perto da água, mina só perto da montanha, e cada nível libera mais obras.
+- **Onde você governa, a IA não mexe.** Numa vila do seu reino com governador da IA, ele constrói só com o caixa da vila, sem tocar no seu tesouro.
+
 ## Novidades: obras da vila separadas por tipo
 
 - **Praça e decoração** e **Cultura, fé e treino** agora são obras da vila: só aparecem para quem é governador ou rei, e só se constroem onde você governa (numa vila sua ou no seu reino).
