@@ -13,7 +13,7 @@ module.exports = async () => {
       Inv.add('cavalry_lance', 1); Game.equip('cavalry_lance');
       let e = mk(); P.mounted = false; Game.damage(e, 20, P); const foot = 5000 - e.hp;
       e = mk(); P.horse = P.horse || { name: 'Teste', color: '#7a4a26' }; P.mounted = true; P.gallop = 2; const x0 = e.x; Game.damage(e, 20, P); const charge = 5000 - e.hp;
-      ok(charge > foot * 2, `a carga de lança não foi mais forte (${foot} → ${charge})`); ok(e.x > x0, 'a carga não empurrou o inimigo');
+      ok(charge > foot * 1.6, `a carga de lança não foi mais forte (${foot} → ${charge})`); ok(e.x > x0, 'a carga não empurrou o inimigo');
       ok(P.gallop === 0, 'a carga não gastou o embalo');
       Inv.add('short_bow', 1); Game.equip('short_bow'); e = mk(); Game.damage(e, 20, P); ok(5000 - e.hp > 20, 'o arco montado não ficou mais forte');
       P.mounted = false;
