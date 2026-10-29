@@ -33,7 +33,7 @@ const COMP = {
     const f = p.favor; if (!f) return { text: 'Não preciso de nada agora.', note: '' };
     if (f.k === 'gold' || f.k === 'feast') {
       const g = f.k === 'gold' ? this.goldOf(p) : 30; if (P.gold < g) return { text: 'Sem dinheiro, sem conversa.', note: `Você precisa de ${g} 🪙.` };
-      P.gold -= g; p.favor = null; this.addLoyal(p, f.k === 'gold' ? 14 : 10);
+      P.gold -= g; p.purse = People.purse(p) + g; p.favor = null; this.addLoyal(p, f.k === 'gold' ? 14 : 10);
       if (f.k === 'feast') for (const q of this.list()) if (q !== p) this.addLoyal(q, 4);
       Sound.play('coin');
       return { text: f.k === 'gold' ? 'Isso é que é patrão! Pode contar comigo.' : 'Hoje a rodada é por nossa conta! Viva!', note: `Lealdade de ${p.name}: ${this.loyal(p)}.` };

@@ -10,7 +10,7 @@ const EQUIP_SLOTS = [
   { key: 'tool',   name: 'Ferramenta', sub: 'Mão esquerda' },
   { key: 'tool2',  name: 'Ferramenta 2', sub: 'Na cintura (troca sozinha quando precisa)' },
   { key: 'head',   name: 'Elmo',       sub: 'Cabeça' },
-  { key: 'torso',  name: 'Gibão',      sub: 'Torso' },
+  { key: 'torso',  name: 'Armadura',   sub: 'Torso' },
   { key: 'legs',   name: 'Calções',    sub: 'Pernas' },
   { key: 'feet',   name: 'Botas',      sub: 'Pés' },
   { key: 'ring',   name: 'Anel',       sub: 'Dedo' },

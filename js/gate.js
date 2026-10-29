@@ -192,7 +192,7 @@ const Gate = {
       if (typeof Crime !== 'undefined' && v && Crime.wanted(v.civ)) { this.log(s, `⚖️ ${G.name} pediu passagem e foi reconhecido: procurado.`); UI.showArrest(v.civ); return; }
       if (v && G.civs[v.civ] && G.civs[v.civ].atWar) { UI.msg('🚪 "Inimigos do reino não passam!"', 'bad'); return; }
       if (d.fee && P.gold < d.fee) { UI.msg(`🚪 A entrada custa ${d.fee} 🪙.`, 'bad'); return; }
-      if (d.fee) P.gold -= d.fee;
+      if (d.fee) { P.gold -= d.fee; if (!this.mine(s) && typeof Money !== 'undefined') Money.toVillage(s.village, d.fee); } // a entrada vai para o caixa da vila
       s.passUntil = G.realTime + 5; this.apply(s); this.log(s, `🚶 ${G.name} pediu passagem${d.fee ? ` e pagou ${d.fee} 🪙` : ''}.`);
       UI.close(); UI.msg('🚪 O porteiro abre o portão para você passar.'); return;
     }
@@ -510,7 +510,7 @@ Object.assign(Gate, {
   Gate.hire = function (s, p) {
     if (!this.mine(s) || Shops.keeper(s) || !p || !People.commoner(p)) return;
     if (P.gold < HIRE) { UI.msg(`O alistamento custa ${HIRE} 🪙.`, 'bad'); return; }
-    P.gold -= HIRE; p.rank = 'gatekeeper'; p.shop = s.okey; p.met = true;
+    P.gold -= HIRE; p.purse = People.purse(p) + HIRE; p.rank = 'gatekeeper'; p.shop = s.okey; p.met = true;
     p.equip = Object.assign({}, p.equip || {}, ITEMS.iron_helm ? { head: 'iron_helm' } : {}, ITEMS.chainmail ? { torso: 'chainmail' } : {}, ITEMS.iron_sword ? { weapon: 'iron_sword' } : {});
     const e = G.spawned.get(p.id); if (e) { e.dead = true; G.spawned.delete(p.id); }
     this.log(s, `🪖 ${People.full(p)} foi contratad${p.sex === 'f' ? 'a' : 'o'} como ${RANKS.gatekeeper[p.sex].toLowerCase()} (${HIRE} 🪙 de alistamento, ${WAGE} 🪙 por mês).`);

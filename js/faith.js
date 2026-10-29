@@ -108,7 +108,7 @@ const Faith = {
   },
   monthTick() {
     const c = this.C();
-    if (c.tithe && P.gold > 0) { const n = Math.min(100, Math.max(1, Math.round(P.gold * 0.05))); P.gold -= n; this.addPiety(2); Game.note(`⛪ Dízimo: −${n} 🪙 · +2 de devoção.`); }
+    if (c.tithe && P.gold > 0) { const n = Math.min(100, Math.max(1, Math.round(P.gold * 0.05))); P.gold -= n; this.addPiety(2); if (typeof Money !== 'undefined') Money.toChurch(n); Game.note(`⛪ Dízimo: −${n} 🪙 · +2 de devoção.`); }
   },
   // casamento na igreja: dispensa o anel (para quem já namora e tem romance 70+)
   canWed(p) { return p && p.alive && p.dating && p.rom >= 70; },

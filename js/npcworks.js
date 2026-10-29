@@ -158,9 +158,11 @@ const NpcWorks = {
   // um mês de uma vila
   village(vi) {
     const v = World.villages[vi], who = this.ruler(v); if (!who || G.dungeon || this.off) return;
-    const st = this.state(vi, who), R = this.realm(v), inc = this.income(v, vi), gr = this.grant(v, R);
+    const st = this.state(vi, who), R = this.realm(v), inc = this.income(v, vi);
+    // o mês enche o caixa até o teto (doações podem passar dele); a verba do rei só cobre o que falta
+    const room = Math.max(0, this.fundMax(v) - st.fund), gr = Math.min(this.grant(v, R), Math.max(0, Math.round(room - inc)));
     if (gr) R.c.treasury -= gr;
-    st.fund = Math.min(this.fundMax(v), Math.round(st.fund + inc + gr));
+    st.fund = Math.round(st.fund + Math.min(room, inc + gr));
     if (st.wait > 0) { st.wait--; return; }
     if (st.built.length >= this.limit(v)) return;
     const have = this.have(vi);

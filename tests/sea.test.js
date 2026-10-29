@@ -34,10 +34,10 @@ module.exports = async () => {
       Sea.buy('galleon'); const n0 = G.ents.filter(e => e.kind === 'pirate').length; Sea.spawnPirates(); const pir = G.ents.filter(e => e.kind === 'pirate');
       if (pir.length > n0) { ok(pir[0].sailing, 'pirata sem barco'); const cv = document.createElement('canvas').getContext('2d'); pir[0].draw(cv, 0, 0); }
       // música por lugar
-      P.sailing = true; ok(Music.pick('day') === 'sea', 'no mar não toca a música do mar'); P.sailing = false;
-      const v = World.villages[0]; P.x = (v.x + 0.5) * TILE; P.y = (v.y + 1) * TILE; const m = Music.pick('day'); ok(m === 'village' || m === 'winter', 'na vila não toca a música da vila: ' + m);
-      ok(Music.pick('battle') === 'battle', 'a batalha perdeu a música dela');
-      for (const t of ['village', 'tavern', 'winter', 'sea']) { const T0 = Sound.TUNES[t]; ok(T0 && T0.drum.length === T0.bar && T0.mel.length > 8, 'tema mal formado: ' + t); }
+      // uma música só, alegre e leve, em todo lugar (sem tambor e sem bordão)
+      ok(Object.keys(Sound.TUNES).join() === 'alegre', 'ainda há outras músicas: ' + Object.keys(Sound.TUNES).join());
+      { const T0 = Sound.TUNES.alegre; ok(T0.drum.every(d => !d) && T0.jingle.every(d => !d) && T0.nodrone && T0.mel.reduce((a, m) => a + m[1], 0) % T0.bar === 0, 'a música alegre tem marcação ou compasso quebrado'); }
+      for (const m of ['battle', 'cave', 'night', 'menu']) { Sound.music(m); ok(Sound.wantMode === 'alegre', `em ${m} toca outra música: ` + Sound.wantMode); }
       // placar da dinastia
       UI.showLegacy(); ok(html().includes('Placar') || html().includes('Pontos'), 'janela do placar'); ok(Book.pages().some(p => p.includes('O placar das gerações')), 'o livro não tem o placar');
       const n = Legacy.now(); ok(n.gold === Math.round(P.gold), 'placar da geração de agora');

@@ -97,6 +97,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: o dinheiro tem dono, uma música só e mais classes
+
+- **O caminho do dinheiro:** tudo o que sai da sua bolsa entra na riqueza de quem recebe. Deu 5000 Salin a alguém? A Ficha dele mostra 5000 a mais. Presentes, recrutar, subornar, salários, dote, parteira, soldo dos capangas e parcelas de empréstimo vão para a bolsa da pessoa; doação, festa, comício, candidatura e a entrada do portão vão para o caixa da vila (visto na administração da vila); compras sem comerciante (animais, cavalos, navio, viagem) e a inscrição no torneio vão para o tesouro do reino; a aliança e o favor de uma família, para a riqueza da casa; doações, bênçãos e dízimo, para o padre da vila. E o empréstimo sai da bolsa de quem empresta.
+- **Uma música só:** todas as músicas saíram; fica uma melodia alegre e leve (flauta e alaúde), sem tambor nem pandeiro.
+- **Classes também em Produção, Fazenda e animais e Empreendimentos:** Cozinha e bebidas, Madeira e ferramentas, Metais e armas, Tecidos e couro, Barro e vidro, Poções e magia; Lavouras, Pomares e vinhas, Animais, Criações especiais; Campo e criação, Matérias-primas, Comida e bebida, Ofícios, Comércio e serviços.
+- **Inventário:** o espaço "Gibão" agora se chama "Armadura".
+- **Sino de avisos** só na tela do jogo: some quando uma janela está aberta.
+
 ## Novidades: construa em qualquer lugar
 
 - **Base e obras em todo o mapa:** dá para construir na terra livre e nas vilas independentes; só não dentro de um reino que não é seu (a não ser na vila que você governa). Fica só um bloco de folga das construções dos outros.

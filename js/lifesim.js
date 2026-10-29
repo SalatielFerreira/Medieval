@@ -320,6 +320,8 @@ const Careers = {
 const Loans = {
   L() { return G.loans || (G.loans = []); },
   OFFERS: { crown: { rate: 0.05, months: 8, amounts: [200, 500, 1500] }, merchant: { rate: 0.09, months: 6, amounts: [50, 150, 400] } },
+  // o que você paga (ou os cobradores levam) volta para quem emprestou: o tesouro do reino ou a bolsa do agiota
+  credit(l, n) { if (!(n > 0)) return; if (l.kind === 'crown') { if (G.civs[l.ci]) G.civs[l.ci].treasury += n; } else if (G.people[l.pid]) G.people[l.pid].purse = People.purse(G.people[l.pid]) + n; },
   lenderName(l) { return l.kind === 'crown' ? `Tesouro de ${CIV_DEFS[l.ci].short}` : (G.people[l.pid] ? People.full(G.people[l.pid]) : 'agiota'); },
   take(kind, ci, pid, amount) {
     const o = this.OFFERS[kind];
@@ -327,6 +329,8 @@ const Loans = {
     const total = Math.round(amount * (1 + o.rate * o.months)), monthly = Math.ceil(total / o.months);
     this.L().push({ kind, ci, pid, principal: amount, left: total, monthly, missed: 0, day: G.day });
     P.gold += amount; Sound.play('coin');
+    // o dinheiro sai de quem empresta
+    if (kind === 'crown') { if (G.civs[ci]) G.civs[ci].treasury -= amount; } else if (pid !== undefined && G.people[pid]) G.people[pid].purse = Math.max(0, People.purse(G.people[pid]) - amount);
     if (pid !== undefined && G.people[pid]) Mind.remember(G.people[pid], 'loan');
     UI.msg(`💰 Empréstimo de ${amount} 🪙: você vai pagar ${monthly} 🪙 por mês, ${o.months} meses (${total} 🪙 no total).`, 'gold', true);
   },
@@ -334,7 +338,7 @@ const Loans = {
     const l = this.L()[i]; if (!l || l.left <= 0) return;
     const n = Math.min(l.left, all ? l.left : l.monthly, P.gold);
     if (n <= 0) { UI.msg('Ouro insuficiente.', 'bad'); return; }
-    P.gold -= n; l.left -= n; l.missed = 0; Sound.play('coin');
+    P.gold -= n; l.left -= n; l.missed = 0; this.credit(l, n); Sound.play('coin');
     UI.msg(l.left <= 0 ? `✅ Dívida com ${this.lenderName(l)} quitada!` : `Pagou ${n} 🪙. Faltam ${l.left} 🪙.`, 'gold');
     if (l.left <= 0) G.loans = this.L().filter(x => x.left > 0);
   },
@@ -342,12 +346,12 @@ const Loans = {
     for (const l of this.L()) {
       if (l.left <= 0) continue;
       const n = Math.min(l.monthly, l.left);
-      if (P.gold >= n) { P.gold -= n; l.left -= n; l.missed = 0; Game.note(`💰 Parcela do empréstimo (${this.lenderName(l)}): −${n} 🪙.`); continue; }
+      if (P.gold >= n) { P.gold -= n; l.left -= n; l.missed = 0; this.credit(l, n); Game.note(`💰 Parcela do empréstimo (${this.lenderName(l)}): −${n} 🪙.`); continue; }
       l.missed++;
       UI.msg(`⚠️ Você não pagou a parcela de ${n} 🪙 a ${this.lenderName(l)} (${l.missed}ª vez).`, 'bad', true);
       if (l.missed >= 2) {
         // os cobradores levam o que acharem
-        let took = Math.min(P.gold, l.left); P.gold -= took; l.left -= took;
+        let took = Math.min(P.gold, l.left); P.gold -= took; l.left -= took; this.credit(l, took);
         for (const k of Object.keys(P.inv).sort((a, b) => ITEMS[b].price - ITEMS[a].price)) {
           if (l.left <= 0) break;
           if (Object.values(P.equip).includes(k)) continue;
@@ -589,7 +593,7 @@ const Lifesim = {
     if (op === 'loanask') { UI.showLoans('merchant', p.civ >= 0 ? p.civ : (World.villages[p.home.idx] || {}).civ, p.id); return 'shown'; }
     if (op === 'midwife') {
       if (P.gold < 40) return { text: 'Meu trabalho tem preço, querido.', note: 'Você precisa de 40 🪙.' };
-      P.gold -= 40; G.family.midwife = true; Mind.remember(p, 'midwife');
+      P.gold -= 40; p.purse = People.purse(p) + 40; G.family.midwife = true; Mind.remember(p, 'midwife');
       return { text: 'Pode deixar comigo. Na hora do parto eu estarei lá!', note: 'Parteira contratada: o parto fica muito mais seguro.' };
     }
     return null;

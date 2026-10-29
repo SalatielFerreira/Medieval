@@ -104,10 +104,35 @@ const OBRAS_CLASSES = [
   ['fe', '⛪', 'Fé', ['c:chapel', 'c:vcross', 'c:vspring', 'c:vmonastery', 'c:vcathedral', 'oratory', 'stone_circle']],
   ['def', '🛡️', 'Defesa e treino', ['c:vgate', 'c:vtower', 'c:vguard', 'DEF', 'training', 'archery', 'tiltyard']],
 ];
+// Produção, Fazenda e animais e Empreendimentos também separados por classe (o que não estiver aqui vai para a última)
+const BR_CLASSES = {
+  producao: [
+    ['coz', '🔥', 'Cozinha e bebidas', ['campfire', 'oven', 'smokehouse', 'quern', 'brewery', 'winepress']],
+    ['mad', '🪵', 'Madeira e ferramentas', ['workbench', 'carpentry', 'sawmill_p']],
+    ['met', '⚒️', 'Metais e armas', ['forge', 'smelter', 'armorer_bench', 'goldsmith']],
+    ['tec', '🧵', 'Tecidos e couro', ['tanrack', 'loom', 'dyeworks']],
+    ['bar', '🏺', 'Barro e vidro', ['kiln', 'glassworks']],
+    ['mag', '🔮', 'Poções e magia', ['alchemy', 'mage_tower']],
+  ],
+  fazenda: [
+    ['lav', '🌾', 'Lavouras', ['farm', 'garden', 'herbgarden', 'flaxfield', 'sunflowers', 'hopfield', 'mushroom']],
+    ['pom', '🍇', 'Pomares e vinhas', ['orchard', 'olivegrove', 'vineyard']],
+    ['ani', '🐄', 'Animais', ['coop', 'pen', 'pigsty', 'goatpen', 'rabbithutch', 'dovecote', 'duckpond']],
+    ['esp', '🐝', 'Criações especiais', ['beehive', 'fishpond', 'silkhouse']],
+  ],
+  negocios: [
+    ['cam', '🌾', 'Campo e criação', ['biz_farm', 'biz_ranch', 'biz_dairy', 'biz_winery', 'biz_press', 'biz_mill', 'biz_stables']],
+    ['mat', '⛏️', 'Matérias-primas', ['biz_quarry', 'biz_lumber', 'biz_mine', 'biz_charcoal', 'biz_saltworks', 'biz_fishery', 'biz_mason']],
+    ['com', '🍞', 'Comida e bebida', ['biz_bakery', 'biz_butcher', 'biz_brewery', 'biz_cooper']],
+    ['ofi', '🔨', 'Ofícios', ['biz_ropery', 'biz_tannery', 'biz_weaver', 'biz_dyer', 'biz_cobbler', 'biz_tailor', 'biz_pottery', 'biz_carpentry', 'biz_bowyer', 'biz_glass', 'biz_chandler', 'biz_smithy', 'biz_smelter', 'biz_armorer', 'biz_jeweler', 'biz_shipyard']],
+    ['srv', '🛒', 'Comércio e serviços', ['biz_shop', 'ptavern', 'biz_inn', 'biz_barber', 'biz_bathhouse', 'biz_bank', 'biz_apothecary', 'biz_perfumer', 'biz_scribe', 'biz_magic', 'biz_theatre']],
+  ],
+};
 
 const BuildRoles = {
   shopOf: {},
   // o nome da categoria das obras: no reino para o rei, na vila para o governador
+  classesOf(cat) { return cat === 'obras' ? OBRAS_CLASSES : BR_CLASSES[cat] || null; },
   obrasName() { return G.civs.some(c => c.ruler === 'player') ? 'Obras no reino' : 'Obras na vila'; },
   isProd(t) { return BR.PROD.includes(t); },
   isFarm(t) { return BR.FARM.includes(t); },
@@ -245,6 +270,13 @@ const BuildRoles = {
     const obras = cats.find(c => c[0] === 'obras');
     cats = cats.filter(c => !['defesa', 'praca', 'cultura', 'obras'].includes(c[0])).map(c => [c[0], c[1], c[2], c[3].filter(k => !BR.INFRA_OUT.includes(k) && !BR.OUT.includes(k))]);
     UI.buildClass = {};
+    // Produção, Fazenda e animais e Empreendimentos: cada classe do mais fácil ao mais difícil
+    for (const c of cats) {
+      const cls = BR_CLASSES[c[0]]; if (!cls) continue;
+      const of = x => (cls.find(q => q[3].includes(x)) || cls[cls.length - 1])[0];
+      c[3] = cls.flatMap(([k]) => Order.sortBuild(c[3].filter(x => of(x) === k)));
+      for (const x of c[3]) UI.buildClass[x] = of(x);
+    }
     if (auth) {
       // uma categoria só (Obras nas vilas), com a lista em classes: cada classe do mais fácil ao mais difícil
       const civ = new Set(obras ? obras[3] : []), have = k => (k.startsWith('c:') ? civ.has(k) : !!BUILDINGS[k]) && !BR.DUP.includes(k), used = new Set(), list = [];
@@ -264,13 +296,12 @@ const BuildRoles = {
   const bd0 = UI.buildDetailHtml.bind(UI);
   UI.buildDetailHtml = function (k) {
     let h = bd0(k);
-    const kc = UI.buildClass && UI.buildClass[k], kd = kc && OBRAS_CLASSES.find(x => x[0] === kc);
-    if (kd) { const on = BuildRoles.obrasName(); h = h.replace(`<div class="dt-cat">${on}</div>`, `<div class="dt-cat">${on} · ${kd[1]} ${kd[2]}</div>`); }
+    const kcat = (UI.buildCats || []).find(c => c[3].includes(k)), kcl = kcat && BuildRoles.classesOf(kcat[0]), kd = kcl && UI.buildClass && kcl.find(x => x[0] === UI.buildClass[k]);
+    if (kd) h = h.replace(`<div class="dt-cat">${kcat[2]}</div>`, `<div class="dt-cat">${kcat[2]} · ${kd[1]} ${kd[2]}</div>`);
     const chips = list => `<div class="chips br-prod">${list.slice(0, 24).map(i => `<span class="chip">${UI.ii(i)} ${ITEMS[i].name}</span>`).join('')}${list.length > 24 ? `<span class="chip">+${list.length - 24}</span>` : ''}</div>`;
     let extra = '';
     if (BR.PROD.includes(k)) { const p = BuildRoles.products(k); if (p.length) extra = `<div><div class="sec">🛠️ Pode produzir <span>${p.length} ${p.length === 1 ? 'item' : 'itens'}</span></div>${chips(p)}</div>`; }
     else if (BR.FARM.includes(k) && BuildRoles.shopOf[k]) extra = `<div><div class="sec">🧺 O responsável vende</div>${chips(SHOPS[BuildRoles.shopOf[k]].sells)}</div>`;
-    const cat = (UI.buildCats || []).find(c => c[3].includes(k));
     if (!extra) return h;
     const at = h.indexOf('<small class="muted">Depois de clicar');
     return at >= 0 ? h.slice(0, at) + extra + h.slice(at) : h + extra;
@@ -293,9 +324,10 @@ BuildRoles.renderBuild = function (first) {
   const cat = cats.find(c => c[0] === S.bcat);
   if (!S.build || !cat[3].includes(S.build)) S.build = cat[3][0];
   const costMini = cost => Object.entries(cost).map(([k, n]) => `<i class="${Inv.count(k) >= n ? 'ok' : 'bad'}">${UI.ii(k)}${n}</i>`).join('');
-  // nas Obras nas vilas: o título de cada classe antes das construções dela
+  // nas categorias com classes: o título de cada classe antes das construções dela
   let lastCls = null;
-  const head = k => { const c = cat[0] === 'obras' && UI.buildClass[k]; if (!c || c === lastCls) return ''; lastCls = c; const d = OBRAS_CLASSES.find(x => x[0] === c); return `<div class="grp">${d[1]} ${d[2]}</div>`; };
+  const cls = BuildRoles.classesOf(cat[0]);
+  const head = k => { const c = cls && UI.buildClass[k]; if (!c || c === lastCls) return ''; lastCls = c; const d = cls.find(x => x[0] === c); return d ? `<div class="grp">${d[1]} ${d[2]}</div>` : ''; };
   const rows = cat[3].map(k => head(k) + (() => {
     const b = UI.binfo(k), tool = !b.cost;
     const sub = tool ? b.sub : `${b.owned !== undefined ? (b.owned ? `você tem ${b.owned} · ` : '') : ''}<span class="bcost">${costMini(b.cost)}</span>`;

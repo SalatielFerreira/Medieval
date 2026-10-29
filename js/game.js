@@ -1675,7 +1675,7 @@ const Game = {
   },
   hire() {
     if (P.gold < 60 || this.allies().length >= this.followerCap()) return;
-    P.gold -= 60; const m = this.newMercenary(G.zone);
+    P.gold -= 60; const m = this.newMercenary(G.zone); m.purse = People.purse(m) + 60;
     UI.msg(`${People.full(m)}, mercenári${m.sex === 'm' ? 'o' : 'a'}, se junta a você! Fale com ${m.sex === 'm' ? 'ele' : 'ela'} para equipar armas e armaduras.`, 'gold');
   },
   train() {
@@ -1752,8 +1752,9 @@ const Game = {
     const upkeep = caps.length * 4; // seguidores e guardas recebem soldo
     if (upkeep) {
       const k = G.civs.find(c => c.ruler === 'player' && c.treasury >= upkeep);
-      if (P.gold >= upkeep) { P.gold -= upkeep; this.note(`⚔️ Soldo dos capangas: −${upkeep} 🪙.`); }
-      else if (k) { k.treasury -= upkeep; this.note(`⚔️ O tesouro de ${CIV_DEFS[k.id].short} pagou ${upkeep} 🪙 de soldo.`); }
+      const paid = () => { for (const q of caps) q.purse = People.purse(q) + 4; }; // o soldo vai para a bolsa de cada um
+      if (P.gold >= upkeep) { P.gold -= upkeep; paid(); this.note(`⚔️ Soldo dos capangas: −${upkeep} 🪙.`); }
+      else if (k) { k.treasury -= upkeep; paid(); this.note(`⚔️ O tesouro de ${CIV_DEFS[k.id].short} pagou ${upkeep} 🪙 de soldo.`); }
       else { const q = allies.length ? allies[allies.length - 1].npc : caps[caps.length - 1]; if (q) People.dismiss(q); UI.msg('Um soldado abandonou você por falta de pagamento.', 'bad'); }
     }
     for (const c of G.civs) this.tickCiv(c);

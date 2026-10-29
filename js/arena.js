@@ -147,7 +147,7 @@ const Arena = {
     const t = this.tourney();
     if (!t || t.ci !== ci || t.out || t.won) return;
     if (P.gold < 50) { UI.msg('A inscrição custa 50 🪙.', 'bad'); return; }
-    P.gold -= 50; t.entered = true;
+    P.gold -= 50; t.entered = true; if (G.civs[t.ci]) G.civs[t.ci].treasury += 50; // a inscrição vai para o reino do torneio
     UI.msg('Você se inscreveu no Grande Torneio! Três lutas seguidas: vença todas para levar o prêmio.', 'gold');
     this.startDuel(ci, 0, 0, 0);
   },

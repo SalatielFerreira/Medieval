@@ -30,7 +30,7 @@ const Sea = {
     const old = this.ship(), credit = old ? Math.round(SHIPS[old.kind].price * 0.5) : 0;
     if (P.gold + credit < d.price) { UI.msg(`O ${d.name} custa ${d.price} 🪙${credit ? ` (o seu navio vale ${credit} na troca)` : ''}.`, 'bad'); return; }
     if (old && this.used()) { UI.msg('Venda a carga do porão antes de trocar de navio.', 'bad'); return; }
-    P.gold -= d.price - credit;
+    P.gold -= d.price - credit; if (typeof Money !== 'undefined') Money.toMarket(d.price - credit);
     G.ship = { kind, name: U.pick(SHIP_NAMES), hull: d.hull, hold: {} };
     Sound.play('coin'); UI.banner(`${d.icon} ${d.name} ${G.ship.name}!`);
     UI.msg(`${d.icon} O ${d.name} "${G.ship.name}" é seu! Embarque em qualquer margem (E) — ele é mais rápido que o barco a remo e tem porão para ${d.hold} mercadorias.`, 'gold', true);
@@ -44,7 +44,7 @@ const Sea = {
     const s = World.structs[sid], sh = this.ship(); if (!sh || !s) return;
     const pr = this.price(s, k).buy; n = Math.min(n, SHIPS[sh.kind].hold - this.used(), Math.floor(P.gold / pr));
     if (n <= 0) { UI.msg(this.used() >= SHIPS[sh.kind].hold ? 'O porão está cheio.' : 'Ouro insuficiente.', 'bad'); return; }
-    P.gold -= n * pr; sh.hold[k] = (sh.hold[k] || 0) + n; Sound.play('coin');
+    P.gold -= n * pr; if (typeof Money !== 'undefined') Money.toMarket(n * pr); sh.hold[k] = (sh.hold[k] || 0) + n; Sound.play('coin');
   },
   unload(sid, k, n) {
     const s = World.structs[sid], sh = this.ship(); if (!sh || !s) return;
@@ -62,7 +62,7 @@ const Sea = {
     const from = World.structs[sid], d = this.dests(from)[di], sh = this.ship(); if (!from || !d || !sh) return;
     if (sh.hull < 25) { UI.msg('O casco está muito avariado: conserte antes de zarpar.', 'bad'); return; }
     const fee = 15 + Math.round(d.dist / 10); if (P.gold < fee) { UI.msg(`A tripulação cobra ${fee} 🪙 pela viagem.`, 'bad'); return; }
-    P.gold -= fee;
+    P.gold -= fee; if (typeof Money !== 'undefined') Money.toMarket(fee);
     G.voyage = { sid, d: { kind: d.kind, name: d.name, sid: d.s ? d.s.id : null, isl: d.is ? World.islands.indexOf(d.is) : null, dist: d.dist }, log: [`⛵ ${sh.name} zarpou rumo a ${d.name} (${d.dist} léguas, ${fee} 🪙 para a tripulação).`] };
     UI.close();
     this.go();

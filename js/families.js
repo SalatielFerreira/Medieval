@@ -583,7 +583,7 @@ const Biz = {
     if (ok !== true) { UI.msg(ok, 'bad'); return false; }
     if (this.workerCount(s) >= BIZ_TYPES[s.type].slots) { UI.msg('Não há vagas neste empreendimento.', 'bad'); return false; }
     if (P.gold < 15) { UI.msg('Você precisa de 15 🪙 para o adiantamento do contrato.', 'bad'); return false; }
-    P.gold -= 15;
+    P.gold -= 15; p.purse = People.purse(p) + 15; // o adiantamento é do contratado
     s.workers = (s.workers || []).filter(id => G.people[id] && G.people[id].alive && G.people[id].job === s.id);
     s.workers.push(p.id); p.job = s.id; p.met = true;
     const e = G.spawned.get(p.id); if (e) { e.dead = true; G.spawned.delete(p.id); }

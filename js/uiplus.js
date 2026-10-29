@@ -64,7 +64,7 @@ const UIP = {
   bell() {
     let el = document.getElementById('alertBell');
     if (!el) { el = document.createElement('button'); el.id = 'alertBell'; el.className = 'al-bell'; el.title = 'Avisos'; el.addEventListener('click', () => { if (G.state === 'play') UIP.goPage('x:alerts'); }); document.body.appendChild(el); }
-    if (G.state !== 'play' || G.place && G.place.kind === 'battle') { el.classList.add('hidden'); return; }
+    if (G.state !== 'play' || G.place && G.place.kind === 'battle' || UI.isOpen()) { el.classList.add('hidden'); return; } // só na tela do jogo
     const L = this.alerts(), urg = L.some(a => a.urg >= 3);
     el.classList.toggle('hidden', !L.length); el.classList.toggle('urg', urg);
     const t = `🔔<b>${L.length}</b>`; if (el.innerHTML !== t) el.innerHTML = t;

@@ -314,7 +314,7 @@ const Court = {
     if (this.isEnemy(f)) return { text: 'Aliança? Depois de tudo o que você fez à nossa casa?', note: 'Faça as pazes primeiro.' };
     if (this.isAlly(f)) return { text: 'Nossas casas já são aliadas.', note: '' };
     if (P.gold < this.ALLY_COST) return { text: 'Uma aliança se sela com presentes à altura.', note: `Você precisa de ${this.ALLY_COST} 🪙.` };
-    P.gold -= this.ALLY_COST;
+    P.gold -= this.ALLY_COST; f.wealth = (f.wealth || 0) + this.ALLY_COST; // os presentes ficam com a casa aliada
     pf.allies = [...new Set([...(pf.allies || []), f.id])]; f.allies = [...new Set([...(f.allies || []), pf.id])];
     if (f.rival === pf.id) f.rival = null;
     f.loyalty = Math.min(100, (f.loyalty || 50) + 10);

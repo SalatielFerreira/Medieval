@@ -237,6 +237,7 @@ const VillageAdmin = {
           <p class="dt-desc">Para subir do nível ${f.lvl} sem depender da sorte, a vila precisa de mais de <b>${Math.round((f.lvl - 1) * 0.2 * 50)}</b> de poder econômico.</p></div>
         <div class="card"><div class="sec">🪙 Rendas da vila <span>por mês</span></div>
           <div class="kv"><div>Aluguéis das obras (vão para você, o governador)<b>${rent} 🪙</b></div>
+            ${typeof NpcWorks !== 'undefined' ? `<div>🏦 Caixa da vila (doações, festas, entradas)<b>${NpcWorks.fundOf(vi)} 🪙</b></div>` : ''}
             ${gates.map(s => { const d = Gate.peek(s) || {}; return `<div>🚪 Portão: pedágio ${d.toll || 0} 🪙 · entrada ${d.fee || 0} 🪙<b>${d.lastMonth !== undefined ? d.lastMonth : 0} 🪙 no mês passado</b></div>`; }).join('')}</div></div>
         <div class="card"><div class="sec">💡 Como fazer a vila crescer</div><ul class="glog">${tips.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
     }

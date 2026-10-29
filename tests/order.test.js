@@ -10,8 +10,8 @@ module.exports = async () => {
       if (!Urban.hasAny()) Game.becomeRuler(0, 'teste'); // para a categoria "Obras nas vilas" aparecer
       UI.showBuild(); UI.close();
       for (const [key, , name, list] of UI.buildCats) {
-        // nas Obras nas vilas, a ordem vale dentro de cada classe (Moradia, Comércio, Serviços...)
-        for (const part of key === 'obras' ? [...new Set(list.map(k => UI.buildClass[k]))].map(c => list.filter(k => UI.buildClass[k] === c)) : [list]) {
+        // nas categorias com classes (Obras, Produção, Fazenda, Empreendimentos), a ordem vale dentro de cada classe
+        for (const part of BuildRoles.classesOf(key) ? [...new Set(list.map(k => UI.buildClass[k]))].map(c => list.filter(k => UI.buildClass[k] === c)) : [list]) {
           const vs = part.map(k => Order.buildValue(k)).filter(v => v !== null);
           for (let i = 1; i < vs.length; i++) if (vs[i] < vs[i - 1]) { bad.push(`${name}: fora de ordem em ${part[i]}`); break; }
         }

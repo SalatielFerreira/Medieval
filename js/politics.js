@@ -129,7 +129,7 @@ const Politics = {
       this.log(`🤫 Você comprou ${People.full(p)} (${KING_CIRCLE[seat][p.sex === 'f' ? 1 : 0]} de ${CIV_DEFS[ci].short}).`);
       return { text: U.pick(['Ouro fala mais alto que juramento. Conte comigo.', 'Quando chegar a hora, a minha espada fica na bainha.', 'O rei nunca me pagou tão bem.']), note: `🤫 ${n} de ${tot} do círculo do rei comprados.${n === tot ? ' Ninguém mais protege o rei na sala do trono!' : ''}` };
     }
-    P.gold -= Math.round(cost / 2); People.addAff(p, -15);
+    P.gold -= Math.round(cost / 2); p.purse = People.purse(p) + Math.round(cost / 2); People.addAff(p, -15); // ele fica com o dinheiro
     if (Math.random() < 0.45) { Game.addRelation(ci, -20); this.log(`🚨 ${People.full(p)} contou ao rei de ${CIV_DEFS[ci].short} que você tentou suborná-lo.`); return { text: 'Traição? O rei vai saber disso!', note: `🚨 Recusou e contou ao rei (relação −20, perdeu ${Math.round(cost / 2)} 🪙).` }; }
     return { text: 'Guarde o seu ouro. Eu não vi nada, e você não disse nada.', note: `Recusou (perdeu ${Math.round(cost / 2)} 🪙).` };
   },

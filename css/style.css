@@ -4236,3 +4236,5 @@ body:not(.small) .ldi-itx small { font-size: 12.5px; }
 .lang-list button:hover { background: rgba(184, 145, 63, .2); }
 .lang-list button.on { background: rgba(184, 145, 63, .32); color: #fff3cf; }
 @media (max-height: 500px) { .lang-btn { font-size: 12px; padding: 4px 8px; } .lang-list button { padding: 6px 9px; font-size: 13px; } }
+/* o sino de avisos só aparece na tela do jogo: some na hora em que uma janela abre */
+body.win-open #alertBell { display: none !important; }

@@ -48,7 +48,7 @@ const Social = {
     }
     if (op === 'drink') {
       if (P.gold < 6) return { text: 'Que gentil... mas você nem tem para a sua!', note: 'Você precisa de 6 🪙.' };
-      P.gold -= 6; S.drink = G.day; People.addAff(p, p.trait === 'rabugento' ? 3 : 6); Mind.feel(p, 'joy', 15); Sound.play('coin');
+      P.gold -= 6; S.drink = G.day; { const k = p.home && p.home.type === 'village' ? People.shopkeeper(p.home.idx, 'innkeeper') : null; if (k) k.purse = People.purse(k) + 6; } // a bebida é paga ao taverneiro People.addAff(p, p.trait === 'rabugento' ? 3 : 6); Mind.feel(p, 'joy', 15); Sound.play('coin');
       const open = p.trait === 'rabugento' ? 'Hmpf... mas cerveja de graça eu não recuso. ' : p.trait === 'timido' ? 'Ah... obrigad' + this.o(p) + '. *bebe devagar* ' : 'Saúde! ';
       return { text: open + this.secret(p), note: 'Com a bebida, a língua solta: a Ficha mostra o que você descobriu.' };
     }

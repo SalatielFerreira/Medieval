@@ -161,7 +161,7 @@ const Commerce = {
     const unhappy = Biz.workers(s).filter(p => p.aff < -4);
     if (Biz.workers(s).length >= 2 && unhappy.length >= Math.ceil(Biz.workers(s).length / 2) && Math.random() < 0.5) { s.strike = G.day + 1; UI.msg(`✊ Greve no seu ${BUILDINGS[s.type].name}! Os funcionários cruzaram os braços. Negocie no painel dos negócios.`, 'bad', true); this.log(`Greve: ${BUILDINGS[s.type].name}`); }
   },
-  settle(s) { const ws = Biz.workers(s), cost = ws.length * 12; if (P.gold < cost) { UI.msg(`O acordo custa ${cost} 🪙 (12 por funcionário).`, 'bad'); return; } P.gold -= cost; for (const p of ws) People.addAff(p, 15); s.strike = 0; UI.msg(`🤝 Acordo fechado: ${cost} 🪙 de bônus e todos voltaram ao trabalho.`, 'gold'); },
+  settle(s) { const ws = Biz.workers(s), cost = ws.length * 12; if (P.gold < cost) { UI.msg(`O acordo custa ${cost} 🪙 (12 por funcionário).`, 'bad'); return; } P.gold -= cost; for (const p of ws) { People.addAff(p, 15); p.purse = People.purse(p) + 12; } s.strike = 0; UI.msg(`🤝 Acordo fechado: ${cost} 🪙 de bônus e todos voltaram ao trabalho.`, 'gold'); },
   // ---------------------------------------------------------------- 6. guildas
   GUILDS: {
     smiths: { name: 'Cavaleiros Templários', icon: '✠', trade: 'ferreiros e armeiros', ranks: ['smith', 'armorer'], biz: ['biz_smithy', 'biz_smelter', 'biz_armorer', 'biz_jeweler'] },

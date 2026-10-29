@@ -127,45 +127,19 @@ const Sound = {
   // ------------------------------------------------------------ música: melodias medievais compostas
   // Cada tema: compasso (passos por compasso), andamento, melodia [nota MIDI ou 0 = pausa, duração em passos],
   // acordes por compasso (raiz MIDI + tipo) e padrão de percussão.
-  TUNES: {
-    // giga dançante em ré dório (6/8)
-    day: { bpm: 138, bar: 6, lead: 'flute', drum: [3, 0, 1, 2, 0, 1], jingle: [0, 0, 0, 1, 0, 0],
-      mel: [[69, 2], [74, 1], [74, 2], [76, 1], [77, 1], [76, 1], [74, 1], [72, 2], [69, 1], [67, 2], [72, 1], [72, 2], [74, 1], [76, 1], [74, 1], [72, 1], [69, 3],
-        [69, 2], [74, 1], [74, 2], [76, 1], [77, 1], [79, 1], [81, 1], [79, 2], [76, 1], [77, 1], [76, 1], [74, 1], [72, 1], [69, 1], [67, 1], [69, 3], [74, 3],
-        [74, 1], [77, 1], [81, 1], [81, 2], [79, 1], [77, 1], [81, 1], [77, 1], [76, 2], [72, 1], [72, 1], [76, 1], [79, 1], [79, 2], [77, 1], [76, 1], [79, 1], [76, 1], [74, 2], [72, 1],
-        [74, 1], [77, 1], [81, 1], [81, 2], [79, 1], [77, 1], [76, 1], [74, 1], [72, 2], [76, 1], [74, 1], [72, 1], [69, 1], [67, 1], [69, 1], [72, 1], [74, 3], [74, 3]],
-      chords: [[50, 'm'], [50, 'm'], [48, 'M'], [48, 'M'], [50, 'm'], [50, 'm'], [48, 'M'], [50, 'm'], [50, 'm'], [50, 'm'], [48, 'M'], [48, 'M'], [50, 'm'], [50, 'm'], [48, 'M'], [50, 'm']] },
-    // valsa tranquila em lá menor (3/4) para a noite
-    night: { bpm: 96, bar: 6, lead: 'lute', drum: [0, 0, 0, 0, 0, 0], jingle: [0, 0, 0, 0, 0, 0],
-      mel: [[76, 2], [74, 2], [72, 2], [71, 4], [69, 2], [72, 3], [71, 1], [69, 2], [67, 6], [69, 2], [71, 2], [72, 2], [74, 4], [72, 2], [71, 2], [69, 2], [68, 2], [69, 6],
-        [72, 2], [74, 2], [76, 2], [77, 4], [76, 2], [74, 3], [72, 1], [71, 2], [72, 6], [69, 2], [72, 2], [71, 2], [69, 4], [67, 2], [68, 2], [71, 2], [68, 2], [69, 6]],
-      chords: [[45, 'm'], [43, 'M'], [41, 'M'], [40, 'M'], [45, 'm'], [50, 'm'], [40, 'M'], [45, 'm'], [45, 'm'], [50, 'm'], [48, 'M'], [48, 'M'], [45, 'm'], [40, 'M'], [40, 'M'], [45, 'm']] },
-    // marcha solene em ré mixolídio para o menu
-    menu: { bpm: 104, bar: 8, lead: 'flute', drum: [3, 0, 1, 0, 2, 0, 1, 1], jingle: [0, 0, 0, 0, 1, 0, 0, 0],
-      mel: [[62, 2], [66, 2], [69, 3], [69, 1], [72, 2], [71, 2], [69, 4], [67, 2], [69, 2], [71, 2], [67, 2], [66, 4], [64, 4], [62, 2], [66, 2], [69, 3], [71, 1],
-        [72, 3], [74, 1], [72, 2], [71, 2], [69, 2], [67, 2], [66, 2], [64, 2], [62, 8]],
-      chords: [[50, 'M'], [48, 'M'], [43, 'M'], [45, 'M'], [50, 'M'], [48, 'M'], [43, 'M'], [50, 'M']] },
-    // batalha: ritmo rápido em mi menor
-    battle: { bpm: 152, bar: 8, lead: 'lute', drum: [3, 1, 2, 1, 3, 1, 2, 2], jingle: [0, 1, 0, 1, 0, 1, 0, 1],
-      mel: [[64, 1], [64, 1], [67, 1], [64, 1], [71, 2], [69, 2], [67, 1], [66, 1], [64, 2], [62, 2], [64, 2], [64, 1], [64, 1], [67, 1], [69, 1], [71, 2], [74, 2],
-        [72, 2], [71, 2], [69, 2], [71, 2], [67, 2], [66, 2], [64, 4]],
-      chords: [[40, 'm'], [38, 'M'], [40, 'm'], [43, 'M'], [45, 'm'], [47, 'M']] },
-    // caverna: bordão sombrio e notas soltas
-    cave: { bpm: 60, bar: 8, lead: 'lute', drum: [0, 0, 0, 0, 0, 0, 0, 0], jingle: [0, 0, 0, 0, 0, 0, 0, 0], sparse: true,
-      mel: [[52, 3], [0, 3], [55, 2], [53, 4], [0, 4], [52, 2], [50, 6], [0, 2], [57, 3], [55, 1], [53, 4], [0, 4], [52, 8]],
-      chords: [[40, 'm'], [40, 'm'], [41, 'M'], [40, 'm']] },
-  },
+  // a música (uma só, alegre e leve) está em music.js
+  TUNES: {},
   music(mode) {
     this.wantMode = mode;
     if (!this.ready || mode === this.mode) return;
     this.mode = mode;
-    const tune = this.TUNES[mode] || this.TUNES.day, c = this.ctx, t = c.currentTime;
+    const tune = this.TUNES[mode] || this.TUNES.alegre || Object.values(this.TUNES)[0], c = this.ctx, t = c.currentTime;
     this.tune = tune; this.step = 0; this.mi = 0; this.mrem = 0; this.nextBeat = t + 0.4; this.round = 0;
     if (this.droneNodes) for (const n of this.droneNodes) { try { n.stop(c.currentTime + 1.2); } catch (e) { /* já parado */ } }
     this.droneNodes = [];
-    // sanfona (bordão em quinta) que muda de tom com os acordes
+    // sanfona (bordão em quinta) que muda de tom com os acordes (a música leve não tem)
     const root = tune.chords[0][0];
-    for (const semi of [0, 7]) {
+    if (!tune.nodrone) for (const semi of [0, 7]) {
       const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = this.midi(root - 12 + semi);
       const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = mode === 'cave' ? 260 : 520;
       const g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(mode === 'battle' ? 0.03 : 0.04, t + 1.5);
@@ -208,9 +182,9 @@ const Sound = {
       // acordes no alaúde e baixo
       const [root, kind] = T_.chords[bar % T_.chords.length];
       const third = kind === 'm' ? 3 : 4;
-      if (inBar === 0) { this.pluck(t, this.midi(root - 12), sp * T_.bar, 0.26, this.musBus); }
+      if (inBar === 0) { this.pluck(t, this.midi(root - 12), sp * T_.bar, T_.soft ? 0.11 : 0.26, this.musBus); }
       if (!T_.sparse && (inBar === Math.floor(T_.bar / 2) || inBar === 0)) {
-        [0, third, 7].forEach((iv, k) => this.pluck(t + k * 0.018, this.midi(root + 12 + iv), sp * 3, 0.07, this.musBus));
+        [0, third, 7].forEach((iv, k) => this.pluck(t + k * (T_.soft ? 0.08 : 0.018), this.midi(root + 12 + iv), sp * 3, T_.soft ? 0.04 : 0.07, this.musBus)); // dedilhado leve na música alegre
       }
       if (inBar === 0 && this.droneNodes && this.droneNodes[0]) {
         this.droneNodes[0].frequency.setTargetAtTime(this.midi(root - 12), t, 0.08);

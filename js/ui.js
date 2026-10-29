@@ -1487,7 +1487,7 @@ const UI = {
         + `<div class="card st-screen kalone"><div class="st-cols">${small ? '' : `<div class="st-col"><div class="sec">🔍 Escala</div><small class="st-hint">A automática se ajusta ao tamanho da tela</small>${chips('uiScale', [['auto', 'Auto'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']], s.uiScale)}</div>`}<div class="st-col"><div class="sec">🗺️ Minimapa</div>${sw('minimap', '👁️', 'Mostrar', 'toque nele para abrir o mapa')}${sw('ambience', '✨', 'Efeitos de ambiente', 'fumaça, nuvens, reflexos, pássaros, luz do pôr do sol')}${chips('miniSize', [[140, 'P', 'pequeno'], [180, 'M', 'médio'], [230, 'G', 'grande']], s.miniSize)}</div><div class="st-col"><div class="sec">📋 Informações</div>${sw('numbers', '🔢', 'Números nas barras', 'vida, energia e fome')}${sw('keysbar', '⌨️', 'Barra de atalhos', 'teclas no rodapé')}</div><div class="st-col st-pcol"><div class="sec">👀 Prévia</div><div class="sp-screen"><div class="sp-hud">${[['hp', 100], ['en', 80], ['fo', 60]].map(([k, v]) => `<div class="sp-bar ${k}"><i style="width:${v}%"></i>${s.numbers ? `<em>${v}</em>` : ''}</div>`).join('')}</div>${s.minimap ? `<div class="sp-mini" style="--m:${s.miniSize / 230}"></div>` : ''}<div class="sp-hero"></div>${s.keysbar ? '<div class="sp-keys"><i></i><i></i><i></i><i></i><i></i></div>' : ''}</div></div></div></div>`;
     } else if (tab === 'som') {
       page = this.pageHead('🔊', 'Som', 'Música e efeitos, todos criados pelo próprio jogo')
-        + `<div class="card st-sound kalone">${range('music', '🎵', 'Música', 'Muda de dia, à noite, nas cavernas e em batalha')}${range('sfx', '🔔', 'Efeitos', 'Passos, golpes, machado, fogueira, chuva...')}
+        + `<div class="card st-sound kalone">${range('music', '🎵', 'Música', 'Uma música alegre e leve')}${range('sfx', '🔔', 'Efeitos', 'Passos, golpes, machado, fogueira, chuva...')}
           ${sw('mute', '🔇', 'Silenciar tudo', 'Desliga todo o áudio do jogo')}</div>`;
     } else if (tab === 'controles') {
       const h = this.helpParts();
@@ -2664,7 +2664,7 @@ const UI = {
       case 'funally': { const f = Families.get(+d.f); Dialog.confirm({ icon: '💔', title: 'Desfazer a aliança', text: `Desfazer a aliança com a ${Families.name(f)}?`, ok: 'Desfazer', danger: true }, () => { this.msg(Court.unally(f).note); this.refresh(); }); return; }
       case 'fenemy': { const f = Families.get(+d.f); Dialog.confirm({ icon: '⚔️', title: 'Declarar inimiga', text: `Declarar a ${Families.name(f)} inimiga da sua casa? Os adultos dela poderão ser enfrentados até a morte, e eles vão revidar.`, ok: 'Declarar inimiga', danger: true }, () => { this.msg(Court.declareEnemy(f).note, 'bad'); this.refresh(); }); return; }
       case 'fpeace': { const f = Families.get(+d.f), ok = Court.canPeace(f); this.msg(Court.peace(f).note, ok ? 'gold' : 'bad'); break; }
-      case 'famfavor': { const f = Families.get(+d.f); if (f && P.gold >= 200) { P.gold -= 200; f.favor = (f.favor || 0) + 25; f.loyalty = Math.min(100, f.loyalty + 15); this.msg(`A ${Families.name(f)} agradece os favores da coroa (+15 de lealdade).`, 'gold'); } break; }
+      case 'famfavor': { const f = Families.get(+d.f); if (f && P.gold >= 200) { P.gold -= 200; f.wealth = (f.wealth || 0) + 200; f.favor = (f.favor || 0) + 25; f.loyalty = Math.min(100, f.loyalty + 15); this.msg(`A ${Families.name(f)} agradece os favores da coroa (+15 de lealdade).`, 'gold'); } break; }
       case 'fping': { const f = Families.get(+d.f), v = typeof f.seat === 'number' ? World.villages[f.seat] : null; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
       case 'found': {
         const ideas = Families.nameIdeas();
@@ -2739,7 +2739,7 @@ const HELP_HTML = `
 <li>Colha <b>linho</b> para fazer corda e tecido. Com corda e madeira faça uma <b>Vara de Pesca</b> e, na bancada, um <b>Barco a Remo</b>.</li>
 <li>Construa uma <b>Fogueira</b>, uma <b>Bancada</b> e uma <b>Forja</b> (B) perto da sua cabana.</li>
 <li>Cace cervos e javalis para obter <b>carne</b> e <b>couro</b>. Asse a carne na fogueira.</li>
-<li>Equipe <b>Elmo, Gibão, Calções e Botas</b>: cada peça soma defesa.</li>
+<li>Equipe <b>Elmo, Armadura, Calções e Botas</b>: cada peça soma defesa.</li>
 <li>Cada vila tem <b>Armazém, Madeireira, Pedreira e Ferreiro</b>, cada um vendendo e comprando o seu tipo de mercadoria. <b>Caçadores</b> andam pelos arredores vendendo peles, ossos, chifres e presas.</li>
 <li>Clique em qualquer pessoa perto de você (ou no balão 💬) para conversar — a tecla <b>E</b> é só para interagir com as coisas: elogie, dê presentes (cada um tem um favorito), paquere, recrute <b>capangas</b> e equipe-os com armas e armaduras.</li>
 <li>Com amizade e romance altos, peça em namoro; com um <b>Anel de Prata</b>, peça em casamento. Casados, durmam em casa para ter filhos.</li>
