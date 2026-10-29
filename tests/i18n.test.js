@@ -36,10 +36,22 @@ module.exports = async () => {
         return out;
       });
       if (!/Backpack|BACKPACK/i.test(r.inv)) fails.push('a mochila não ficou em inglês');
+      const h1 = await page.evaluate(() => document.querySelector('.menu-title h1').textContent);
+      if (h1 !== 'MEDIEVAL') fails.push(`em inglês o nome virou "${h1}"`);
       if (r.t !== 'New game') fails.push(`"Novo jogo" virou "${r.t}"`);
       const pt = (r.inv + r.k).match(/\b(Você|não|está|também|vila|moedas)\b/g);
       if (pt && pt.length > 3) fails.push('ainda há português nas janelas em inglês: ' + pt.slice(0, 6).join(', '));
       fails.push(...errors.map(e => 'erro no jogo (en): ' + e));
+    } finally { await close(); }
+  }
+  // espanhol: o nome MEDIEVAL não se traduz; o subtítulo sim
+  {
+    const { page, errors, close } = await open({ newGame: false, query: '?lang=es' });
+    try {
+      const r = await page.evaluate(() => ({ h1: document.querySelector('.menu-title h1').textContent, h4: document.querySelector('.menu-title h4').textContent }));
+      if (r.h1 !== 'MEDIEVAL') fails.push(`em espanhol o nome virou "${r.h1}"`);
+      if (r.h4 !== 'El Último Reino') fails.push(`em espanhol o subtítulo é "${r.h4}"`);
+      fails.push(...errors.map(e => 'erro no jogo (es): ' + e));
     } finally { await close(); }
   }
   return fails;

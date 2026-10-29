@@ -20,5 +20,9 @@
  "branco": "white",
  "tom": "tone",
  "cor": "color",
- "livre": "free"
+ "livre": "free",
+ "MED": "MED",
+ "EVAL": "EVAL",
+ "MEDIEVAL": "MEDIEVAL",
+ "Medieval": "Medieval"
 }
