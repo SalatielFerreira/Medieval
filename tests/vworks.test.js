@@ -9,22 +9,24 @@ module.exports = async () => {
       const bad = [], ok = (c, m) => { if (!c) bad.push(m); };
       UI.msg = () => {}; UI.banner = () => {};
       Game.becomeRuler(0, 'teste'); UI.close(); UI.showBuild(); UI.close();
-      // as obras separadas por tipo: as 70 da vila, a Defesa, a Praça e a Cultura (sem as repetidas)
-      const ob = UI.buildCats.filter(c => c[0].startsWith('ob_')), list = ob.flatMap(c => c[3]);
-      ok(ob.map(c => c[0]).join() === 'ob_casa,ob_prod,ob_faz,ob_praca,ob_cult,ob_def', 'categorias das obras: ' + ob.map(c => c[0]).join());
+      // Obras nas vilas: uma janela só, com a lista separada por classes (sem obras repetidas)
+      ok(!UI.buildCats.some(c => c[0].startsWith('ob_')), 'as classes viraram janelas separadas');
+      const list = UI.buildCats.find(c => c[0] === 'obras')[3], cls = list.map(k => UI.buildClass[k]);
       ok(list.filter(k => k.startsWith('c:')).length === 70, `obras nas vilas: ${list.filter(k => k.startsWith('c:')).length} (meta 70)`);
       ok(list.filter(k => BR.DEF.includes(k)).length === 10, 'a Defesa não está nas obras');
       ok(!list.some(k => BR.DUP.includes(k)), 'ainda há obra repetida: ' + list.filter(k => BR.DUP.includes(k)).join());
-      ok(new Set(list).size === list.length, 'obra em duas categorias');
+      ok(new Set(list).size === list.length, 'obra repetida na lista');
       const nm = k => k.startsWith('c:') ? CIVIC[k.slice(2)].name : BUILDINGS[k].name, all = list.map(nm); ok(new Set(all).size === all.length, 'nome repetido nas obras: ' + all.filter((n, i) => all.indexOf(n) !== i).join());
-      ok(ob.find(c => c[0] === 'ob_praca')[3].includes('c:vfountain') && ob.find(c => c[0] === 'ob_cult')[3].includes('library') && ob.find(c => c[0] === 'ob_prod')[3].includes('c:smith') && ob.find(c => c[0] === 'ob_faz')[3].includes('c:field'), 'obra na categoria errada');
-      const names = list.filter(k => k.startsWith('c:')).map(k => CIVIC[k.slice(2)] && CIVIC[k.slice(2)].name); ok(new Set(names).size === names.length, 'obra com nome repetido');
+      ok(cls.every(Boolean), 'obra sem classe');
+      ok(cls.every((c, i) => !i || c === cls[i - 1] || !cls.slice(0, i).includes(c)), 'as classes estão misturadas na lista');
+      ok(UI.buildClass['c:vpost'] === 'serv' && UI.buildClass['c:vfountain'] === 'praca' && UI.buildClass['library'] === 'cult' && UI.buildClass['c:chapel'] === 'fe' && UI.buildClass['c:smith'] === 'prod' && UI.buildClass['c:field'] === 'faz' && UI.buildClass['barracks'] === 'def', 'obra na classe errada');
+      UI.sel.bcat = 'obras'; UI.showBuild(); ok(UI.panel.querySelectorAll('.grp').length >= 8, 'a janela das obras não mostra os títulos das classes'); UI.close();
+      for (const k0 of OBRAS_CLASSES.map(c => c[0])) { const vs = list.filter(k => UI.buildClass[k] === k0).map(k => Order.buildValue(k)).filter(v => v !== null); for (let i = 1; i < vs.length; i++) if (vs[i] < vs[i - 1]) { bad.push('obras fora de ordem na classe ' + k0); break; } }
       for (const [k, d] of Object.entries(VWORKS)) {
         for (const i in d.cost) ok(ITEMS[i], `${d.name}: material ${i} não existe`);
         ok(d.rent || d.stock || d.pm || d.cap || d.attract, `${d.name} não rende nada`);
         ok(CIVIC[k] && CIVIC[k].desc.includes('.'), `${d.name} sem descrição`);
       }
-      for (const c of ob) { const vs = c[3].map(k => Order.buildValue(k)).filter(v => v !== null); for (let i = 1; i < vs.length; i++) if (vs[i] < vs[i - 1]) { bad.push(`obras fora de ordem em ${c[2]}`); break; } }
       // desenho de todas, nas quatro estações
       const ctx = document.createElement('canvas').getContext('2d');
       for (const sn of [0, 2, 3]) { World.season = sn; for (const k of Object.keys(VWORKS)) { const d = VWORKS[k]; try { World.drawStruct(ctx, { id: 1, type: k, x: 0, y: 0, w: d.w, h: d.h, owner: 0, village: 0 }, 10, 10, 1); } catch (e) { bad.push(`desenho de ${d.name}: ${e.message}`); } } }

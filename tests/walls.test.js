@@ -16,7 +16,7 @@ module.exports = async () => {
       P.x = (sp.x + 3.5) * TILE; P.y = (sp.y + 2.5) * TILE;
       Inv.add('stone', 20);
       // menu: a muralha saiu das Obras; o muro de pedra está em Defesa e exército
-      UI.sel.bcat = 'ob_praca'; UI.showBuild();
+      UI.sel.bcat = 'obras'; UI.showBuild();
       const obras = [...document.querySelectorAll('#panel [data-k]')].map(e => e.dataset.k);
       UI.close();
       // clicar e arrastar

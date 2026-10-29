@@ -89,14 +89,18 @@ const BR_ROOMS = {
 const BR_STABLE_ITEMS = ['saddle', 'horsehair', 'horseshoe', 'rope', 'leather', 'wheat', 'barley', 'apple', 'carrot', 'hay'];
 const BR_HORSE = 240, BR_CART = 170;
 
-// as Obras da vila separadas por tipo (o que não estiver aqui vai para Moradia e comércio)
-const OBRAS_CATS = [
-  ['ob_casa', '🏘️', 'Moradia e comércio', ['vhouse', 'vtenement', 'store', 'tavern', 'vinn', 'vinn2', 'vmarket', 'vhmarket', 'vtrade', 'vpost', 'vpawn', 'vfishshop', 'vmint', 'port', 'bank']],
-  ['ob_prod', '🔨', 'Produção', ['smith', 'lumber', 'quarry', 'vbakery', 'voven', 'vmill', 'vsawmill', 'vmine', 'vweaver', 'vbrewery', 'vbasket', 'vcharcoal', 'vlaundry', 'vshoe', 'vbutcher', 'vpotter', 'vcheese', 'vfishery', 'vcraft', 'vguild']],
-  ['ob_faz', '🐄', 'Fazenda e animais', ['field', 'vgarden2', 'vapiary', 'vbarley', 'vflax', 'vorchard', 'vhens', 'vpasture', 'vwood', 'vpigs', 'vstable', 'vgranary', 'vcattle']],
-  ['ob_praca', '⛲', 'Praça e decoração', ['well', 'vlamp', 'vgarden', 'vfountain', 'vstatue']],
-  ['ob_cult', '📚', 'Cultura, fé e treino', ['chapel', 'vcross', 'vspring', 'cemetery', 'vschool', 'vuniv', 'vmonastery', 'vcathedral', 'vorphan', 'vclinic', 'vinfirm', 'vbath', 'vthermae', 'vhall', 'arena']],
-  ['ob_def', '🛡️', 'Defesa e exército', ['vgate', 'vtower', 'vguard']],
+// as Obras nas vilas numa janela só, separadas por classe (o que não estiver aqui vai para Serviços).
+// As suas de Praça, Cultura e Defesa entram nas classes delas (menos as repetidas com as da vila).
+const OBRAS_CLASSES = [
+  ['casa', '🏠', 'Moradia', ['c:vhouse', 'c:vtenement']],
+  ['com', '🛒', 'Comércio', ['c:store', 'c:tavern', 'c:vinn', 'c:vinn2', 'c:vmarket', 'c:vhmarket', 'c:vtrade', 'c:vfishshop', 'c:vpawn', 'c:bank']],
+  ['serv', '🏛️', 'Serviços', ['c:vpost', 'c:vclinic', 'c:vinfirm', 'c:vbath', 'c:vthermae', 'c:vlaundry', 'c:vorphan', 'c:vhall', 'c:vmint', 'c:port', 'c:cemetery']],
+  ['prod', '🔨', 'Produção', ['c:smith', 'c:lumber', 'c:quarry', 'c:vbakery', 'c:voven', 'c:vmill', 'c:vsawmill', 'c:vmine', 'c:vweaver', 'c:vbrewery', 'c:vbasket', 'c:vcharcoal', 'c:vshoe', 'c:vbutcher', 'c:vpotter', 'c:vcheese', 'c:vfishery', 'c:vcraft', 'c:vguild']],
+  ['faz', '🐄', 'Fazenda e animais', ['c:field', 'c:vgarden2', 'c:vapiary', 'c:vbarley', 'c:vflax', 'c:vorchard', 'c:vhens', 'c:vpasture', 'c:vwood', 'c:vpigs', 'c:vstable', 'c:vgranary', 'c:vcattle']],
+  ['praca', '⛲', 'Praça e decoração', ['c:well', 'c:vlamp', 'c:vgarden', 'c:vfountain', 'c:vstatue', 'PRACA']],
+  ['cult', '📚', 'Cultura e educação', ['c:vschool', 'c:vuniv', 'library', 'stage', 'observatory', 'c:arena']],
+  ['fe', '⛪', 'Fé', ['c:chapel', 'c:vcross', 'c:vspring', 'c:vmonastery', 'c:vcathedral', 'oratory', 'stone_circle']],
+  ['def', '🛡️', 'Defesa e treino', ['c:vgate', 'c:vtower', 'c:vguard', 'DEF', 'training', 'archery', 'tiltyard']],
 ];
 
 const BuildRoles = {
@@ -231,16 +235,15 @@ const BuildRoles = {
     // Praça e decoração e Cultura, fé e treino também são obras da vila: saem da sua base e entram nas Obras
     const obras = cats.find(c => c[0] === 'obras');
     cats = cats.filter(c => !['defesa', 'praca', 'cultura', 'obras'].includes(c[0])).map(c => [c[0], c[1], c[2], c[3].filter(k => !BR.INFRA_OUT.includes(k) && !BR.OUT.includes(k))]);
+    UI.buildClass = {};
     if (auth) {
-      // as obras separadas por tipo; as suas de praça, cultura e defesa entram junto (menos as repetidas)
-      const civ = obras ? obras[3] : [], used = new Set();
-      const extra = { ob_praca: BR.PRACA, ob_cult: BR.CULT, ob_def: BR.DEF };
-      const groups = OBRAS_CATS.map(([k, ic, name, list]) => {
-        const mine = civ.filter(x => list.includes(x.slice(2))); mine.forEach(x => used.add(x));
-        return [k, ic, name, (extra[k] || []).filter(b => !BR.DUP.includes(b)).concat(mine)];
-      });
-      const rest = civ.filter(x => !used.has(x)); if (rest.length) groups[0][3] = groups[0][3].concat(rest);
-      for (const g of groups) { g[3] = Order.sortBuild(g[3]); if (g[3].length) cats.push(g); }
+      // uma categoria só (Obras nas vilas), com a lista em classes: cada classe do mais fácil ao mais difícil
+      const civ = new Set(obras ? obras[3] : []), have = k => (k.startsWith('c:') ? civ.has(k) : !!BUILDINGS[k]) && !BR.DUP.includes(k), used = new Set(), list = [];
+      const classes = OBRAS_CLASSES.map(([k, ic, name, keys]) => [k, ic, name, keys.flatMap(x => x === 'PRACA' ? BR.PRACA : x === 'DEF' ? BR.DEF : [x]).filter(have)]);
+      for (const c of classes) c[3].forEach(x => used.add(x));
+      const rest = [...civ].filter(x => !used.has(x) && have(x)); classes.find(c => c[0] === 'serv')[3].push(...rest);
+      for (const [k, , , keys] of classes) for (const x of Order.sortBuild([...new Set(keys)])) { if (UI.buildClass[x]) continue; UI.buildClass[x] = k; list.push(x); }
+      cats.push(['obras', '🏗️', 'Obras nas vilas', list]);
     }
     this.buildCats = cats;
     // a categoria escolhida saiu do menu (Defesa, Praça, Cultura ou Obras antigas): vai para onde a construção está agora
@@ -252,13 +255,15 @@ const BuildRoles = {
   const bd0 = UI.buildDetailHtml.bind(UI);
   UI.buildDetailHtml = function (k) {
     let h = bd0(k);
+    const kc = UI.buildClass && UI.buildClass[k], kd = kc && OBRAS_CLASSES.find(x => x[0] === kc);
+    if (kd) h = h.replace('<div class="dt-cat">Obras nas vilas</div>', `<div class="dt-cat">Obras nas vilas · ${kd[1]} ${kd[2]}</div>`);
     const chips = list => `<div class="chips br-prod">${list.slice(0, 24).map(i => `<span class="chip">${UI.ii(i)} ${ITEMS[i].name}</span>`).join('')}${list.length > 24 ? `<span class="chip">+${list.length - 24}</span>` : ''}</div>`;
     let extra = '';
     if (BR.PROD.includes(k)) { const p = BuildRoles.products(k); if (p.length) extra = `<div><div class="sec">🛠️ Pode produzir <span>${p.length} ${p.length === 1 ? 'item' : 'itens'}</span></div>${chips(p)}</div>`; }
     else if (BR.FARM.includes(k) && BuildRoles.shopOf[k]) extra = `<div><div class="sec">🧺 O responsável vende</div>${chips(SHOPS[BuildRoles.shopOf[k]].sells)}</div>`;
     else if (BR.DEF.includes(k) || BR.PRACA.includes(k) || BR.CULT.includes(k)) extra = '<small class="ok">🏗️ Obra da vila: só onde você governa (uma vila sua ou o seu reino).</small>';
     const cat = (UI.buildCats || []).find(c => c[3].includes(k));
-    if (cat && cat[0].startsWith('ob_') && UI.buildPower && !h.includes(UI.buildPower)) extra += UI.buildPower;
+    if (cat && cat[0] === 'obras' && UI.buildPower && !h.includes(UI.buildPower)) extra += UI.buildPower;
     if (!extra) return h;
     const at = h.indexOf('<small class="muted">Depois de clicar');
     return at >= 0 ? h.slice(0, at) + extra + h.slice(at) : h + extra;
@@ -289,18 +294,21 @@ BuildRoles.renderBuild = function (first) {
   const cat = cats.find(c => c[0] === S.bcat);
   if (!S.build || !cat[3].includes(S.build)) S.build = cat[3][0];
   const costMini = cost => Object.entries(cost).map(([k, n]) => `<i class="${Inv.count(k) >= n ? 'ok' : 'bad'}">${UI.ii(k)}${n}</i>`).join('');
-  const rows = cat[3].map(k => {
+  // nas Obras nas vilas: o título de cada classe antes das construções dela
+  let lastCls = null;
+  const head = k => { const c = cat[0] === 'obras' && UI.buildClass[k]; if (!c || c === lastCls) return ''; lastCls = c; const d = OBRAS_CLASSES.find(x => x[0] === c); return `<div class="grp">${d[1]} ${d[2]}</div>`; };
+  const rows = cat[3].map(k => head(k) + (() => {
     const b = UI.binfo(k), tool = !b.cost;
     const sub = tool ? b.sub : `${b.owned !== undefined ? (b.owned ? `você tem ${b.owned} · ` : '') : ''}<span class="bcost">${costMini(b.cost)}</span>`;
     return `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${b.icon}</span>
       <span><b>${b.name}</b><small>${sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
-  }).join('');
+  })()).join('');
   UI.buildCatKey = S.bcat;
   const b = UI.binfo(S.build);
   const detail = `<div class="cdt-in">${UI.buildDetailHtml(S.build)}</div>
     <div class="act-row"><button class="primary" data-act="${BUILDINGS[S.build] ? 'build' : 'urban'}" data-k="${S.build}" ${b.can ? '' : 'disabled'}>${b.btn}</button></div>`;
   const ready = c => c[3].filter(k => { const x = UI.binfo(k); return x.cost && x.can; }).length;
-  const vil = c => c[0] === 'infra' || c[0] === 'obras' || c[0].startsWith('ob_');
+  const vil = c => c[0] === 'infra' || c[0] === 'obras';
   const groups = [['Sua base', cats.filter(c => !vil(c)).map(c => [c[0], c[1], c[2], ready(c) ? '✓' + ready(c) : ''])], ['Estradas e vilas', cats.filter(vil).map(c => [c[0], c[1], c[2]])]];
   UI.open('Construção', `<div class="bld iconnav">${UI.navHtml(groups, S.bcat, 'bcat', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail bld-dt">${detail}</div></div>`)}</div>`,
     'showBuild', [], (first && first[4]) || 'Erga sua base, abra estradas e reforme as vilas');

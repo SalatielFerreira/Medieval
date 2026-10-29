@@ -100,7 +100,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 ## Novidades: obras da vila separadas por tipo
 
 - **Praça e decoração** e **Cultura, fé e treino** agora são obras da vila: só aparecem para quem é governador ou rei, e só se constroem onde você governa (numa vila sua ou no seu reino).
-- **Obras nas vilas separadas por tipo** (Construção → Estradas e vilas): 🏘️ Moradia e comércio, 🔨 Produção, 🐄 Fazenda e animais, ⛲ Praça e decoração, 📚 Cultura, fé e treino e 🛡️ Defesa e exército.
+- **Obras nas vilas numa janela só, separadas por classe** (Construção → Estradas e vilas → Obras nas vilas): 🏠 Moradia, 🛒 Comércio, 🏛️ Serviços (correio, casa de curas, banhos, orfanato, paço, porto...), 🔨 Produção, 🐄 Fazenda e animais, ⛲ Praça e decoração, 📚 Cultura e educação, ⛪ Fé e 🛡️ Defesa e treino.
 - **Menu de construção mais enxuto:** saíram a Choupana, a Barraca de Viagem, a Casa na Árvore, a Casa Comprida, a Torre de Pedra e o Solar (Moradia); a Arca Reforçada, o Celeiro e a Casa de Gelo (Baús e estábulo); a Cisterna e a Rede de Esgoto (Infraestrutura). As que você já construiu continuam funcionando.
 - **Sem obras repetidas:** ficam o Poço, o Lampião, o Chafariz, a Estátua, a Torre de Vigia e a Capela da vila. Saem do menu os seus Poço, Lampião, Chafariz, Estátua do Herói, Torre de Vigia e Capela Particular; os que você já construiu continuam funcionando.
 - **Fim da janela Criação:** as ferramentas e armas que se faziam com as mãos agora se fazem na Bancada. Também mudaram: o espaço "Ferramenta" do inventário (antes "Ferram. 2"), o boneco do inventário (sem o quadro e 1,5× maior) e o botão Voltar, que agora volta de primeira para a janela anterior ou para o jogo.
