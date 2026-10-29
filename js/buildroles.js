@@ -297,20 +297,9 @@ const BuildRoles = {
     if (!cats.some(c => c[0] === S.bcat)) { const w = cats.find(c => c[3].includes(S.build)); S.bcat = w ? w[0] : 'moradia'; }
     return BuildRoles.renderBuild(out);
   };
-  // ficha da construção: o que a produção fabrica (embaixo do custo) e o que a fazenda vende
-  const bd0 = UI.buildDetailHtml.bind(UI);
-  UI.buildDetailHtml = function (k) {
-    let h = bd0(k);
-    const kcat = (UI.buildCats || []).find(c => c[3].includes(k)), kcl = kcat && BuildRoles.classesOf(kcat[0]), kd = kcl && UI.buildClass && kcl.find(x => x[0] === UI.buildClass[k]);
-    if (kd) h = h.replace(`<div class="dt-cat">${kcat[2]}</div>`, `<div class="dt-cat">${kcat[2]} · ${kd[1]} ${kd[2]}</div>`);
-    const chips = list => `<div class="chips br-prod">${list.slice(0, 24).map(i => `<span class="chip">${UI.ii(i)} ${ITEMS[i].name}</span>`).join('')}${list.length > 24 ? `<span class="chip">+${list.length - 24}</span>` : ''}</div>`;
-    let extra = '';
-    if (BR.PROD.includes(k)) { const p = BuildRoles.products(k); if (p.length) extra = `<div><div class="sec">🛠️ Pode produzir <span>${p.length} ${p.length === 1 ? 'item' : 'itens'}</span></div>${chips(p)}</div>`; }
-    else if (BR.FARM.includes(k) && BuildRoles.shopOf[k]) extra = `<div><div class="sec">🧺 O responsável vende</div>${chips(SHOPS[BuildRoles.shopOf[k]].sells)}</div>`;
-    if (!extra) return h;
-    const at = h.indexOf('<small class="muted">Depois de clicar');
-    return at >= 0 ? h.slice(0, at) + extra + h.slice(at) : h + extra;
-  };
+  // ficha da construção (igual em todas as janelas): cabeçalho, tamanho/tipo/quantas você tem, custo e os produtos
+  // ligados ao imóvel. Sem o texto de descrição; o tamanho da letra é sempre o mesmo e só a lista de produtos rola.
+  UI.buildDetailHtml = function (k) { return BuildRoles.detail(k); };
   // ---------------------------------------------------------------- o portão se emenda no muro
   const dw0 = World.drawWall.bind(World);
   World.drawWall = function (ctx, s, X, Y, stone) {
@@ -348,5 +337,59 @@ BuildRoles.renderBuild = function (first) {
   const groups = [['Sua base', cats.filter(c => !vil(c)).map(c => [c[0], c[1], c[2], ready(c) ? '✓' + ready(c) : ''])], ['Estradas e vilas', cats.filter(vil).map(c => [c[0], c[1], c[2]])]];
   UI.open('Construção', `<div class="bld iconnav">${UI.navHtml(groups, S.bcat, 'bcat', `<div class="split"><div class="col"><div class="scroll" data-scroll="build">${rows}</div></div><div class="card detail bld-dt">${detail}</div></div>`)}</div>`,
     'showBuild', [], (first && first[4]) || 'Erga sua base, abra estradas e reforme as vilas');
-  UI.fitDetail('.bld-dt', cat[3], k => UI.buildDetailHtml(k), S.bcat);
+  { const box = document.querySelector('#panel .bld-dt .cdt-in'); if (box) box.style.zoom = ''; } // a ficha tem tamanho fixo (sem medir cada construção)
 };
+
+// ---------------------------------------------------------------- a ficha padronizada das construções
+// o que se colhe ou recolhe nas construções de fazenda que não têm a produção na tabela das expansões
+const BR_HARVEST = { herbgarden: ['herb'], garden: ['carrot', 'cabbage'], flaxfield: ['fiber'], farm: ['wheat'], mushroom: ['mushroom'], orchard: ['apple'],
+  dovecote: ['feather', 'egg'], coop: ['egg'], pigsty: ['meat', 'leather'], pen: ['milk', 'wool'], beehive: ['honey'], fishpond: ['carp', 'trout'] };
+Object.assign(BuildRoles, {
+  // os produtos ligados ao imóvel: [título, lista (chave de item ou [ícone, texto]), aviso quando não há produto]
+  related(k, cat) {
+    const t = k.startsWith('c:') ? k.slice(2) : k, it = l => (l || []).filter(i => typeof i !== 'string' || ITEMS[i]);
+    const shopList = key => key && SHOPS[key] ? SHOPS[key].sells || [] : [];
+    if (cat === 'producao') return ['🛠️ Pode produzir', BuildRoles.products(t), 'Nada para fabricar aqui.'];
+    if (cat === 'fazenda') { const f = expFn(t) && expFn(t).farm; return ['🧺 Produz e coleta', it(f ? Object.keys(f) : BR_HARVEST[t] || shopList(BuildRoles.shopOf[t]).slice(0, 4)), 'Nada para colher aqui.']; }
+    if (cat === 'negocios') {
+      const d = BIZ_TYPES[t] || {};
+      if (d.out && Object.keys(d.out).length) return ['🛒 Produtos do estabelecimento', it(Object.keys(d.out)), ''];
+      if (t === 'ptavern') return ['🛒 Produtos do estabelecimento', [['🍲', 'A comida e a bebida que você puser à venda']], ''];
+      if (t === 'biz_shop') return ['🛒 Produtos do estabelecimento', [['🧺', 'As mercadorias que você puser na prateleira']], ''];
+      return ['🛒 Produtos do estabelecimento', [], `Vende serviço, não produto${d.gold ? ' (rende ouro todo mês)' : ''}.`];
+    }
+    if (cat === 'guarda') {
+      if (t === 'stable') return ['🛒 À venda aqui', [['🐴', 'Cavalo'], ['🛒', 'Carroça'], ...(typeof HORSE_BREEDS !== 'undefined' ? Object.values(HORSE_BREEDS).map(b => ['🐎', b.name]) : [])], ''];
+      if (t === 'cellar') return ['🍷 Guarda e envelhece', it(['wine', 'beer', 'mead', 'aged_wine']), ''];
+      if (t === 'kennel') return ['🐕 Cria', [['🐕', 'Cão de guarda']], ''];
+      if (t === 'cartshed') return ['🛒 Guarda', [['🛒', 'Carroças e mulas de carga (+100 de carga)']], ''];
+      if (t === 'vault') return ['💰 Guarda', [['🪙', 'Ouro (rende 1% ao mês)']], ''];
+      return ['📦 Guarda', [['📦', 'Os seus itens']], ''];
+    }
+    if (cat === 'obras') {
+      const own = BUILDINGS[t] ? 'player' : 0, rk = SHOP_KEEPER[t];
+      if (t === 'tavern') return ['🛒 À venda aqui', it(['bread', 'cooked_meat']).concat([['🐴', 'Cavalo'], ['🛒', 'Carroça']]), ''];
+      const key = Work.shopOf({ type: t, owner: own }) || (SHOPS[t] ? t : null) || (rk && RANKS[rk] && RANKS[rk].shop) || null;
+      return ['🛒 À venda aqui', it(shopList(key)), 'Não vende nada (é ao ar livre ou de enfeite).'];
+    }
+    return null;
+  },
+  // quantas desta você tem (as suas construções, e as obras suas ou das vilas e do reino que você governa)
+  owned(k) {
+    if (BUILDINGS[k]) return World.structs.filter(s => s && s.owner === 'player' && s.type === k && !s.removed).length;
+    const t = k.slice(2); return World.structs.filter(s => s && s.type === t && !s.removed && (s.mine || Urban.ownStruct(s))).length;
+  },
+  detail(k) {
+    const b = UI.binfo(k), B = BUILDINGS[k], C = k.startsWith('c:') ? CIVIC[k.slice(2)] : null;
+    const cat = (UI.buildCats || []).find(c => c[3].includes(k)), cls = cat && BuildRoles.classesOf(cat[0]), kd = cls && UI.buildClass && cls.find(x => x[0] === UI.buildClass[k]);
+    const D = B || C, solid = B ? B.blocks : !(C && CIV_STRUCTS[k.slice(2)] && CIV_STRUCTS[k.slice(2)].blocks === false);
+    const tags = D ? [`📐 ${D.w}×${D.h}`, solid ? '🧱 sólida' : '👣 dá para andar por cima', `🏠 você tem ${this.owned(k)}`] : [];
+    const req = b.cost ? Object.entries(b.cost).map(([c, n]) => { const have = Inv.count(c); return `<div class="req-row"><span>${UI.ii(c)}</span><span>${ITEMS[c].name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`; }).join('') : '';
+    const rel = cat ? this.related(k, cat[0]) : null;
+    const chip = i => typeof i === 'string' ? `<span class="chip">${UI.ii(i)} ${ITEMS[i].name}</span>` : `<span class="chip">${i[0]} ${UI.esc(i[1])}</span>`;
+    return `<div class="dt-head"><div class="dt-ic">${b.icon}</div><div><div class="dt-name">${b.name}</div><div class="dt-cat">${cat ? cat[2] : b.sub}${kd ? ` · ${kd[1]} ${kd[2]}` : ''}</div></div></div>
+      ${tags.length ? `<div class="chips">${tags.map(x => `<span class="chip">${x}</span>`).join('')}</div>` : !b.cost ? `<p class="dt-desc">${b.desc || ''}</p>` : ''}
+      ${req ? `<div><div class="sec">Custo</div><div class="req">${req}</div></div>` : ''}
+      ${rel ? `<div class="br-rel"><div class="sec">${rel[0]}${rel[1].length ? ` <span>${rel[1].length}</span>` : ''}</div>${rel[1].length ? `<div class="chips">${rel[1].map(chip).join('')}</div>` : `<small class="muted">${rel[2]}</small>`}</div>` : ''}`;
+  },
+});

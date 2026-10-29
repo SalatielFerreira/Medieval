@@ -582,7 +582,8 @@ const UI = {
     // mesma lista e mesma tela: reaproveita o tamanho já calculado
     this.fitCache = this.fitCache || {};
     const key = list.join(',') + '|' + (extraKey || '') + '|' + innerWidth + 'x' + innerHeight;
-    if (this.fitCache[sel] === undefined || this.fitCache[sel].key !== key) {
+    const FC = this.fitCache[sel] && this.fitCache[sel].all ? this.fitCache[sel] : (this.fitCache[sel] = { all: {} });
+    if (FC.all[key] === undefined) {
       const html = box.innerHTML;
       let z = small ? 1.45 : 1;
       for (const i of list) {
@@ -591,9 +592,9 @@ const UI = {
         while (z > 0.7 && !fits()) { z -= 0.05; box.style.zoom = z.toFixed(2); }
       }
       box.innerHTML = html;
-      this.fitCache[sel] = { key, z };
+      FC.all[key] = z;
     }
-    const z = this.fitCache[sel].z;
+    const z = FC.all[key];
     box.style.zoom = z < 0.999 || small ? z.toFixed(2) : '';
   },
   // de onde vem um material, em poucas palavras (coleta, caça, pesca, criação ou loja)

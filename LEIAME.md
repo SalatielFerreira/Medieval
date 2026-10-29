@@ -97,6 +97,11 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: ficha das construções no mesmo padrão e janela mais rápida
+
+- **Ficha igual em todas as janelas:** ícone, nome, janela e classe; tamanho, se é sólida e quantas você tem; o custo; e os produtos ligados ao imóvel — em Produção o que dá para fabricar, em Fazenda e animais o que se colhe ou recolhe, em Empreendimentos o que o seu estabelecimento produz e vende, em Baús e estábulo e nas Obras o que se compra ali. Saiu o texto de descrição. A letra tem sempre o mesmo tamanho e só a lista de produtos rola quando é comprida.
+- **Janela de construção mais rápida:** trocar de categoria abria em até 0,4 s (a ficha de cada construção era montada e medida); agora abre na hora.
+
 ## Novidades: o dinheiro tem dono, uma música só e mais classes
 
 - **O caminho do dinheiro:** tudo o que sai da sua bolsa entra na riqueza de quem recebe. Deu 5000 Salin a alguém? A Ficha dele mostra 5000 a mais. Presentes, recrutar, subornar, salários, dote, parteira, soldo dos capangas e parcelas de empréstimo vão para a bolsa da pessoa; doação, festa, comício, candidatura e a entrada do portão vão para o caixa da vila (visto na administração da vila); compras sem comerciante (animais, cavalos, navio, viagem) e a inscrição no torneio vão para o tesouro do reino; a aliança e o favor de uma família, para a riqueza da casa; doações, bênçãos e dízimo, para o padre da vila. E o empréstimo sai da bolsa de quem empresta.

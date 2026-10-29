@@ -15,7 +15,9 @@ module.exports = async () => {
       // oficinas e construção
       UI.act('iinfo', { k: 'bread' }); ok(UI.cur.fn === 'showItemInfo', 'ação iinfo');
       const rc = RECIPES.find(x => x.station); ok(UI.craftDetailHtml(rc, rc.station).includes('Vale a pena'), 'oficina sem lucro');
-      UI.sel.bcat = 'producao'; UI.sel.build = 'oven'; UI.showBuild(); ok(html().includes('O que rende'), 'construção sem rendimento');
+      UI.sel.bcat = 'producao'; UI.sel.build = 'oven'; UI.showBuild(); ok(html().includes('Pode produzir') && !html().includes('Depois de clicar'), 'a ficha da construção não está no padrão (custo + o que produz)');
+      // a ficha é igual em todas as janelas: tamanho, tipo, quantas você tem, custo e os produtos ligados ao imóvel
+      for (const [c, k, t] of [['fazenda', 'pen', 'Produz e coleta'], ['negocios', 'biz_bakery', 'Produtos do estabelecimento'], ['guarda', 'stable', 'À venda aqui']]) { UI.sel.bcat = c; UI.sel.build = k; UI.showBuild(); ok(html().includes(t) && html().includes('você tem') && html().includes('Custo'), `ficha de ${k} fora do padrão`); }
       // reino: Gestão no Portfólio, finanças, avisos
       Game.becomeRuler(1, 'teste'); UI.close(); G.civs[1].treasury = 5000; Reign.monthTick(); Lifesim.monthTick();
       UI.showKingdom(); ok(html().includes('data-k="x:alerts"') && html().includes('data-k="x:finance"') && html().includes('data-k="x:reign"'), 'Portfólio sem o grupo Gestão');
