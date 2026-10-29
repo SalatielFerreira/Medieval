@@ -121,6 +121,8 @@ Object.assign(BUILD_ICONS, {
   'c:vmarket': () => `${[0, 1, 2].map(k => `<rect x="${2 + k * 10}" y="16" width="9" height="12" fill="#8b5a2b" stroke="#4a2e16" stroke-width=".9"/><path d="M${1 + k * 10} 10 L${12 + k * 10} 10 L${11 + k * 10} 16 L${2 + k * 10} 16 Z" fill="${['#c84a4a', '#4a7ac8', '#d8b84a'][k]}" stroke="#3a2010" stroke-width=".8"/><rect x="${4 + k * 10}" y="19" width="5" height="3" fill="${['#e2b23a', '#6aa84f', '#c24b3a'][k]}"/>`).join('')}`,
   'c:arena': () => `<ellipse cx="16" cy="19" rx="14" ry="9" fill="#c8b07a" stroke="#6a5a30" stroke-width="1.3"/><ellipse cx="16" cy="19" rx="9" ry="5" fill="#e8d8a8" stroke="#a8945a"/>${[3, 8, 13, 18, 23].map(x => `<rect x="${x}" y="8" width="5" height="4" fill="${['#8e1f2a', '#f2efe6', '#2a4a8a', '#f2efe6', '#8e1f2a'][x / 5 | 0]}"/>`).join('')}<path d="M12 21 L20 15 M20 21 L12 15" stroke="#7a8088" stroke-width="1.8" stroke-linecap="round"/>`,
 });
+// as obras da vila usam o desenho dos empreendimentos, mas sem a moeda (que marca o que é empreendimento seu)
+for (const k of ['c:store', 'c:tavern', 'c:lumber', 'c:quarry']) { const f = BUILD_ICONS[k]; if (f) BUILD_ICONS[k] = () => f().replace(BI.coin, ''); }
 // SVG do ícone (ou null se não houver)
 function buildArt(k) {
   const f = BUILD_ICONS[k];
