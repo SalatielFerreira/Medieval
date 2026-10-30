@@ -161,6 +161,9 @@ drawStructExtra = function (ctx, s, X, Y, time, H) {
       else if (kind === 'monument') { shadow(); R(w / 2 - 10, h - 10, 20, 8, U.shade(c1, -0.2)); R(w / 2 - 6, h - 24, 12, 16, c1); big(w / 2 - 8, h - 26, 16, c2); }
       else if (kind === 'hall') { house(c1, c2); for (let k = 10; k < w - 10; k += 14) R(k, 26, 4, h - 32, U.shade(c1, 0.12)); R(6, h - 10, w - 12, 4, U.shade(c1, -0.25)); sign(w / 2 - 7, 8, ic); }
       else if (kind === 'big') { house(c1, c2); R(w - 26, -26, 18, 52, U.shade(c1, -0.08)); roof(w - 30, -40, 26, 16, c2); R(w - 20, -14, 6, 9, '#2a2420'); flag(w - 18, -40, Game.civColor(typeof s.owner === 'number' ? s.owner : 0)); sign(10, 44, ic); }
+      // obra de uma fileira só (2×1: Cesteiro, Sapateiro): casinha baixa — a casa comum foi feita para dois blocos de
+      // altura e deixava a janela e a placa para fora do prédio
+      else if (h < 48) { shadow(); R(4, 10, w - 8, h - 12, c1); R(4, h - 4, w - 8, 2, U.shade(c1, -0.15)); R(w / 2 - 4, h - 16, 8, 14, '#5a3a1e'); R(w / 2 + 1, h - 10, 2, 2, '#d4b14a'); R(9, 14, 7, 6, '#2a2a3a'); roof(2, -10, w - 4, 22, c2); sign(w - 20, 13, ic); }
       else { house(c1, c2); if (/[🔥⚫]/u.test(ic)) for (let k = 0; k < 3; k++) { ctx.fillStyle = `rgba(200,200,200,${0.35 - k * 0.1})`; ctx.beginPath(); ctx.arc(X + w - 14 + Math.sin(time + k) * 3, Y - 6 - k * 8 - (time * 6 % 8), 3 + k, 0, Math.PI * 2); ctx.fill(); } sign(w - 22, 30, ic); }
       break;
     }
