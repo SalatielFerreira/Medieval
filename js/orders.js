@@ -46,8 +46,8 @@ const KOrders = {
     const S = this.S(); Object.assign(S, { key: k, pts: 0, viol: 0, mission: null, since: G.day });
     const d = KORDERS[k];
     UI.banner(`${d.icon} ${d.name}`);
-    UI.msg(`${d.icon} Você jurou diante dos irmãos da ${d.name}: "${d.oath}" Agora é Escudeiro. Cumpra as missões para subir.`, 'gold', true);
-    Progress.diary(`${d.icon} Entrou para a ${d.name} como Escudeiro.`); Diplo.chronicle(`${d.icon} ${G.name} ${G.surname || ''} entrou para a ${d.name}.`, true);
+    UI.msg(`${d.icon} Você jurou diante dos irmãos da ${d.name}: "${d.oath}" Agora é ${KO_RANKS[0][0]}. Cumpra as missões para subir.`, 'gold', true);
+    Progress.diary(`${d.icon} Entrou para a ${d.name} como ${KO_RANKS[0][0]}.`); Diplo.chronicle(`${d.icon} ${G.name} ${G.surname || ''} entrou para a ${d.name}.`, true);
     this.newMission();
   },
   leave(why) {

@@ -368,7 +368,7 @@ const Commerce = {
 {
   UI.showBizBoard = function (tab) {
     const S = Commerce.st(), L = Biz.list(); tab = tab || this.sel.bbTab || 'biz'; this.sel.bbTab = tab;
-    const tabs = [['biz', '🏭 Negócios'], ['contracts', '📜 Encomendas'], ['guilds', '🏛️ Guildas'], ['market', '🎪 Feiras e leilões'], ['log', '📒 Ocorrências']];
+    const tabs = [['biz', '🏭 Negócios'], ['contracts', '📜 Encomendas'], ['market', '🎪 Feiras e leilões'], ['log', '📒 Ocorrências']];
     let h = `<div class="tabs">${tabs.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" data-act="bboard" data-t="${k}">${n}</button>`).join('')}</div>`;
     if (tab === 'biz') {
       const t = Biz.totals();

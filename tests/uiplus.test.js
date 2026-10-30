@@ -26,7 +26,7 @@ module.exports = async () => {
       Reign.show('money'); ok(UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:reign' && UI.sel.rgTab === 'money', 'Reinado não abriu no Portfólio');
       UI.act('rgTab', { t: 'army' }); ok(UI.cur.fn === 'showKingdom', 'trocar aba do Reinado saiu do Portfólio');
       Society.show('events'); ok(UI.sel.knav === 'crown' && UI.sel.crTab === 'sociedade', 'Sociedade não abriu no Portfólio');
-      UI.showBizBoard('guilds'); ok(UI.sel.knav === 'x:board', 'Negócios não abriu no Portfólio');
+      UI.showBizBoard('contracts'); ok(UI.sel.knav === 'x:board', 'Negócios não abriu no Portfólio');
       const L = UIP.alerts(); ok(Array.isArray(L), 'avisos'); ok(L.some(a => /conselho/.test(a.text)) || !Reign.R().dilemma, 'dilema não virou aviso');
       UI.act('knav', { k: 'x:alerts' }); if (L.length) { UI.act('alGo', { i: 0 }); ok(UI.panel, 'Ir não abriu nada'); }
       UI.close(); UIP.bell(); const b = document.getElementById('alertBell'); ok(b, 'sino não existe');

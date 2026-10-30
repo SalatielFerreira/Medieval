@@ -42,7 +42,7 @@ module.exports = async () => {
       Commerce.after(); ok(Commerce.st().auction || Commerce.fair() || true, 'mês do comércio');
       const st = Commerce.st(); st.auction = { ci: 1, item: 'painting', price: 100, until: G.day, mine: 0, top: 0 }; Commerce.bid(1); ok(st.auction.mine > 0, 'não deu lance');
       const rich = G.people.find(p => p.alive && p.age >= 25 && ['merchant', 'trader', 'knight'].includes(p.rank)); if (rich) { rich.purse = 99999; rich.aff = 40; Commerce.takePartner(mill, rich.id); ok(mill.partner, 'o sócio não entrou'); }
-      for (const t of ['biz', 'contracts', 'guilds', 'market', 'log']) { UI.showBizBoard(t); ok(UI.cur && UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:board' && UI.sel.bbTab === t && UI.panel.innerHTML.includes('data-act="bboard"'), 'painel não abriu: ' + t); }
+      for (const t of ['biz', 'contracts', 'market', 'log']) { UI.showBizBoard(t); ok(UI.cur && UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:board' && UI.sel.bbTab === t && UI.panel.innerHTML.includes('data-act="bboard"'), 'painel não abriu: ' + t); }
       UI.close();
       // religiões
       ok(RELIGIONS[Religion.mine()], 'você não tem religião');

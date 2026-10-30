@@ -5,6 +5,8 @@
 //     e, para o chefe, os golpes: caravanas e vilas em cartões.
 //  ⚔️ Mercenários: o resumo do que você tem contratado, cada companhia como um estandarte (emblema, lema, capitão,
 //     barras de força e lealdade, faixa da situação) e as notícias numa linha do tempo.
+// Tudo cabe na janela, sem rolar: cada aba tem as suas páginas (no alto) e o que ainda não couber se divide em partes
+// (◀ 1/2 ▶), sem cortar nenhum quadro.
 const MERC_COLORS = { lobo: '#6a7480', lancas: '#3a3a4a', corvos: '#4a3a5a', leao: '#b8862a', pantano: '#4a6a3a', errantes: '#7a3a2a' };
 
 const Services = {
@@ -38,23 +40,22 @@ const Services = {
       const e = OutLaw.canStart();
       const ways = [['⛺', 'Esconderijo', 'Um acampamento vira a sua casa: descanse lá e os bandidos param de atacar você.'], ['🐫', 'Caravanas', 'Assalte as caravanas que passam pelas estradas.'],
         ['🔥', 'Saques e proteção', 'Saqueie vilas ou cobre delas para não saquear.'], ['🎯', 'Cabeça a prêmio', 'Cada golpe sobe a recompensa: guardas e caçadores vêm atrás.']];
-      return `<div class="sv-hero ol"><div class="sv-hic">🏴</div><div class="sv-htx"><small>A vida de fora da lei</small><h3>Chefe de bandidos</h3><p>Um bando, um esconderijo e a estrada inteira para assaltar — com a cabeça a prêmio em todos os reinos.</p>
+      return this.subs('ol0', [['vida', '🏴', 'A vida de fora da lei', `<div class="sv-hero ol"><div class="sv-hic">🏴</div><div class="sv-htx"><small>A vida de fora da lei</small><h3>Chefe de bandidos</h3><p>Um bando, um esconderijo e a estrada inteira para assaltar — com a cabeça a prêmio em todos os reinos.</p>
           <div class="sv-go"><button class="danger" data-act="ol" data-op="start" ${e ? 'disabled' : ''}>🗡️ Assumir o bando${OutLaw.totalBounty() < 150 ? ' (300 🪙)' : ''}</button>${e ? `<small>${esc(e)}</small>` : ''}</div></div>
-          <div class="sv-ways">${ways.map(w => `<div><span>${w[0]}</span><b>${w[1]}</b><small>${w[2]}</small></div>`).join('')}</div></div>
-        <div class="sv-cols"><div class="card sv-bandsc"><div class="sec">⛺ Bandos da região <span>gente de verdade</span></div>${this.bands()}</div>${this.poster()}</div>`;
+          <div class="sv-ways">${ways.map(w => `<div><span>${w[0]}</span><b>${w[1]}</b><small>${w[2]}</small></div>`).join('')}</div></div>`],
+        ['procurado', '📜', 'Procurado', `<div class="sv-center">${this.poster()}</div>`], ['bandos', '⛺', 'Bandos da região', `<div class="sv-campgrid sv-pl">${this.bands()}</div>`]]);
     }
     const cars = OutLaw.caravans().slice(0, 6), vils = OutLaw.near(60).slice(0, 8);
     const stat = (ic, v, l) => `<div class="sv-stat"><span>${ic}</span><b>${v}</b><small>${l}</small></div>`;
-    return `<div class="sv-hero ol me"><div class="sv-hic">🏴</div><div class="sv-htx"><small>Fora da lei</small><h3>O bando de ${esc(G.name)}</h3>
+    return this.subs('ol1', [['bando', '🏴', 'O seu bando', `<div class="sv-hero ol me"><div class="sv-hic">🏴</div><div class="sv-htx"><small>Fora da lei</small><h3>O bando de ${esc(G.name)}</h3>
           <div class="sv-stats">${stat('👥', O.band, 'no esconderijo')}${stat('🗡️', Game.allies().length, 'capangas')}${stat('💀', O.fame, 'fama de fora da lei')}${stat('💰', O.loot.toLocaleString('pt-BR'), 'saque total 🪙')}${stat('⚔️', Math.round(OutLaw.power()), 'força do bando')}</div>
           <div class="sv-go"><button data-act="ol" data-op="man">➕ Homem no esconderijo — 30 🪙</button><button data-act="ol" data-op="cap">🗡️ Bandido para seguir você — 60 🪙</button><button data-act="ol" data-op="home">⛺ Ir ao esconderijo</button></div></div></div>
-      <div class="sv-cols three">
+      <div class="sv-quit"><button data-act="ol" data-op="quit">🏳️ Largar a vida de fora da lei</button></div>`],
+      ['golpes', '🗡️', 'Golpes', `<div class="sv-cols">
         <div class="card"><div class="sec">🐫 Caravanas nas estradas <span>${cars.length}</span></div>${cars.length ? `<div class="sv-cars">${cars.map(c => `<button class="sv-car" data-act="ol" data-op="car" data-i="${c.id}"><span>${Heraldry.armsSvg(c.from, 16)}</span><b>${CIV_DEFS[c.from].short} → ${CIV_DEFS[c.to].short}</b><em>🗡️ Assaltar</em></button>`).join('')}</div>` : '<div class="sv-none">🐫<small>Nenhuma caravana na estrada agora.</small></div>'}</div>
-        <div class="card"><div class="sec">🏘️ Vilas perto do esconderijo <span>${O.protect.length} pagam proteção</span></div>${vils.length ? vils.map(x => `<div class="sv-vil ${O.protect.includes(x.i) ? 'paid' : ''}"><span>🏘️</span><span><b>${esc(x.v.name)}</b><small>${x.v.free ? 'vila livre' : CIV_DEFS[x.v.civ].short} · ${Math.round(U.dist(x.v.x, x.v.y, O.hx, O.hy))} passos${O.protect.includes(x.i) ? ' · 💰 paga proteção' : ''}</small></span>
-          <span class="sv-va"><button class="danger" data-act="ol" data-op="raid" data-v="${x.i}">🔥 Saquear</button>${O.protect.includes(x.i) ? '' : `<button data-act="ol" data-op="protect" data-v="${x.i}">💰 Proteção</button>`}</span></div>`).join('') : '<div class="sv-none">🏘️<small>Nenhuma vila por perto.</small></div>'}</div>
-        ${this.poster()}</div>
-      <div class="card sv-bandsc"><div class="sec">⛺ Bandos da região</div><div class="sv-campgrid">${this.bands()}</div></div>
-      <div class="sv-quit"><button data-act="ol" data-op="quit">🏳️ Largar a vida de fora da lei</button></div>`;
+        <div class="card"><div class="sec">🏘️ Vilas perto do esconderijo <span>${O.protect.length} pagam proteção</span></div>${vils.length ? '<div class="sv-pl">' + vils.map(x => `<div class="sv-vil ${O.protect.includes(x.i) ? 'paid' : ''}"><span>🏘️</span><span><b>${esc(x.v.name)}</b><small>${x.v.free ? 'vila livre' : CIV_DEFS[x.v.civ].short} · ${Math.round(U.dist(x.v.x, x.v.y, O.hx, O.hy))} passos${O.protect.includes(x.i) ? ' · 💰 paga proteção' : ''}</small></span>
+          <span class="sv-va"><button class="danger" data-act="ol" data-op="raid" data-v="${x.i}">🔥 Saquear</button>${O.protect.includes(x.i) ? '' : `<button data-act="ol" data-op="protect" data-v="${x.i}">💰 Proteção</button>`}</span></div>`).join('') + '</div>' : '<div class="sv-none">🏘️<small>Nenhuma vila por perto.</small></div>'}</div></div>`],
+      ['procurado', '📜', 'Procurado', `<div class="sv-center">${this.poster()}</div>`], ['bandos', '⛺', 'Bandos da região', `<div class="sv-campgrid sv-pl">${this.bands()}</div>`]]);
   },
   mercs() {
     const M = Mercs.M(), esc = this.esc.bind(this), mine = Mercs.mine();
@@ -72,13 +73,51 @@ const Services = {
         <div class="sv-ca">${my ? `<button data-act="mercOut" data-k="${d.id}">Dispensar</button><button data-act="tk" data-op="open" data-id="${L.id}">💬 ${L.sex === 'f' ? 'A capitã' : 'O capitão'}</button>` : free ? `<button class="primary" data-act="mercHire" data-k="${d.id}" ${P.gold >= Mercs.fee(d.id) ? '' : 'disabled'}>Contratar — ${Mercs.fee(d.id)} 🪙</button>` : '<small class="muted">Contratada por outro senhor</small>'}</div></div>`;
     }).join('');
     const rules = [['⚔️', 'Nas guerras', 'somam ao seu exército'], ['👑', 'Num golpe', 'seguram a guarda real na porta do trono'], ['🪙', 'O soldo', 'sai do seu bolso (ou do tesouro do seu reino)'], ['⚠️', '2 meses sem pagar', 'trocam de lado ou viram saqueadores']];
-    return `<div class="sv-hero mc"><div class="sv-hic">⚔️</div><div class="sv-htx"><small>Companhias livres</small><h3>Mercenários</h3><p>Lutam por quem paga — e só enquanto pagam.</p>
+    const strip = `<div class="sv-strip"><span>🏳️ <b>${mine.length}</b> ${mine.length === 1 ? 'companhia sua' : 'companhias suas'}</span><span>👥 <b>${men}</b> homens</span><span>🪙 <b>${fee}</b> de soldo por mês</span><span class="muted">Dois meses sem pagar e a companhia troca de lado.</span></div>`;
+    return this.subs('mc', [['companhias', '⚔️', 'Companhias', `${strip}<div class="sv-cogrid sv-pl">${cards}</div>`], ['regras', '📊', 'Resumo e regras', `<div class="sv-hero mc"><div class="sv-hic">⚔️</div><div class="sv-htx"><small>Companhias livres</small><h3>Mercenários</h3><p>Lutam por quem paga — e só enquanto pagam.</p>
           <div class="sv-stats">${[['🏳️', mine.length, mine.length === 1 ? 'companhia sua' : 'companhias suas'], ['👥', men, 'homens'], ['🪙', fee, 'soldo por mês']].map(([i, v, l]) => `<div class="sv-stat"><span>${i}</span><b>${v}</b><small>${l}</small></div>`).join('')}</div></div>
-        <div class="sv-ways">${rules.map(w => `<div><span>${w[0]}</span><b>${w[1]}</b><small>${w[2]}</small></div>`).join('')}</div></div>
-      <div class="sv-cogrid">${cards}</div>
-      ${M.log.length ? `<div class="card sv-news"><div class="sec">📒 Notícias das companhias</div><div class="sv-tl">${M.log.slice(0, 8).map(l => `<div><em>${Calendar.short(l.day)}</em><span>${esc(l.t)}</span></div>`).join('')}</div></div>` : ''}`;
+        <div class="sv-ways">${rules.map(w => `<div><span>${w[0]}</span><b>${w[1]}</b><small>${w[2]}</small></div>`).join('')}</div></div>`],
+      ['noticias', '📒', 'Notícias', M.log.length ? `<div class="card sv-news"><div class="sec">📒 Notícias das companhias</div><div class="sv-tl sv-pl">${M.log.slice(0, 14).map(l => `<div><em>${Calendar.short(l.day)}</em><span>${esc(l.t)}</span></div>`).join('')}</div></div>` : '<div class="sv-none">📒<small>Nenhuma notícia das companhias ainda.</small></div>']]);
   },
 };
 
+Object.assign(Services, {
+  // as páginas de uma aba: os botões no alto e a página escolhida embaixo
+  subs(g, list) {
+    const S = UI.sel.svSub || (UI.sel.svSub = {}), cur = list.find(x => x[0] === S[g]) || list[0];
+    return `<div class="sv-root" data-g="${g}" data-t="${cur[0]}"><div class="tabs subtabs sv-sub">${list.map(([k, ic, l]) => `<button class="tab ${k === cur[0] ? 'on' : ''}" data-act="svsub" data-g="${g}" data-t="${k}">${ic} ${l}</button>`).join('')}</div>
+      <div class="sv-pg">${cur[3]}</div></div>`;
+  },
+  // o que não cabe na página vira partes (◀ 1/2 ▶), sem cortar nenhum quadro
+  paginate() {
+    const root = UI.panel && UI.panel.querySelector('.sv-root'), box = root && root.querySelector('.sv-pg'), list = box && box.querySelector('.sv-pl');
+    if (!list || document.body.classList.contains('small')) return;
+    const items = [...list.children], over = () => box.scrollHeight > box.clientHeight + 1;
+    if (!over() || items.length < 2) return;
+    const pages = []; let start = 0;
+    while (start < items.length) {
+      items.forEach(c => { c.hidden = true; });
+      let end = start;
+      for (let i = start; i < items.length; i++) { items[i].hidden = false; if (over() && i > start) { items[i].hidden = true; break; } end = i + 1; }
+      pages.push([start, end]); start = end;
+    }
+    const key = root.dataset.g + ':' + root.dataset.t, P0 = UI.sel.svPg || (UI.sel.svPg = {}), n = pages.length, k = Math.min(P0[key] || 0, n - 1);
+    items.forEach((c, i) => { c.hidden = i < pages[k][0] || i >= pages[k][1]; });
+    root.querySelector('.sv-sub').insertAdjacentHTML('beforeend', `<span class="cr-pager"><button data-act="svpg" data-k="${key}" data-d="-1" ${k ? '' : 'disabled'}>◀</button><b>${k + 1}/${n}</b><button data-act="svpg" data-k="${key}" data-d="1" ${k < n - 1 ? '' : 'disabled'}>▶</button></span>`);
+  },
+});
+
 OutLaw.page = function () { return Services.outlaw(); };
 Mercs.page = function () { return Services.mercs(); };
+{
+  const fit = () => { try { Services.paginate(); } catch (e) { console.error(e); } };
+  const sk0 = UI.showKingdom.bind(UI);
+  UI.showKingdom = function (...a) { const r = sk0(...a); if (this.sel.knav === 'x:outlaw') fit(); return r; };
+  if (UI.showMercs) { const sm0 = UI.showMercs.bind(UI); UI.showMercs = function (...a) { const r = sm0(...a); fit(); return r; }; }
+  const a0 = UI.act.bind(UI);
+  UI.act = function (a, d) {
+    if (a === 'svsub') { (this.sel.svSub || (this.sel.svSub = {}))[d.g] = d.t; this.refresh(); return; }
+    if (a === 'svpg') { const P0 = this.sel.svPg || (this.sel.svPg = {}); P0[d.k] = Math.max(0, (P0[d.k] || 0) + +d.d); this.refresh(); return; }
+    return a0(a, d);
+  };
+}

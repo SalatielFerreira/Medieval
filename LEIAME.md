@@ -97,6 +97,15 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: Sociedades secretas
+
+- **As Guildas e as Ordens de cavalaria viraram uma coisa só: as Sociedades secretas** (Portfólio → Gestão → 🕯️ Sociedades secretas). São sete: Cavaleiros Templários, Illuminati, Maçonaria, Priorado de Sião, Cavaleiros Hospitalários, Ordem Teutônica e Rosa-Cruz. Os irmãos são pessoas de verdade: os mestres de um ofício (os ferreiros são Templários, os mercadores são Illuminati...) e gente poderosa — reis, nobres e cavaleiros.
+- **Só por convite:** faça amizade com um irmão e tenha o nível e a fama que a sociedade pede; peça o apadrinhamento a ele, ou espere que um irmão amigo convide você. Também dá para fundar a sua (Grão-Mestre desde o primeiro dia).
+- **Graus:** Aprendiz → Companheiro → Mestre → Grão-Mestre, cumprindo a missão secreta de cada mês. A partir de Companheiro, o manto da sociedade e cavaleiros que seguem você. Os Templários e os Hospitalários têm juramento estrito: três crimes e é a expulsão.
+- **Benefícios:** 🛡️ um rei irmão corta a multa pela metade (Mestre: o caso é abafado) e encurta a prisão, e irmãos não aceitam matar você nem entram para bandos; 💰 os seus empreendimentos rendem mais (mais ainda os do ofício da sociedade) e vendas e encomendas ficam 10% melhores; ⚔️ irmãos soldados entram nas guerras do seu reino; 🕯️ cartas lacradas com os segredos do mês (quem pagou assassinos, quem fala em guerra, quem guarda rancor, onde está o ouro), a relação com reis irmãos sobe todo mês e os irmãos votam em você nas eleições das vilas.
+- Quem já era de uma ordem ou de uma guilda continua: vira irmão da sociedade equivalente. A aba Guildas saiu de Negócios.
+- **Serviços cabe na janela:** cada aba (Fora da lei e Mercenários) tem as suas páginas no alto, e o que não couber se divide em partes (◀ 1/2 ▶), sem rolar.
+
 ## Novidades: o Haras, bandidos e assassinos de verdade
 
 - **🐎 Haras (Construção → Baús e estábulo → Animais e carga):** construção com interior. Lá dentro: 4 baias com os cavalos, a **baia de cruzamento** e o **livro do haras** (abrem a Estrebaria: o cavalo que você monta em destaque, as suas baias com montar e vender, e o cruzamento de égua × garanhão com a previsão do potro) e a **mesa do Grande Prêmio** (o páreo do mês com pódio de prêmios, os rivais do melhor para o pior com a sua chance, e o histórico das suas corridas). Um cavalariço cuida do Haras. Cruzar e correr só com o Haras.
