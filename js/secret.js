@@ -189,7 +189,7 @@ const Secret = {
   const ld0 = Game.load.bind(Game);
   Game.load = async function (...a) { const r = await ld0(...a); if (G.state === 'play') { try { migrate(); } catch (e) { console.error(e); } } return r; };
   const ng0 = Game.newGame.bind(Game);
-  Game.newGame = function (...a) { const r = ng0(...a); try { Secret.seed(); } catch (e) { console.error(e); } return r; };
+  Game.newGame = async function (...a) { const r = await ng0(...a); if (G.state === 'play') { try { Secret.seed(); } catch (e) { console.error(e); } } return r; }; // (espera o mundo ficar pronto)
   // só entra quem foi convidado
   const why0 = KOrders.why.bind(KOrders);
   KOrders.why = function (k) { const e = why0(k); if (e) return e; return Secret.S().joinOk === k || Secret.S().invites[k] ? null : 'Só entra quem é convidado.'; };

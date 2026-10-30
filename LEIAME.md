@@ -97,6 +97,11 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: estradas dos prédios do castelo
+
+- **A arena, a catedral, o cemitério, o banco e a prisão de cada reino** ganharam uma estrada em volta (como os imóveis das vilas), ligada pelo caminho mais curto à estrada mais próxima. **O porto** ganhou só uma estrada, saindo do lado virado para o castelo até a estrada principal. Um prédio novo perto do castelo (um banco fundado depois, por exemplo) ganha a dele na virada do mês. Vale também para jogos salvos.
+- **Sociedades secretas:** num jogo novo, os reis e nobres irmãos agora são sorteados depois de o mundo ficar pronto.
+
 ## Novidades: mapa com as construções identificadas
 
 - **🗺️ Mapa:** cada construção ganhou um selo com o ícone dela (🍺 taverna, 🛒 loja, ⚒️ ferreiro, 🥖 padaria, ⛪ templo, 🏦 banco, ⛓️ prisão, 🏟️ arena, ⚓ porto, 🐴 estábulo, ⛺ acampamento, 🕳️ caverna...) na cor da categoria; aproximando, aparece o nome. Na lateral, **O que mostrar** liga e desliga cada categoria (Lojas e serviços, Poder e ordem, Fé e descanso, Viagem e montaria, Empreendimentos, Campos e criações, Suas construções, Casas e Perigos) e **Perto de você** lista as lojas e serviços mais próximos para marcar como destino. Ao passar o mouse, a dica diz o que é, quem cuida e de quem é. A neblina continua escondendo o que você ainda não viu.
