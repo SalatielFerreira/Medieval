@@ -97,6 +97,17 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: Negócios e Grandes Casas redesenhados
+
+- **📊 Negócios** cabe na janela, em páginas: 🏭 Negócios (cada negócio num cartão com o lucro do mês, quanto já devolveu, estado, funcionários, insumos, seguro e sócio, e os botões de sempre), 📜 Encomendas (em andamento × pedidos abertos, com o prazo e quanto você tem), 🎪 Feiras e leilões (três quadros grandes) e 📒 Ocorrências (linha do tempo). O que não couber vira partes (◀ 1/2 ▶).
+- **🏛️ Grandes Casas** em quatro páginas: 🏆 Pódio (as três maiores num pódio e a sua casa em destaque), 📜 Ranking (todas, com barras de influência e lealdade, riqueza e gente), 🗺️ Por reino (as quatro maiores casas de cada reino, nas cores dele) e ⚠️ Inquietas (lealdade baixa e revoltas). Clique numa casa para ver a família.
+
+## Novidades: justiça, prisões e bandidos com quem se conversa
+
+- **Conversar com bandidos:** os bandidos dos acampamentos (calmos) aceitam conversa. Fique amigo deles e, na conversa: 🗡️ **encomende um assalto** a uma família (o bando ataca no mês seguinte e leva parte da riqueza dela; se pegarem o bandido, ele pode contar quem pagou — aí você é procurado e a família vira inimiga), 🤝 **chame um deles para o seu lado** (amizade 25 e 120 🪙: vira capanga) ou 🕊️ **tire-o da vida do crime** (amizade 35 e 200 🪙: volta a morar numa vila, +2 de fama).
+- **Prisões com 4 celas de 4 presos:** os reis prendem gente de verdade (ladrões, bandidos pegos, quem arruma briga, quem foi condenado pelo tribunal ou por dívida) e soltam quando a pena acaba. Quando lota, o rei da IA abre vaga: o de mão pesada condena à morte, o clemente solta.
+- **Você, rei (Reinado → ⛓️ Prisão e justiça):** na conversa, mande **prender** ou **condene à morte** qualquer um do seu reino, e **declare procurado** qualquer um do jogo (também pela lista da aba). Se um procurado pisar no seu reino, os guardas o pegam e ele vai para a sua prisão; você decide se ele continua preso (6 meses), se sai ou se morre. Prisão lotada: solte ou condene alguém antes de prender outro (quem os guardas pegarem espera na fila). Condenar à morte assusta o povo e a família nunca perdoa.
+
 ## Novidades: Sociedades secretas
 
 - **As Guildas e as Ordens de cavalaria viraram uma coisa só: as Sociedades secretas** (Portfólio → Gestão → 🕯️ Sociedades secretas). São sete: Cavaleiros Templários, Illuminati, Maçonaria, Priorado de Sião, Cavaleiros Hospitalários, Ordem Teutônica e Rosa-Cruz. Os irmãos são pessoas de verdade: os mestres de um ofício (os ferreiros são Templários, os mercadores são Illuminati...) e gente poderosa — reis, nobres e cavaleiros.

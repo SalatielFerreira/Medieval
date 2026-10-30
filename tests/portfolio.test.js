@@ -44,6 +44,9 @@ module.exports = async () => {
         UI.sel.olTab = tab; (UI.sel.svSub = UI.sel.svSub || {})[g] = t; UI.sel.knav = 'x:outlaw'; UI.showKingdom();
         const b = UI.panel.querySelector('.snav-body'), pg = UI.panel.querySelector('.sv-pg'); ok(b.scrollHeight <= b.clientHeight + 1 && pg && pg.scrollHeight <= pg.clientHeight + 1, `Serviços → ${t} não cabe na janela`);
       }
+      // Negócios e Grandes Casas cabem na janela, em todas as páginas
+      for (const t of ['biz', 'contracts', 'market', 'log']) { UI.showBizBoard(t); const b = UI.panel.querySelector('.snav-body'); ok(UI.sel.knav === 'x:board' && b.scrollHeight <= b.clientHeight + 1, `Negócios → ${t} não cabe na janela`); }
+      for (const t of ['podio', 'ranking', 'reinos', 'inquietas']) { (UI.sel.svSub = UI.sel.svSub || {}).gc = t; UI.sel.knav = 'families'; UI.showKingdom(); const b = UI.panel.querySelector('.snav-body'); ok(UI.panel.querySelector('.hs2-pods, .hs2-rows, .hs2-civs, .hs2-un, .hs2-calm') && b.scrollHeight <= b.clientHeight + 1, `Grandes Casas → ${t} não cabe na janela`); }
       UI.act('oltab', { t: 'bando' }); ok(/vida de fora da lei|O bando de/i.test(txt()) && /Serviços/.test(UI.panel.textContent), 'a página Fora da lei não abriu');
       UI.sel.knav = 'x:clima'; UI.showKingdom(); ok(UI.sel.knav === 'overview', 'Estações e clima ainda abre');
       UI.act('atlasciv', { c: 1 }); ok(UI.sel.knav === 'overview', 'o atlas dos reinos ainda abre');
