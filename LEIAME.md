@@ -99,8 +99,9 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades: Negócios e Grandes Casas redesenhados
 
+- **Negócios entrou em Empreendimentos:** as quatro páginas ficam entre Seus empreendimentos e Contas (Painel · Seus empreendimentos · Negócios · Encomendas · Feiras e leilões · Ocorrências · Contas · Concorrência); Negócios saiu do menu do Portfólio e os avisos abrem a página certa.
 - **📊 Negócios** cabe na janela, em páginas: 🏭 Negócios (cada negócio num cartão com o lucro do mês, quanto já devolveu, estado, funcionários, insumos, seguro e sócio, e os botões de sempre), 📜 Encomendas (em andamento × pedidos abertos, com o prazo e quanto você tem), 🎪 Feiras e leilões (três quadros grandes) e 📒 Ocorrências (linha do tempo). O que não couber vira partes (◀ 1/2 ▶).
-- **🏛️ Grandes Casas** em quatro páginas: 🏆 Pódio (as três maiores num pódio e a sua casa em destaque), 📜 Ranking (todas, com barras de influência e lealdade, riqueza e gente), 🗺️ Por reino (as quatro maiores casas de cada reino, nas cores dele) e ⚠️ Inquietas (lealdade baixa e revoltas). Clique numa casa para ver a família.
+- **🏛️ Grandes Casas** (agora no grupo Você do menu) em quatro páginas: 🏆 Pódio (as três maiores num pódio e a sua casa em destaque), 📜 Ranking (todas, com barras de influência e lealdade, riqueza e gente), 🗺️ Por reino (as quatro maiores casas de cada reino, nas cores dele) e ⚠️ Inquietas (lealdade baixa e revoltas). Clique numa casa para ver a família.
 
 ## Novidades: justiça, prisões e bandidos com quem se conversa
 

@@ -1,5 +1,5 @@
 'use strict';
-// Negócios e Grandes Casas (Portfólio) redesenhados: cabem na janela sem rolar (páginas no alto e o que não couber vira
+// Negócios (dentro de Empreendimentos, entre Seus empreendimentos e Contas) e Grandes Casas (Portfólio) redesenhados: cabem na janela sem rolar (páginas no alto e o que não couber vira
 // partes ◀ 1/2 ▶, com Services.subs/paginate), mais organizados e bonitos. Os botões e as ações são os mesmos de antes.
 //  📊 Negócios: 🏭 os negócios em cartões (lucro do mês, quanto já devolveu, estado, funcionários, insumos, seguro e
 //     sócio) · 📜 Encomendas (em andamento × pedidos abertos) · 🎪 Feiras e leilões · 📒 Ocorrências (linha do tempo).
@@ -27,14 +27,14 @@ const NegBoard = {
         ${BIZ_INPUTS[s.type] ? `<button data-act="bbfeed" data-s="${s.id}">📦 Entregar insumos</button>` : ''}${strike ? `<button class="primary" data-act="bbsettle" data-s="${s.id}">🤝 Negociar</button>` : ''}
         ${p ? `<button data-act="bbbuyout" data-s="${s.id}">Comprar a parte do sócio ${m(val * 0.5)} 🪙</button>` : Commerce.partnerCands(s).slice(0, 1).map(c => `<button data-act="bbpartner" data-s="${s.id}" data-p="${c.id}">🤝 Sócio: ${esc(c.name)} +${m(val * 0.4)} 🪙</button>`).join('')}</div></div>`;
   },
-  html(tab) {
+  parts(tab) {
     const S = Commerce.st(), L = Biz.list(), esc = this.esc.bind(this), m = this.money.bind(this);
     const mine = Commerce.mine(), offers = Commerce.offers(), f = Commerce.fair(), a = Commerce.auction();
     const tabs = [['biz', `🏭 Negócios (${L.length})`], ['contracts', `📜 Encomendas${mine.length ? ` (${mine.length})` : ''}`], ['market', `🎪 Feiras e leilões${f || a ? ' •' : ''}`], ['log', '📒 Ocorrências']];
     let body;
     if (tab === 'biz') {
       const t = Biz.totals();
-      body = `<div class="sv-strip"><span>📈 Último mês <b class="${t.lastProfit >= 0 ? '' : 'bad'}">${m(t.lastProfit)} 🪙</b></span><span>🏦 Desde o início <b>${m(t.profit)} 🪙</b></span><span>🏭 <b>${L.length}</b> ${L.length === 1 ? 'negócio' : 'negócios'}</span><span>✊ <b>${L.filter(s => s.strike > G.day).length}</b> em greve</span><span class="muted">Mais números em Empreendimentos.</span></div>
+      body = `<div class="sv-strip"><span>📈 Último mês <b class="${t.lastProfit >= 0 ? '' : 'bad'}">${m(t.lastProfit)} 🪙</b></span><span>🏦 Desde o início <b>${m(t.profit)} 🪙</b></span><span>🏭 <b>${L.length}</b> ${L.length === 1 ? 'negócio' : 'negócios'}</span><span>✊ <b>${L.filter(s => s.strike > G.day).length}</b> em greve</span><span class="muted">Mais números no Painel e em Contas.</span></div>
         ${L.length ? `<div class="nb-grid sv-pl">${L.map(s => this.card(s)).join('')}</div>` : '<div class="sv-none">🏭<small>Você ainda não tem empreendimentos. Construa um em Construção → Empreendimentos.</small></div>'}`;
     } else if (tab === 'contracts') {
       const row = (k, btn) => { const have = Inv.count(k.item), left = k.due - G.day;
@@ -51,8 +51,9 @@ const NegBoard = {
       body = S.log.length ? `<div class="card nb-log"><div class="sec">📒 Ocorrências dos seus negócios <span>${S.log.length}</span></div><div class="sv-tl sv-pl">${S.log.map(x => `<div><em>${Calendar.short(x.d)}</em><span>${esc(x.t)}</span></div>`).join('')}</div></div>`
         : '<div class="sv-none">📒<small>Nada ainda: greves, roubos, incêndios, sócios e encomendas aparecem aqui.</small></div>';
     }
-    return this.root(tab, tabs, body);
+    return { tabs, body };
   },
+  html(tab) { const x = this.parts(tab); return this.root(tab, x.tabs, x.body); },
 };
 
 const Houses = {
@@ -101,6 +102,21 @@ const Houses = {
     UI.open('📊 Painel dos negócios', `<div class="bboard">${NegBoard.html(tab)}</div>`, 'showBizBoard', [tab], 'Seus negócios, encomendas, feiras e leilões');
   };
   if (typeof UIP !== 'undefined' && UIP._raw) UIP._raw.board = raw;
+  // Negócios entra em Empreendimentos: as quatro páginas ficam entre Seus empreendimentos e Contas
+  BizBoard.TABS.splice(2, 0, ['nb_biz', '🏭', 'Negócios'], ['nb_contracts', '📜', 'Encomendas'], ['nb_market', '🎪', 'Feiras e leilões'], ['nb_log', '📒', 'Ocorrências']);
+  const bh0 = BizBoard.html.bind(BizBoard);
+  BizBoard.html = function () {
+    const h = bh0(), t = UI.sel.bzTab; if (!/^nb_/.test(t || '')) return h;
+    const i = h.indexOf('<div class="bzb-page'); if (i < 0) return h;
+    UI.sel.bbTab = t.slice(3);
+    return h.slice(0, i) + `<div class="bzb-page bzb-nb">${NegBoard.parts(t.slice(3)).body.replace('sv-pl', 'sv-pl bzb-pg')}</div>`;
+  };
+  PF_GONE['x:board'] = 'biz';
+  UI.showBizBoard = function (tab) {
+    if ((tab || this.sel.bbTab) === 'guilds') { this.sel.bbTab = 'biz'; this.sel.knav = 'x:ordens'; return this.showKingdom(); } // as guildas agora são as sociedades
+    tab = tab || this.sel.bbTab || 'biz'; if (!['biz', 'contracts', 'market', 'log'].includes(tab)) tab = 'biz';
+    this.sel.bbTab = tab; this.sel.bzTab = 'nb_' + tab; this.sel.knav = 'biz'; return this.showKingdom();
+  };
   // Grandes Casas
   const kp0 = UI.kPage.bind(UI);
   UI.kPage = function (nav) {
@@ -110,5 +126,7 @@ const Houses = {
   };
   // páginas que não cabem: divide em partes
   const sk0 = UI.showKingdom.bind(UI);
-  UI.showKingdom = function (...a) { const r = sk0(...a); if (['families', 'x:board'].includes(this.sel.knav)) { try { Services.paginate(); } catch (e) { console.error(e); } } return r; };
+  UI.showKingdom = function (...a) {
+    if (this.sel.knav === 'x:board') { this.sel.bzTab = 'nb_' + (this.sel.bbTab || 'biz'); this.sel.knav = 'biz'; } // atalhos antigos de Negócios
+    const r = sk0(...a); if (['families', 'x:board'].includes(this.sel.knav)) { try { Services.paginate(); } catch (e) { console.error(e); } } return r; };
 }

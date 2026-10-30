@@ -110,6 +110,13 @@ const Hitmen = {
       try { return om0(...a); } finally { Hitmen.mode = null; for (const e of G.ents) if (!e.dead && e.npc && e.hitman === 'hunter') e.name = People.full(e.npc); }
     };
   }
+  // ao entrar num imóvel, quem vinha atrás de você volta para a fila (mesmo que more ali e entre como freguês)
+  const er0 = Places.enterRoom.bind(Places);
+  Places.enterRoom = function (...a) {
+    const r = er0(...a);
+    if (G.place) for (const e of G.ents) if (!e.dead && e.tag === 'assassin' && !e.placeNpc) { e.dead = true; G.assassins = (G.assassins || 0) + 1; if (e.npc && G.spawned.get(e.npc.id) === e) G.spawned.delete(e.npc.id); }
+    return r;
+  };
   const mt0 = Lifesim.monthTick.bind(Lifesim);
   Lifesim.monthTick = function (...a) { const r = mt0(...a); try { Hitmen.monthTick(); } catch (e) { console.error(e); } return r; };
   const die0 = People.die.bind(People);

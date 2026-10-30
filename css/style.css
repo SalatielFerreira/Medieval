@@ -4631,3 +4631,4 @@ body.small .ju-cells { grid-template-columns: repeat(2, 1fr); }
 .hs2-u.rev { border-color: rgba(224, 72, 72, .6); background: rgba(120, 20, 10, .2); } .hs2-u > span { flex: 1; display: flex; flex-direction: column; gap: 3px; } .hs2-u b { font-size: 13px; } .hs2-u small { font-size: 11px; color: #a8987a; } .hs2-u em { font-style: normal; font-size: 12px; }
 .hs2-calm { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; } .hs2-calm span { font-size: 54px; } .hs2-calm b { font-size: 18px; color: #f6e2a8; } .hs2-calm small { color: #a8987a; }
 body.small .nb-grid, body.small .nb-k2, body.small .nb-mk, body.small .hs2-top, body.small .hs2-un { grid-template-columns: 1fr; } body.small .hs2-civs { grid-template-columns: repeat(2, 1fr); }
+.bzb-page.bzb-nb { display: flex; flex-direction: column; gap: 10px; } .bzb-nb .nb-k2 { flex: 1; min-height: 0; }

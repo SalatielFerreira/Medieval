@@ -21,12 +21,12 @@ module.exports = async () => {
       // reino: Gestão no Portfólio, finanças, avisos
       Game.becomeRuler(1, 'teste'); UI.close(); G.civs[1].treasury = 5000; Reign.monthTick(); Lifesim.monthTick();
       UI.showKingdom(); ok(html().includes('data-k="x:alerts"') && html().includes('data-k="x:finance"') && html().includes('data-k="x:reign"'), 'Portfólio sem o grupo Gestão');
-      for (const k of ['x:alerts', 'x:finance', 'x:board', 'x:reign']) { UI.act('knav', { k }); ok(UI.cur.fn === 'showKingdom' && UI.sel.knav === k && html().length > 500, 'página não abriu: ' + k); }
+      for (const k of ['x:alerts', 'x:finance', 'x:reign']) { UI.act('knav', { k }); ok(UI.cur.fn === 'showKingdom' && UI.sel.knav === k && html().length > 500, 'página não abriu: ' + k); }
       UI.act('knav', { k: 'x:finance' }); ok(html().includes('Entradas') && html().includes('Saídas'), 'finanças sem o extrato');
       Reign.show('money'); ok(UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:reign' && UI.sel.rgTab === 'money', 'Reinado não abriu no Portfólio');
       UI.act('rgTab', { t: 'army' }); ok(UI.cur.fn === 'showKingdom', 'trocar aba do Reinado saiu do Portfólio');
       Society.show('events'); ok(UI.sel.knav === 'crown' && UI.sel.crTab === 'sociedade', 'Sociedade não abriu no Portfólio');
-      UI.showBizBoard('contracts'); ok(UI.sel.knav === 'x:board', 'Negócios não abriu no Portfólio');
+      UI.showBizBoard('contracts'); ok(UI.sel.knav === 'biz' && UI.sel.bzTab === 'nb_contracts', 'Negócios não abriu em Empreendimentos');
       const L = UIP.alerts(); ok(Array.isArray(L), 'avisos'); ok(L.some(a => /conselho/.test(a.text)) || !Reign.R().dilemma, 'dilema não virou aviso');
       UI.act('knav', { k: 'x:alerts' }); if (L.length) { UI.act('alGo', { i: 0 }); ok(UI.panel, 'Ir não abriu nada'); }
       UI.close(); UIP.bell(); const b = document.getElementById('alertBell'); ok(b, 'sino não existe');
