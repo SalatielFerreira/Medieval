@@ -1,5 +1,5 @@
-// Haras e corridas: raças e qualidades, a velocidade do cavalo no jogo, comprar para o haras, cruzar e nascer o potro,
-// trocar de cavalo, corrida com prêmio; o haras volta ao carregar.
+// Haras e corridas: raças e qualidades, a velocidade do cavalo no jogo, comprar no Estábulo, a construção Haras (com
+// interior: cruzar e correr só lá), nascer o potro, trocar de cavalo, corrida com prêmio; o haras volta ao carregar.
 'use strict';
 const { open } = require('./harness');
 module.exports = async () => {
@@ -13,8 +13,21 @@ module.exports = async () => {
       Horses.buy('arabe'); ok(Horses.herd().length === 0, 'comprou para o haras sem estábulo');
       const px = Math.floor(P.x / TILE) + 4, py = Math.floor(P.y / TILE) + 4; World.addStruct('stable', px, py, BUILDINGS.stable.w, BUILDINGS.stable.h, 'player', { built: true });
       Horses.buy('arabe'); Horses.buy('percherao'); ok(Horses.herd().length === 2, 'o haras não recebeu os cavalos');
-      // cruzar
+      // cruzar: só com a construção Haras
       const all = [P.horse, ...Horses.herd()]; all[0].sex = 'm'; all[1].sex = 'f'; Horses.breed(all[1].id, all[0].id);
+      ok(!all[1].foal, 'cruzou sem ter um Haras');
+      const hs = World.addStruct('haras', px - 9, py - 9, BUILDINGS.haras.w, BUILDINGS.haras.h, 'player', { built: true });
+      ok(Places.enterRoom(hs) && G.place.type === 'haras', 'não entrou no Haras');
+      const acts = Places.furn.filter(f => f.act).map(f => f.act);
+      ok(['hsbreed', 'hsrace', 'hsbook'].every(a => acts.includes(a)), 'faltam a baia de cruzamento, a mesa do Grande Prêmio ou o livro no Haras');
+      Places.use(Places.furn.find(f => f.act === 'hsbreed')); ok(UI.cur.fn === 'showHaras' && /As suas baias/.test(html()) && /Cruzamento/.test(html()), 'a baia de cruzamento não abriu o haras');
+      Places.use(Places.furn.find(f => f.act === 'hsrace')); ok(UI.cur.fn === 'showHaras' && /Correr agora|Já correu/.test(html()), 'a mesa do Grande Prêmio não abriu a corrida');
+      ok(!/Comprar —/.test(html()), 'ainda dá para comprar cavalo na janela do Haras');
+      UI.close(); Places.exit(true, true);
+      UI.showStable(World.structs.find(s => s.type === 'stable' && s.owner === 'player').id); ok(/Cavalos de raça/.test(html()) && html().includes('data-op="buy"'), 'o Estábulo não vende as raças');
+      UI.sel.bcat = 'guarda'; UI.showBuild(); ok(UI.buildCats.find(c => c[0] === 'guarda')[3].includes('haras') && !UI.panel.querySelector('[data-act="bcat"][data-k="haras"]'), 'o Haras não está em Baús e estábulo (ou a janela antiga ainda existe)');
+      UI.close();
+      Horses.breed(all[1].id, all[0].id);
       ok(all[1].foal, 'a égua não ficou prenha'); G.day += 2; Horses.monthTick(); ok(Horses.herd().length === 3 && !all[1].foal, 'o potro não nasceu');
       const foal = Horses.herd()[2]; ok(!Horses.adult(foal), 'o potro já nasceu adulto'); Horses.ride(foal.id); ok(P.horse !== foal, 'montou num potro');
       Horses.ride(all[2].id); ok(P.horse === all[2] && Horses.herd().includes(all[0]), 'não trocou de cavalo');
@@ -22,7 +35,6 @@ module.exports = async () => {
       P.horse = all[0]; Horses.herd().splice(Horses.herd().indexOf(all[0]), 1); P.horse.speed = 10; P.horse.stamina = 10;
       const g0 = P.gold; Horses.race(); ok(Horses.S().hist.length === 1 && UI.cur && UI.cur.fn === 'horseRace', 'a corrida não aconteceu');
       ok(Horses.nextRace().ran, 'a corrida do mês não ficou marcada');
-      UI.sel.knav = 'x:horses'; UI.showKingdom(); ok(html().includes('Grande Prêmio') && html().includes('O seu haras'), 'página do haras');
       return { bad, n: Horses.herd().length };
     });
     fails.push(...r.bad);

@@ -139,9 +139,11 @@ const Commerce = {
     }
     if (!this.guarded(s) && Math.random() < 0.025 && (s.till || 0) > 20) {
       const loss = Math.round(s.till * 0.4); s.till -= loss;
-      if (s.insured) { P.gold += loss; UI.msg(`🦹 Ladrões levaram ${loss} 🪙 do caixa do ${name}. O seguro devolveu tudo.`, 'bad'); }
-      else UI.msg(`🦹 Ladrões levaram ${loss} 🪙 do caixa do ${name}. Uma torre de vigia, um quartel ou um pelourinho por perto afasta os ladrões.`, 'bad', true);
-      this.log(`Roubo: ${name} (−${loss} 🪙)`);
+      // o ladrão é uma pessoa de verdade (bands.js): o jogo diz quem foi
+      const who = typeof Bands !== 'undefined' ? Bands.rob(s, loss) : null, took = who ? `${who} levou` : 'Ladrões levaram';
+      if (s.insured) { P.gold += loss; UI.msg(`🦹 ${took} ${loss} 🪙 do caixa do ${name}. O seguro devolveu tudo.`, 'bad'); }
+      else UI.msg(`🦹 ${took} ${loss} 🪙 do caixa do ${name}. Uma torre de vigia, um quartel ou um pelourinho por perto afasta os ladrões.`, 'bad', true);
+      this.log(`Roubo: ${name} (−${loss} 🪙)${who ? ' · ' + who : ''}`);
     }
   },
   // ---------------------------------------------------------------- 5. funcionários

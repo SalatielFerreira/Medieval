@@ -3,12 +3,15 @@
 //  • O que só existia nelas foi para outras janelas: a Sociedade (eleições, convites, rivais, reputação e segredos) vai
 //    para o fim de Coroa e títulos; a Família (membros da Casa e o casamento dos filhos) vai para Linhagens; os Tratados
 //    (casamento entre dinastias, comércio, tributo e reféns) vão para o Reinado (só o rei).
-//  • Vilas e guardas vira uma página de Coroa e títulos.
+//  • Vilas e guardas vira uma página de Coroa e títulos; Fora da lei e Mercenários viram a janela Serviços.
+//  • Haras e corridas sai: tudo é feito na construção Haras (o cruzamento e o Grande Prêmio, lá dentro).
 //  • Estações e clima e o atlas dos reinos saem de vez.
 //  • Os atalhos antigos (Avisos, Grandes Casas, botões) abrem o lugar novo.
-const PF_GONE = { family: 'tree', 'x:society': 'crown', 'x:pacts': 'x:reign', 'x:clima': 'overview', atlas: 'overview', villages: 'crown' };
+const PF_GONE = { family: 'tree', 'x:society': 'crown', 'x:pacts': 'x:reign', 'x:clima': 'overview', atlas: 'overview', villages: 'crown', 'x:merc': 'x:outlaw', 'x:horses': 'overview' };
 // páginas que viraram abas de Coroa e títulos
 const PF_TAB = { 'x:society': 'sociedade', villages: 'vilas' };
+// Serviços: Fora da lei e Mercenários numa janela só, uma página para cada
+const OL_TABS = [['bando', '🗡️', 'Fora da lei', 'x:outlaw'], ['merc', '⚔️', 'Mercenários', 'x:merc']];
 
 const Portfolio = {
   // a página antiga, sem o cabeçalho dela, com um título de seção no lugar
@@ -90,6 +93,12 @@ const Portfolio = {
     items.forEach((c, i) => { c.hidden = i < pages[k][0] || i >= pages[k][1]; });
     adv.querySelector('.cr-next-h').insertAdjacentHTML('beforeend', `<span class="cr-pager"><button data-act="crpg" data-k="adv" data-d="-1" ${k ? '' : 'disabled'}>◀</button><b>${k + 1}/${n}</b><button data-act="crpg" data-k="adv" data-d="1" ${k < n - 1 ? '' : 'disabled'}>▶</button></span>`);
   },
+  outlaw(kp0) {
+    const tab = OL_TABS.find(t => t[0] === UI.sel.olTab) || OL_TABS[0];
+    const tabs = `<div class="tabs subtabs ol-tabs">${OL_TABS.map(([k, ic, l]) => `<button class="tab ${tab[0] === k ? 'on' : ''}" data-act="oltab" data-t="${k}">${ic} ${l}</button>`).join('')}</div>`;
+    return UI.pageHead('🗡️', 'Serviços', 'O bando, os golpes e a recompensa pela sua cabeça · companhias livres para a guerra e para golpes')
+      + tabs + (kp0(tab[3]) || '').replace(/^\s*<div class="pg-head">[^]*?<\/div><\/div>/, '');
+  },
   target(nav) {
     const t = PF_GONE[nav];
     if (t === 'x:reign' && !G.civs.some(c => c.ruler === 'player')) return 'overview';
@@ -103,13 +112,17 @@ const Portfolio = {
   // (filtra o menu pronto: o grupo Gestão é acrescentado por outro módulo, depois deste)
   UI.navHtml = function (groups, cur, act, body) {
     let h = nh0(groups, cur, act, body);
-    if (act === 'knav') for (const k of Object.keys(PF_GONE)) h = h.replace(new RegExp('<button class="snav-i[^"]*" data-act="knav" data-k="' + k + '">[^]*?</button>', 'g'), '');
+    if (act === 'knav') {
+      for (const k of Object.keys(PF_GONE)) h = h.replace(new RegExp('<button class="snav-i[^"]*" data-act="knav" data-k="' + k + '">[^]*?</button>', 'g'), '');
+      h = h.replace(/(data-k="x:outlaw">[^]*?)Fora da lei</, '$1Serviços<');
+    }
     return h;
   };
   // quem ia para uma delas cai no lugar novo
   const sk0 = UI.showKingdom.bind(UI);
   UI.showKingdom = function (...a) {
     if (PF_TAB[this.sel.knav]) this.sel.crTab = PF_TAB[this.sel.knav]; // a Sociedade e as Vilas agora são páginas de Coroa e títulos
+    if (this.sel.knav === 'x:merc') this.sel.olTab = 'merc'; // e os Mercenários, de Fora da lei
     if (PF_GONE[this.sel.knav]) this.sel.knav = Portfolio.target(this.sel.knav);
     const r = sk0(...a);
     if (this.sel.knav === 'crown') { try { Portfolio.paginate(); } catch (e) { console.error(e); } }
@@ -117,6 +130,7 @@ const Portfolio = {
   };
   const ac0 = UI.act.bind(UI);
   UI.act = function (a, d) {
+    if (a === 'oltab') { this.sel.olTab = d.t; this.sel.knav = 'x:outlaw'; this.showKingdom(); return; }
     if (a === 'crtab') { this.sel.crTab = d.t; this.sel.knav = 'crown'; this.showKingdom(); return; }
     if (a === 'crpg') { const P0 = this.sel.crPg || (this.sel.crPg = {}); P0[d.k] = Math.max(0, (P0[d.k] || 0) + +d.d); this.showKingdom(); return; }
     return ac0(a, d);
@@ -126,6 +140,7 @@ const Portfolio = {
   UI.kPage = function (nav) {
     if (PF_GONE[nav]) nav = Portfolio.target(nav);
     if (nav === 'crown') return Portfolio.crown(kp0);
+    if (nav === 'x:outlaw') return Portfolio.outlaw(kp0);
     const h = kp0(nav);
     if (nav === 'tree') return h + Portfolio.part(kp0, 'family', '👪', 'A sua Casa: membros e casamento dos filhos');
     if (nav === 'x:reign' && G.civs.some(c => c.ruler === 'player')) return h + Portfolio.part(kp0, 'x:pacts', '📜', 'Tratados: casamento entre dinastias, comércio, tributos e reféns');

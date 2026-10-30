@@ -10,7 +10,7 @@ module.exports = async () => {
       UI.msg = () => {};
       const nav = () => [...UI.panel.querySelectorAll('.snav [data-act="knav"]')].map(b => b.dataset.k);
       const txt = () => (UI.panel.querySelector('.kpg') || UI.panel).textContent;
-      const check = () => { UI.sel.knav = 'overview'; UI.showKingdom(); const n = nav(); for (const k of ['family', 'x:clima', 'atlas', 'x:pacts', 'x:society', 'villages']) ok(!n.includes(k), `${k} ainda está no menu`); for (const k of ['overview', 'crown', 'tree', 'families']) ok(n.includes(k), `${k} sumiu do menu`); };
+      const check = () => { UI.sel.knav = 'overview'; UI.showKingdom(); const n = nav(); for (const k of ['family', 'x:clima', 'atlas', 'x:pacts', 'x:society', 'villages', 'x:merc', 'x:horses']) ok(!n.includes(k), `${k} ainda está no menu`); for (const k of ['overview', 'crown', 'tree', 'families']) ok(n.includes(k), `${k} sumiu do menu`); };
       check();
       // a Sociedade dentro de Coroa e títulos; a Família dentro de Linhagens
       // Coroa e títulos em páginas (abas): Títulos, Vantagens, Corte e reinos, Sociedade — cada uma cabe na janela
@@ -37,6 +37,9 @@ module.exports = async () => {
       // atalhos antigos
       Society.show(); ok(UI.sel.knav === 'crown', 'o atalho da Sociedade não abriu Coroa e títulos');
       UI.sel.knav = 'family'; UI.showKingdom(); ok(UI.sel.knav === 'tree', 'o atalho da Família não abriu Linhagens');
+      // Mercenários é uma página de Fora da lei
+      UI.act('knav', { k: 'x:merc' }); ok(UI.sel.knav === 'x:outlaw' && UI.sel.olTab === 'merc' && /Companhias livres/i.test(txt()), 'Mercenários não abriu dentro de Fora da lei');
+      UI.act('oltab', { t: 'bando' }); ok(/vida de fora da lei|O bando de/i.test(txt()) && /Serviços/.test(UI.panel.textContent), 'a página Fora da lei não abriu');
       UI.sel.knav = 'x:clima'; UI.showKingdom(); ok(UI.sel.knav === 'overview', 'Estações e clima ainda abre');
       UI.act('atlasciv', { c: 1 }); ok(UI.sel.knav === 'overview', 'o atlas dos reinos ainda abre');
       UI.sel.knav = 'x:pacts'; UI.showKingdom(); ok(UI.sel.knav === 'overview', 'Tratados abriu para quem não é rei');

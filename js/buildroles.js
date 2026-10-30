@@ -393,6 +393,7 @@ Object.assign(BuildRoles, {
     }
     if (cat === 'guarda') {
       if (t === 'stable') return ['🛒 À venda aqui', [['🐴', 'Cavalo'], ['🛒', 'Carroça'], ...(typeof HORSE_BREEDS !== 'undefined' ? Object.values(HORSE_BREEDS).map(b => ['🐎', b.name]) : [])], ''];
+      if (t === 'haras') return ['🏇 Lá dentro', [['💕', 'Baia de cruzamento'], ['🏁', 'Mesa do Grande Prêmio'], ['📖', 'Livro do haras'], ['🐎', '4 baias']], ''];
       if (t === 'cellar') return ['🍷 Guarda e envelhece', it(['wine', 'beer', 'mead', 'aged_wine']), ''];
       if (t === 'kennel') return ['🐕 Cria', [['🐕', 'Cão de guarda']], ''];
       if (t === 'cartshed') return ['🛒 Guarda', [['🛒', 'Carroças e mulas de carga (+100 de carga)']], ''];

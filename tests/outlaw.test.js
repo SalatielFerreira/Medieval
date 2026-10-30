@@ -22,7 +22,7 @@ module.exports = async () => {
         const vi = World.villages.findIndex(v => v && v.lord !== 'player'); const r2 = OutLaw.raid(vi);
         ok(r2 && r2.ok && World.villages[vi].sacked === G.day, 'o saque não deu certo');
         OutLaw.protect(vi); G.outlaw.fame = 50; const g1 = P.gold; OutLaw.monthTick(); ok(P.gold > g1, 'a proteção não rendeu');
-        ok(G.ents.some(e => e.bounty && !e.dead && e.name === 'Caçador de Recompensas') || OutLaw.totalBounty() <= 300, 'nenhum caçador de recompensa veio');
+        ok(G.ents.some(e => e.bounty && !e.dead && e.npc && e.npc.hit && e.npc.hit.kind === 'hunter') || OutLaw.totalBounty() <= 300, 'nenhum caçador de recompensa veio');
       } finally { Math.random = rnd; }
       // perdão
       const ci = OutLaw.wanted()[0].ci; P.gold = 1e6; OutLaw.pardon(ci); ok(!Crime.wanted(ci), 'o perdão não limpou o reino');

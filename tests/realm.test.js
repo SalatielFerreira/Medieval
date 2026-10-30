@@ -46,7 +46,7 @@ module.exports = async () => {
       Progress.endHero('teste'); ok(G.bookPending, 'o livro não ficou pendente no fim da geração'); G.bookPending = false;
       // mapa e Portfólio
       UI.close(); MapView.show(); const L = UIP.layers(); ok(L.bank && L.elec && L.crisis && L.barb, 'camadas novas'); MapView.draw(); MapView.hide();
-      for (const k of ['x:merc', 'x:games']) { UI.act('knav', { k }); ok(UI.sel.knav === k && html().length > 500, 'página do Portfólio: ' + k); }
+      for (const [k, to] of [['x:merc', 'x:outlaw'], ['x:games', 'x:games']]) { UI.act('knav', { k }); ok(UI.sel.knav === to && html().length > 500, 'página do Portfólio: ' + k); } // Mercenários fica dentro de Fora da lei
       UIP.goPage('x:reign', 'law'); ok(html().includes('Tribunal'), 'o aviso não leva ao tribunal');
       UI.close();
       return bad;

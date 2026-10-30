@@ -4352,3 +4352,64 @@ body:not(.small) #panel .kpg.kdesk[data-nav="biz"] { height: 100% !important; gr
 body.small .bzb-painel, body.small .bzb-lista { grid-template-columns: 1fr; } body.small .bzb-kpis { grid-template-columns: repeat(2, 1fr); }
 body.small .bzb-tr { grid-template-columns: 1.6fr 1fr 1fr 1fr; } body.small .bzb-tr > :nth-child(5), body.small .bzb-tr > :nth-child(6) { display: none; }
 body.small .bzb-page { overflow: visible; }
+/* a janela do Haras (aberta lá dentro) e o mercado de cavalos do Estábulo */
+.hs-win { display: flex; flex-direction: column; gap: 12px; } .hs-stmkt { margin-top: 12px; } .hs-stmkt .hs-mkt { margin-top: 6px; }
+.ol-tabs { margin: 0; }
+
+/* Haras e corridas em três abas (Estrebaria, Grande Prêmio, Mercado de cavalos) */
+.hs-tabs { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.hs-dot { font-style: normal; font-size: 10px; font-weight: 800; padding: 0 5px; border-radius: 8px; background: #a82424; color: #fff; margin-left: 4px; }
+.hs-pg { display: grid; gap: 12px; }
+.hs-pg .card { margin: 0 !important; }
+.hs-svg { display: block; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .45)); }
+.hs-stars { color: #ffd54a; font-size: 12px; letter-spacing: 1px; margin-left: 6px; } .hs-stars i { font-style: normal; color: rgba(255, 213, 74, .22); }
+.hs-stats { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; font-size: 12px; color: #cdbb93; }
+.hs-stats span { display: inline-flex; align-items: center; gap: 6px; } .hs-stats b { color: #f0e2bf; min-width: 14px; }
+.hs-bar { width: 70px; height: 7px; } .hs-bar.sp i { background: linear-gradient(90deg, #3a8ac0, #8fd6ff); } .hs-bar.st i { background: linear-gradient(90deg, #3f9a4a, #a6ec8a); } .hs-bar.sr i { background: linear-gradient(90deg, #b8642a, #ffb27a); }
+/* Estrebaria */
+.hs-est { grid-template-columns: 1.15fr 1fr; grid-template-rows: auto auto; }
+.hs-hero { grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; border-radius: 14px; border: 1px solid rgba(214, 174, 96, .3);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255, 220, 140, .14), transparent 60%), linear-gradient(180deg, rgba(90, 130, 60, .18), rgba(0, 0, 0, .25)); }
+.hs-hero-pic { padding: 12px 24px 4px; border-bottom: 3px solid rgba(120, 90, 40, .6); border-radius: 50% 50% 8px 8px / 30% 30% 8px 8px; background: radial-gradient(ellipse at 50% 100%, rgba(0, 0, 0, .3), transparent 70%); }
+.hs-hero-tx { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hs-hero-tx > small { color: #a8987a; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+.hs-hero-tx h3 { margin: 0; font-size: 22px; color: #f6e2a8; } .hs-who { color: #cdbb93; font-size: 13px; }
+.hs-hero .hs-stats { justify-content: center; font-size: 13px; } .hs-hero .hs-bar { width: 90px; height: 8px; }
+.hs-tips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 4px; } .hs-tips span { font-size: 11.5px; padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, .25); color: #cdbb93; }
+.hs-hero.empty .hs-svg { opacity: .35; filter: grayscale(1); }
+.hs-stalls { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.hs-stall.free { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; border: 1px dashed rgba(214, 174, 96, .3); border-radius: 10px; color: #a8987a; }
+.hs-card { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin: 0; border-radius: 10px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 174, 96, .15); }
+.hs-card .hs-info { flex: 1; min-width: 0; } .hs-card .hs-info > b { display: block; font-size: 14px; } .hs-card .hs-info > small { color: #a99a7c; font-size: 11.5px; }
+.hs-card .hs-stats { gap: 2px 10px; font-size: 11px; } .hs-card .hs-bar { width: 44px; }
+.hs-acts { display: flex; flex-direction: column; gap: 4px; } .hs-acts button { padding: 4px 10px; font-size: 12px; }
+.hs-none { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; font-size: 28px; text-align: center; } .hs-none b { font-size: 14px; } .hs-none small { font-size: 12.5px; color: #a8987a; }
+.hs-pair { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-bottom: 6px; } .hs-pair label { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: #a8987a; } .hs-pair select { min-width: 170px; }
+.hs-x { font-size: 20px; color: #e8c06a; padding-bottom: 4px; }
+/* Grande Prêmio */
+.hs-pre { grid-template-columns: 1.4fr 1fr; align-items: start; }
+.hs-banner { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 18px; padding: 14px 18px; border-radius: 14px; border: 1px solid rgba(214, 174, 96, .35);
+  background: linear-gradient(90deg, rgba(60, 100, 40, .35), rgba(0, 0, 0, .2)), repeating-linear-gradient(90deg, rgba(255, 255, 255, .03) 0 20px, transparent 20px 40px); }
+.hs-banner > div:first-child > small { color: #a8987a; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; } .hs-banner h3 { margin: 2px 0; font-size: 22px; color: #f6e2a8; } .hs-banner > div > span { font-size: 12px; color: #cdbb93; }
+.hs-podium { display: flex; align-items: flex-end; gap: 6px; }
+.hs-podium > div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 78px; border-radius: 8px 8px 0 0; background: rgba(214, 174, 96, .14); border: 1px solid rgba(214, 174, 96, .3); padding: 6px 4px; }
+.hs-podium .p1 { order: 2; height: 92px; background: rgba(255, 213, 74, .2); } .hs-podium .p2 { order: 1; height: 74px; } .hs-podium .p3 { order: 3; height: 62px; }
+.hs-podium b { font-size: 22px; } .hs-podium span { font-size: 12.5px; font-weight: 700; color: #f0e2bf; } .hs-podium small { font-size: 10px; color: #a8987a; }
+.hs-go { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 220px; text-align: center; } .hs-go small { font-size: 12px; color: #cdbb93; }
+.hs-go button.big { font-size: 15px; padding: 10px 18px; }
+.hs-run { display: grid; grid-template-columns: 22px 44px 1fr auto auto; align-items: center; gap: 10px; padding: 3px 8px; border-radius: 10px; background: rgba(0, 0, 0, .2); margin-bottom: 4px; }
+.hs-run.me { background: rgba(255, 213, 74, .14); border: 1px solid rgba(255, 213, 74, .4); }
+.hs-run em { font-style: normal; font-weight: 800; color: #e8c06a; text-align: center; } .hs-rn { display: flex; flex-direction: column; min-width: 0; } .hs-rn small { color: #a8987a; font-size: 11.5px; }
+.hs-rs { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; } .hs-rs .hs-bar { width: 50px; }
+.hs-hr { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; background: rgba(0, 0, 0, .18); margin-bottom: 4px; font-size: 13px; }
+.hs-hr b { font-size: 16px; text-align: center; } .hs-hr small { color: #a8987a; font-size: 11.5px; }
+/* Mercado */
+.hs-mkt { grid-template-columns: repeat(5, 1fr); align-items: stretch; }
+.hs-breedc { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 10px; text-align: center; border-radius: 12px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 174, 96, .22); }
+.hs-breedc > b { font-size: 15px; color: #f6e2a8; } .hs-breedc > small { font-size: 12px; color: #cdbb93; min-height: 32px; }
+.hs-bpics { display: flex; justify-content: center; } .hs-bpics .hs-svg { margin: 0 -6px; } .hs-bpics .hs-svg:nth-child(2) { transform: translateY(-4px) scale(1.12); z-index: 1; }
+.hs-breedc .hs-stats { flex-direction: column; align-items: stretch; gap: 3px; width: 100%; } .hs-breedc .hs-stats span { justify-content: space-between; } .hs-breedc .hs-bar { width: 56px; }
+.hs-breedc button { margin-top: auto; width: 100%; }
+.hs-mnote { grid-column: 1 / -1; }
+body.small .hs-est, body.small .hs-pre { grid-template-columns: 1fr; } body.small .hs-hero { grid-row: auto; } body.small .hs-mkt { grid-template-columns: repeat(2, 1fr); }
+body.small .hs-banner { grid-template-columns: 1fr; justify-items: center; text-align: center; }

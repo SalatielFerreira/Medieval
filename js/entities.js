@@ -53,7 +53,8 @@ function hostile(a, b) {
   if (b.tag && b.tag.startsWith('crw') && fac(a) === 'player') { const r = Families.revolt(+b.tag.slice(3)); if (r && !r.done && r.side === 'rebel') return true; }
   if (a.angry) return b === P || fac(b) === 'player';
   if (b.angry && fac(a) === 'player') return true;
-  if (a.npc && a.npc.hostile) return b === P || (b.npc && b.npc.capanga);
+  // (os bandidos de um bando são pessoas hostis, mas brigam como bando: contra você, os guardas e os soldados)
+  if (a.npc && a.npc.hostile && a.kind !== 'bandit') return b === P || (b.npc && b.npc.capanga);
   if (b.npc && b.npc.hostile && fac(a) === 'player') return true;
   // soldados de lados opostos numa batalha em campo aberto
   if (a.battle && a.battle === b.battle && a.civ !== b.civ) return true;
@@ -291,7 +292,7 @@ class Creature {
           aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
         break;
       case 'bandit':
-        drawHuman(ctx, x, y, { body: '#3b2b2b', legs: '#2a1f1a', hair: '#1a1a1a', hood: '#4a1f1f', weapon: '#9a9a9a', wlen: 16, aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
+        drawHuman(ctx, x, y, { body: '#3b2b2b', legs: '#2a1f1a', hair: this.npc ? this.npc.hair : '#1a1a1a', skin: this.npc ? this.npc.skin : undefined, fem: !!(this.npc && this.npc.sex === 'f'), hood: '#4a1f1f', weapon: '#9a9a9a', wlen: 16, aim: this.aim, swing: this.swing, dir: this.dir, moving: this.moving, anim: this.anim, hurt });
         break;
       case 'guard': {
         const col = Game.civColor(this.civ);
