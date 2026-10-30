@@ -839,12 +839,12 @@ const UI = {
     const mine = Urban.myVillages(), alerts = this.kAlerts();
     if (S.knav.startsWith('v:') && !mine.some(({ i }) => 'v:' + i === S.knav)) S.knav = 'overview';
     const groups = [['Você', [['overview', '🏠', 'Visão geral', alerts.length, alerts.length > 0], ['crown', '👑', 'Coroa e títulos'], ['family', '👪', 'Família'],
-      ['villages', '🏘️', 'Vilas e guardas', mine.length], ['biz', '💼', 'Empreendimentos', Biz.list().length], ['families', '🏛️', 'Grandes Casas']]]];
+      ['villages', '🏘️', 'Vilas e guardas', mine.length], ['biz', '💼', 'Empreendimentos', Biz.list().length], ['families', '🏛️', 'Grandes Casas'], ['tree', '🌳', 'Linhagens']]]];
     if (ruled.length) groups.push(['Seus reinos', ruled.map(c => ['k:' + c.id, Heraldry.armsSvg(c.id, 16), CIV_DEFS[c.id].short,
       c.rebel > 0 || c.atWar ? '!' : '', c.rebel > 0 || c.atWar])]);
     // as vilas em que você é o governador: cada uma com a sua administração
     if (mine.length) groups.push(['Suas vilas', mine.map(({ v, i }) => ['v:' + i, '🏘️', v.name, v.raid && v.raid.until >= G.day ? '!' : '', !!(v.raid && v.raid.until >= G.day)])]);
-    groups.push(['O mundo', [['atlas', '🗺️', 'Reino'], ['tree', '🌳', 'Linhagens']]]); // Grandes Casas fica em Você
+    // (o grupo O mundo saiu: Grandes Casas e Linhagens ficam em Você e o atlas do Reino saiu do menu)
     const page = this.kPage(S.knav);
     this.open('Portfólio', `<div class="iconnav">${this.navHtml(groups, S.knav, 'knav', `<div class="kpg">${page}</div>`)}</div>`, 'showKingdom', [], 'Você, seus reinos e o mundo');
     this.fitReino();

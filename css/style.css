@@ -4632,3 +4632,13 @@ body.small .ju-cells { grid-template-columns: repeat(2, 1fr); }
 .hs2-calm { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; } .hs2-calm span { font-size: 54px; } .hs2-calm b { font-size: 18px; color: #f6e2a8; } .hs2-calm small { color: #a8987a; }
 body.small .nb-grid, body.small .nb-k2, body.small .nb-mk, body.small .hs2-top, body.small .hs2-un { grid-template-columns: 1fr; } body.small .hs2-civs { grid-template-columns: repeat(2, 1fr); }
 .bzb-page.bzb-nb { display: flex; flex-direction: column; gap: 10px; } .bzb-nb .nb-k2 { flex: 1; min-height: 0; }
+/* Linhagens em páginas (js/portfolio2.js) */
+.ln2-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: rgba(0, 0, 0, .25); border: 1px solid rgba(214, 174, 96, .2); } .ln2-bar > span { flex: 1; color: #cdbb93; font-size: 13px; }
+.ln2-one { flex: 1; min-height: 0; display: flex; } .ln2-one > .card { flex: 1; margin: 0 !important; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.ln2-two { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1.2fr; gap: 12px; } .ln2-two > .card { margin: 0 !important; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.ln2-two .ln-cols { display: flex; flex-direction: column; gap: 8px; flex: 1; } .ln2-two .ln-col { flex: 1; } .ln2-two .ln-cv { flex: 1; min-height: 0; } .ln2-two .ln-cv canvas { width: 100%; height: 100%; }
+.ln2-casa { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1.4fr; grid-auto-rows: min-content; gap: 12px; align-content: start; } .ln2-casa > .card { margin: 0 !important; }
+.ln2-casa > .fm-members { grid-row: span 2; } .ln2-casa > .act-row { grid-column: 1; }
+body.small .ln2-two, body.small .ln2-casa { grid-template-columns: 1fr; }
+.ln2-two > .card { align-self: stretch !important; justify-content: flex-start !important; margin: 0 !important; } .ln2-two .ln-cols { display: flex !important; flex-direction: column !important; gap: 8px; flex: 1; } .ln2-two .ln-col { flex: 1; }
+.ln2-two > .card, .ln2-one > .card, .ln2-casa > .card { grid-row: auto !important; grid-column: auto !important; } .ln2-casa > .fm-members { grid-row: span 2 !important; }

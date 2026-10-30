@@ -33,7 +33,10 @@ module.exports = async () => {
       UI.sel.knav = 'villages'; UI.showKingdom(); ok(UI.sel.knav === 'crown' && UI.sel.crTab === 'vilas', 'o atalho de Vilas e guardas não abriu Coroa e títulos');
       UI.sel.socTab = 'politics'; UI.sel.crTab = 'sociedade'; UI.showKingdom();
       ok(UI.panel.querySelector('.cr-pager') || UI.panel.querySelector('.cr-soc').scrollHeight <= UI.panel.querySelector('.cr-soc').clientHeight + 1, 'a Política não cabe e não tem páginas');
-      UI.sel.knav = 'tree'; UI.showKingdom(); ok(/A sua Casa/.test(txt()) && /Membros|MEMBROS/.test(txt()), 'a Família não está em Linhagens');
+      (UI.sel.svSub = UI.sel.svSub || {}).ln = 'casa'; UI.sel.knav = 'tree'; UI.showKingdom(); ok(!/A sua Casa/.test(txt()) && /Árvore da casa/.test(txt()), 'a página A sua Casa ainda está em Linhagens');
+      // Linhagens em páginas, cabendo na janela; Grandes Casas e Linhagens no grupo Você
+      for (const t of ['arvore', 'lacos']) { UI.sel.svSub.ln = t; UI.showKingdom(); const b = UI.panel.querySelector('.snav-body'); ok(b.scrollHeight <= b.clientHeight + 1, `Linhagens → ${t} não cabe na janela`); }
+      { const seq = [...UI.panel.querySelectorAll('.snav > *')].map(e => e.classList.contains('snav-g') ? '|' : e.dataset.k).join(' '); ok(/^\| overview crown .*families tree \|/.test(seq), 'Grandes Casas e Linhagens não estão em Você: ' + seq); }
       // atalhos antigos
       Society.show(); ok(UI.sel.knav === 'crown', 'o atalho da Sociedade não abriu Coroa e títulos');
       UI.sel.knav = 'family'; UI.showKingdom(); ok(UI.sel.knav === 'tree', 'o atalho da Família não abriu Linhagens');

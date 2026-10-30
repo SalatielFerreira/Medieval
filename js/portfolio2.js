@@ -56,6 +56,21 @@ const NegBoard = {
   html(tab) { const x = this.parts(tab); return this.root(tab, x.tabs, x.body); },
 };
 
+// 🌳 Linhagens em duas páginas: a árvore da casa (com a árvore da dinastia e o placar) e os laços com o mapa de relações
+// (antes vinham todos juntos e não cabiam).
+const Lines = {
+  html(h) {
+    const t = document.createElement('template'); t.innerHTML = h;
+    const pick = sel => { const e = t.content.querySelector(sel); return e ? e.outerHTML : ''; };
+    const btns = t.content.querySelector('.lg-open');
+    const list = [
+      ['arvore', '🌳', 'Árvore da casa', `${btns ? `<div class="ln2-bar"><span>A sua dinastia, geração por geração.</span>${btns.innerHTML}</div>` : ''}<div class="ln2-one">${pick('.ln-tree')}</div>`],
+      ['lacos', '🤝', 'Laços e relações', `<div class="ln2-two">${pick('.ln-ties')}${pick('.ln-map')}</div>`],
+    ];
+    return UI.pageHead('🌳', 'Linhagens', 'A sua dinastia e os laços entre as casas') + Services.subs('ln', list);
+  },
+};
+
 const Houses = {
   esc(s) { return UI.esc(s); },
   crest(f, sz) { return `<span class="gc-crest" style="--c:${f.color};--s:${sz}px">${this.esc((f.surname || '?')[0])}</span>`; },
@@ -117,9 +132,10 @@ const Houses = {
     tab = tab || this.sel.bbTab || 'biz'; if (!['biz', 'contracts', 'market', 'log'].includes(tab)) tab = 'biz';
     this.sel.bbTab = tab; this.sel.bzTab = 'nb_' + tab; this.sel.knav = 'biz'; return this.showKingdom();
   };
-  // Grandes Casas
+  // Grandes Casas e Linhagens
   const kp0 = UI.kPage.bind(UI);
   UI.kPage = function (nav) {
+    if (nav === 'tree') return Lines.html(kp0('tree'));
     if (nav === 'x:board' && typeof UIP !== 'undefined') return this.pageHead('📊', 'Negócios', 'Seus negócios, encomendas, feiras e leilões') + UIP.capture(() => UIP._raw.board(UI.sel.bbTab));
     if (nav === 'families') return this.pageHead('🏛️', 'Grandes Casas', `${Families.ranking().length} famílias e ${G.people.filter(p => p.alive).length} pessoas vivas no mundo`) + Houses.html();
     return kp0(nav);
@@ -128,5 +144,5 @@ const Houses = {
   const sk0 = UI.showKingdom.bind(UI);
   UI.showKingdom = function (...a) {
     if (this.sel.knav === 'x:board') { this.sel.bzTab = 'nb_' + (this.sel.bbTab || 'biz'); this.sel.knav = 'biz'; } // atalhos antigos de Negócios
-    const r = sk0(...a); if (['families', 'x:board'].includes(this.sel.knav)) { try { Services.paginate(); } catch (e) { console.error(e); } } return r; };
+    const r = sk0(...a); if (['families', 'x:board', 'tree'].includes(this.sel.knav)) { try { Services.paginate(); } catch (e) { console.error(e); } } return r; };
 }
