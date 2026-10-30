@@ -99,6 +99,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades: Diário do herói
 
+- **Tudo cabe na janela, em páginas:** 🏆 Conquistas (Resumo com o anel de progresso, o seu título — Novato, Aventureiro, Veterano, Campeão, Lenda, Imortal —, as últimas conquistas e as próximas a buscar · Conquistadas · A conquistar), 📰 Notícias (Manchetes: a manchete, as notícias por assunto, a gente em destaque e as mais recentes · Todas as notícias, com filtros), 📊 Estatísticas (Resumo com o nível e os seus maiores feitos · Trabalho · Combate · Vida), 🏅 Ranking (Você no mundo: a sua posição em cada categoria e quanto do mundo você supera · Os melhores do mundo) e ⚔️ Heróis (Os mais famosos: pódio, top 10 e a sua fama · Por reino · Lendas caídas). O que não couber vira partes (◀ 1/2 ▶).
 - **Saíram as páginas Dinastia, Contas e Diário.** A **Crônica da dinastia** (o livro ilustrado) virou um item do menu do Diário, logo abaixo de Heróis.
 
 ## Novidades: estradas dos prédios do castelo

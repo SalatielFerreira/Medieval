@@ -14,7 +14,7 @@ module.exports = async () => {
       const marked = G.people.filter(p => p.alive && News.status(p)).length;
       UI.sel.dtab = 'news'; UI.showDiary();
       const items = document.querySelectorAll('.nw-item').length, head = !!document.querySelector('.nw-top');
-      UI.sel.ncat = 'life'; UI.showDiary();
+      UI.sel.ncat = 'life'; (UI.sel.svSub = UI.sel.svSub || {}).dynews = 'todas'; UI.showDiary();
       const lifeOnly = [...document.querySelectorAll('.nw-item')].every(el => el.dataset.cat === 'life');
       UI.close();
       // conversa com alguém que tem notícias
