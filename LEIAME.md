@@ -97,6 +97,17 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: mapa com as construções identificadas
+
+- **🗺️ Mapa:** cada construção ganhou um selo com o ícone dela (🍺 taverna, 🛒 loja, ⚒️ ferreiro, 🥖 padaria, ⛪ templo, 🏦 banco, ⛓️ prisão, 🏟️ arena, ⚓ porto, 🐴 estábulo, ⛺ acampamento, 🕳️ caverna...) na cor da categoria; aproximando, aparece o nome. Na lateral, **O que mostrar** liga e desliga cada categoria (Lojas e serviços, Poder e ordem, Fé e descanso, Viagem e montaria, Empreendimentos, Campos e criações, Suas construções, Casas e Perigos) e **Perto de você** lista as lojas e serviços mais próximos para marcar como destino. Ao passar o mouse, a dica diz o que é, quem cuida e de quem é. A neblina continua escondendo o que você ainda não viu.
+
+## Novidades: os Jogos dos Sete Reinos em páginas
+
+- **🏅 Jogos** (Portfólio) em quatro páginas que cabem na janela: 🏟️ **O evento** (onde os Jogos estão acontecendo, com o brasão do anfitrião, até quando e quantas provas você já fez — ou o próximo anfitrião e quantos meses faltam —, os prêmios num pódio, como funciona e os próximos anfitriões), ⚔️ **As provas** (as sete, com os três favoritos de cada uma e o botão de competir), 📜 **Registros** (cada edição: ano, anfitrião, grande campeão e o pódio de cada prova, uma edição por página) e 🏆 **Medalhas e lendas** (o quadro de medalhas de todos os tempos, as suas medalhas e os atletas com mais medalhas).
+- **Classificação ao vivo:** durante os Jogos, cada prova mostra quem já competiu e em que lugar está (os atletas competem ao longo do mês; o pódio final sai dessas mesmas notas). Quando os Jogos acabam, a classificação é limpa e o resultado fica nos Registros. Nas Lendas dos Jogos e no quadro de medalhas entram também os atletas sem reino (você, por exemplo), do melhor para o pior.
+- **🏅 Jogos dentro da Arena:** a faixa de botões no alto da Arena saiu; agora há a página Jogos (abaixo de Torneio), com o evento (onde e até quando, quantas provas você fez, os prêmios) e as sete provas em cartões com os favoritos e o botão Competir — ou, fora de época, onde e quando serão os próximos Jogos.
+- **Porto sem o pontilhado:** a linha tracejada da fronteira do reino não aparece mais em volta dos portos.
+
 ## Novidades: Negócios e Grandes Casas redesenhados
 
 - **Negócios entrou em Empreendimentos:** as quatro páginas ficam entre Seus empreendimentos e Contas (Painel · Seus empreendimentos · Negócios · Encomendas · Feiras e leilões · Ocorrências · Contas · Concorrência); Negócios saiu do menu do Portfólio e os avisos abrem a página certa.

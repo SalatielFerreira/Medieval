@@ -1025,7 +1025,7 @@ const World = {
     }
     // fronteiras dos territórios
     const tr = this.inb(x, y) ? this.terr[this.idx(x, y)] : -1;
-    if (tr >= 0 && TINFO[t].walk && t !== T.CFLOOR) {
+    if (tr >= 0 && TINFO[t].walk && t !== T.CFLOOR && !this.nearPort(x, y)) { // (sem a linha em volta dos portos)
       g.fillStyle = U.rgba(CIV_DEFS[tr].color, 0.8);
       const other = (nx, ny) => this.inb(nx, ny) && this.terr[this.idx(nx, ny)] !== tr && this.tiles[this.idx(nx, ny)] !== T.DEEP;
       if (other(x, y - 1)) { g.fillRect(px + 1, py, 5, 1); g.fillRect(px + 9, py, 5, 1); }
@@ -1035,6 +1035,12 @@ const World = {
     }
   },
 
+  // o chão em volta de um porto (até 4 passos do prédio): a linha da fronteira não é desenhada ali
+  nearPort(x, y) {
+    const n = this.structs.length;
+    if (this._portN !== n) { this._portN = n; this._ports = this.structs.filter(s => s && s.type === 'port' && !s.removed); }
+    return this._ports.some(s => x >= s.x - 4 && x < s.x + s.w + 4 && y >= s.y - 4 && y < s.y + s.h + 4);
+  },
   // ---------------------------------------------------------------- sprites dos recursos
   sprites: null,
   makeSprites() {

@@ -50,6 +50,8 @@ module.exports = async () => {
       // Negócios e Grandes Casas cabem na janela, em todas as páginas
       for (const t of ['biz', 'contracts', 'market', 'log']) { UI.showBizBoard(t); const b = UI.panel.querySelector('.snav-body'); ok(UI.sel.knav === 'biz' && b.scrollHeight <= b.clientHeight + 1, `Negócios → ${t} não cabe na janela`); }
       for (const t of ['podio', 'ranking', 'reinos', 'inquietas']) { (UI.sel.svSub = UI.sel.svSub || {}).gc = t; UI.sel.knav = 'families'; UI.showKingdom(); const b = UI.panel.querySelector('.snav-body'); ok(UI.panel.querySelector('.hs2-pods, .hs2-rows, .hs2-civs, .hs2-un, .hs2-calm') && b.scrollHeight <= b.clientHeight + 1, `Grandes Casas → ${t} não cabe na janela`); }
+      // Jogos em páginas, cabendo na janela
+      for (const t of ['evento', 'provas', 'registros', 'medalhas']) { (UI.sel.svSub = UI.sel.svSub || {}).og = t; UI.sel.knav = 'x:games'; UI.showKingdom(); const b = UI.panel.querySelector('.snav-body'); ok(UI.panel.querySelector('.og-hero, .og-evs, .og-hist, .sv-none, .og-table') && b.scrollHeight <= b.clientHeight + 1, `Jogos → ${t} não cabe na janela`); }
       UI.act('oltab', { t: 'bando' }); ok(/vida de fora da lei|O bando de/i.test(txt()) && /Serviços/.test(UI.panel.textContent), 'a página Fora da lei não abriu');
       UI.sel.knav = 'x:clima'; UI.showKingdom(); ok(UI.sel.knav === 'overview', 'Estações e clima ainda abre');
       UI.act('atlasciv', { c: 1 }); ok(UI.sel.knav === 'overview', 'o atlas dos reinos ainda abre');

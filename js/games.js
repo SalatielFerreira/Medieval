@@ -247,7 +247,7 @@ UI.showPodium = function (rec) {
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
     const S = Games.S();
-    if (fn === 'showArena' && args && S.on && args[0] === S.host) body = `<div class="card games-top"><div class="sec">🏅 Jogos dos Sete Reinos <span>até ${Calendar.short(S.day + 1)}</span></div><div class="act-row">${Object.entries(GAMES_EVENTS).map(([ev, [ic, nm]]) => `<button class="primary" data-act="gPlay" data-k="${ev}" ${Games.canPlay(ev) ? '' : 'disabled'}>${ic} ${nm}${S.me[ev] !== undefined ? ' ✔' : ''}</button>`).join('')}<button data-act="games">📋 Competidores e medalhas</button></div></div>` + body;
+    // (as provas agora ficam na página 🏅 Jogos da Arena: olympics.js)
     return op0(title, body, fn, args, sub);
   };
   const mt0 = Lifesim.monthTick.bind(Lifesim);

@@ -33,8 +33,13 @@ module.exports = async () => {
       // Jogos
       const S = Games.S(); S.year = 0; Games.start(); ok(S.on && S.host >= 0, 'os Jogos não começaram');
       S.me.archery = 99; G.day++; Games.resolve(); ok(!S.on && S.history.length && S.history[0].ev.archery[0].who === 'player', 'o jogador com 99 pontos não ganhou o ouro no arco');
+      // a página 🏅 Jogos dentro da Arena (abaixo de Torneio), cabendo na janela
+      { Games.start(); const h = S.host; Places.enterRoom(Arena.arenaOf(h)); UI.sel.atab = 'jogos'; UI.showArena(h); const b = UI.panel.querySelector('.snav-body'), ks = [...UI.panel.querySelectorAll('[data-act="anav"]')].map(x => x.dataset.k);
+        ok(ks.indexOf('jogos') === ks.indexOf('torneio') + 1 && UI.panel.querySelectorAll('.og-ev').length === 7 && UI.panel.querySelector('[data-act="gPlay"]:not([disabled])') && b.scrollHeight <= b.clientHeight + 1, 'a página Jogos da Arena');
+        UI.sel.atab = 'lutar'; UI.close(); Places.exit(true); G.day++; Games.resolve(); }
       Games.archery(); for (let k = 0; k < 3; k++) Games.shoot(); ok(G.arch.shots.length === 3, 'o arco não atirou 3 flechas'); Games.archEnd();
-      UI.showGames(); ok(html().includes('Quadro de medalhas'), 'janela dos Jogos');
+      (UI.sel.svSub = UI.sel.svSub || {}).og = 'medalhas'; UI.showGames(); ok(html().includes('Quadro de medalhas'), 'janela dos Jogos');
+      UI.sel.svSub.og = 'registros'; UI.showGames(); ok(html().includes('Jogos do ano') && html().includes('🥇'), 'os registros dos Jogos não mostram o pódio');
       // viajantes
       let went = 0; Math.random = () => 0.001; try { Travel.depart(); } finally { Math.random = rnd; }
       const tr = G.people.filter(p => p.alive && p.trip && p.trip.why); went = tr.length; ok(went > 0, 'ninguém viajou');
