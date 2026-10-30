@@ -182,3 +182,17 @@ const TownPlan = {
   const mt0 = Lifesim.monthTick.bind(Lifesim);
   Lifesim.monthTick = function () { mt0(); TownPlan.monthTick(); };
 }
+
+// a muralha de uma vila não invade a área de outra: ao fundar uma vila (e ao recriá-la quando o jogo carrega), os trechos
+// da muralha das vizinhas que caíram dentro dela saem (os que você ergueu com as próprias mãos ficam)
+{
+  const mv0 = Families.makeVillage.bind(Families);
+  Families.makeVillage = function (...a) {
+    const r = mv0(...a), vi = World.villages.length - 1, v = World.villages[vi];
+    if (v) for (const s of World.structs) {
+      if (!s || s.removed || s.type !== 'vwall' || s.village === undefined || s.village === vi || s.added) continue;
+      if (Math.max(Math.abs(s.x - v.x), Math.abs(s.y - v.y) * 1.25) <= 17) World.removeStruct(s);
+    }
+    return r;
+  };
+}

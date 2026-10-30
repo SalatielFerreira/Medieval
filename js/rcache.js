@@ -5,7 +5,10 @@
 //   dano aparecerem logo) — cada um no seu tempo (com um sorteio, para não vencerem todos juntos), só enquanto sobra
 //   tempo no quadro e na mesma tela (sem criar outra): numa cidade cheia, era o que travava a tela de tempos em tempos;
 // - cada figura é recortada no tamanho do que tem desenhado (a folga para telhados e bandeiras é quase toda vazia): um
-//   trecho de muro é copiado como um quadradinho, não como uma imagem dez vezes maior;
+//   trecho de muro é copiado como um quadradinho, não como uma imagem dez vezes maior (o recorte é medido uma vez por
+//   tipo e aparência, não para cada prédio);
+// - andando pelo mapa, os prédios que aparecem são montados poucos por quadro: os outros são desenhados direto até
+//   chegar a vez deles (antes, entrar numa área nova montava todos de uma vez e a tela parava);
 // - toda construção é estática: é desenhada sempre no mesmo instante (fogo, fumaça, bandeiras, água, peixes e pássaros
 //   dos prédios ficam parados), e por isso nenhuma precisa ser refeita o tempo todo;
 // - prévias de construção (meio transparentes) e qualquer coisa que não seja um prédio do mundo são desenhadas ao vivo.
@@ -17,14 +20,15 @@ const RCache = {
   map: new WeakMap(),   // prédio → { key, cv, res, born } ou { live: true, key }
   on: true,
   stats: { hit: 0, draw: 0, live: 0 },
-  budget: { start: 0, used: 0, ms: 3 },   // tempo por quadro para refazer figuras que só envelheceram
+  budget: { start: 0, used: 0, ms: 4 },   // tempo por quadro para montar e refazer figuras
+  boxes: new Map(),                       // aparência (sem a posição) → o retângulo com desenho
   res(ctx) { const tf = ctx.getTransform(); return Math.max(1, Math.min(4, Math.round(Math.hypot(tf.a, tf.b) * 2) / 2)); },
   // o que, se mudar, pede uma figura nova na hora
   key(s, res) { return [res, s.type, s.w, s.h, s.x, s.y, s.owner, s.progress, s.ruined, s.ruin, s.gateClosed, s.gateBroken, s.blocks, s.level, s.lv, G.season, World.season].join('|'); },
   render(draw, s, w, h, res, time, into) {
     const W = Math.ceil(w * res), H = Math.ceil(h * res);
-    const cv = into && into.width === W && into.height === H ? into : document.createElement('canvas');
-    if (cv !== into) { cv.width = W; cv.height = H; }
+    const cv = into || document.createElement('canvas');
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, W, H);
     g.imageSmoothingEnabled = false; g.scale(res, res);
     draw(g, s, RCACHE_PAD.l, RCACHE_PAD.t, time);
@@ -37,11 +41,11 @@ const RCache = {
   },
   // o retângulo que tem desenho (nas duas figuras), com uma folga de 3 pontos
   box(a, b) {
-    const W = a.width, H = a.height, da = a.getContext('2d').getImageData(0, 0, W, H).data, db = b.getContext('2d').getImageData(0, 0, W, H).data;
+    const W = a.width, H = a.height, da = a.getContext('2d').getImageData(0, 0, W, H).data, db = b && b !== a ? b.getContext('2d').getImageData(0, 0, W, H).data : da;
     let x0 = W, y0 = H, x1 = -1, y1 = -1;
     for (let y = 0; y < H; y++) for (let x = 0, i = y * W * 4 + 3; x < W; x++, i += 4) if (da[i] || db[i]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     if (x1 < 0) return { x: 0, y: 0, w: 1, h: 1 };
-    x0 = Math.max(0, x0 - 3); y0 = Math.max(0, y0 - 3); x1 = Math.min(W - 1, x1 + 3); y1 = Math.min(H - 1, y1 + 3);
+    x0 = Math.max(0, x0 - 6); y0 = Math.max(0, y0 - 6); x1 = Math.min(W - 1, x1 + 6); y1 = Math.min(H - 1, y1 + 6);
     return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
   },
   // copia só o retângulo com desenho para a figura guardada (reaproveita a tela, se já for desse tamanho)
@@ -62,12 +66,20 @@ const RCache = {
       const B = this.budget, t0 = performance.now();
       if (t0 - B.start > 8) { B.start = t0; B.used = 0; } // um quadro novo: o orçamento recomeça
       // aparência nova: na hora; figura que só envelheceu (ou animada): se sobrar tempo neste quadro
-      if (!c || c.key !== key || (now - c.born > ttl && B.used < B.ms)) {
+      const fresh = !c || c.key !== key;
+      // sem tempo neste quadro para montar a figura nova: a antiga (se houver) ou o desenho direto, e fica para depois
+      if (fresh && B.used >= B.ms) { if (!c) { draw(ctx, s, X, Y, time); B.used += performance.now() - t0; return; } }
+      else if (fresh || (now - c.born > ttl && B.used < B.ms)) {
         const w = s.w * TILE + RCACHE_PAD.l + RCACHE_PAD.r, h = s.h * TILE + RCACHE_PAD.t + RCACHE_PAD.b;
-        // primeira vez com esta aparência: confere se o desenho muda com o tempo
-        if (!c || c.key !== key) {
-          const a = this.render(draw, s, w, h, res, time), bx = this.box(a, a);
-          c = { key, cv: this.crop(a, bx), bx, res, born: now, live: false, ttl: RCACHE_TTL + Math.random() * 2 }; this.map.set(s, c); this.stats.draw++;
+        if (fresh) {
+          // monta na tela de rascunho e guarda só o retângulo com desenho (medido uma vez por tipo e aparência)
+          // a tela de rascunho fica no processador (ler os pixels dela para medir o recorte é rápido; numa tela da placa
+          // de vídeo, a leitura chegava a 230 ms e travava a tela)
+          if (!this.scratch) { this.scratch = document.createElement('canvas'); this.scratch.getContext('2d', { willReadFrequently: true }); }
+          this.scratch = this.render(draw, s, w, h, res, time, this.scratch);
+          const bk = [res, s.type, s.w, s.h, s.level, s.lv, s.progress, s.ruined, s.ruin, s.gateClosed, s.gateBroken, s.blocks, G.season, World.season].join('|');
+          let bx = this.boxes.get(bk); if (!bx) { bx = this.box(this.scratch); this.boxes.set(bk, bx); if (this.boxes.size > 3000) this.boxes.clear(); }
+          c = { key, cv: this.crop(this.scratch, bx, c && c.cv), bx, res, born: now, live: false, ttl: RCACHE_TTL + Math.random() * 2 }; this.map.set(s, c); this.stats.draw++;
         } else {
           // refaz numa tela de rascunho do tamanho inteiro e copia só o retângulo com desenho
           this.scratch = this.render(draw, s, w, h, res, time, this.scratch);
@@ -106,3 +118,26 @@ World.drawStruct = RCache.wrap(World.drawStruct.bind(World));
   };
 }
 
+// ---------------------------------------------------------------- chão: os pedaços do mapa ficam prontos antes
+// Andando, cada pedaço novo do chão era pintado na hora em que entrava na tela (às vezes vários juntos). Agora, depois de
+// cada quadro, se sobrou tempo, o jogo pinta um pedaço que ainda falta em volta da vista — primeiro na direção em que
+// você anda —, e quando ele entra na tela já está pronto.
+{
+  const rd0 = Game.render.bind(Game);
+  let lx = 0, ly = 0;
+  Game.render = function (...a) {
+    const t0 = performance.now(), r = rd0(...a);
+    if (G.state !== 'play' || G.place || G.dungeon || World.busy || !World.chunks || !G.cam) return r;
+    if (performance.now() - t0 > 9) return r; // o quadro já foi pesado: fica para o próximo
+    const CPX = CH * TILE, z = this.zoom || 1, cw = this.canvas.width / z, ch = this.canvas.height / z;
+    const dx = Math.sign(P.x - lx), dy = Math.sign(P.y - ly); lx = P.x; ly = P.y;
+    const gx0 = Math.floor(G.cam.x / CPX) - 1 + Math.min(0, dx), gx1 = Math.floor((G.cam.x + cw) / CPX) + 1 + Math.max(0, dx);
+    const gy0 = Math.floor(G.cam.y / CPX) - 1 + Math.min(0, dy), gy1 = Math.floor((G.cam.y + ch) / CPX) + 1 + Math.max(0, dy);
+    const n = Math.ceil(WORLD_W / CH), m = Math.ceil(WORLD_H / CH);
+    for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
+      if (gx < 0 || gy < 0 || gx >= n || gy >= m || World.chunks.has(gx + ',' + gy)) continue;
+      World.getChunk(gx, gy); return r; // um pedaço por quadro
+    }
+    return r;
+  };
+}

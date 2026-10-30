@@ -97,6 +97,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: jogo leve andando pelo mapa
+
+- **Sem travar ao andar:** os prédios que entram na tela são montados poucos por quadro (os outros aparecem direto até chegar a vez deles), o recorte de cada um é medido uma vez por tipo e sem ler a imagem da placa de vídeo, e o chão em volta da tela é pintado antes, nas sobras de tempo. Andando pelo mapa, o pior quadro caiu de ~420 ms para ~50 ms; numa cidade cheia, a média ficou em ~4 ms.
+- **Construções paradas:** nenhuma construção se mexe (fogo, fumaça, bandeiras e água dos prédios ficam parados).
+- **Muros entre vilas:** a muralha de uma vila não invade mais a área da vizinha (vila fundada perto de outra).
+
 ## Novidades: a Prisão
 
 - **Cada castelo tem a sua Prisão** (aparece sozinha perto da capital, como a arena e o cemitério): prédio de pedra com torre e porta de ferro. Por dentro: o corredor com o carcereiro e os guardas, braseiros e celas gradeadas — com os moradores que estão presos de verdade.

@@ -32,6 +32,8 @@ const Towns = {
       const ring = Math.max(Math.abs(x - v.x), Math.abs(y - v.y) * 1.25 | 0) === R;
       if (!ring || Math.abs(x - v.x) < 2 || Math.abs(y - v.y) < 2) continue;
       if (!World.inb(x, y) || World.blocked(x, y) || this.onRoad(x, y, 1, 1) || World.sgrid[World.idx(x, y)] >= 0) continue;
+      // a muralha não invade a área de outra vila (vilas vizinhas: cada uma fecha só o seu lado)
+      if (World.villages.some((o, oi) => oi !== vi && o && !o.removed && Math.max(Math.abs(x - o.x), Math.abs(y - o.y) * 1.25) <= R + 1)) continue;
       const t = World.tile(x, y);
       if (t === T.WATER || t === T.BRIDGE) continue;
       v.extra.walls.push(World.addStruct('vwall', x, y, 1, 1, civ, { growth: 3, village: vi }));
