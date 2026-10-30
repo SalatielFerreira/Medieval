@@ -12,7 +12,7 @@ module.exports = async () => {
       // Obras nas vilas: uma janela só, com a lista separada por classes (sem obras repetidas)
       ok(!UI.buildCats.some(c => c[0].startsWith('ob_')), 'as classes viraram janelas separadas');
       const list = UI.buildCats.find(c => c[0] === 'obras')[3], cls = list.map(k => UI.buildClass[k]);
-      ok(list.filter(k => k.startsWith('c:')).length === 70, `obras nas vilas: ${list.filter(k => k.startsWith('c:')).length} (meta 70)`);
+      ok(list.filter(k => k.startsWith('c:')).length === 68 && !list.includes('c:cemetery') && !list.includes('c:arena'), `obras nas vilas: ${list.filter(k => k.startsWith('c:')).length} (meta 68: o Cemitério e a Arena vêm com o castelo)`);
       ok(list.filter(k => BR.DEF.includes(k)).length === 10, 'a Defesa não está nas obras');
       ok(!list.some(k => BR.DUP.includes(k)), 'ainda há obra repetida: ' + list.filter(k => BR.DUP.includes(k)).join());
       ok(!list.includes('market_stall') && !list.includes('oratory'), 'a Barraca de Feira ou o Oratório ainda estão nas Obras');

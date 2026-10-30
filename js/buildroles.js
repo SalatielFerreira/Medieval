@@ -25,7 +25,7 @@ const BR = {
   // fora do menu (as que você já construiu continuam funcionando)
   OUT: ['hut', 'tent', 'treehouse', 'longhouse', 'stonetower', 'villa', 'big_chest', 'granary_p', 'icehouse'],
   // fora das Obras (as que você já construiu continuam funcionando): a Barraca de Feira e o Oratório
-  OBRAS_OUT: ['market_stall', 'oratory'],
+  OBRAS_OUT: ['market_stall', 'oratory', 'c:cemetery', 'c:arena'], // e o Cemitério e a Arena, que já vêm com o castelo (como a Prisão)
 };
 // todo imóvel é sólido: ninguém anda por cima de nenhum (só o portão abre a passagem, do jeito dele)
 for (const k in BUILDINGS) BUILDINGS[k].blocks = true;

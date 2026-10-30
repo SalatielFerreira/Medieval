@@ -97,6 +97,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: a Prisão
+
+- **Cada castelo tem a sua Prisão** (aparece sozinha perto da capital, como a arena e o cemitério): prédio de pedra com torre e porta de ferro. Por dentro: o corredor com o carcereiro e os guardas, braseiros e celas gradeadas — com os moradores que estão presos de verdade.
+- **Ir preso:** a pena é decidida pelo rei daquele reino (a multa e o jeito dele: um rei rabugento ou desconfiado é duro, um gentil é brando). Você fica na cela trancada até cumprir: a palha passa um mês e a tigela dá a ração. Cumprida a pena, sai pela porta da prisão. Jogo salvo no meio da pena volta para a cela.
+- A Arena e o Cemitério saíram da lista de construção (já vêm com o castelo).
+- O zoom voltou a ser como antes (a roda do mouse aproxima e afasta).
+- Cesteiro e Sapateiro da Vila desenhados direito (eram altos demais para o tamanho deles).
+
 ## Novidades: cidade cheia sem travar
 
 - **Cidades populosas mais leves:** as figuras das pessoas não ficam mais saindo e voltando da memória (era o que travava), as figuras novas ficam prontas aos poucos, e os prédios são redesenhados cada um no seu tempo e recortados no que têm desenhado. Numa cidade com 170 moradores, o quadro caiu de ~21 ms para ~11 ms em média e o pior, de 390 ms para ~30 ms.

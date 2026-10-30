@@ -3,8 +3,6 @@
 
 // níveis de zoom da câmera (1 = o mais afastado); múltiplos que mantêm os pixels nítidos
 const ZOOM_LEVELS = [1, 1.25, 1.5, 1.75, 2, 2.5];
-// a câmera fica fixa neste zoom (50% mais perto que o antigo padrão); a roda do mouse não aproxima nem afasta
-const ZOOM_FIXED = 1.5;
 
 const G = {
   state: 'menu', paused: false, time: 0, day: 1, ents: [], texts: [], parts: [],
@@ -173,8 +171,14 @@ const Game = {
     });
     window.addEventListener('blur', () => { G.keys = {}; G.mouse.down = false; });
     this.canvas.addEventListener('mousemove', e => { G.mouse.x = e.clientX; G.mouse.y = e.clientY; });
-    // roda do mouse: o zoom é fixo (ela só não deixa a página rolar)
-    this.canvas.addEventListener('wheel', e => { if (G.state === 'play') e.preventDefault(); }, { passive: false });
+    // roda do mouse: aproxima ou afasta a câmera do personagem
+    this.canvas.addEventListener('wheel', e => {
+      if (G.state !== 'play') return;
+      e.preventDefault();
+      const steps = ZOOM_LEVELS, cur = steps.indexOf(this.zoomStep()), i = U.clamp(cur + (e.deltaY < 0 ? 1 : -1), 0, steps.length - 1);
+      G.settings.zoom = steps[i];
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(G.settings)); } catch (err) { /* vale só nesta sessão */ }
+    }, { passive: false });
     this.canvas.addEventListener('mousedown', e => {
       if (G.state !== 'play' || G.paused) return;
       if (e.button === 2) { if (Urban.mode) Urban.cancel(); else if (G.placing) G.placing = null; else G.mouse.right = true; return; }
@@ -597,7 +601,7 @@ const Game = {
     Season.weather(dt);
     this.updateAudio(dt);
 
-    // câmera (com zoom suave: o fixo e, dentro de alguns lugares, o deles)
+    // câmera (com zoom suave até o nível escolhido na roda do mouse)
     const want = G.place && G.place.zoom ? Math.max(this.zoomStep(), G.place.zoom) : this.zoomStep();
     this.zoom = this.zoom || want;
     this.zoom += (want - this.zoom) * Math.min(1, dt * 10);
@@ -1888,7 +1892,7 @@ const Game = {
     for (let k = 0; k < n; k++) G.parts.push({ x, y, vx: U.rnd(-60, 60), vy: U.rnd(-90, -20), life: U.rnd(0.3, 0.7), color, size: U.rint(2, 4) });
   },
 
-  zoomStep() { return ZOOM_FIXED; },
+  zoomStep() { const z = +G.settings.zoom || 1; return ZOOM_LEVELS.includes(z) ? z : 1; },
   // ================================================================ renderização
   render() {
     const ctx = this.ctx, sw = this.canvas.width, sh = this.canvas.height;
