@@ -112,3 +112,21 @@ const MapPlus = {
     return r;
   };
 }
+{
+  // o botão de voltar no cabeçalho do mapa (como nas outras janelas): para a janela de onde você veio ou para o jogo
+  const sm0 = UI.showMap.bind(UI);
+  UI.showMap = function (...a) {
+    const c = this.cur; this.hist = this.hist || [];
+    if (c && c.fn !== 'showMap' && !this.panel.classList.contains('hidden') && !this.navBack) { this.hist.push({ fn: c.fn, args: c.args, title: this.curTitle }); if (this.hist.length > 20) this.hist.shift(); }
+    const r = sm0(...a);
+    const head = MapView.el && MapView.el.querySelector('.mv-head'), prev = this.hist.length ? this.hist[this.hist.length - 1] : null;
+    if (head) {
+      let b = head.querySelector('.ph-back');
+      if (!b) { head.insertAdjacentHTML('afterbegin', '<button class="ph-back" data-mv="back">◀<small></small></button>'); b = head.querySelector('.ph-back'); }
+      const t = prev ? prev.title || 'Voltar' : 'Jogo'; b.querySelector('small').textContent = t.slice(0, 18); b.title = 'Voltar para ' + (prev ? t : 'o jogo');
+    }
+    return r;
+  };
+  const tl1 = MapView.tool.bind(MapView);
+  MapView.tool = function (a) { if (a !== 'back') return tl1(a); this.hide(); if (UI.hist && UI.hist.length) UI.act('wback', {}); else UI.close(); };
+}

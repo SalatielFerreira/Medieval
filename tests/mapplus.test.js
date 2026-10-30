@@ -18,6 +18,10 @@ module.exports = async () => {
       MapView.tool('mpf:shop'); ok(!MapPlus.off().shop, 'o filtro não religou as lojas');
       const it = MapPlus.at(port.x, port.y, 1); ok(it && /Porto/.test(MapPlus.info(it)), 'a dica não diz o que é');
       MapView.hide();
+      // o botão de voltar: para a janela de onde você veio (ou para o jogo)
+      UI.toggle('showInventory'); UI.showMap(); ok(/Inventário/.test(document.querySelector('#mapView .ph-back').textContent), 'o mapa não tem o botão de voltar para a janela');
+      MapView.tool('back'); ok(!MapView.isOpen && UI.cur && UI.cur.fn === 'showInventory', 'voltar não levou à janela de antes');
+      UI.close(); UI.showMap(); ok(/Jogo/.test(document.querySelector('#mapView .ph-back').textContent), 'sem janela antes, o botão não diz Jogo'); MapView.tool('back'); ok(!MapView.isOpen, 'voltar não fechou o mapa');
       return bad;
     });
     fails.push(...r);
