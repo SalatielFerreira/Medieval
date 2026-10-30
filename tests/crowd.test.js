@@ -30,6 +30,8 @@ module.exports = async () => {
       ok(humanLimit() >= Math.min(3200, G.ents.length * 13), 'a memória das figuras não acompanha a quantidade de gente');
       // prédios: a figura guardada é recortada no que tem desenhado
       Game.render(); Game.render();
+      // toda construção é estática: nenhuma figura de prédio fica animada
+      const seen = World.structs.filter(s => s && RCache.map.get(s)); ok(seen.length > 0 && seen.every(s => !RCache.map.get(s).live), 'alguma construção ainda se mexe (' + seen.length + ' na tela): ' + seen.filter(s => RCache.map.get(s).live).map(s => s.type).join());
       const wall = World.structs.find(s => s && !s.removed && s.type === 'vwall' && RCache.map.get(s));
       if (wall) { const c = RCache.map.get(wall), fullW = Math.ceil((wall.w * TILE + RCACHE_PAD.l + RCACHE_PAD.r) * c.res); ok(c.cv.width < fullW / 2, `o muro não foi recortado (${c.cv.width} de ${fullW})`); }
       return bad;

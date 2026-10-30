@@ -6,12 +6,13 @@
 //   tempo no quadro e na mesma tela (sem criar outra): numa cidade cheia, era o que travava a tela de tempos em tempos;
 // - cada figura é recortada no tamanho do que tem desenhado (a folga para telhados e bandeiras é quase toda vazia): um
 //   trecho de muro é copiado como um quadradinho, não como uma imagem dez vezes maior;
-// - os animados (fogo, fumaça, pás do moinho, bandeiras, água) são descobertos sozinhos — desenhando duas vezes em
-//   momentos diferentes e comparando — e são refeitos 10 vezes por segundo (animação suave, 6 vezes menos trabalho);
+// - toda construção é estática: é desenhada sempre no mesmo instante (fogo, fumaça, bandeiras, água, peixes e pássaros
+//   dos prédios ficam parados), e por isso nenhuma precisa ser refeita o tempo todo;
 // - prévias de construção (meio transparentes) e qualquer coisa que não seja um prédio do mundo são desenhadas ao vivo.
 const RCACHE_PAD = { l: 64, r: 64, t: 128, b: 48 }; // folga: telhados, torres e bandeiras passam do quadrado do prédio
 const RCACHE_TTL = 2;                               // segundos até refazer a figura de um prédio parado
-const RCACHE_ANIM = 0.1;                            // e a de um prédio animado (10 vezes por segundo)
+const RCACHE_ANIM = 0.1;                            // (sem uso: as construções não se mexem mais)
+const RCACHE_STILL = 0.5;                           // o instante em que toda construção é desenhada (fica parada nele)
 const RCache = {
   map: new WeakMap(),   // prédio → { key, cv, res, born } ou { live: true, key }
   on: true,
@@ -54,6 +55,7 @@ const RCache = {
     return (ctx, s, X, Y, time) => {
       // só prédios de verdade do mundo, desenhados opacos e fora das salas
       if (!this.on || !s || s.id === undefined || World.structs[s.id] !== s || ctx.globalAlpha !== 1 || G.place || G.dungeon) return draw(ctx, s, X, Y, time);
+      time = RCACHE_STILL; // construção parada: sempre o mesmo instante
       const res = this.res(ctx), key = this.key(s, res), now = G.realTime || 0;
       let c = this.map.get(s);
       const ttl = c && c.live ? RCACHE_ANIM : (c && c.ttl) || RCACHE_TTL;
@@ -64,8 +66,8 @@ const RCache = {
         const w = s.w * TILE + RCACHE_PAD.l + RCACHE_PAD.r, h = s.h * TILE + RCACHE_PAD.t + RCACHE_PAD.b;
         // primeira vez com esta aparência: confere se o desenho muda com o tempo
         if (!c || c.key !== key) {
-          const a = this.render(draw, s, w, h, res, time), b = this.render(draw, s, w, h, res, time + 0.37), bx = this.box(a, b);
-          c = { key, cv: this.crop(a, bx), bx, res, born: now, live: !this.same(a, b), ttl: RCACHE_TTL + Math.random() * 2 }; this.map.set(s, c); this.stats.draw++;
+          const a = this.render(draw, s, w, h, res, time), bx = this.box(a, a);
+          c = { key, cv: this.crop(a, bx), bx, res, born: now, live: false, ttl: RCACHE_TTL + Math.random() * 2 }; this.map.set(s, c); this.stats.draw++;
         } else {
           // refaz numa tela de rascunho do tamanho inteiro e copia só o retângulo com desenho
           this.scratch = this.render(draw, s, w, h, res, time, this.scratch);

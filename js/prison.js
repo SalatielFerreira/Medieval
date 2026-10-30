@@ -97,9 +97,10 @@ const Prison = {
 };
 
 {
-  // a prisão aparece junto com o castelo
-  const ai0 = Arena.init.bind(Arena);
-  Arena.init = function (...a) { const r = ai0(...a); try { Prison.init(); } catch (e) { console.error(e); } return r; };
+  // a prisão aparece junto com o castelo — por último, depois da arena, da catedral, do cemitério e do porto (para não
+  // tomar o lugar de nenhum deles)
+  const ng0 = Game.newGame.bind(Game);
+  Game.newGame = async function (...a) { const r = await ng0(...a); if (G.state === 'play') { try { Prison.init(); } catch (e) { console.error(e); } } return r; };
   // quem cuida dela: o carcereiro, da vila mais perto
   const is0 = Shops.isShop.bind(Shops);
   Shops.isShop = function (s) { if (s && s.type === 'prison') return !s.removed && Work.vi(s) >= 0; return is0(s); };
@@ -142,7 +143,11 @@ const Prison = {
   Content2.update = function (dt) { cu0(dt); const J = Prison.cur(); if (J && G.day >= J.until && G.state === 'play') Prison.release(); };
   // jogo salvo no meio da pena: volta para a cela
   const ld0 = Game.load.bind(Game);
-  Game.load = async function (...a) { const r = await ld0(...a); if (G.state === 'play' && Prison.jailed()) { try { Prison.lockUp(); } catch (e) { console.error(e); } } return r; };
+  Game.load = async function (...a) {
+    const r = await ld0(...a);
+    if (G.state === 'play') { try { Prison.init(); if (Prison.jailed()) Prison.lockUp(); } catch (e) { console.error(e); } }
+    return r;
+  };
 
   // ---------------------------------------------------------------- desenho
   const df0 = drawFurn;

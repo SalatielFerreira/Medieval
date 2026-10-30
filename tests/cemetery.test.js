@@ -27,7 +27,8 @@ module.exports = async () => {
       // erguer uma arena e um cemitério novos (fora do reino) e mudar a arena original
       Inv.add('stone', 500); Inv.add('wood', 500); Inv.add('iron_bar', 50);
       const mk = (t, sp) => { Urban.start('c:' + t); G.mouse.wx = (sp.x + CIVIC[t].w / 2) * TILE; G.mouse.wy = (sp.y + CIVIC[t].h / 2) * TILE; const g = Urban.ghost(CIVIC[t].w, CIVIC[t].h); Urban.click(); return World.structs.find(s => s && !s.removed && s.type === t && s.x === g.x && s.y === g.y); };
-      const ar = mk('arena', spots[1]), nc = mk('cemetery', spots[2]);
+      // (a arena e o cemitério novos não se erguem mais pela lista: já vêm com o castelo)
+      const ar = null, nc = null; void mk;
       // e a catedral do reino
       const cat = find('cathedral', 0), catOk = !Urban.movable(cat) && !Urban.placeErr(cat, spots[3].x, spots[3].y, cat, Urban.isCivic(cat)) && !!Urban.movable(find('cathedral', 1));
       if (catOk) Urban.relocate(cat, spots[3].x, spots[3].y);
@@ -39,8 +40,8 @@ module.exports = async () => {
     if (!a.spots || a.spots.length < 4) { fails.push('não achou lugares livres longe do reino'); return fails; }
     if (!a.vegErr) fails.push('deixou pôr o cemitério em cima de vegetação');
     if (!a.houseErr) fails.push('deixou pôr o cemitério em cima de uma casa');
-    if (!a.arena || a.arena.owner !== 0) fails.push('a arena não foi erguida fora do reino (ou ficou com o reino errado)');
-    if (!a.newCem || a.newCem.owner !== 0) fails.push('o cemitério novo não foi erguido fora do reino');
+
+
     await page.evaluate(() => Game.save()); await page.evaluate(() => Game.load(3));
     await page.waitForFunction(() => G.state === 'play', { timeout: 120000 });
     const b = await page.evaluate(() => World.structs.filter(s => s && !s.removed && ['cemetery', 'arena', 'cathedral'].includes(s.type) && s.owner === 0).map(s => `${s.type}@${s.x},${s.y}`));
