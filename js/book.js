@@ -60,7 +60,8 @@ UI.showBook = function (pg) {
   // no Diário: o botão do livro
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
-    if (fn === 'showDiary') body = `<div class="act-row bk-open"><button class="primary" data-act="book" data-p="0">📖 Crônica da dinastia (livro ilustrado)</button></div>` + body;
+    // no menu do Diário, logo abaixo de Heróis
+    if (fn === 'showDiary') body = body.replace(/(<button class="snav-i[^"]*" data-act="dnav" data-k="heroes">[^]*?<\/button>)/, '$1<button class="snav-i" data-act="book" data-p="0"><span class="si">📖</span><span class="sl">Crônica da dinastia</span></button>');
     return op0(title, body, fn, args, sub);
   };
   const a0 = UI.act.bind(UI);

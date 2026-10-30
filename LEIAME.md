@@ -97,6 +97,10 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: Diário do herói
+
+- **Saíram as páginas Dinastia, Contas e Diário.** A **Crônica da dinastia** (o livro ilustrado) virou um item do menu do Diário, logo abaixo de Heróis.
+
 ## Novidades: estradas dos prédios do castelo
 
 - **A arena, a catedral, o cemitério, o banco e a prisão de cada reino** ganharam uma estrada em volta (como os imóveis das vilas), ligada pelo caminho mais curto à estrada mais próxima. **O porto** ganhou só uma estrada, saindo do lado virado para o castelo até a estrada principal. Um prédio novo perto do castelo (um banco fundado depois, por exemplo) ganha a dele na virada do mês. Vale também para jogos salvos.

@@ -2098,9 +2098,9 @@ const UI = {
   // cada seção do diário em quadros (o paginador arruma: páginas nas telas pequenas, grade no computador)
   showDiaryM() {
     const S = this.sel, st = G.stats || {};
-    const tab = ['ach', 'news', 'stats', 'rank', 'heroes', 'dyn', 'contas', 'log'].includes(S.dtab) ? S.dtab : 'ach';
+    const tab = ['ach', 'news', 'stats', 'rank', 'heroes'].includes(S.dtab) ? S.dtab : 'ach'; // (Dinastia, Contas e Diário saíram)
     const got = ACHIEVEMENTS.filter(a => G.ach[a.id]);
-    const groups = [['', [['ach', '🏆', 'Conquistas', got.length], ['news', '📰', 'Notícias'], ['stats', '📊', 'Estatísticas'], ['rank', '🏅', 'Ranking'], ['heroes', '⚔️', 'Heróis'], ['dyn', '🌳', 'Dinastia'], ['contas', '📒', 'Contas'], ['log', '📜', 'Diário']]]];
+    const groups = [['', [['ach', '🏆', 'Conquistas', got.length], ['news', '📰', 'Notícias'], ['stats', '📊', 'Estatísticas'], ['rank', '🏅', 'Ranking'], ['heroes', '⚔️', 'Heróis']]]];
     const tile = (ic, label, val, hue) => `<div class="dy-st" style="--hue:${hue}"><span class="dy-ic">${ic}</span><b>${val || 0}</b><small>${label}</small></div>`;
     let page = '';
     if (tab === 'ach') {
