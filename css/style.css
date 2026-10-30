@@ -4245,3 +4245,6 @@ body:not(.small) .ldi-itx small { font-size: 12.5px; }
 @media (max-height: 500px) { .lang-btn { font-size: 12px; padding: 4px 8px; } .lang-list button { padding: 6px 9px; font-size: 13px; } }
 /* o sino de avisos só aparece na tela do jogo: some na hora em que uma janela abre */
 body.win-open #alertBell { display: none !important; }
+/* lista da Construção: o texto embaixo do nome começa com letra maiúscula ("Reforma", "Você tem 2") */
+.bld .rrow > span > small { display: block; }
+.bld .rrow > span > small::first-letter { text-transform: uppercase; }

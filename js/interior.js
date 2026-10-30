@@ -134,7 +134,9 @@ const LAYOUTS = {
     return { w: 16, h: 11, items: [
       ['throne', 7, 0, 2, 1, { act: 'throne' }], ['carpet', 7, 1, 2, 10], ['banner', 3, -1], ['banner', 12, -1], ['banner', 6, -1], ['banner', 9, -1], ['window', 1, -1], ['window', 14, -1],
       ['pillar', 2, 2], ['pillar', 13, 2], ['pillar', 2, 6], ['pillar', 13, 6], ['brazier', 5, 1, 1, 1, { light: 1 }], ['brazier', 10, 1, 1, 1, { light: 1 }],
-      ['longtable', 0, 8, 1, 3], ['longtable', 15, 8, 1, 3], ['plant', 0, 0], ['plant', 15, 0], ['armor', 4, 0], ['armor', 11, 0]],
+      // o quarto real (canto da esquerda): a cama de casal do rei, para salvar e dormir
+      ['bed', 0, 8, 1, 2, { act: 'royalbed' }], ['bed', 1, 8, 1, 2, { act: 'royalbed' }], ['rug', 0, 10, 2, 1],
+      ['longtable', 15, 8, 1, 3], ['plant', 0, 0], ['plant', 15, 0], ['armor', 4, 0], ['armor', 11, 0]],
       keeper: [7.5, 1.3], staff: [[6, 2], [9.5, 2], [4, 4], [11, 4], [4, 8], [11, 8]], wander: [[5, 6], [10, 6]] };
   },
   // coliseu: arquibancadas em degraus nos três lados (a plateia senta nelas), camarote real no alto,
@@ -448,6 +450,7 @@ const Places = {
       case 'chapel': return 'Altar — rezar e falar com o padre';
       case 'throne': return s && G.civs[s.owner] && G.civs[s.owner].ruler === 'player' ? 'Trono — governar o reino' : 'Trono — audiência com o soberano';
       case 'rest': return 'Cama — salvar e dormir';
+      case 'royalbed': return 'Quarto real — salvar e dormir';
       case 'exit': return 'Porta — sair';
       case 'study': return 'Mesa de estudos — estudar';
       case 'port': return 'Balcão do porto — vender pescados e comprar equipamento';
@@ -472,6 +475,7 @@ const Places = {
       case 'chapel': UI.showChapel(s.id); return;
       case 'throne': if (G.civs[s.owner].ruler === 'player') UI.showKingdom(s.owner); else UI.showCastle(s.owner); return;
       case 'rest': UI.showRest(s.id); return;
+      case 'royalbed': this.royalBed(s); return;
       case 'exit': this.exit(); return;
       case 'port': UI.showPort(s.id); return;
       case 'arena': UI.showArena(s.owner); return;
@@ -486,6 +490,16 @@ const Places = {
     }
     if (Content.act(f.act)) return;
     if (f.act && f.act.startsWith('craft:')) UI.showCrafting(f.act.slice(6));
+  },
+  // o quarto real do castelo: só o rei deste reino dorme aqui (dormir salva o jogo e o castelo vira o ponto de retorno)
+  royalBed(s) {
+    const c = G.civs[s.owner];
+    if (!c || c.ruler !== 'player') { UI.msg('👑 O quarto real é só do rei. Os guardas não deixam você passar.', 'bad'); return; }
+    const hurt = P.hp < P.maxHp;
+    if (!UI.royalBedUI) UI.royalBedUI = sid => this.royalBed(World.structs[sid]); // para a janela poder se redesenhar
+    UI.open('👑 Quarto Real', `<div class="rest"><div class="rest-acts">
+        <button class="ra main" data-act="sleep" data-s="${s.id}"><span class="ra-ic">🛏️</span><span class="ra-t"><b>Dormir até o amanhecer</b><small>${hurt ? 'Recupera toda a vida · ' : ''}salva no espaço ${G.slot} · o castelo vira o seu ponto de retorno</small></span></button>
+      </div></div>`, 'royalBedUI', [s.id], `O quarto do rei de ${CIV_DEFS[s.owner].short}`);
   },
   // janelas só clareiam de dia
   // sair do porto de barco: aparece navegando na água em frente ao cais

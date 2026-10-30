@@ -425,7 +425,7 @@ const Urban = {
   },
   prompt() {
     const m = this.mode;
-    if (m === 'road') return '🛣️ <b>Abrindo estradas</b> — clique e arraste · de graça · botão direito/Esc encerra';
+    if (m === 'road') return '🛣️ <b>Abrindo estradas</b> — clique e arraste · botão direito/Esc encerra';
     if (m === 'u:unroad') return '⛏️ <b>Removendo estradas</b> — clique e arraste · botão direito/Esc encerra';
     if (/^u:road\d$/.test(m)) { const L = ROAD_LV[+m.slice(6)]; return `${L.icon} <b>${L.name}</b> — clique e arraste sobre a estrada · ${Object.entries(L.cost).map(([k, n]) => n + ' ' + ITEMS[k].name).join(' + ')} por bloco · botão direito/Esc encerra`; }
     if (m === 'u:demolish') return '💥 <b>Demolir</b> — clique numa construção · botão direito/Esc encerra';
@@ -472,7 +472,7 @@ const Urban = {
 
   // ------------------------------------------------------------ painel de construção
   info(k) {
-    if (k === 'road') return { name: 'Estrada', icon: '🛣️', sub: 'de graça · clique e arraste', can: true, btn: '🛣️ Abrir estradas',
+    if (k === 'road') return { name: 'Estrada', icon: '🛣️', sub: 'Clique e arraste', can: true, btn: '🛣️ Abrir estradas',
       desc: 'Abre uma estrada de terra batida, onde se anda 25% mais rápido. Não gasta material. Sobre rio raso vira ponte. Dentro de vilas e castelos dos outros, só o governador da vila ou o rei pode abrir estradas.' };
     if (/^u:road\d$/.test(k)) {
       const lv = +k.slice(6), L = ROAD_LV[lv];

@@ -21,7 +21,7 @@ module.exports = async () => {
         if (Game.nearestInteract() !== s) { bad.push(s.type + ': sem interação'); continue; }
         Game.interact();
         if (!(G.place && G.place.kind === 'room')) { bad.push(s.type + ': não entrou'); continue; }
-        if (!Shops.keeper(s)) bad.push(s.type + ': sem responsável');
+        if (!Shops.keeper(s) && !BIZ_JOBS[s.type]) bad.push(s.type + ': sem responsável'); // nos empreendimentos o responsável é quem você contrata
         const counter = Places.furn.find(f => f.act === 'work');
         if (Work.shopOf(s) && counter) { Places.use(counter); if (!document.querySelector('.trd-head, .shopowner')) bad.push(s.type + ': balcão não negocia'); UI.close(); }
         Places.exit(true); UI.close();

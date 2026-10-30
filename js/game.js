@@ -197,7 +197,7 @@ const Game = {
     Resume.watch();
     let last = performance.now();
     const loop = now => {
-      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now; // o 1º quadro pode vir com hora anterior à do início: o tempo nunca anda para trás
       G.realTime += dt;
       Pad.update();
       if (G.state === 'play' && !G.paused && !World.busy) this.update(dt);

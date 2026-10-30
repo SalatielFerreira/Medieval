@@ -104,7 +104,7 @@ Shops.list = function (vi) { return World.structs.filter(s => this.isShop(s) && 
 Shops.ensure = function () {
   const owners = new Set(), used = new Set();
   for (const p of G.people) if (p.alive && p.shop) { const s = this.byKey(p.shop); if (s && this.isShop(s) && SHOP_KEEPER[s.type] === p.rank && !owners.has(s.okey)) owners.add(s.okey); else p.shop = null; }
-  const free = q => q && q.alive && !q.shop && !q.capanga && !used.has(q.id) && q.age >= 16 && !q.kin && q.spouse !== 'player' && !People.isCourt(q) && !q.trip && !q.port;
+  const free = q => q && q.alive && !q.shop && !q.capanga && (q.job === undefined || q.job === null) && !used.has(q.id) && q.age >= 16 && !q.kin && q.spouse !== 'player' && !People.isCourt(q) && !q.trip && !q.port;
   const hired = [];
   for (const s of World.structs) {
     if (!this.isShop(s) || owners.has(s.okey) || (Shops.noAuto && Shops.noAuto.has(s.type))) continue; // o porteiro é contratado pelo governador

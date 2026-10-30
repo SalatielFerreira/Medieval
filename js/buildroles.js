@@ -21,7 +21,7 @@ const BR = {
   PRACA: ['well_p', 'fountain', 'statue', 'lamppost', 'bench', 'pergola', 'sundial', 'flagpole_p', 'flowerbed', 'hedge', 'fence'],
   // repetidas com as obras da vila (fica a da vila): poço, chafariz, estátua, lampião, torre de vigia e capela
   DUP: ['well_p', 'fountain', 'statue', 'lamppost', 'watchtower', 'chapel_p'],
-  INFRA_OUT: ['crane', 'windmill', 'dock', 'sewer', 'cistern', 'relay', 'u:road2', 'u:road3', 'u:road4', 'u:road5'], // também saíram o Posto de Muda (os já construídos continuam) e subir o nível das estradas (o jogo sobe sozinho, conforme a economia)
+  INFRA_OUT: ['crane', 'windmill', 'dock', 'sewer', 'cistern', 'relay', 'toll', 'u:road2', 'u:road3', 'u:road4', 'u:road5'], // também saíram o Posto de Muda e o Posto de Pedágio (os já construídos continuam) e subir o nível das estradas (o jogo sobe sozinho, conforme a economia)
   // fora do menu (as que você já construiu continuam funcionando)
   OUT: ['hut', 'tent', 'treehouse', 'longhouse', 'stonetower', 'villa', 'big_chest', 'granary_p', 'icehouse'],
   // fora das Obras (as que você já construiu continuam funcionando): a Barraca de Feira e o Oratório
@@ -115,8 +115,8 @@ const BR_CLASSES = {
     ['casas', '🏠', 'Casas e residências', ['cabin', 'house', 'farmhouse', 'lodge', 'townhouse', 'manor', 'mansion', 'palacete', 'pcastle']],
   ],
   infra: [
-    ['estr', '🛣️', 'Estradas e pedágio', ['road', 'toll']],
-    ['ferr', '🔧', 'Ferramentas', ['u:unroad', 'u:move', 'u:demolish']],
+    ['estr', '🛣️', 'Estradas', ['road', 'u:unroad']],
+    ['ferr', '🔧', 'Ferramentas', ['u:move', 'u:demolish']],
   ],
   producao: [
     ['coz', '🔥', 'Cozinha e bebidas', ['campfire', 'oven', 'smokehouse', 'quern', 'brewery', 'winepress']],
@@ -439,4 +439,65 @@ Object.assign(BuildRoles, {
     if (g) this.note(`🧺 Produção da fazenda e dos animais vendida sozinha: +${g} 🪙.`);
     return r;
   };
+}
+
+// ---------------------------------------------------------------- empreendimentos: quem você contrata é o responsável
+// O contratado assume o cargo do lugar (com os nomes das obras da vila: Padeiro, Açougueiro, Tecelão...) e, ao ser
+// dispensado, volta ao ofício de antes. O bônus de ofício ("caçadores rendem mais") continua valendo pelo ofício antigo.
+const BIZ_JOBS = {
+  biz_farm: 'farmer', biz_winery: 'vintner', biz_ranch: 'rancher', biz_dairy: 'cheesemaker', biz_mill: 'miller', biz_stables: 'groom', biz_press: 'vintner',
+  biz_saltworks: 'salter', biz_charcoal: 'charcoaler', biz_quarry: 'mason', biz_fishery: 'fisher', biz_lumber: 'sawyer', biz_mason: 'mason', biz_mine: 'miner',
+  biz_butcher: 'butcher', biz_bakery: 'baker', biz_cooper: 'cooper', biz_brewery: 'brewer',
+  biz_ropery: 'roper', biz_dyer: 'dyer', biz_cobbler: 'cobbler', biz_tannery: 'tanner', biz_weaver: 'weaver', biz_chandler: 'chandler', biz_tailor: 'tailor',
+  biz_pottery: 'potter', biz_glass: 'glazier', biz_carpentry: 'carpenter', biz_bowyer: 'fletcher', biz_jeweler: 'jeweler', biz_smithy: 'smith', biz_smelter: 'founder',
+  biz_shipyard: 'shipwright', biz_armorer: 'armorer',
+  biz_barber: 'barber', biz_apothecary: 'apothecary', biz_perfumer: 'perfumer', biz_scribe: 'clerk', biz_shop: 'merchant', ptavern: 'innkeeper',
+  biz_bathhouse: 'bather', biz_inn: 'innkeeper', biz_magic: 'mage', biz_theatre: 'minstrel', biz_bank: 'banker',
+};
+// cargos que ainda não existiam: [masculino, feminino, cor, roupa] (o Capitão é o responsável do porto)
+const BIZ_NEW_RANKS = {
+  salter: ['Salineiro', 'Salineira', '#c8c0b0', 'apron_white'], cooper: ['Tanoeiro', 'Tanoeira', '#6a4a2a', 'apron_leather'], roper: ['Cordoeiro', 'Cordoeira', '#8a7a4a', 'patched'],
+  tanner: ['Curtidor', 'Curtidora', '#6a4a2a', 'apron_leather'], chandler: ['Cerieiro', 'Cerieira', '#c8a050', 'apron_white'], tailor: ['Alfaiate', 'Alfaiate', '#5a3a6a', 'coat'],
+  fletcher: ['Flecheiro', 'Flecheira', '#5a6a3a', 'fur'], jeweler: ['Joalheiro', 'Joalheira', '#8a7a3a', 'coat'], shipwright: ['Carpinteiro Naval', 'Carpinteira Naval', '#3a5a7a', 'sailor'],
+  barber: ['Barbeiro', 'Barbeira', '#7a3a3a', 'apron_white'], apothecary: ['Boticário', 'Boticária', '#3a6a4a', 'apron_white'], perfumer: ['Perfumista', 'Perfumista', '#8a5a8a', 'coat'],
+  banker: ['Cambista', 'Cambista', '#5a4a2a', 'coat'], captain: ['Capitão', 'Capitã', '#2a3a5a', 'sailor'],
+  vintner: ['Vinhateiro', 'Vinhateira', '#7a2a4a', 'apron_white'], carpenter: ['Marceneiro', 'Marceneira', '#7a5a3a', 'apron_leather'], sawyer: ['Serrador', 'Serradora', '#6a4a26', 'apron_leather'],
+  miner: ['Mineiro', 'Mineira', '#4a4a4a', 'patched'], miller: ['Moleiro', 'Moleira', '#c8b890', 'apron_white'], baker: ['Padeiro', 'Padeira', '#c8a070', 'apron_white'],
+  brewer: ['Cervejeiro', 'Cervejeira', '#8a6a2a', 'apron_white'], weaver: ['Tecelão', 'Tecelã', '#7a5a8a', 'coat'], potter: ['Oleiro', 'Oleira', '#9a5a3a', 'apron_leather'],
+  armorer: ['Armeiro', 'Armeira', '#5a5a5a', 'apron_leather'], bather: ['Atendente dos Banhos', 'Atendente dos Banhos', '#7a9ab0', 'apron_white'], groom: ['Cavalariço', 'Cavalariça', '#7a5a3a', 'patched'],
+};
+for (const [k, [m, f, col, outfit]] of Object.entries(BIZ_NEW_RANKS)) {
+  if (!RANKS[k]) RANKS[k] = { m, f, order: 6 };
+  if (!RANK_LOOK[k]) RANK_LOOK[k] = col;
+  if (typeof PEOPLE_OUTFIT !== 'undefined' && !PEOPLE_OUTFIT[k]) PEOPLE_OUTFIT[k] = outfit;
+}
+Object.assign(BuildRoles, {
+  // o contratado assume o cargo do lugar (e guarda o ofício de antes)
+  takeJob(p, s) {
+    const job = BIZ_JOBS[s.type]; if (!p || !job || !RANKS[job] || p.rank === job) return;
+    if (p.oldRank === undefined) p.oldRank = p.rank;
+    p.rank = job;
+  },
+  leaveJob(p) { if (p && p.oldRank !== undefined) { p.rank = p.oldRank; delete p.oldRank; } },
+  // jogo salvo antigo: os funcionários de agora assumem o cargo; o mestre do porto vira Capitão
+  fixJobs() {
+    for (const s of Biz.list()) for (const p of Biz.workers(s)) this.takeJob(p, s);
+    for (const p of G.people) if (p && p.alive && p.port && p.rank === 'sailor') p.rank = 'captain';
+  },
+});
+{
+  // Vinícola e Rancho: sem o responsável à parte (quem cuida é quem você contrata)
+  for (const t of ['biz_winery', 'biz_ranch']) delete SHOP_KEEPER[t];
+  const hi0 = Biz.hire.bind(Biz);
+  Biz.hire = function (p, s) { const r = hi0(p, s); if (r) BuildRoles.takeJob(p, s); return r; };
+  const fi0 = Biz.fire.bind(Biz);
+  Biz.fire = function (p) { const r = fi0(p); BuildRoles.leaveJob(p); return r; };
+  Biz.skilled = function (p, s) { return (p.oldRank !== undefined ? p.oldRank : p.rank) === BIZ_TYPES[s.type].skill; };
+  // o mestre do porto é o Capitão
+  const ek0 = Ports.ensureKeepers.bind(Ports);
+  Ports.ensureKeepers = function (...a) { const r = ek0(...a); for (const p of G.people) if (p && p.alive && p.port && p.rank === 'sailor') p.rank = 'captain'; return r; };
+  for (const k of ['newGame', 'load']) {
+    const f0 = Game[k].bind(Game);
+    Game[k] = async function (...a) { const r = await f0(...a); if (G.state === 'play') { try { BuildRoles.fixJobs(); } catch (e) { console.error(e); } } return r; };
+  }
 }

@@ -11,7 +11,7 @@ module.exports = async () => {
       v.lord = 'player';
       const spot = (w, h) => { for (let rr = 8; rr < 70; rr++) for (let k = 0; k < 48; k++) { const a = k / 48 * 6.283, x = Math.round(v.x + Math.cos(a) * rr), y = Math.round(v.y + Math.sin(a) * rr); if (World.areaOk(x - 1, y - 1, w + 2, h + 4) && World.areaFree(x - 1, y - 1, w + 2, h + 4)) return { x, y }; } };
       // (produção e fazenda ficam sem lado de dentro: buildroles.test.js)
-      for (const [type, row] of Object.entries(WP2).filter(([t]) => !BR.PROD.includes(t) && !BR.FARM.includes(t))) {
+      for (const [type, row] of Object.entries(WP2).filter(([t]) => !BR.PROD.includes(t) && !BR.FARM.includes(t) && !BIZ_JOBS[t])) { // nos empreendimentos o responsável é quem você contrata
         const mine = row[3] === 'player', d = mine ? BUILDINGS[type] : CIVIC[type];
         if (!d) { out.push(`${type}: não existe no jogo`); continue; }
         const sp = spot(d.w, d.h); if (!sp) { out.push(`${type}: sem lugar livre para o teste`); continue; }

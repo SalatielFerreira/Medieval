@@ -97,6 +97,15 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: quarto real, cargos e o Capitão
+
+- **Quarto real no castelo:** na Sala do Trono, a cama do rei para salvar e dormir (só para quem é o rei daquele castelo; o castelo vira o ponto de retorno).
+- **Empreendimentos:** quem você contrata é o responsável e assume o cargo do lugar (Padeiro, Açougueiro, Tecelão, Tanoeiro, Cordoeiro, Joalheiro...); ao ser dispensado, volta ao ofício de antes. O bônus de ofício (caçadores no curtume etc.) continua valendo.
+- **Porto:** o responsável é o **Capitão**.
+- **Infraestrutura:** saiu o Posto de Pedágio; a classe se chama Estradas (com Remover estrada) e a Estrada diz só "Clique e arraste".
+- O texto embaixo do nome das construções na lista começa sempre com letra maiúscula.
+- **Correção:** no primeiro instante do jogo o relógio podia andar para trás e, por isso, às vezes o saque de uma vila não criava os inimigos e os defensores.
+
 ## Novidades: todo imóvel é sólido
 
 - **Ninguém anda por cima de nenhum imóvel** (plantações, hortas, currais, campos de treino, enfeites, obras...); só o portão abre a passagem, como sempre. As Estacas e o Fosso agora ferem os inimigos que encostam neles. A ficha não mostra mais "sólida / dá para andar por cima".
