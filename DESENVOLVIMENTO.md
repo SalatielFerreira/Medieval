@@ -87,6 +87,7 @@ chame a função original e devolva o resultado dela.
 | Obras da IA (outubro) | `npcworks` (`NpcWorks`: os governadores e reis da IA erguem as Obras nas vilas — caixa de obras de cada vila em `G.urban.npcw`, gosto pelo ofício do governador, regras em `NW_SKIP`, `NW_REQ`, `NW_MINLVL`; a obra vai para um lote do `TownPlan` com `Urban.addCivic`) |
 | Obras em qualquer lugar (outubro) | `obrasplus` (`ObrasPlus`: obra erguida fora de onde você governa fica sua — `s.mine`, sem `village`, renda no mês; `Urban.foreignRealm` barra só o território de outro reino) |
 | Caminho do dinheiro (outubro) | `moneyflow` (`Money.toPerson/toVillage/toRealm/toFamily/toChurch` e `Money.wrap`, que manda para quem recebe o que uma função tirou da sua bolsa; caixa da vila em `NpcWorks.addFund/fundOf`) · classes de Produção, Fazenda e Empreendimentos em `BR_CLASSES` (`buildroles`) · uma música só (`music`: `Sound.TUNES.alegre`) |
+| Prisão e Portfólio (outubro) | `prison` (a Prisão de cada castelo: interior com celas, pena decidida pelo rei, `Crime.prison`; criada no fim de `Game.newGame`/`load`), `portfolio` (`PF_GONE`: páginas que saíram do menu e para onde vão; `Portfolio.crown` monta Coroa e títulos em abas a partir de `UI.kPage('crown')`, `'x:society'` e `'villages'`; `Portfolio.paginate`/`pageAdv` dividem em partes o que não cabe; `bizboard` (`BizBoard`: Empreendimentos em abas `UI.sel.bzTab`, histórico de 12 meses em `s.earn.hist` = [entrou, salários, mês], gravado antes de `Biz.dayTick` zerar o mês)) |
 | Vida à vista | `chronicle` (o Pregoeiro: notícias do mês, balões sobre os moradores, subida na vida), `profile` (Ficha do morador na conversa e passatempos) |
 | Interface e controles | `ui` (HUD e janelas), `windows` (cenas de abertura das janelas: tabela WIN_SCENES), `interior` (lugares fechados), `input` (gamepad e toque), `audio`, `menu` |
 | Núcleo | `game` (estado, laço principal, salvar e carregar) — carregado quase por último |
@@ -118,5 +119,6 @@ abrir o jogo e `page.evaluate(...)` para mexer no jogo por dentro.
   stone.
 - **Cartões de ação:** `UI.tiles([{ ic, label, sub, attrs, cls, off }])` (o mesmo visual dos cartões da Casa).
 - Para dar cena a uma janela sem mexer nela, acrescente uma linha em `WIN_SCENES` (`js/windows.js`).
+- O menu do Portfólio é filtrado em `js/portfolio.js` (as páginas antigas continuam em `UI.kPage` e são reaproveitadas).
 - As páginas do Portfólio já aprovadas (Visão geral, Coroa e títulos, Família, Vilas e guardas, Empreendimentos, Reino e
   Grandes Casas) não devem mudar.

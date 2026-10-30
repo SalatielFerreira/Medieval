@@ -49,7 +49,7 @@ module.exports = async () => {
       const vi = 0; Society.run(vi); ok(Society.E(vi).me, 'não se candidatou'); for (const p of People.residents(vi)) p.aff = 95; Society.E(vi).push = 60; World.villages[vi].lord = undefined; Society.election(vi); ok(World.villages[vi].lord === 'player', 'ganhar a eleição não deu o governo');
       // 9. jantar
       const dn = vil[14]; dn.aff = 30; Inv.add('stew', 1); const da = dn.aff; Society.dinner(dn); ok(dn.aff > da, 'o jantar não deu amizade');
-      for (const t of ['rep', 'friends', 'events', 'politics', 'secrets']) { Society.show(t); ok(UI.cur && UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:society' && UI.sel.socTab === t, 'janela não abriu: ' + t); }
+      for (const t of ['rep', 'friends', 'events', 'politics', 'secrets']) { Society.show(t); ok(UI.cur && UI.cur.fn === 'showKingdom' && UI.sel.knav === 'crown' && UI.sel.crTab === 'sociedade' && UI.sel.socTab === t, 'janela não abriu: ' + t); } // a Sociedade é uma página de Coroa e títulos
       UI.close(); Society.visit(); Society.monthTick(); Game.onNewDay();
       return bad;
     });

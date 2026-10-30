@@ -97,6 +97,13 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: Portfólio mais enxuto
+
+- **Saíram do menu:** Família, Estações e clima, Reino (o atlas), Tratados, Sociedade e Vilas e guardas. O que só existia nelas mudou de lugar: a Família (membros da Casa e casamento dos filhos) está em Linhagens; os Tratados estão no Reinado (só para o rei); a Sociedade e Vilas e guardas viraram páginas de Coroa e títulos. Os atalhos antigos (avisos, botões) abrem o lugar novo.
+- **Coroa e títulos em páginas** (abas no alto, tudo cabendo na janela sem cortar): ⚜️ Títulos, 👑 Corte e reinos, 🏘️ Vilas e guardas e 🤝 Sociedade. Quando os quadros não cabem, a página se divide em partes (◀ 1/2 ▶).
+- **Títulos:** o quadro da nobreza mostra a escada de títulos, o próximo título e o que ele pede (relação, serviços à coroa, nível e taxa) e, conforme você conquista títulos, **Suas vantagens**: cada título com o que ele dá e o botão de renunciar a ele. Com muitos títulos, as vantagens também se dividem em partes. O quadro civil mostra como ganhar cada título civil. A página separada de Vantagens saiu.
+- **💼 Empreendimentos em quatro páginas** (tudo cabendo na janela; o que não cabe vira partes ◀ 1/2 ▶): **📊 Painel** com quanto entrou, salários e lucro do último mês (▲/▼ em relação ao mês anterior), a previsão do próximo mês, o lucro desde o início, o gráfico dos últimos 12 meses (entrou × salários, com o lucro de cada mês), se os seus ganhos estão subindo ou caindo (e há quantos meses), o melhor e o pior empreendimento do mês, funcionários, o mês em andamento e a produção; **💼 Seus empreendimentos**, um cartão por empreendimento com o resultado do mês, a tendência e o gráfico do lucro; **📒 Contas**, a tabela de cada um (mês, comparação e lucro total) com o total embaixo; **⚔️ Concorrência**.
+
 ## Novidades: jogo leve andando pelo mapa
 
 - **Sem travar ao andar:** os prédios que entram na tela são montados poucos por quadro (os outros aparecem direto até chegar a vez deles), o recorte de cada um é medido uma vez por tipo e sem ler a imagem da placa de vídeo, e o chão em volta da tela é pintado antes, nas sobras de tempo. Andando pelo mapa, o pior quadro caiu de ~420 ms para ~50 ms; numa cidade cheia, a média ficou em ~4 ms.

@@ -23,7 +23,7 @@ module.exports = async () => {
       Clima.S().w[4] = 'tempestade'; Clima.S().day = G.day; const wx = War.weather({ side: 3, enemy: 4 }); ok(wx.mine < 1 && wx.foe === 1, 'a tempestade não atrapalhou quem ataca');
       Clima.S().w[4] = 'normal';
       Diplo.D().wars = Diplo.D().wars.filter(w => !(w.a === 3 && w.b === 4));
-      UI.sel.knav = 'x:clima'; UI.showKingdom(); ok(html().includes('O tempo deste mês'), 'página das estações');
+      UI.sel.knav = 'x:clima'; UI.showKingdom(); ok(UI.sel.knav === 'overview', 'a página das estações ainda abre'); // saiu do Portfólio
       G.day = day0; Clima.S().day = -1;
       // ---------------- árvore da dinastia (sem reino ainda)
       Game.birth('Aurora', 'f'); const kid = G.people[G.people.length - 1]; ok(kid.heroGen === 0, 'o filho não ganhou a geração');
@@ -63,7 +63,7 @@ module.exports = async () => {
       const H = Board.hist(1); ok(H.length >= 2 && H[H.length - 1].tre > H[H.length - 2].tre - 1, 'histórico do painel');
       ok(Board.threats(1).some(t => /Guerra/.test(t.t)), 'a guerra não aparece nas ameaças');
       UI.sel.rbCiv = 1; UI.sel.knav = 'x:painel'; UI.showKingdom(); ok(html().includes('rb-chart') && html().includes('Ameaças'), 'página do painel');
-      ok(html().includes('Painel do reino') && html().includes('Tratados') && html().includes('Estações e clima'), 'os itens novos não estão no Portfólio');
+      ok(html().includes('Painel do reino'), 'o Painel do reino não está no Portfólio');
       // salvar guarda os tratados, o clima e o painel
       const before = JSON.stringify([Pacts.sig(), Clima.kind(1), Board.S()[1].length]);
       return { bad, before };
