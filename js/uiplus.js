@@ -300,7 +300,7 @@ const UIP = {
   MapView.renderSide = function () {
     rs0(); if (!this.side) return;
     const L = UIP.layers(), names = { biz: '💼 Negócios', fav: '⭐ Favoritos', war: '⚔️ Guerras', faith: '⛪ Religiões', fair: '🎪 Feiras e leilões', fief: '🏰 Feudos', bank: '🏦 Bancos', elec: '🗳️ Eleições', crisis: '🚨 Crises', barb: '🏴 Bárbaros' };
-    this.side.insertAdjacentHTML('afterbegin', `<div class="mv-sec"><h4>Camadas</h4><div class="mv-layers">${Object.keys(names).map(k => `<button class="${L[k] ? 'on' : ''}" data-layer="${k}">${names[k]}</button>`).join('')}</div></div>`);
+    this.side.insertAdjacentHTML('afterbegin', `<div class="mv-sec mp-sec"><h4>🧭 Camadas</h4><div class="mv-layers">${Object.keys(names).map(k => `<button class="${L[k] ? 'on' : ''}" data-layer="${k}">${names[k]}</button>`).join('')}</div></div>`);
     if (!this.side.dataset.lay) { this.side.dataset.lay = '1'; this.side.addEventListener('click', e => { const b = e.target.closest('[data-layer]'); if (!b) return; e.stopPropagation(); const L2 = UIP.layers(); L2[b.dataset.layer] = !L2[b.dataset.layer]; try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(G.settings)); } catch (er) { /* só nesta sessão */ } MapView.renderSide(); MapView.draw(); }, true); }
   };
   const md0 = MapView.draw.bind(MapView);
