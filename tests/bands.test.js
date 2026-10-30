@@ -15,7 +15,13 @@ module.exports = async () => {
       const p = e.npc;
       ok(p && p.alive && p.name && p.surname && TRAITS[p.trait] && p.band === 'camp' + World.camps.indexOf(camp), 'o bandido do acampamento não é uma pessoa do bando');
       ok(p.rank === 'bandit' && e.name === People.full(p), 'o bandido não tem o nome dele');
-      ok(hostile(e, P), 'o bandido não ataca');
+      // o bandido do acampamento só ataca se for atacado: aí o bando inteiro revida
+      ok(!hostile(e, P), 'o bandido do acampamento ataca sem ser provocado');
+      const mate = Game.spawn('bandit', sp.x, sp.y, { camp, leash: 8 });
+      Game.damage(e, 1, P);
+      ok(hostile(e, P) && hostile(mate, P) && mate.target === P, 'o bando não revidou quando você atacou um deles');
+      camp.angryT = G.realTime - 9999; ok(!hostile(e, P), 'o bando ficou bravo para sempre');
+      mate.dead = true; G.spawned.delete(mate.npc.id);
       // quem escapa volta no próximo ataque
       e.dead = true; G.spawned.delete(p.id);
       const e2 = Game.spawn('bandit', sp.x, sp.y, { camp, leash: 8 });
@@ -27,6 +33,7 @@ module.exports = async () => {
       const e3 = Game.spawn('bandit', sp.x, sp.y, { camp, leash: 8 }); ok(e3.npc && e3.npc !== p && e3.npc.alive, 'o bando não recrutou alguém novo');
       // emboscada a caravana e exército anarquista
       const a = Game.spawn('bandit', sp.x, sp.y, { leash: 18, tag: 'amb7' }); ok(a.npc && a.npc.band === 'amb', 'quem embosca caravanas não é uma pessoa');
+      ok(hostile(a, P), 'quem embosca caravanas deixou de atacar');
       const n = Game.spawn('bandit', sp.x, sp.y, { leash: 40, tag: 'anarch' }); ok(n.npc && /^anarch/.test(n.npc.band), 'o exército anarquista não é de pessoas');
       // os assassinos continuam com hitmen.js
       const h = Game.spawn('bandit', sp.x, sp.y, { leash: 40, tag: 'assassin' }); ok(h.kind === 'villager' && h.npc && h.npc.hit, 'o assassino virou bandido de bando');

@@ -4,12 +4,16 @@
 //  • quem entra para um bando é um morador pobre e de mau gênio da região, que largou a vila e foi viver no mato (a vila
 //    fica sabendo), ou um forasteiro que chega para isso;
 //  • quem escapa de uma luta volta no próximo ataque (os rostos são os mesmos); o bando só recruta quando alguém morre;
+//  • os bandidos dos acampamentos só atacam se você (ou os seus homens) atacar um deles: aí o bando inteiro revida por
+//    alguns minutos; os das emboscadas e o exército anarquista atacam sempre;
 //  • matar um bandido é legítima defesa (não é crime), mas a família dele lamenta.
 // Os ladrões que roubam o caixa dos seus empreendimentos também são pessoas: o jogo diz quem foi e o dinheiro fica com ele.
 // Bandos em G.urban.bands = { chave: [ids] } (camp<n>, amb, anarch<reino>, wild); família dos forasteiros de cada bando
 // em G.urban.bandFam.
 if (!RANKS.bandit) RANKS.bandit = { m: 'Bandido', f: 'Bandida', order: 9 };
 if (!RANK_LOOK.bandit) RANK_LOOK.bandit = '#3b2b2b';
+// por quanto tempo (segundos de jogo) o acampamento fica bravo depois de ser atacado
+const BAND_ANGRY = 180;
 const BAND_FROM = { beggar: 3, wanderer: 3, peasant: 1, hunter: 2, mercenary: 2, sailor: 1 };
 
 const Bands = {
@@ -76,6 +80,9 @@ const Bands = {
     }
     return pool.length ? U.pick(pool) : this.stranger('wild');
   },
+  // o acampamento está bravo com você? (alguém do bando foi atacado há pouco)
+  angry(camp) { return !!camp && camp.angryT !== undefined && G.realTime - camp.angryT < BAND_ANGRY; },
+  calm(e) { return !!e && e.kind === 'bandit' && !!e.camp && !e.bounty && !this.angry(e.camp); },
   // o roubo do caixa: o ladrão fica com o dinheiro e a vila fica sabendo; devolve quem foi (para a mensagem)
   rob(s, loss) {
     const t = this.thief(s);
@@ -97,5 +104,23 @@ const Bands = {
       p.hostile = true; p.met = true; G.spawned.set(p.id, e);
       return e;
     } catch (err) { console.error(err); return sp0(kind, x, y, o); }
+  };
+  // os bandidos dos acampamentos deixam você em paz (e os seus homens não atacam eles) até alguém atacar o bando
+  const h0 = hostile;
+  // eslint-disable-next-line no-global-assign
+  hostile = function (a, b) {
+    if (Bands.calm(a) && (b === P || fac(b) === 'player')) return false;
+    if (Bands.calm(b) && fac(a) === 'player' && a !== P) return false;
+    return h0(a, b);
+  };
+  // golpe num bandido do acampamento: o bando inteiro revida
+  const dm0 = Game.damage.bind(Game);
+  Game.damage = function (target, amount, src) {
+    if (target && target.kind === 'bandit' && target.camp && src && (src === P || fac(src) === 'player')) {
+      const was = Bands.angry(target.camp); target.camp.angryT = G.realTime;
+      for (const e of G.ents) if (!e.dead && e.camp === target.camp) { e.target = src; e.provoked = true; }
+      if (!was) UI.msg('⚔️ Você atacou o acampamento: o bando inteiro parte para cima de você!', 'bad');
+    }
+    return dm0(target, amount, src);
   };
 }

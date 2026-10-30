@@ -62,7 +62,8 @@ module.exports = async () => {
       Board.record(); G.day++; G.civs[1].treasury += 500; Board.record();
       const H = Board.hist(1); ok(H.length >= 2 && H[H.length - 1].tre > H[H.length - 2].tre - 1, 'histórico do painel');
       ok(Board.threats(1).some(t => /Guerra/.test(t.t)), 'a guerra não aparece nas ameaças');
-      UI.sel.rbCiv = 1; UI.sel.knav = 'x:painel'; UI.showKingdom(); ok(html().includes('rb-chart') && html().includes('Ameaças'), 'página do painel');
+      UI.sel.rbCiv = 1; UI.sel.knav = 'x:painel'; UI.sel.rvTab = 'geral'; UI.showKingdom(); ok(html().includes('Ameaças') && html().includes('rv-gauge'), 'página do painel');
+      UI.act('rvtab', { t: 'graficos' }); ok(html().includes('rb-chart'), 'os gráficos do painel'); UI.sel.rvTab = 'geral';
       ok(html().includes('Painel do reino'), 'o Painel do reino não está no Portfólio');
       // salvar guarda os tratados, o clima e o painel
       const before = JSON.stringify([Pacts.sig(), Clima.kind(1), Board.S()[1].length]);
