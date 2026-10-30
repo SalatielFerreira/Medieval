@@ -1,4 +1,4 @@
-// Leis na rua: guardas multando (balão e tesouro), contrabando nos portos (prender ou vista grossa), mercado negro à
+// Leis na rua: guardas multando (a multa vai para o tesouro), contrabando nos portos (prender ou vista grossa), mercado negro à
 // noite na taverna e espiões estrangeiros (investigador e acusação).
 'use strict';
 const { open } = require('./harness');
@@ -14,7 +14,7 @@ module.exports = async () => {
       P.x = (v.x + 0.5) * TILE; P.y = (v.y + 2) * TILE;
       const g = Game.spawn('guard', P.x + 40, P.y, { civ: ci, leash: 3 }); const w = People.residents(vi)[0]; const ve = Game.spawn('villager', P.x + 60, P.y, { civ: ci, npc: w, leash: 3 });
       const t0 = G.civs[ci].treasury; LawsPlus.t = 0; LawsPlus.update(1);
-      ok(G.civs[ci].treasury > t0 && g._law, 'o guarda não multou ninguém');
+      ok(G.civs[ci].treasury > t0, 'o guarda não multou ninguém'); // sem balão de fala: só a multa
       const ctx = document.createElement('canvas').getContext('2d'); g.draw(ctx, 0, 0);
       LawsPlus.monthTick(); ok(LawsPlus.S().fines === 0, 'as multas do mês não foram para o resumo');
       // contrabando num porto seu

@@ -100,21 +100,7 @@ const News = {
     if (!p || !p.alive || e.kind !== 'villager' || e.sleeping || e.inRoom || typeof P === 'undefined') return;
     const d = U.dist(e.x, e.y, P.x, P.y); if (d > 11 * TILE) return;
     const x = Math.round(e.x - cx), y = Math.round(e.y - cy) - (p.horse && !G.place ? 62 : 46), t = performance.now() / 1000;
-    // às vezes fala sozinho quando você passa perto
-    if (d < 4.5 * TILE && (!e._sayNext || t > e._sayNext)) {
-      e._sayNext = t + U.rnd(9, 22);
-      const line = Math.random() < 0.55 ? Mind.line(p) : null;
-      if (line) e._say = { text: line.length > 46 ? line.slice(0, 44) + '…' : line, until: t + 4 };
-    }
-    if (e._say && t < e._say.until) {
-      ctx.font = '600 10px "Segoe UI", sans-serif'; if (e._say.w === undefined) e._say.w = Math.min(230, ctx.measureText(e._say.text).width + 12);
-      const w = e._say.w, a = Math.min(1, (e._say.until - t) * 2);
-      ctx.globalAlpha = a; ctx.fillStyle = 'rgba(255,248,232,0.94)'; ctx.strokeStyle = 'rgba(60,40,20,0.6)'; ctx.lineWidth = 1;
-      rrPath(ctx, x - w / 2, y - 17, w, 16, 6); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x - 3, y - 1); ctx.lineTo(x + 3, y - 1); ctx.lineTo(x, y + 4); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#3a2814'; ctx.textAlign = 'center'; ctx.fillText(e._say.text, x, y - 5.5); ctx.textAlign = 'left'; ctx.globalAlpha = 1;
-      return;
-    }
+    // (os moradores não falam sozinhos em balões: só o ícone do humor ou da novidade aparece)
     const ic = this.status(p); if (!ic) return;
     const bob = Math.sin(t * 2.4 + p.id) * 1.5;
     ctx.fillStyle = 'rgba(255,248,232,0.9)'; ctx.strokeStyle = 'rgba(60,40,20,0.5)'; ctx.lineWidth = 1;

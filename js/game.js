@@ -3,6 +3,8 @@
 
 // níveis de zoom da câmera (1 = o mais afastado); múltiplos que mantêm os pixels nítidos
 const ZOOM_LEVELS = [1, 1.25, 1.5, 1.75, 2, 2.5];
+// a câmera fica fixa neste zoom (50% mais perto que o antigo padrão); a roda do mouse não aproxima nem afasta
+const ZOOM_FIXED = 1.5;
 
 const G = {
   state: 'menu', paused: false, time: 0, day: 1, ents: [], texts: [], parts: [],
@@ -11,7 +13,7 @@ const G = {
   groups: {}, timers: { spawn: 0, amb: 0, regrow: 0, hud: 0 }, name: 'Aventureiro',
   darkness: 0, realTime: 0, lastWarn: 0, ping: null,
   people: [], family: { spouse: null, tryChild: false, dueDay: 0 }, spawned: new Map(),
-  settings: { uiScale: 'auto', minimap: true, ambience: true, miniSize: 180, numbers: true, keysbar: false, music: 0.5, sfx: 0.7, mute: false, touch: 'auto' },
+  settings: { uiScale: 'auto', streets: 'normal', minimap: true, ambience: true, miniSize: 180, numbers: true, keysbar: false, music: 0.5, sfx: 0.7, mute: false, touch: 'auto' },
   storage: {}, dungeons: {}, dungeon: null, diplo: null, weather: null, slot: 1,
   plots: {}, order: 'follow', battles: [], caravans: [], stats: {}, ach: {}, diary: [], dynasty: [], diff: 'normal', hoverNpc: null,
 };
@@ -122,6 +124,24 @@ const Inv = {
   },
 };
 
+// pessoas na rua por vila (o resto está em casa ou no trabalho): Poucas, Normal ou Todas
+const STREET_CAP = { few: 35, normal: 60, all: Infinity };
+const Streets = {
+  ids: null, t: -1,
+  // quem precisa estar na rua: uma lista feita no máximo uma vez por segundo
+  must() {
+    if (this.ids && G.realTime - this.t < 1) return this.ids;
+    const s = new Set();
+    try { if (typeof LawsPlus !== 'undefined' && LawsPlus.spies) for (const x of LawsPlus.spies()) s.add(x.pid); } catch (e) { /* sem espiões */ }
+    try { if (typeof Laws !== 'undefined' && Laws.L) for (const c of Laws.L().cases || []) { s.add(c.pid); s.add(c.vid); } } catch (e) { /* sem processos */ }
+    this.ids = s; this.t = G.realTime; return s;
+  },
+  keep(p, v) {
+    return !!(p.shop || (p.job !== undefined && p.job !== null) || p.kin || p.spouse === 'player' || p.dating || p.met || p.council
+      || p.rank === 'priest' || (v && v.chief === p.id) || this.must().has(p.id));
+  },
+};
+
 const Game = {
   // ================================================================ inicialização
   boot() {
@@ -153,14 +173,8 @@ const Game = {
     });
     window.addEventListener('blur', () => { G.keys = {}; G.mouse.down = false; });
     this.canvas.addEventListener('mousemove', e => { G.mouse.x = e.clientX; G.mouse.y = e.clientY; });
-    // roda do mouse: aproxima ou afasta a câmera do personagem
-    this.canvas.addEventListener('wheel', e => {
-      if (G.state !== 'play') return;
-      e.preventDefault();
-      const steps = ZOOM_LEVELS, cur = steps.indexOf(this.zoomStep()), i = U.clamp(cur + (e.deltaY < 0 ? 1 : -1), 0, steps.length - 1);
-      G.settings.zoom = steps[i];
-      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(G.settings)); } catch (err) { /* vale só nesta sessão */ }
-    }, { passive: false });
+    // roda do mouse: o zoom é fixo (ela só não deixa a página rolar)
+    this.canvas.addEventListener('wheel', e => { if (G.state === 'play') e.preventDefault(); }, { passive: false });
     this.canvas.addEventListener('mousedown', e => {
       if (G.state !== 'play' || G.paused) return;
       if (e.button === 2) { if (Urban.mode) Urban.cancel(); else if (G.placing) G.placing = null; else G.mouse.right = true; return; }
@@ -583,7 +597,7 @@ const Game = {
     Season.weather(dt);
     this.updateAudio(dt);
 
-    // câmera (com zoom suave até o nível escolhido na roda do mouse)
+    // câmera (com zoom suave: o fixo e, dentro de alguns lugares, o deles)
     const want = G.place && G.place.zoom ? Math.max(this.zoomStep(), G.place.zoom) : this.zoomStep();
     this.zoom = this.zoom || want;
     this.zoom += (want - this.zoom) * Math.min(1, dt * 10);
@@ -1429,8 +1443,15 @@ const Game = {
         this.ensureGroup('def' + vi, Defense.defenders(v), () => Defense.spawnDefender(v, vi));
       }
       // cada morador tem a sua casa (mendigos dormem na praça); de dia fica no trabalho ou perto de casa
-      for (const p of People.residents(vi)) {
+      // cidade cheia: só uma parte do povo fica na rua ao mesmo tempo (Ajustes → Tela → Pessoas nas ruas); quem importa
+      // (lojistas, funcionários, família, quem você conhece, o governador, os espiões e os processos) aparece sempre
+      const cap = STREET_CAP[G.settings.streets || 'normal'] || Infinity, res = People.residents(vi);
+      let out = 0;
+      if (cap < Infinity) { for (const e of G.spawned.values()) if (e && !e.dead && e.vi === vi) out++; res.sort((a, b) => Streets.keep(b, v) - Streets.keep(a, v)); }
+      for (const p of res) {
         if (G.spawned.has(p.id) || p.port || p.trip || p.jail > G.day) continue; // presos não andam pela vila // o marinheiro aparece no porto; quem está viajando, na vila que visita
+        if (out >= cap && !Streets.keep(p, v)) continue;
+        out++;
         const h = Homes.houseOf(p); // a casa da família (pode ainda não ter: aí fica pela praça)
         const work = Shops.workOf(p) || (p.rank === 'priest' ? v.chapel : null);
         let e;
@@ -1867,7 +1888,7 @@ const Game = {
     for (let k = 0; k < n; k++) G.parts.push({ x, y, vx: U.rnd(-60, 60), vy: U.rnd(-90, -20), life: U.rnd(0.3, 0.7), color, size: U.rint(2, 4) });
   },
 
-  zoomStep() { const z = +G.settings.zoom || 1; return ZOOM_LEVELS.includes(z) ? z : 1; },
+  zoomStep() { return ZOOM_FIXED; },
   // ================================================================ renderização
   render() {
     const ctx = this.ctx, sw = this.canvas.width, sh = this.canvas.height;

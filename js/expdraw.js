@@ -352,7 +352,7 @@
         ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(X + 6, Y + h - 6, w - 10, 6);
         poly([12, h - 4, 18, -10, w - 18, -10, w - 12, h - 4], '#e6dcc4'); poly([12, h - 4, 18, -10, 24, -10, 20, h - 4], '#c8bfa8');
         poly([14, -10, w / 2, -26, w - 14, -10], '#8a3a2a'); R(w / 2 - 5, h - 18, 10, 14, '#5a3a1e'); glow(w / 2 - 3, 14, 6, 6);
-        const a = time * 1.6, cx = w / 2, cy = -12;
+        const a = Math.PI / 4, cx = w / 2, cy = -12; // pás paradas
         for (let k = 0; k < 4; k++) { const b = a + k * Math.PI / 2; ctx.save(); ctx.translate(X + cx, Y + cy); ctx.rotate(b); ctx.fillStyle = '#6a4423'; ctx.fillRect(0, -1.5, 30, 3); ctx.fillStyle = 'rgba(240,232,214,0.95)'; ctx.fillRect(6, 1.5, 22, 8); ctx.restore(); }
         ell(cx, cy, 3, 3, '#3a2410');
         break;

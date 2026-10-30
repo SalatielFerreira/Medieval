@@ -120,7 +120,7 @@ drawStructExtra = function (ctx, s, X, Y, time, H) {
     case 'vbakery': house('#ecdcbc', '#9a3a2a'); R(w - 16, -4, 8, 14, '#8a7a6a'); sign(w - 22, 30, '🥖'); break;
     case 'vmill': {
       house('#d8c8a8', '#7a5a3a');
-      const a = time * 1.2; ctx.save(); ctx.translate(X + w / 2, Y + 10); ctx.rotate(a);
+      const a = Math.PI / 4; ctx.save(); ctx.translate(X + w / 2, Y + 10); ctx.rotate(a); // pás paradas
       for (let k = 0; k < 4; k++) { ctx.rotate(Math.PI / 2); ctx.fillStyle = '#e8e0c8'; ctx.fillRect(-2, 2, 4, 22); ctx.fillStyle = '#8a6a42'; ctx.fillRect(-1, 2, 2, 22); }
       ctx.restore(); ell(w / 2, 10, 3, 3, '#5a3a1e'); break;
     }

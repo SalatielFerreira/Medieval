@@ -32,8 +32,7 @@ const LawsPlus = {
     const guard = G.ents.find(e => !e.dead && e.kind === 'guard' && e.civ === ci && U.dist(e.x, e.y, P.x, P.y) < 12 * TILE);
     const who = G.ents.find(e => !e.dead && e.kind === 'villager' && e.npc && !e.sleeping && !e.inRoom && e.npc.age >= 16 && !e.npc.capanga && U.dist(e.x, e.y, P.x, P.y) < 12 * TILE && (!guard || U.dist(e.x, e.y, guard.x, guard.y) < 9 * TILE));
     if (!guard || !who) return;
-    const k = U.pick(laws), L = LAW_STREET[k], t = performance.now() / 1000;
-    guard._law = { text: L.guard, until: t + 5 }; who._say = { text: L.who, until: t + 5.5 };
+    const k = U.pick(laws), L = LAW_STREET[k];
     guard.target = null; guard.wx = who.x; guard.wy = who.y;
     G.civs[ci].treasury += L.fine; this.S().fines += L.fine;
     if (who.npc) { who.npc.purse = Math.max(0, People.purse(who.npc) - L.fine); Mind.feel(who.npc, 'anger', 20); }
@@ -130,19 +129,6 @@ const LawsPlus = {
 };
 
 {
-  // balão do guarda (os moradores já têm o deles)
-  const cd0 = Creature.prototype.draw;
-  Creature.prototype.draw = function (ctx, cx, cy) {
-    const r = cd0.call(this, ctx, cx, cy), L = this._law, t = performance.now() / 1000;
-    if (L && t < L.until && !this.dead) {
-      const x = Math.round(this.x - cx), y = Math.round(this.y - cy) - 48;
-      ctx.font = '600 10px "Segoe UI", sans-serif'; const w = Math.min(240, ctx.measureText(L.text).width + 12);
-      ctx.fillStyle = 'rgba(232,240,255,0.95)'; ctx.strokeStyle = 'rgba(30,40,80,0.7)'; ctx.lineWidth = 1;
-      rrPath(ctx, x - w / 2, y - 17, w, 16, 6); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#1a2440'; ctx.textAlign = 'center'; ctx.fillText(L.text, x, y - 5.5); ctx.textAlign = 'left';
-    }
-    return r;
-  };
   const cu0 = Content2.update.bind(Content2);
   Content2.update = function (dt) { cu0(dt); LawsPlus.update(dt); };
   const mt0 = Lifesim.monthTick.bind(Lifesim);

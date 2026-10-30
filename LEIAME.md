@@ -97,6 +97,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: cidade cheia sem travar
+
+- **Cidades populosas mais leves:** as figuras das pessoas não ficam mais saindo e voltando da memória (era o que travava), as figuras novas ficam prontas aos poucos, e os prédios são redesenhados cada um no seu tempo e recortados no que têm desenhado. Numa cidade com 170 moradores, o quadro caiu de ~21 ms para ~11 ms em média e o pior, de 390 ms para ~30 ms.
+- **Pessoas nas ruas** (Ajustes → Tela): Poucas (~35 por vila), Normal (~60, o padrão) ou Todas. O resto do povo fica em casa ou no trabalho; lojistas, funcionários, família, quem você conhece, o governador e quem você precisa achar aparecem sempre.
+- **Sem balões de fala** sobre os moradores e os guardas (o ícone de humor continua).
+- **Câmera fixa** 50% mais perto que antes (a roda do mouse não muda mais o zoom).
+- **Moinhos parados** (as pás não giram: mais leve).
+
 ## Novidades: quarto real, cargos e o Capitão
 
 - **Quarto real no castelo:** na Sala do Trono, a cama do rei para salvar e dormir (só para quem é o rei daquele castelo; o castelo vira o ponto de retorno).

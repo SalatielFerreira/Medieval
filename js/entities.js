@@ -848,7 +848,35 @@ function humanBody(ctx, o, dir, t) {
 }
 // O corpo é desenhado uma vez por visual e por quadro (8 quadros andando, 4 parado) numa imagem guardada,
 // na resolução da tela; a cada quadro do jogo só se copia a imagem. A arma é desenhada ao vivo (segue a mira).
-const HUMAN_CACHE = new Map();
+// Cidade cheia: a memória cresce com a quantidade de gente (até um teto) para as figuras não ficarem saindo e voltando,
+// e cada quadro monta figuras novas só por alguns milissegundos — o resto usa outra figura pronta da mesma pessoa ou é
+// desenhado direto (sem guardar), e as figuras ficam prontas aos poucos em vez de travar a tela.
+const HUMAN_CACHE = new Map(), HUMAN_LAST = new Map(), HUMAN_POOL = [], HUMAN_SCRATCH = {};
+const HUMAN_BUDGET = { start: 0, used: 0, ms: 3 };
+function humanLimit() { return Math.max(1400, Math.min(3200, (typeof G !== 'undefined' && G.ents ? G.ents.length : 0) * 13)); }
+// telas de rascunho reaproveitadas (criar tela nova a cada figura era o mais caro)
+function humanScratch(name, w, h) {
+  let c = HUMAN_SCRATCH[name]; if (!c) c = HUMAN_SCRATCH[name] = document.createElement('canvas');
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; return c; }
+  const g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, w, h);
+  return c;
+}
+function humanBuild(o, res, t) {
+  const W = Math.ceil(44 * res), H = Math.ceil(54 * res);
+  const cv = humanScratch('body', W, H), g = cv.getContext('2d'); g.scale(res, res); g.translate(22, 46);
+  humanBody(g, o, 1, t);
+  // contorno escuro e suave em volta da figura (deixa a pessoa nítida sobre qualquer chão)
+  const sil = humanScratch('sil', W, H), sg = sil.getContext('2d'); sg.drawImage(cv, 0, 0); sg.globalCompositeOperation = 'source-in'; sg.fillStyle = 'rgba(24,14,8,0.62)'; sg.fillRect(0, 0, W, H);
+  // a figura guardada reaproveita uma tela que saiu da memória (do mesmo tamanho), se houver
+  const pi = HUMAN_POOL.findIndex(c => c.width === W && c.height === H);
+  const out = pi >= 0 ? HUMAN_POOL.splice(pi, 1)[0] : document.createElement('canvas');
+  if (pi < 0) { out.width = W; out.height = H; }
+  const og = out.getContext('2d'), d1 = Math.max(1, Math.round(res * 0.5));
+  og.setTransform(1, 0, 0, 1, 0, 0); og.globalCompositeOperation = 'source-over'; og.clearRect(0, 0, W, H);
+  for (const [dx, dy] of [[d1, 0], [-d1, 0], [0, d1], [0, -d1]]) og.drawImage(sil, dx, dy);
+  og.drawImage(cv, 0, 0);
+  return out;
+}
 function humanFrame(o) {
   const t = o.anim || 0;
   if (o.moving) { const f = ((Math.floor(t * 12 / (Math.PI * 2) * 8) % 8) + 8) % 8; return { key: 'm' + f, t: (f + 0.5) / 8 * Math.PI * 2 / 12 }; }
@@ -858,24 +886,23 @@ function drawHuman(ctx, x, y, o) {
   const s = o.scale || 1, dir = o.dir < 0 ? -1 : 1, fr = humanFrame(o);
   const tf = ctx.getTransform(), res = Math.max(1, Math.min(10, Math.round(Math.hypot(tf.a, tf.b) * s * 2) / 2));
   // a figura é a mesma para as duas direções (a da esquerda é o espelho): metade das figuras na memória
-  const key = [fr.key, res, o.body, o.legs, o.skin, o.hair, o.hairStyle, o.beardStyle, o.beard, o.armor, o.helmet, o.cap, o.hood, o.crown, o.cape, o.outfit,
-    o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, o.regalia, !!(o.weapon || o.swing > 0 || o.rod)].join('|');
-  let cv = HUMAN_CACHE.get(key);
+  const look = [res, o.body, o.legs, o.skin, o.hair, o.hairStyle, o.beardStyle, o.beard, o.armor, o.helmet, o.cap, o.hood, o.crown, o.cape, o.outfit,
+    o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, o.regalia, !!(o.weapon || o.swing > 0 || o.rod)].join('|'), key = fr.key + '|' + look;
+  let cv = HUMAN_CACHE.get(key), direct = false;
   if (cv) { HUMAN_CACHE.delete(key); HUMAN_CACHE.set(key, cv); } // a mais usada fica (as esquecidas saem primeiro)
   if (!cv) {
-    cv = document.createElement('canvas'); cv.width = Math.ceil(44 * res); cv.height = Math.ceil(54 * res);
-    const g = cv.getContext('2d'); g.scale(res, res); g.translate(22, 46);
-    humanBody(g, o, 1, fr.t);
-    // contorno escuro e suave em volta da figura (deixa a pessoa nítida sobre qualquer chão)
-    const sil = document.createElement('canvas'); sil.width = cv.width; sil.height = cv.height;
-    const sg = sil.getContext('2d'); sg.drawImage(cv, 0, 0); sg.globalCompositeOperation = 'source-in'; sg.fillStyle = 'rgba(24,14,8,0.62)'; sg.fillRect(0, 0, sil.width, sil.height);
-    const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height;
-    const og = out.getContext('2d'), d1 = Math.max(1, Math.round(res * 0.5));
-    for (const [dx, dy] of [[d1, 0], [-d1, 0], [0, d1], [0, -d1]]) og.drawImage(sil, dx, dy);
-    og.drawImage(cv, 0, 0);
-    cv = out;
-    if (HUMAN_CACHE.size > 1400) HUMAN_CACHE.delete(HUMAN_CACHE.keys().next().value);
-    HUMAN_CACHE.set(key, cv);
+    const B = HUMAN_BUDGET, now = performance.now();
+    if (now - B.start > 8) { B.start = now; B.used = 0; } // um quadro novo: o orçamento recomeça
+    if (B.used < B.ms) {
+      cv = humanBuild(o, res, fr.t); B.used += performance.now() - now;
+      const lim = humanLimit();
+      while (HUMAN_CACHE.size >= lim) { const k0 = HUMAN_CACHE.keys().next().value, c0 = HUMAN_CACHE.get(k0); HUMAN_CACHE.delete(k0); if (HUMAN_POOL.length < 64) HUMAN_POOL.push(c0); }
+      HUMAN_CACHE.set(key, cv); HUMAN_LAST.set(look, key);
+    } else {
+      // sem tempo neste quadro: outra figura pronta da mesma pessoa ou, se não houver, o desenho direto
+      const lk = HUMAN_LAST.get(look); cv = lk ? HUMAN_CACHE.get(lk) : null;
+      if (!cv) direct = true;
+    }
   }
   const bob = o.moving ? -Math.abs(Math.sin(fr.t * 12)) * 1.1 : Math.sin(fr.t * 2.2) * 0.3;
   ctx.save();
@@ -883,7 +910,7 @@ function drawHuman(ctx, x, y, o) {
   ctx.scale(s, s);
   ell(ctx, 0, 0, 9.5, 3.2, 'rgba(0,0,0,0.26)'); ell(ctx, 0, 0, 6, 2, 'rgba(0,0,0,0.12)'); // sombra no chão
   if (dir < 0) ctx.scale(-1, 1);
-  ctx.drawImage(cv, -22, -46, cv.width / res, cv.height / res);
+  if (direct) humanBody(ctx, o, 1, fr.t); else ctx.drawImage(cv, -22, -46, cv.width / res, cv.height / res);
   if (dir < 0) ctx.scale(-1, 1);
 
   // ---- arma ou ferramenta (no mundo: a mira não é espelhada)

@@ -1604,7 +1604,7 @@ const World = {
         R(14, 22, w - 28, h - 26, '#d8c39a'); R(14, h - 8, w - 28, 4, '#b8a37a');
         ctx.fillStyle = '#7b3b22'; ctx.beginPath(); ctx.moveTo(X + 10, Y + 24); ctx.lineTo(X + w / 2, Y + 6); ctx.lineTo(X + w - 10, Y + 24); ctx.fill();
         R(w / 2 - 4, h - 18, 8, 14, '#5a3a1e');
-        const a0 = time * 1.2 + s.id;
+        const a0 = Math.PI / 4; // pás paradas (moinho estático: não precisa ser redesenhado o tempo todo)
         ctx.strokeStyle = '#6b4423'; ctx.lineWidth = 3;
         for (let k = 0; k < 4; k++) {
           const a = a0 + k * Math.PI / 2, ex = X + w / 2 + Math.cos(a) * 26, ey = Y + 14 + Math.sin(a) * 26;
