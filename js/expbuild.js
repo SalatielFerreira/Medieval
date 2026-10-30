@@ -89,7 +89,7 @@ const EXP_BUILDINGS = [
   ['icehouse', 'guarda', 'Casa de Gelo', 2, 2, true, { stone: 25, wood: 10, peat: 0 }, 'Depósito frio meio enterrado: guarda comida e junta gelo no inverno.', { store: true, ice: true }, { k: 'icehouse' }],
   // ---------------------------------------------------------------- defesa e exército (+4)
   ['ballista', 'defesa', 'Balista', 2, 2, true, { hardwood: 6, iron_bar: 6, rope: 4 }, 'Arma de cerco fixa: atira virotes gigantes em inimigos a até 12 passos.', { def: 'ballista' }, { k: 'ballista' }],
-  ['trench', 'defesa', 'Fosso com Estacas', 2, 1, false, { dirt: 10, wood: 6 }, 'Inimigos que passam por aqui ficam lentos e se ferem.', { def: 'trench' }, { k: 'trench' }],
+  ['trench', 'defesa', 'Fosso com Estacas', 2, 1, false, { dirt: 10, wood: 6 }, 'Inimigos que encostam nele ficam lentos e se ferem.', { def: 'trench' }, { k: 'trench' }],
   ['war_stable', 'defesa', 'Estábulo de Guerra', 3, 2, true, { wood: 40, stone: 15, iron_bar: 4, horsehair: 0 }, 'Cavalos de guerra: +2 cavaleiros no seu exército em cada batalha (até 4) e crina todo mês.', { def: 'cavalry', farm: { horsehair: 2 } }, { k: 'barn', wall: '#6a4a2a', roof: '#3a3a42', sign: '🐎' }],
   ['siege_workshop', 'defesa', 'Oficina de Cerco', 3, 2, true, { wood: 40, hardwood: 6, iron_bar: 6, rope: 6 }, 'Catapultas e aríetes 30% mais baratos no arsenal, e até 10 catapultas nas batalhas.', { def: 'siege' }, { k: 'siegeyard' }],
   // ---------------------------------------------------------------- infraestrutura (+7)
@@ -280,7 +280,8 @@ const ExpBuild = {
     if (tr.length) for (const e of G.ents) {
       if (e.dead || e.dmg <= 0 || !hostile(e, P)) continue;
       const tx = e.x / TILE, ty = (e.y - 4) / TILE;
-      if (tr.some(s => tx >= s.x && tx < s.x + s.w && ty >= s.y && ty < s.y + s.h)) { e.slowUntil = G.realTime + 1.2; e.trenchT = (e.trenchT || 0) - 0.4; if (e.trenchT <= 0) { e.trenchT = 1.2; Game.damage(e, 6, null); } }
+      // o fosso é sólido: atrasa e fere quem encosta nele
+      if (tr.some(s => tx >= s.x - 1 && tx < s.x + s.w + 1 && ty >= s.y - 1 && ty < s.y + s.h + 1)) { e.slowUntil = G.realTime + 1.2; e.trenchT = (e.trenchT || 0) - 0.4; if (e.trenchT <= 0) { e.trenchT = 1.2; Game.damage(e, 6, null); } }
     }
   },
 };

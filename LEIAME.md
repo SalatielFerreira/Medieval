@@ -97,6 +97,12 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - A barba longa fica na frente do braço; o círculo que a neblina do mapa descobre tem quatro vezes o tamanho original.
 - O botão Voltar das janelas só volta de janela para janela: o que você faz dentro de uma janela (dividir itens, trocar de aba) não vira passo, e Voltar sai direto para onde você estava.
 
+## Novidades: todo imóvel é sólido
+
+- **Ninguém anda por cima de nenhum imóvel** (plantações, hortas, currais, campos de treino, enfeites, obras...); só o portão abre a passagem, como sempre. As Estacas e o Fosso agora ferem os inimigos que encostam neles. A ficha não mostra mais "sólida / dá para andar por cima".
+- **Classes também em Moradia e Infraestrutura:** Casas e residências; Estradas e pedágio e Ferramentas.
+- Na ficha da Fazenda e animais, "Produz e coleta" virou **Coleta**.
+
 ## Novidades: fazenda que se vende sozinha e menu mais enxuto
 
 - **Fazenda e animais só para recolher:** ao interagir abre a produção guardada, o botão Recolher tudo e a opção de vender a produção automaticamente (preço de mercado do reino do lugar; o tesouro dele paga). No Galinheiro e no Curral também dá para comprar animais. Essas construções não têm mais responsável. A Fazenda de trigo agora guarda a colheita nela, como as outras.

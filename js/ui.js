@@ -664,7 +664,7 @@ const UI = {
     if (!BUILDINGS[k]) { const inf = Urban.info(k); inf.icon = buildArt(k) || inf.icon; return inf; }
     const b = BUILDINGS[k], n = World.structs.filter(s => s.owner === 'player' && s.type === k && !s.removed).length;
     return { name: b.name, icon: buildArt(k) || Game.buildIcon(k), cost: b.cost, desc: b.desc, sub: `${b.w}×${b.h} · ${n ? `você tem ${n}` : 'nenhuma ainda'}`, can: Inv.has(b.cost),
-      cat: `${b.w}×${b.h} espaços · ${b.blocks ? 'sólida' : 'pode-se andar por cima'}`, btn: '📍 Construir no mapa', owned: n, size: `${b.w}×${b.h}` };
+      cat: `${b.w}×${b.h} espaços`, btn: '📍 Construir no mapa', owned: n, size: `${b.w}×${b.h}` };
   },
   showBuild() {
     const S = this.sel;
@@ -711,7 +711,7 @@ const UI = {
   // detalhes de uma construção: o que é, informações em etiquetas e o custo
   buildDetailHtml(k) {
     const b = this.binfo(k), B = BUILDINGS[k];
-    const tags = B ? [`📐 ${b.size}`, B.blocks ? '🧱 sólida' : '👣 dá para andar por cima', `🏠 você tem ${b.owned}`] : [];
+    const tags = B ? [`📐 ${b.size}`, `🏠 você tem ${b.owned}`] : [];
     const req = b.cost ? Object.entries(b.cost).map(([c, n]) => {
       const have = Inv.count(c);
       return `<div class="req-row"><span>${UI.ii(c)}</span><span>${ITEMS[c].name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`;

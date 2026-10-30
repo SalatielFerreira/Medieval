@@ -10,6 +10,10 @@ module.exports = async () => {
       UI.msg = () => {};
       const at = (type, dx) => { const B = BUILDINGS[type], x = Math.floor(P.x / TILE) + dx, y = Math.floor(P.y / TILE) + 6; for (let j = y; j < y + B.h; j++) for (let i = x; i < x + B.w; i++) World.obj[World.idx(i, j)] = 0; return World.addStruct(type, x, y, B.w, B.h, 'player', { built: true }); };
       const coop = at('coop', -8), farm = at('farm', 0), hive = at('beehive', 6);
+      // todo imóvel é sólido (só o portão abre a passagem do jeito dele) e a ficha não fala mais disso
+      ok(Object.keys(BUILDINGS).every(k => BUILDINGS[k].blocks) && Object.keys(CIVIC).filter(k => k !== 'vgate' && CIV_STRUCTS[k]).every(k => CIV_STRUCTS[k].blocks), 'há imóvel em que se anda por cima');
+      ok(farm.blocks && coop.blocks, 'a fazenda e o galinheiro construídos não são sólidos');
+      ok(!/andar por cima|sólida/.test(BuildRoles.detail('farm')), 'a ficha ainda fala de sólida / andar por cima');
       // interagir: a janela de recolher (sem loja nem responsável)
       coop.goods = { egg: 5 }; Game.useStruct(coop);
       ok(UI.cur && UI.cur.fn === 'showFarmBld', 'o galinheiro não abriu a janela de recolher: ' + (UI.cur && UI.cur.fn));

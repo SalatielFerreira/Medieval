@@ -27,6 +27,9 @@ const BR = {
   // fora das Obras (as que você já construiu continuam funcionando): a Barraca de Feira e o Oratório
   OBRAS_OUT: ['market_stall', 'oratory'],
 };
+// todo imóvel é sólido: ninguém anda por cima de nenhum (só o portão abre a passagem, do jeito dele)
+for (const k in BUILDINGS) BUILDINGS[k].blocks = true;
+for (const k of Object.keys(CIVIC).concat(['arena', 'field', 'ffarm', 'fvine'])) if (CIV_STRUCTS[k] && k !== 'vgate') CIV_STRUCTS[k].blocks = true;
 for (const [k, c] of [['PROD', 'producao'], ['FARM', 'fazenda'], ['CULT', 'cultura'], ['DEF', 'defesa'], ['PRACA', 'praca']]) BR[k] = BR[k].concat((UI.expCats && UI.expCats[c]) || []).filter(t => BUILDINGS[t]);
 
 // ofícios novos
@@ -106,8 +109,15 @@ const OBRAS_CLASSES = [
   ['fe', '⛪', 'Fé', ['c:chapel', 'c:vcross', 'c:vspring', 'c:vmonastery', 'c:vcathedral', 'stone_circle']],
   ['def', '🛡️', 'Defesa e treino', ['c:vgate', 'c:vtower', 'c:vguard', 'DEF', 'training', 'archery', 'tiltyard']],
 ];
-// Produção, Fazenda e animais, Empreendimentos e Baús e estábulo também separados por classe (o que não estiver aqui vai para a última)
+// todas as janelas da Construção separadas por classe (o que não estiver aqui vai para a última)
 const BR_CLASSES = {
+  moradia: [
+    ['casas', '🏠', 'Casas e residências', ['cabin', 'house', 'farmhouse', 'lodge', 'townhouse', 'manor', 'mansion', 'palacete', 'pcastle']],
+  ],
+  infra: [
+    ['estr', '🛣️', 'Estradas e pedágio', ['road', 'toll']],
+    ['ferr', '🔧', 'Ferramentas', ['u:unroad', 'u:move', 'u:demolish']],
+  ],
   producao: [
     ['coz', '🔥', 'Cozinha e bebidas', ['campfire', 'oven', 'smokehouse', 'quern', 'brewery', 'winepress']],
     ['mad', '🪵', 'Madeira e ferramentas', ['workbench', 'carpentry', 'sawmill_p']],
@@ -373,7 +383,7 @@ Object.assign(BuildRoles, {
     const t = k.startsWith('c:') ? k.slice(2) : k, it = l => (l || []).filter(i => typeof i !== 'string' || ITEMS[i]);
     const shopList = key => key && SHOPS[key] ? SHOPS[key].sells || [] : [];
     if (cat === 'producao') return ['🛠️ Pode produzir', BuildRoles.products(t), 'Nada para fabricar aqui.'];
-    if (cat === 'fazenda') { const f = expFn(t) && expFn(t).farm; return ['🧺 Produz e coleta', it(f ? Object.keys(f) : BR_HARVEST[t] || shopList(BuildRoles.shopOf[t]).slice(0, 4)), 'Nada para colher aqui.']; }
+    if (cat === 'fazenda') { const f = expFn(t) && expFn(t).farm; return ['🧺 Coleta', it(f ? Object.keys(f) : BR_HARVEST[t] || shopList(BuildRoles.shopOf[t]).slice(0, 4)), 'Nada para colher aqui.']; }
     if (cat === 'negocios') {
       const d = BIZ_TYPES[t] || {};
       if (d.out && Object.keys(d.out).length) return ['🛒 Produtos do estabelecimento', it(Object.keys(d.out)), ''];
@@ -405,8 +415,8 @@ Object.assign(BuildRoles, {
   detail(k) {
     const b = UI.binfo(k), B = BUILDINGS[k], C = k.startsWith('c:') ? CIVIC[k.slice(2)] : null;
     const cat = (UI.buildCats || []).find(c => c[3].includes(k)), cls = cat && BuildRoles.classesOf(cat[0]), kd = cls && UI.buildClass && cls.find(x => x[0] === UI.buildClass[k]);
-    const D = B || C, solid = B ? B.blocks : !(C && CIV_STRUCTS[k.slice(2)] && CIV_STRUCTS[k.slice(2)].blocks === false);
-    const tags = D ? [`📐 ${D.w}×${D.h}`, solid ? '🧱 sólida' : '👣 dá para andar por cima', `🏠 você tem ${this.owned(k)}`] : [];
+    const D = B || C;
+    const tags = D ? [`📐 ${D.w}×${D.h}`, `🏠 você tem ${this.owned(k)}`] : []; // todo imóvel é sólido: não precisa dizer
     const req = b.cost ? Object.entries(b.cost).map(([c, n]) => { const have = Inv.count(c); return `<div class="req-row"><span>${UI.ii(c)}</span><span>${ITEMS[c].name}</span><b class="${have >= n ? 'ok' : 'bad'}">${have}/${n}</b></div>`; }).join('') : '';
     const rel = cat ? this.related(k, cat[0]) : null;
     // empreendimentos: o lucro estimado por mês (2 funcionários) e em quanto tempo se paga

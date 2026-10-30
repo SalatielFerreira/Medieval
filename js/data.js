@@ -633,7 +633,7 @@ Object.assign(BUILDINGS, {
   kennel:     { name: 'Canil',             w: 2, h: 2, blocks: true,  cost: { wood: 20, plank: 6, meat: 4 },              desc: 'Cria um cão de guarda que segue você e morde inimigos. Se ele cair, outro filhote cresce no mês seguinte.' },
   // defesa
   archer_tower: { name: 'Torre de Arqueiros', w: 2, h: 2, blocks: true, cost: { wood: 30, stone: 30, arrow: 40, beam: 2 }, desc: 'Atira flechas sozinha em bandidos, feras e inimigos que chegarem perto.' },
-  spikes:     { name: 'Estacas',           w: 1, h: 1, blocks: false, cost: { wood: 4 },                                  desc: 'Estacas pontudas no chão: ferem os inimigos que passam por cima (você e os seus passam livres).' },
+  spikes:     { name: 'Estacas',           w: 1, h: 1, blocks: false, cost: { wood: 4 },                                  desc: 'Estacas pontudas no chão: ferem os inimigos que encostam nelas.' },
   armory:     { name: 'Arsenal',           w: 3, h: 2, blocks: true,  cost: { stone: 30, plank: 12, iron_bar: 8 },        desc: 'Armas e armaduras guardadas para a sua tropa: capangas com +3 de dano e +2 de defesa.' },
   // empreendimentos
   biz_carpentry: { name: 'Marcenaria',     w: 3, h: 2, blocks: true,  cost: { wood: 40, stone: 10, iron_bar: 2 },         desc: 'Empreendimento: até 3 marceneiros (madeireiros rendem mais). Produz tábuas e vigas.' },

@@ -125,7 +125,8 @@ const Content2 = {
       if (sp.length) for (const e of G.ents) {
         if (e.dead || e.dmg <= 0 || !hostile(e, P)) continue;
         const tx = Math.floor(e.x / TILE), ty = Math.floor((e.y - 4) / TILE);
-        if (sp.some(s => s.x === tx && s.y === ty)) { Game.damage(e, 8, null); Game.burst(e.x, e.y - 6, '#8a1a1a', 3); }
+        // as estacas são sólidas: ferem quem encosta nelas
+        if (sp.some(s => Math.abs(s.x - tx) <= 1 && Math.abs(s.y - ty) <= 1)) { Game.damage(e, 8, null); Game.burst(e.x, e.y - 6, '#8a1a1a', 3); }
       }
     }
     if (this.dogT <= 0) {

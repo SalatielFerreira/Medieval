@@ -22,7 +22,7 @@ module.exports = async () => {
       ok(cls.every((c, i) => !i || c === cls[i - 1] || !cls.slice(0, i).includes(c)), 'as classes estão misturadas na lista');
       ok(UI.buildClass['c:vpost'] === 'serv' && UI.buildClass['c:vfountain'] === 'praca' && UI.buildClass['library'] === 'cult' && UI.buildClass['c:chapel'] === 'fe' && UI.buildClass['c:smith'] === 'prod' && UI.buildClass['c:field'] === 'faz' && UI.buildClass['barracks'] === 'def', 'obra na classe errada');
       // Produção, Fazenda e animais e Empreendimentos também em classes, com o título de cada uma
-      for (const [ck, n] of [['producao', 6], ['fazenda', 4], ['negocios', 5], ['guarda', 3]]) {
+      for (const [ck, n] of [['moradia', 1], ['producao', 6], ['fazenda', 4], ['negocios', 5], ['guarda', 3], ['infra', 2]]) {
         const L = UI.buildCats.find(c => c[0] === ck)[3], C = L.map(k => UI.buildClass[k]);
         ok(L.length && C.every(Boolean), `${ck}: construção sem classe`);
         ok(C.every((c, i) => !i || c === C[i - 1] || !C.slice(0, i).includes(c)), `${ck}: as classes estão misturadas`);
