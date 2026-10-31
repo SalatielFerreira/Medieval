@@ -88,6 +88,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: Ajustes arrumados
+
+- Saiu o "Como jogar" dos Ajustes. As quatro páginas ficaram em quadros que enchem a janela (computador e celular deitado):
+  - **Jogo**: sua jornada (nome, data, nível, Salin), as ações da partida (continuar, salvar, exportar, sair) e a **dificuldade**, que muda na hora.
+  - **Tela e interface**: **idioma** (português, inglês, espanhol), tamanho da interface, minimapa, o que aparece na tela, pessoas nas ruas e a prévia.
+  - **Som**: volumes com botão **Ouvir**, silenciar e **jeitos de ouvir** (Tudo, Só música, Só efeitos, Baixinho).
+  - **Controles**: as teclas por assunto (Andar, Lutar, Fazer, Janelas) e o mouse; no celular, os controles de toque.
+
 ## Novidades: o nome "O Último Reino" e o jogo em inglês e espanhol
 
 - O jogo agora se chama **MEDIEVAL — O Último Reino**.

@@ -752,7 +752,7 @@ const UI = {
     const head = [], units = [];
     for (const el of flat) (units.length === 0 && isHead(el) ? head : units).push(el);
     const bottom = () => body.getBoundingClientRect().bottom - 2;
-    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .ar-bet, .ar-tier, .ar-vs, .ar-tour') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
+    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
     const deepList = (el, tiles) => lists(el, tiles).sort((x, y) => y.children.length - x.children.length)[0] || null;
     if (!small) {
       const on = (nav.startsWith('d:') && nav !== 'd:rank' && nav !== 'd:heroes') || nav.startsWith('s:') || nav.startsWith('c:') || nav.startsWith('a:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
@@ -1456,12 +1456,12 @@ const UI = {
   // ------------------------------------------------------------ balcão do seu empreendimento: comprar e vender
   // (o Balcão do seu empreendimento está em js/finance.js)
 
-  // ============================================================ Ajustes: Jogo · Tela · Som · Controles · Como jogar
+  // ============================================================ Ajustes: Jogo · Tela e interface · Som · Controles
   showSettings(tab) {
     const S = this.sel;
     if (tab) S.stab = tab;
     else if (!(this.cur && this.cur.fn === 'showSettings')) S.stab = 'jogo'; // Esc e o botão Ajustes abrem na aba Jogo
-    S.stab = S.stab || 'jogo';
+    if (!['jogo', 'tela', 'som', 'controles'].includes(S.stab)) S.stab = 'jogo'; // o antigo "Como jogar" saiu
     this.showSettingsM();
   },
   // menu de ícones à esquerda e cada assunto em quadros; escolhas viram botões (o paginador arruma: páginas no celular, uma página no computador)
@@ -1473,47 +1473,65 @@ const UI = {
     const range = (key, ic, label, sub) => `<div class="st-vol"><span class="st-ic big">${ic}</span><div class="st-tx"><b>${label}</b><small>${sub}</small>
       <div class="range-box"><input type="range" min="0" max="1" step="0.05" data-set="${key}" value="${+s[key]}"><span class="rv">${Math.round(+s[key] * 100)}%</span></div></div></div>`;
     let page = '';
+    // peças comuns das páginas: quadro com título, linha com chave liga/desliga e botões de escolha
+    const box = (cls, ic, title, hint, inner) => `<div class="aj-box ${cls}"><div class="aj-h"><span>${ic}</span><b>${title}</b></div>${hint ? `<small class="aj-hint">${hint}</small>` : ''}${inner}</div>`;
+    const tog = (key, ic, label, sub) => `<label class="aj-sw"><span class="aj-si">${ic}</span><span class="aj-st"><b>${label}</b><small>${sub}</small></span><span class="switch"><input type="checkbox" data-set="${key}" ${s[key] ? 'checked' : ''}><span></span></span></label>`;
+    const opts = (key, list, cur, act) => `<div class="aj-opts">${list.map(([v, t, sub]) => `<button class="aj-opt ${String(cur) === String(v) ? 'on' : ''}" data-act="${act || 'setopt'}" data-k="${key}" data-v="${v}"><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</button>`).join('')}</div>`;
     if (tab === 'jogo') {
       const inf = Saves.info(G.slot), blocked = G.dungeon ? 'Dentro de cavernas não dá para salvar.' : G.siege ? 'Durante um cerco não dá para salvar.' : '';
       const when = inf && inf.savedAt ? new Date(inf.savedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca';
-      const big = (cls, act, ic, label, sub, dis) => `<button class="st-big ${cls}" data-act="${act}" ${dis ? 'disabled' : ''}><span class="st-bic">${ic}</span><b>${label}</b><small>${sub}</small></button>`;
-      page = this.pageHead('▶', 'Jogo', `${this.esc(G.name)} ${this.esc(G.surname || '')} · ${Calendar.full(G.day)} · espaço ${G.slot}`)
-        + `<div class="card st-play kalone"><div class="st-bigs">
-          ${big('go', 'close', '▶', 'Continuar jogando', 'Voltar para a aventura')}
-          ${big('', 'savenow', '💾', 'Salvar agora', blocked || `Espaço ${G.slot} · último: ${when}`, blocked)}
-          ${big('', 'export', '⬇️', 'Exportar arquivo', 'Um .json para importar no menu', G.dungeon)}
-          ${big('quit', 'quit', icon('run'), 'Sair para o menu', 'O que não foi salvo se perde')}</div></div>`;
+      const act = (cls, a, ic, label, sub, dis) => `<button class="aj-act ${cls}" data-act="${a}" ${dis ? 'disabled' : ''}><span class="aj-ai">${ic}</span><span class="aj-at"><b>${label}</b><small>${sub}</small></span></button>`;
+      const ruled = G.civs.filter(c => c.ruler === 'player').length;
+      const facts = [['📅', Calendar.full(G.day)], ['⭐', `Nível ${P.level}`], ['🪙', `${P.gold.toLocaleString('pt-BR')} Salin`], ...(ruled ? [['👑', `${ruled} reino(s)`]] : [])];
+      page = this.pageHead('▶', 'Jogo', 'Continuar, salvar e a dificuldade da partida')
+        + `<div class="card aj aj-jogo kalone"><div class="aj-grid">
+          ${box('aj-hero', '🛡️', 'Sua jornada', '', `<div class="aj-name">${this.esc(G.name)} ${this.esc(G.surname || '')}</div><div class="aj-facts">${facts.map(([i, t]) => `<span><i>${i}</i>${t}</span>`).join('')}</div>`)}
+          ${box('aj-acts', '⚔️', 'Partida', '', `<div class="aj-actg">${act('go', 'close', '▶', 'Continuar jogando', 'Voltar para a aventura')}
+            ${act('', 'savenow', '💾', 'Salvar agora', blocked || `Espaço ${G.slot} · último: ${when}`, blocked)}
+            ${act('', 'export', '⬇️', 'Exportar arquivo', 'Um .json para guardar ou levar', G.dungeon)}
+            ${act('quit', 'quit', icon('run'), 'Sair para o menu', 'O que não foi salvo se perde')}</div>`)}
+          ${box('aj-diff', '⚖️', 'Dificuldade', 'Pode mudar a qualquer hora', opts('diff', Object.entries(DIFFICULTY).map(([k, d]) => [k, d.name, k === 'easy' ? 'inimigos fracos' : k === 'hard' ? 'inimigos fortes' : 'equilibrado']), G.diff))}
+        </div></div>`;
     } else if (tab === 'tela') {
-      page = this.pageHead('🖥️', 'Tela e interface', 'Minimapa e o que aparece na tela')
-        + `<div class="card st-screen kalone"><div class="st-cols">${small ? '' : `<div class="st-col"><div class="sec">🔍 Escala</div><small class="st-hint">A automática se ajusta ao tamanho da tela</small>${chips('uiScale', [['auto', 'Auto'], [0.7, '70%'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']], s.uiScale)}</div>`}<div class="st-col"><div class="sec">🗺️ Minimapa</div>${sw('minimap', '👁️', 'Mostrar', 'toque nele para abrir o mapa')}${sw('ambience', '✨', 'Efeitos de ambiente', 'fumaça, nuvens, reflexos, pássaros, luz do pôr do sol')}${chips('miniSize', [[140, 'P', 'pequeno'], [180, 'M', 'médio'], [230, 'G', 'grande']], s.miniSize)}</div><div class="st-col"><div class="sec">👥 Pessoas nas ruas</div><small class="st-hint">Cidade cheia pesa: o resto do povo fica em casa ou no trabalho</small>${chips('streets', [['few', 'Poucas', '~35 por vila'], ['normal', 'Normal', '~60 por vila'], ['all', 'Todas', 'sem limite']], s.streets || 'normal')}</div><div class="st-col"><div class="sec">📋 Informações</div>${sw('numbers', '🔢', 'Números nas barras', 'vida, energia e fome')}${sw('keysbar', '⌨️', 'Barra de atalhos', 'teclas no rodapé')}</div><div class="st-col st-pcol"><div class="sec">👀 Prévia</div><div class="sp-screen"><div class="sp-hud">${[['hp', 100], ['en', 80], ['fo', 60]].map(([k, v]) => `<div class="sp-bar ${k}"><i style="width:${v}%"></i>${s.numbers ? `<em>${v}</em>` : ''}</div>`).join('')}</div>${s.minimap ? `<div class="sp-mini" style="--m:${s.miniSize / 230}"></div>` : ''}<div class="sp-hero"></div>${s.keysbar ? '<div class="sp-keys"><i></i><i></i><i></i><i></i><i></i></div>' : ''}</div></div></div></div>`;
+      page = this.pageHead('🖥️', 'Tela e interface', 'Idioma, tamanho, mapa e o que aparece na tela')
+        + `<div class="card aj aj-tela kalone"><div class="aj-grid">
+          ${box('aj-lang', '🌐', 'Idioma', 'O jogo recarrega no idioma escolhido, de onde você está', `<div class="aj-opts">${I18N_LANGS.map(l => `<button class="aj-opt aj-flag ${I18N.lang === l.k ? 'on' : ''}" data-act="ajlang" data-v="${l.k}">${i18nFlag(l.k, 14)}<b data-noi18n>${l.name}</b></button>`).join('')}</div>`)}
+          ${small ? '' : box('aj-scale', '🔍', 'Tamanho da interface', 'Auto se ajusta à tela', opts('uiScale', [['auto', 'Auto'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']], s.uiScale))}
+          ${box('aj-map', '🗺️', 'Minimapa', '', tog('minimap', '👁️', 'Mostrar minimapa', 'toque nele para abrir o mapa') + opts('miniSize', [[140, 'P', 'pequeno'], [180, 'M', 'médio'], [230, 'G', 'grande']], s.miniSize))}
+          ${box('aj-info', '📋', 'Na tela', '', tog('numbers', '🔢', 'Números nas barras', 'vida, energia e fome') + tog('keysbar', '⌨️', 'Barra de atalhos', 'teclas no rodapé') + tog('ambience', '✨', 'Efeitos de ambiente', 'fumaça, nuvens, reflexos e pássaros'))}
+          ${box('aj-street', '👥', 'Pessoas nas ruas', 'Menos gente deixa o jogo mais leve', opts('streets', [['few', 'Poucas', '~35 por vila'], ['normal', 'Normal', '~60 por vila'], ['all', 'Todas', 'sem limite']], s.streets || 'normal'))}
+          ${box('aj-prev', '👀', 'Prévia', '', `<div class="sp-screen"><div class="sp-hud">${[['hp', 100], ['en', 80], ['fo', 60]].map(([k, v]) => `<div class="sp-bar ${k}"><i style="width:${v}%"></i>${s.numbers ? `<em>${v}</em>` : ''}</div>`).join('')}</div>${s.minimap ? `<div class="sp-mini" style="--m:${s.miniSize / 230}"></div>` : ''}<div class="sp-hero"></div>${s.keysbar ? '<div class="sp-keys"><i></i><i></i><i></i><i></i><i></i></div>' : ''}</div>`)}
+        </div></div>`;
     } else if (tab === 'som') {
+      const vol = (key, ic, label, sub, test) => `<div class="aj-vol"><span class="aj-vi">${ic}</span><span class="aj-vt"><b>${label}</b><small>${sub}</small>
+        <span class="range-box"><input type="range" min="0" max="1" step="0.05" data-set="${key}" value="${+s[key]}"><span class="rv">${Math.round(+s[key] * 100)}%</span></span></span>
+        <button class="aj-test" data-act="ajtest" data-v="${test}" title="Ouvir">🔈 Ouvir</button></div>`;
+      const pre = [['all', '🎶', 'Tudo', 0.5, 0.7], ['music', '🎵', 'Só música', 0.6, 0], ['sfx', '🔔', 'Só efeitos', 0, 0.8], ['calm', '🌙', 'Baixinho', 0.2, 0.3]];
+      const curPre = (pre.find(p => p[3] === +s.music && p[4] === +s.sfx) || [])[0];
       page = this.pageHead('🔊', 'Som', 'Música e efeitos, todos criados pelo próprio jogo')
-        + `<div class="card st-sound kalone">${range('music', '🎵', 'Música', 'Uma música alegre e leve')}${range('sfx', '🔔', 'Efeitos', 'Passos, golpes, machado, fogueira, chuva...')}
-          ${sw('mute', '🔇', 'Silenciar tudo', 'Desliga todo o áudio do jogo')}</div>`;
-    } else if (tab === 'controles') {
-      const h = this.helpParts();
-      page = this.pageHead('🎮', 'Controles', small ? 'Controles de toque' : 'Teclado e mouse')
-        + (small ? '' : `<div class="card st-keys"><div class="sec">⌨️ Teclado <span>clique numa ação e aperte a tecla nova · Esc cancela</span></div>
-          <div class="kb-grid">${KEY_ACTIONS.map(([a, label]) => `<button class="kb-row ${Keys.waiting === a ? 'wait' : ''}" data-act="keybind" data-a="${a}"><span>${label}</span><kbd>${Keys.waiting === a ? 'aperte…' : this.esc(Keys.name(Keys.get(a)))}</kbd></button>`).join('')}</div>
-          <div class="kb-foot"><span class="kb-mouse">🖱️ Clique esquerdo: atacar · Botão direito: bloquear · Roda: zoom · Clique numa pessoa: conversar · Esc: fechar e pausar · Setas também andam</span>
-            <button data-act="keyreset" ${Object.keys(G.settings.keymap || {}).length ? '' : 'disabled'}>↺ Teclas padrão</button></div></div>`)
-        + (small ? `<div class="card st-touch kalone"><div class="sec">👆 Controles de toque <span>ligam sozinhos no celular</span></div>
-          <button class="st-edit" data-act="tcedit"><span class="st-eic">✥</span><span class="st-tx"><b>Ajustar posição e tamanho</b><small>${G.settings.touchLayout ? 'Do seu jeito · toque para mudar' : 'Arraste o joystick e os botões para onde preferir'}</small></span><span class="st-go">›</span></button><div class="st-tgrid">${[['🕹️', 'Joystick', 'à esquerda: arraste para andar'], ['⚔️', 'Atacar', 'golpeia e coleta recursos'], ['✋', 'Interagir', 'conversar, abrir e usar'], ['🛡️', 'Bloquear e esquivar', 'botões ao lado do ataque'], ['🗺️', 'Minimapa', 'toque para abrir o mapa'], ['☰', 'Barra de baixo', 'mochila, criar, construir e mais']].map(([i, t, d]) => `<div class="st-tip"><span class="st-ic">${i}</span><div class="st-tx"><b>${t}</b><small>${d}</small></div></div>`).join('')}</div></div>` : '');
+        + `<div class="card aj aj-som kalone"><div class="aj-grid">
+          ${box('aj-vols', '🎚️', 'Volume', '', vol('music', '🎵', 'Música', 'flauta e alaúde, alegre e leve', 'music') + vol('sfx', '🔔', 'Efeitos', 'passos, golpes, machado, fogueira, chuva...', 'sfx') + tog('mute', '🔇', 'Silenciar tudo', 'desliga todo o áudio do jogo'))}
+          ${box('aj-pre', '✨', 'Jeitos de ouvir', 'Um toque acerta os dois volumes', `<div class="aj-opts">${pre.map(([k, i, t, m, f]) => `<button class="aj-opt ${curPre === k && !s.mute ? 'on' : ''}" data-act="ajpre" data-m="${m}" data-f="${f}"><b>${i} ${t}</b><small>música ${Math.round(m * 100)}% · efeitos ${Math.round(f * 100)}%</small></button>`).join('')}</div>`)}
+        </div></div>`;
     } else {
-      const h = this.helpParts();
-      page = this.pageHead('❓', 'Como jogar', 'Primeiros passos e dicas')
-        + `<div class="card st-steps"><div class="sec">🧭 Primeiros passos</div><div class="st-list">${h.steps.map((x, i) => `<div class="st-step"><span class="st-n">${i + 1}</span><span>${x}</span></div>`).join('')}${small ? '' : h.paras.map(x => `<div class="st-step tip"><span class="st-n">💡</span><span>${x}</span></div>`).join('')}</div></div>
-        ${small && h.paras.length ? `<div class="card st-tipsc"><div class="sec">💡 Dicas</div><div class="st-list">${h.paras.map(x => `<div class="st-step tip"><span class="st-n">💡</span><span>${x}</span></div>`).join('')}</div></div>` : ''}`;
+      // teclas por assunto: andar, lutar, fazer e janelas
+      const KG = [['🚶', 'Andar', ['up', 'down', 'left', 'right', 'run']], ['⚔️', 'Lutar', ['attack', 'heavy', 'block', 'dodge', 'siege']],
+        ['✋', 'Fazer', ['interact', 'eat', 'tool', 'dig', 'ride', 'orders']], ['🪟', 'Janelas', ['inventory', 'craft', 'build', 'kingdom', 'map', 'diary']]];
+      const short = { interact: 'Interagir', heavy: 'Golpe forte (segurar)', siege: 'Aríete ou catapulta', eat: 'Comer', dig: 'Pá: cavar ou aterrar' };
+      const row = a => { const k = KEY_ACTIONS.find(x => x[0] === a); if (!k) return ''; return `<button class="aj-key ${Keys.waiting === a ? 'wait' : ''}" data-act="keybind" data-a="${a}" title="${this.esc(k[1])}"><span>${short[a] || k[1]}</span><kbd>${Keys.waiting === a ? 'aperte…' : this.esc(Keys.name(Keys.get(a)))}</kbd></button>`; };
+      const mouse = [['🖱️', 'Clique esquerdo', 'atacar e coletar'], ['🛡️', 'Botão direito', 'bloquear'], ['🔍', 'Roda', 'zoom'], ['💬', 'Clique numa pessoa', 'conversar'], ['⎋', 'Esc', 'fechar e pausar'], ['⬆️', 'Setas', 'também andam']];
+      page = this.pageHead('🎮', 'Controles', small ? 'Controles de toque' : 'Clique numa ação e aperte a tecla nova (Esc cancela)')
+        + (small ? `<div class="card aj aj-touch kalone"><div class="aj-grid">
+          ${box('aj-tlist', '👆', 'Controles de toque', '', `<button class="aj-act go" data-act="tcedit"><span class="aj-ai">✥</span><span class="aj-at"><b>Ajustar posição e tamanho</b><small>${G.settings.touchLayout ? 'Do seu jeito · toque para mudar' : 'Arraste o joystick e os botões para onde preferir'}</small></span></button><div class="aj-tips">${[['🕹️', 'Joystick', 'arraste para andar'], ['⚔️', 'Atacar', 'golpeia e coleta'], ['✋', 'Interagir', 'conversar, abrir e usar'], ['🛡️', 'Bloquear e esquivar', 'ao lado do ataque'], ['🗺️', 'Minimapa', 'toque para abrir o mapa'], ['☰', 'Barra de baixo', 'mochila, criar, construir']].map(([i, t, d]) => `<div class="aj-tip"><span>${i}</span><b>${t}</b><small>${d}</small></div>`).join('')}</div>`)}
+        </div></div>`
+        : `<div class="card aj aj-keys kalone"><div class="aj-grid">
+          ${KG.map(([ic, t, list]) => box('aj-kg', ic, t, '', `<div class="aj-klist">${list.map(row).join('')}</div>`)).join('')}
+          ${box('aj-mouse', '🖱️', 'Mouse', '', `<div class="aj-tips">${mouse.map(([i, t, d]) => `<div class="aj-tip"><span>${i}</span><b>${t}</b><small>${d}</small></div>`).join('')}</div><button class="aj-reset" data-act="keyreset" ${Object.keys(G.settings.keymap || {}).length ? '' : 'disabled'}>↺ Voltar às teclas padrão</button>`)}
+        </div></div>`);
     }
-    const groups = [[null, [['jogo', '▶', 'Jogo'], ['tela', '🖥️', 'Tela e interface'], ['som', '🔊', 'Som'], ['controles', '🎮', 'Controles'], ['ajuda', '❓', 'Como jogar']]]];
+    const groups = [[null, [['jogo', '▶', 'Jogo'], ['tela', '🖥️', 'Tela e interface'], ['som', '🔊', 'Som'], ['controles', '🎮', 'Controles']]]];
     this.open('Ajustes', `<div class="iconnav st">${this.navHtml(groups, tab, 'stab', `<div class="kpg">${page}</div>`)}</div>`, 'showSettings', [], 'Jogo, tela, som e controles');
     this.fitReino('s:' + tab, 'set/' + tab);
-    // computador, Como jogar: a letra dos passos diminui um pouco até todos caberem na página
-    if (!small && tab === 'ajuda') {
-      const l = this.panel.querySelector('.st-steps .st-list');
-      const out = () => { const r = l.getBoundingClientRect(), c = l.lastElementChild.getBoundingClientRect(); return c.right > r.right + 1 || c.bottom > r.bottom + 1; };
-      for (let px = 12; px >= 9.5 && out(); px -= 0.5) l.style.fontSize = px + 'px';
-    }
   },
   // a tecla apertada enquanto uma ação esperava (Ajustes → Controles)
   keyChosen(code) {
@@ -2532,6 +2550,9 @@ const UI = {
       case 'keyreset': Keys.reset(); this.msg('⌨️ Teclas de volta ao padrão.'); this.showSettings(); return;
       case 'tcedit': Touch.edit(); return;
       case 'setopt': Game.setSetting(d.k, d.v); this.showSettings(); return;
+      case 'ajlang': I18N.set(d.v); return;
+      case 'ajpre': Game.setSetting('music', d.m); Game.setSetting('sfx', d.f); Game.setSetting('mute', false); this.showSettings(); return;
+      case 'ajtest': Sound.play(d.v === 'music' ? 'levelup' : 'coin'); return;
       case 'bcat': this.sel.bcat = d.k; this.sel.build = null; this.showBuild(); return;
       case 'vping': { const v = World.villages[+d.v]; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
       case 'tax': Game.setTax(+d.c, +d.d); break;

@@ -132,7 +132,7 @@ const I18N = {
     h = String(h); if (!/\p{L}/u.test(h)) return h;
     const c = this.cache.get('\u0003' + h); if (c !== undefined) return c;
     const r = h.replace(/(\b(?:title|placeholder|aria-label|data-tip)=")([^"]*)"/g, (_, a, v) => a + this.t(v.replace(/&quot;/g, '"')).replace(/"/g, '&quot;') + '"')
-      .replace(/>([^<]+)</g, (m, x) => '>' + this.ent(x) + '<')
+      .replace(/(<[^>]*)?>([^<]+)</g, (m, tag, x) => (tag || '') + '>' + (tag && tag.indexOf('data-noi18n') >= 0 ? x : this.ent(x)) + '<') // data-noi18n: fica como está
       .replace(/^([^<]+)(?=<|$)/, x => this.ent(x)).replace(/>([^<]+)$/, (m, x) => '>' + this.ent(x));
     if (this.cache.size > 20000) this.cache.clear();
     this.cache.set('\u0003' + h, r);
