@@ -248,8 +248,11 @@ const Reign = {
     if (!this.isKing()) { UI.open('👑 Reinado', '<p>O reinado é para quem governa um reino. Conquiste ou funde um.</p>', 'showReign', [], ''); return; }
     tab = tab || UI.sel.rgTab || 'council'; UI.sel.rgTab = tab; this.fillCouncil();
     const R = this.R(), c = this.main(), esc = UI.esc.bind(UI), btn = (act, label, extra, dis) => `<button data-act="${act}" ${extra || ''} ${dis ? 'disabled' : ''}>${label}</button>`;
-    const tabs = [['council', '📜 Conselho'], ['aud', '⚖️ Audiências'], ['fiefs', '🏰 Vassalos'], ['spy', '🗡️ Espionagem'], ['heirs', '📚 Herdeiros'], ['diplo', '🤝 Diplomacia'], ['money', '💰 Tesouro'], ['army', '⚔️ Exército'], ['court', '🎭 Corte e legado']];
-    let h = `<p><b>${this.titleName()} ${esc(G.name)}</b> · ${this.realms().map(x => CIV_DEFS[x.id].short).join(', ')} · tesouro de ${CIV_DEFS[c.id].short}: <b>${c.treasury} 🪙</b>${R.plots.some(p => p.found) ? ' · <b class="bad">🗡️ complô descoberto!</b>' : ''}</p>
+    const tabs = [['council', '📜 Conselho'], ['aud', '⚖️ Audiências'], ['fiefs', '🏰 Vassalos'], ['spy', '🗡️ Espionagem'], ['heirs', '📚 Herdeiros'], ['diplo', '🤝 Diplomacia'], ['pacts', '📜 Tratados'], ['money', '💰 Tesouro'], ['army', '⚔️ Exército'], ['court', '🎭 Corte e legado']];
+    // faixa do rei: os reinos (com o brasão), o tesouro, o povo, o exército e os alertas
+    const rg = (ic, label, val, cls) => `<span class="rg-chip ${cls || ''}"><i>${ic}</i><small>${label}</small><b>${val}</b></span>`;
+    let h = `<div class="rg-top"><span class="rg-arms">${this.realms().map(x => Heraldry.armsSvg(x.id, 26)).join('')}</span><span class="rg-who"><b>${this.titleName()} ${esc(G.name)}</b><small>${this.realms().map(x => CIV_DEFS[x.id].short).join(' · ')}</small></span>
+      ${rg('🪙', 'Tesouro', c.treasury.toLocaleString('pt-BR'))}${rg('😊', 'Povo', Math.round(c.happy) + '%', c.happy < 30 ? 'bad' : '')}${rg('🛡️', 'Guarnição', c.garrison)}${rg('🏰', 'Vassalos', Object.keys(R.fiefs).length)}${R.plots.some(p => p.found) ? rg('🗡️', 'Alerta', 'complô!', 'bad') : R.dilemma ? rg('📜', 'Conselho', 'dilema', 'warn') : ''}</div>
       <div class="tabs">${tabs.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" data-act="rgTab" data-t="${k}">${n}${k === 'council' && R.dilemma ? ' •' : k === 'aud' && R.aud.length ? ` (${R.aud.length})` : ''}</button>`).join('')}</div>`;
     const person = p => p ? `${esc(People.full(p))} <small>· lealdade ${Math.round(p.loyal || 0)} · ambição ${Math.round(p.amb || 0)}</small>` : '—';
     if (tab === 'council') {
@@ -282,6 +285,8 @@ const Reign = {
         <div class="act-row">${['commerce', 'nonagg', 'passage'].map(k => has(k) ? btn('rgBreak', `Romper ${{ commerce: 'comércio', nonagg: 'não agressão', passage: 'passagem' }[k]}`, `data-c="${o.id}" data-k="${k}"`) : btn('rgSign', `📜 ${{ commerce: 'Comércio (+5% renda)', nonagg: 'Não agressão', passage: 'Livre passagem (+3% renda)' }[k]}`, `data-c="${o.id}" data-k="${k}"`)).join('')}
           ${o.overlord === c.id ? '' : btn('rgVassal', '👑 Exigir vassalagem', `data-c="${o.id}"`)}${btn('rgHostage', '🤝 Pedir um refém', `data-c="${o.id}"`)}${btn('rgWed', '💍 Casamento real', `data-c="${o.id}"`)}</div></div>`; }).join('');
       const hs = R.hostages.map(id => G.people[id]).filter(p => p && p.alive); if (hs.length) h += `<div class="card"><div class="sec">Reféns na sua corte</div><p>${hs.map(p => `${esc(People.full(p))} (${CIV_DEFS[p.hostage] ? CIV_DEFS[p.hostage].short : '?'})`).join(', ')}</p></div>`;
+    } else if (tab === 'pacts') {
+      // os tratados (casamento entre dinastias, comércio, tributos e reféns) entram depois, pelo Portfólio
     } else if (tab === 'money') {
       const b = R.budget, row = (k, n, d) => `<div class="wc-row"><span class="wc-l"><b>${n}</b><small>${d}</small></span><span class="wc-step"><button data-act="rgBud" data-k="${k}" data-d="-1" ${b[k] <= 0 ? 'disabled' : ''}>−</button><b>${b[k]}</b><button data-act="rgBud" data-k="${k}" data-d="1" ${b[k] >= 3 ? 'disabled' : ''}>+</button></span></div>`;
       h += `<div class="card"><div class="sec">📊 Orçamento <span>${this.budgetCost()} 🪙 por mês</span></div>${row('army', '⚔️ Exército', 'treino e moral da tropa')}${row('court', '🎭 Corte', 'lealdade dos vassalos, do conselho e da nobreza')}${row('works', '🏗️ Obras', 'as vilas do reino crescem mais rápido')}${row('church', '⛪ Igreja', 'clero e fé')}</div>

@@ -128,18 +128,15 @@ const Abdicate = {
     if (a === 'abdicate') { Abdicate.ask(+d.c); return; }
     return act0(a, d);
   };
-  // a renúncia aparece na janela do seu reino
-  const sk0 = UI.showKingdom.bind(UI);
-  UI.showKingdom = function (ci, ...rest) {
-    const r = sk0(ci, ...rest);
-    const pb = this.panel && this.panel.querySelector('.pb');
-    if (pb && G.civs[ci] && G.civs[ci].ruler === 'player' && ['resumo', 'coroa'].includes(this.sel.ksub || 'resumo') && !pb.querySelector('[data-act="abdicate"]')) {
-      const div = document.createElement('div'); div.className = 'card'; div.style.marginTop = '12px';
-      div.innerHTML = `<div class="sec">👑 Coroa</div><p class="dt-desc">Passar a coroa adiante: ${UI.esc((() => { const h = Abdicate.heir(ci); return h.p ? People.full(h.p) + ' (' + h.why + ')' : h.why; })())} assume o trono e você vira Duque.</p>
-        <div class="act-row"><button class="danger" data-act="abdicate" data-c="${ci}">👑 Renunciar ao trono</button></div>`;
-      pb.appendChild(div);
-    }
-    return r;
+  // a renúncia aparece na janela do seu reino (dentro da página, para entrar na divisão em páginas)
+  const kpA = UI.kPage.bind(UI);
+  UI.kPage = function (nav) {
+    const h = kpA(nav), ci = nav && nav.startsWith('k:') ? +nav.slice(2) : -1;
+    if (ci < 0 || !G.civs[ci] || G.civs[ci].ruler !== 'player' || !['resumo', 'coroa'].includes(this.sel.ksub || 'resumo') || h.indexOf('data-act="abdicate"') >= 0) return h;
+    const card = `<div class="card"><div class="sec">👑 Coroa</div><p class="dt-desc">Passar a coroa adiante: ${UI.esc((() => { const hh = Abdicate.heir(ci); return hh.p ? People.full(hh.p) + ' (' + hh.why + ')' : hh.why; })())} assume o trono e você vira Duque.</p>
+        <div class="act-row"><button class="danger" data-act="abdicate" data-c="${ci}">👑 Renunciar ao trono</button></div></div>`;
+    const k = h.lastIndexOf('</div>');
+    return h.indexOf('<div class="kbody">') >= 0 && k > 0 ? h.slice(0, k) + card + h.slice(k) : h + card;
   };
   // o mensageiro chega enquanto o jogo corre; ao salvar, a resposta já vem (o ouro nunca se perde)
   const wu0 = War.update.bind(War);

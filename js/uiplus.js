@@ -260,9 +260,9 @@ const UIP = {
   UI.showBizBoard = function (tab) { UI.sel.bbTab = tab || UI.sel.bbTab; UI.sel.knav = 'x:board'; UI.showKingdom(); };
   Society.show = function (tab) { UI.sel.socTab = tab || UI.sel.socTab; UI.sel.knav = 'x:society'; UI.showKingdom(); };
   Reign.show = function (tab) { if (!Reign.isKing()) return UIP._raw.reign(tab); UI.sel.rgTab = tab || UI.sel.rgTab; UI.sel.knav = 'x:reign'; UI.showKingdom(); };
-  // as páginas novas do Portfólio rolam (não são cortadas em quadros)
+  // as páginas novas do Portfólio rolam (não são cortadas em quadros) — menos o Reinado, que é dividido em páginas
   const fr0 = UI.fitReino.bind(UI);
-  UI.fitReino = function (nav, pkey) { if ((nav || this.sel.knav || '').startsWith('x:')) { const body = this.panel && this.panel.querySelector('.iconnav .snav-body'); if (body) body.classList.remove('kfit'); return; } return fr0(nav, pkey); };
+  UI.fitReino = function (nav, pkey) { const nv = nav || this.sel.knav || ''; if (nv === 'x:reign') return fr0('x:reign', pkey || 'reign/' + (this.sel.rgTab || 'council')); if (nv.startsWith('x:')) { const body = this.panel && this.panel.querySelector('.iconnav .snav-body'); if (body) body.classList.remove('kfit'); return; } return fr0(nav, pkey); };
   // 2. ficha do item no inventário e nas oficinas; o botão "Usar" sem uso some
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {

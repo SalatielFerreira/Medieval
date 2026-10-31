@@ -123,6 +123,7 @@ const Portfolio = {
   UI.showKingdom = function (...a) {
     if (PF_TAB[this.sel.knav]) this.sel.crTab = PF_TAB[this.sel.knav]; // a Sociedade e as Vilas agora são páginas de Coroa e títulos
     if (this.sel.knav === 'x:merc') this.sel.olTab = 'merc'; // e os Mercenários, de Fora da lei
+    if (this.sel.knav === 'x:pacts') this.sel.rgTab = 'pacts'; // e os Tratados, a aba deles no Reinado
     if (PF_GONE[this.sel.knav]) this.sel.knav = Portfolio.target(this.sel.knav);
     const r = sk0(...a);
     if (this.sel.knav === 'crown') { try { Portfolio.paginate(); } catch (e) { console.error(e); } }
@@ -143,7 +144,7 @@ const Portfolio = {
     if (nav === 'x:outlaw') return Portfolio.outlaw(kp0);
     const h = kp0(nav);
     if (nav === 'tree') return h + Portfolio.part(kp0, 'family', '👪', 'A sua Casa: membros e casamento dos filhos');
-    if (nav === 'x:reign' && G.civs.some(c => c.ruler === 'player')) return h + Portfolio.part(kp0, 'x:pacts', '📜', 'Tratados: casamento entre dinastias, comércio, tributos e reféns');
+    if (nav === 'x:reign' && G.civs.some(c => c.ruler === 'player') && UI.sel.rgTab === 'pacts') return h + Portfolio.part(kp0, 'x:pacts', '📜', 'Tratados').replace(/^<div class="card pf-part">[\s\S]*?<\/div><\/div>/, ''); // a aba já se chama Tratados
     return h;
   };
 }

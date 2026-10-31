@@ -4896,3 +4896,65 @@ body.small .aj-vt b { width: 56px; flex: none; }
 body.small .aj-vt .range-box { flex: 1; margin-top: 0; }
 body.small .aj-vols .aj-vol { flex: 1 1 auto; }
 body.small .aj-test { margin-left: 4px; }
+
+/* ============ Reinado e a página de cada reino seu: conteúdo enquadrado em páginas (no computador, quadros dois a dois) */
+.rg-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; margin: 4px 0 8px; border-radius: 12px; border: 1px solid rgba(232, 192, 106, .35);
+  background: linear-gradient(100deg, rgba(120, 30, 40, .45), rgba(60, 30, 14, .55) 45%, rgba(20, 14, 8, .6)), repeating-linear-gradient(45deg, rgba(255, 220, 150, .03) 0 8px, transparent 8px 16px); box-shadow: inset 0 1px 0 rgba(255, 230, 170, .12); }
+.rg-arms { display: flex; gap: 2px; flex: none; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5)); }
+.rg-who { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.rg-who b { font-family: 'Cinzel', Georgia, serif; font-size: 17px; color: #ffe9b0; letter-spacing: .5px; }
+.rg-who small { font-size: 11px; color: #d9c08a; }
+.rg-chip { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: 6px; align-items: center; padding: 4px 10px; border-radius: 9px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(214, 174, 96, .22); }
+.rg-chip i { grid-row: span 2; font-style: normal; font-size: 16px; }
+.rg-chip small { font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: #b9a67e; }
+.rg-chip b { font-size: 14px; color: #f6e6c0; line-height: 1.1; }
+.rg-chip.bad { border-color: rgba(220, 80, 60, .6); background: rgba(120, 20, 14, .45); }
+.rg-chip.bad b { color: #ff9a86; }
+.rg-chip.warn { border-color: rgba(242, 196, 90, .6); }
+.rg-chip.warn b { color: #ffd76a; }
+/* computador: cada página é uma grade de dois quadros por linha; cabeçalho, abas e textos ocupam a largura toda */
+body:not(.small) .kpage.kd2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-content: start; padding-bottom: 6px; }
+body:not(.small) .kpages > .kpage.kd2 { height: 100%; }
+body:not(.small) .kpage.kd2 > * { grid-column: 1 / -1; margin: 0 !important; min-width: 0; }
+body:not(.small) .kpage.kd2 > .card, body:not(.small) .kpage.kd2 > .stile { grid-column: auto; }
+body:not(.small) .kpage.kd2 > .card:has(.tiles), body:not(.small) .kpage.kd2 > .card:has(.list > .item:nth-child(3)), body:not(.small) .kpage.kd2 > .card.wide { grid-column: 1 / -1; }
+body:not(.small) .kpage.kd2 > .tabs { margin-bottom: 0 !important; }
+body:not(.small) .kpage.kd2 > .card { display: flex; flex-direction: column; background: linear-gradient(180deg, rgba(255, 235, 200, .055), rgba(255, 235, 200, .02)); border-color: rgba(214, 174, 96, .28); box-shadow: 0 2px 10px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255, 230, 170, .06); }
+body:not(.small) .kpage.kd2 > .card > .act-row:last-child { margin-top: auto; padding-top: 6px; }
+body:not(.small) .kpage.kd2 > .tiles.big { grid-template-columns: repeat(3, 1fr); }
+/* o rodapé das páginas no computador: setas, bolinhas e o número da página */
+.snav-body.kd2b .kdots { height: 30px; gap: 8px; }
+.kdots .kd-arr { width: 28px; height: 24px; padding: 0; border-radius: 7px; border: 1px solid rgba(214, 174, 96, .4); background: rgba(0, 0, 0, .35); color: #f1d79a; font-size: 16px; line-height: 1; cursor: pointer; }
+.kdots .kd-arr:disabled { opacity: .3; cursor: default; }
+.kdots .kd-arr:not(:disabled):hover { border-color: #e8c06a; background: rgba(232, 192, 106, .15); }
+.kdots .kd-n { font-size: 11px; color: #b9a67e; min-width: 34px; text-align: center; }
+.snav-body.kd2b .kdots i { width: 8px; height: 8px; }
+/* celular: a faixa do rei mais baixa */
+body.small .rg-top { padding: 5px 8px; gap: 6px; margin: 2px 0 4px; flex-wrap: nowrap; overflow: hidden; }
+body.small .rg-arms svg { width: 18px; height: 18px; }
+body.small .rg-who b { font-size: 12.5px; }
+body.small .rg-who small { display: none; }
+body.small .rg-chip { padding: 2px 6px; }
+body.small .rg-chip small { display: none; }
+body.small .rg-chip i { font-size: 12px; grid-row: auto; }
+body.small .rg-chip b { font-size: 11.5px; }
+body:not(.small) .kpage.kd2 > .kd-solo { grid-column: 1 / -1; }
+body:not(.small) .kpage.kd2 > .pf-part { grid-column: 1 / -1; padding: 6px 2px 0; background: none !important; border: 0; border-bottom: 1px solid rgba(214, 174, 96, .25); border-radius: 0; box-shadow: none !important; }
+.kpage.kd2 > p.muted, .kpage.kd2 > .muted:only-of-type { padding: 28px 16px; text-align: center; font-size: 14px; border: 1px dashed rgba(214, 174, 96, .3); border-radius: 12px; background: rgba(0, 0, 0, .15); }
+/* celular: no Reinado o título some (a faixa do rei já diz quem é) e as abas viram uma fileira que corre de lado */
+body.small .kpage[data-nav="x:reign"] > .pg-head { display: none; }
+body.small .kpage[data-nav="x:reign"] > .tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 5px; padding-bottom: 2px; margin: 0 0 6px; scrollbar-width: none; }
+body.small .kpage[data-nav="x:reign"] > .tabs button { flex: none; display: inline-flex; flex-direction: row; align-items: center; gap: 4px; white-space: nowrap; padding: 5px 9px; font-size: 11.5px; min-height: 0; min-width: 0; }
+body.small .kpage[data-nav^="k:"] > .pg-head small { display: none; }
+body.small .kpage[data-nav^="k:"] > .pg-head { padding-bottom: 4px; }
+/* celular deitado: também dois quadros por linha no Reinado e nos seus reinos */
+body.small .kpage.kd2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-content: start; }
+body.small .kpage.kd2 > * { grid-column: 1 / -1; margin: 0 !important; min-width: 0; }
+body.small .kpage.kd2 > .card { grid-column: auto; display: flex; flex-direction: column; }
+body.small .kpage.kd2 > .card:has(.tiles), body.small .kpage.kd2 > .kd-solo, body.small .kpage.kd2 > .pf-part { grid-column: 1 / -1; }
+body.small .kpage.kd2 > .card > .act-row:last-child { margin-top: auto; }
+/* Tratados: as fileiras de cada reino lado a lado dentro do quadro */
+.kpage.kd2 > .card:has(> .pc-row) { grid-column: 1 / -1; display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 10px; align-content: start; }
+.kpage.kd2 > .card:has(> .pc-row) > :not(.pc-row) { grid-column: 1 / -1; }
+.kpage.kd2 > .card > .pc-row { margin: 0; padding: 6px 8px; border-radius: 9px; background: rgba(0, 0, 0, .2); border: 1px solid rgba(214, 174, 96, .14); }
+.kpage[data-nav="x:reign"] > .pg-head { display: none; }

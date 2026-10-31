@@ -88,6 +88,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: Reinado e seus reinos em páginas
+
+- **Reinado** e a página de **cada reino seu** (Portfólio → Seus reinos) agora cabem na janela: o que não couber vai para a próxima página, com setas, bolinhas e o número da página embaixo (a roda do mouse também passa as páginas; no celular, arraste).
+- Quadros dois a dois (no computador e no celular deitado); quadro sozinho na linha ocupa a largura toda.
+- O Reinado ganhou a **faixa do rei**: brasões dos seus reinos, tesouro, povo, guarnição, vassalos e o alerta do conselho ou de complô.
+- Os **Tratados** (casamento entre dinastias, comércio, tributos e reféns) ganharam uma aba própria no Reinado, em vez de aparecer no fim de todas.
+- A renúncia ao trono fica dentro da página do reino, junto do resto.
+
 ## Novidades: Ajustes arrumados
 
 - Saiu o "Como jogar" dos Ajustes. As quatro páginas ficaram em quadros que enchem a janela (computador e celular deitado):

@@ -265,7 +265,10 @@ const Justice = {
     const S = Justice.S(), wait = Justice.myRealm().reduce((n, ci) => n + Justice.jail(ci).filter(x => !x.until).length + (S.queue[ci] || []).length, 0);
     let b = a[1].replace(/(<button[^>]*data-act="rgTab" data-t="aud"[^>]*>)/, `<button class="${t === 'jus' ? 'on' : ''}" data-act="rgTab" data-t="jus">⛓️ Prisão e justiça${wait ? ` (${wait})` : ''}</button>$1`);
     if (t === 'jus') { UI.sel.rgTab = 'jus'; b = b.replace(/(<button[^>]*) class="on"([^>]*data-t="council")/, '$1 class=""$2'); const i = b.indexOf('<div class="tabs">'), j = b.indexOf('</div>', i) + 6; b = b.slice(0, j) + Justice.page(); }
-    return UI.open(a[0], b, a[2], [t], a[4]);
+    const r = UI.open(a[0], b, a[2], [t], a[4]);
+    // no Portfólio, o Reinado é dividido em páginas que cabem na janela
+    if (UI.cur && UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:reign') UI.fitReino('x:reign');
+    return r;
   };
   const mt0 = Lifesim.monthTick.bind(Lifesim);
   Lifesim.monthTick = function () { mt0(); try { Justice.monthTick(); } catch (e) { console.error(e); } };

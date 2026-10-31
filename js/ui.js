@@ -745,16 +745,18 @@ const UI = {
     if (!box) return;
     const small = document.body.classList.contains('small');
     body.classList.add('kfit');
-    const isHead = el => el.matches('.pg-head, .tabs, .subtabs, .ktabs');
+    // Reinado e as páginas dos seus reinos: também no computador o conteúdo é dividido em páginas (quadros dois a dois)
+    const two = nav === 'x:reign' || nav.startsWith('k:'), desk2 = !small && two;
+    const isHead = el => el.matches('.pg-head, .tabs, .subtabs, .ktabs, .rg-top');
     const flat = [];
-    const walk = parent => { for (const el of [...parent.children]) { if (small && el.matches('.fam-d, .biz-d, .atl-d, .gc-d, .ln-d')) continue; if (el.matches('.kbody, .fam-m, .biz-m, .atl-m, .gc-m, .ln-m') || (el.tagName === 'DIV' && !el.className && el.children.length > 1)) walk(el); else flat.push(el); } };
+    const walk = parent => { for (const el of [...parent.children]) { if (small && el.matches('.fam-d, .biz-d, .atl-d, .gc-d, .ln-d')) continue; if (el.matches('.kbody, .fam-m, .biz-m, .atl-m, .gc-m, .ln-m') || (two && el.matches('.kgrid, .reign, .law-grid')) || (el.tagName === 'DIV' && !el.className && el.children.length > 1)) walk(el); else flat.push(el); } };
     walk(box);
     const head = [], units = [];
     for (const el of flat) (units.length === 0 && isHead(el) ? head : units).push(el);
     const bottom = () => body.getBoundingClientRect().bottom - 2;
     const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
     const deepList = (el, tiles) => lists(el, tiles).sort((x, y) => y.children.length - x.children.length)[0] || null;
-    if (!small) {
+    if (!small && !desk2) {
       const on = (nav.startsWith('d:') && nav !== 'd:rank' && nav !== 'd:heroes') || nav.startsWith('s:') || nav.startsWith('c:') || nav.startsWith('a:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
       body.classList.toggle('kfit', on); box.classList.toggle('kdesk', on);
       if (on) box.dataset.nav = nav;
@@ -764,7 +766,7 @@ const UI = {
     const W = body.clientWidth, H = body.clientHeight - 14; // 14 = espaço dos pontinhos
     const pages = [];
     let cur;
-    const fresh = () => { cur = document.createElement('div'); cur.className = 'kpg kpage'; cur.style.width = W + 'px'; cur.dataset.nav = nav; for (const h of head) cur.appendChild(h.cloneNode(true)); body.innerHTML = ''; body.appendChild(cur); };
+    const fresh = () => { cur = document.createElement('div'); cur.className = 'kpg kpage' + (two ? ' kd2' : ''); cur.style.width = W + 'px'; cur.dataset.nav = nav; for (const h of head) cur.appendChild(h.cloneNode(true)); body.innerHTML = ''; body.appendChild(cur); };
     const fits = () => cur.scrollHeight <= H + 1;
     const hasContent = () => cur.children.length > head.length;
     const push = () => { pages.push(cur); fresh(); };
@@ -800,12 +802,22 @@ const UI = {
     const track = document.createElement('div'); track.className = 'kpages';
     for (const p of pages) track.appendChild(p);
     const dots = document.createElement('div'); dots.className = 'kdots';
-    dots.innerHTML = pages.length > 1 ? pages.map((_, i) => `<i data-i="${i}"></i>`).join('') : '';
+    dots.innerHTML = pages.length > 1 ? (desk2 ? '<button class="kd-arr" data-d="-1" title="Página anterior">‹</button>' : '') + pages.map((_, i) => `<i data-i="${i}"></i>`).join('') + (desk2 ? `<span class="kd-n"></span><button class="kd-arr" data-d="1" title="Próxima página">›</button>` : '') : '';
+    if (desk2) body.classList.add('kd2b');
     body.appendChild(track); body.appendChild(dots);
+    // quadros dois a dois: o que ficar sozinho na linha ocupa a largura toda (sem meia linha vazia)
+    if (two) for (const pg of pages) {
+      const kids = [...pg.children], half = el => el && el.offsetWidth < pg.clientWidth * 0.7;
+      for (let i = 0; i < kids.length; i++) { if (!half(kids[i])) continue; if (half(kids[i + 1])) { i++; continue; } kids[i].classList.add('kd-solo'); }
+    }
     const S = this.sel, key = pkey || S.knav + '/' + S.ksub; S.kpageOf = S.kpageOf || {};
-    const mark = () => { const i = Math.round(track.scrollLeft / W); S.kpageOf[key] = i; dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === i)); };
+    const mark = () => { const i = Math.round(track.scrollLeft / W); S.kpageOf[key] = i; dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === i));
+      const n = dots.querySelector('.kd-n'); if (n) n.textContent = `${i + 1} / ${pages.length}`; dots.querySelectorAll('.kd-arr').forEach(b => { b.disabled = +b.dataset.d < 0 ? i === 0 : i === pages.length - 1; }); };
     track.addEventListener('scroll', () => { clearTimeout(this._kdt); this._kdt = setTimeout(mark, 60); });
-    dots.addEventListener('click', e => { const d = e.target.closest('i'); if (d) track.scrollTo({ left: +d.dataset.i * W, behavior: 'smooth' }); });
+    dots.addEventListener('click', e => { const d = e.target.closest('i'); if (d) track.scrollTo({ left: +d.dataset.i * W, behavior: 'smooth' });
+      const a = e.target.closest('.kd-arr'); if (a) track.scrollTo({ left: (Math.round(track.scrollLeft / W) + +a.dataset.d) * W, behavior: 'smooth' }); });
+    // no computador, a roda do mouse também passa as páginas
+    if (desk2 && pages.length > 1) track.addEventListener('wheel', e => { if (Math.abs(e.deltaY) < 20 || this._kwT > Date.now()) return; this._kwT = Date.now() + 450; track.scrollTo({ left: (Math.round(track.scrollLeft / W) + Math.sign(e.deltaY)) * W, behavior: 'smooth' }); }, { passive: true });
     track.scrollLeft = Math.min(S.kpageOf[key] || 0, pages.length - 1) * W;
     mark();
   },
