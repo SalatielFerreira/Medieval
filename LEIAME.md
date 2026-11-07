@@ -88,6 +88,13 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Correções: menos travadas
+
+- **Troca de estação e virada do mês sem parar a tela:** o chão apagado por uma estação nova ou por obras é repintado aos poucos (o desenho de antes fica na tela até o novo ficar pronto), em vez de tudo num quadro só (antes, até 0,7 s parado).
+- As árvores, pedras e plantas de cada estação são desenhadas uma vez e guardadas; a próxima estação é preparada antes, enquanto o jogo está pausado ou com uma janela aberta.
+- Os prédios na estação nova reaproveitam o recorte já medido, em vez de medir de novo cada tipo de construção.
+- **Cópia de segurança sem tranco:** a cópia automática (a cada 2 minutos, com você parado) é compactada fora do jogo; a pausa caiu de cerca de 0,3 s para uns 0,05 s.
+
 ## Novidades: Reinado e seus reinos em páginas
 
 - **Reinado** e a página de **cada reino seu** (Portfólio → Seus reinos) agora cabem na janela: o que não couber vai para a próxima página, com setas, bolinhas e o número da página embaixo (a roda do mouse também passa as páginas; no celular, arraste).

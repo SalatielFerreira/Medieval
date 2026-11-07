@@ -93,6 +93,18 @@ chame a função original e devolva o resultado dela.
 | Interface e controles | `ui` (HUD e janelas), `windows` (cenas de abertura das janelas: tabela WIN_SCENES), `interior` (lugares fechados), `input` (gamepad e toque), `audio`, `menu` |
 | Núcleo | `game` (estado, laço principal, salvar e carregar) — carregado quase por último |
 
+## Desempenho: o que evita travadas
+
+- **Chão aos poucos:** apagar `World.chunks` (estação, obras, estradas) não repinta mais a tela num quadro só. Cada pedaço
+  pintado também fica em `World.chunkOld`; durante o desenho do jogo (`World.chunkLazy`), passado `CHUNK_BUDGET` ms no
+  quadro, o pedaço antigo aparece e o novo fica para o quadro seguinte. `chunkOld` é esquecido ao trocar de mapa (caverna)
+  ou ao entrar e sair de um cômodo. O mapa grande (`mapview`) sempre pinta na hora.
+- **Desenhos das estações:** `World.makeSprites` guarda um conjunto por estação em `Perf.sprites`; `Perf.prepSeason`
+  prepara a próxima com o jogo pausado ou uma janela aberta (`perf.js`).
+- **Recorte dos prédios:** `RCache.anySeason` reaproveita o recorte de outra estação com 10 pontos de folga.
+- **Cópia de segurança:** `Resume.write(true)` compacta com `LZ.compressAsync` (Web Worker); `Resume.write()` sem argumento
+  (ao fechar ou trocar de aba) continua compactando na hora. `Resume.seq` impede que uma cópia antiga sobrescreva a nova.
+
 ## Testes
 
 - `npm run check` — sintaxe de todos os scripts e lista de carregamento (rápido, sem navegador).

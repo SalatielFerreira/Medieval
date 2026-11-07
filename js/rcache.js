@@ -22,6 +22,7 @@ const RCache = {
   stats: { hit: 0, draw: 0, live: 0 },
   budget: { start: 0, used: 0, ms: 4 },   // tempo por quadro para montar e refazer figuras
   boxes: new Map(),                       // aparência (sem a posição) → o retângulo com desenho
+  anySeason: new Map(),                   // aparência sem a estação → a chave de um recorte medido (de qualquer estação)
   res(ctx) { const tf = ctx.getTransform(); return Math.max(1, Math.min(4, Math.round(Math.hypot(tf.a, tf.b) * 2) / 2)); },
   // o que, se mudar, pede uma figura nova na hora
   key(s, res) { return [res, s.type, s.w, s.h, s.x, s.y, s.owner, s.progress, s.ruined, s.ruin, s.gateClosed, s.gateBroken, s.blocks, s.level, s.lv, G.season, World.season].join('|'); },
@@ -77,8 +78,12 @@ const RCache = {
           // de vídeo, a leitura chegava a 230 ms e travava a tela)
           if (!this.scratch) { this.scratch = document.createElement('canvas'); this.scratch.getContext('2d', { willReadFrequently: true }); }
           this.scratch = this.render(draw, s, w, h, res, time, this.scratch);
-          const bk = [res, s.type, s.w, s.h, s.level, s.lv, s.progress, s.ruined, s.ruin, s.gateClosed, s.gateBroken, s.blocks, G.season, World.season].join('|');
-          let bx = this.boxes.get(bk); if (!bx) { bx = this.box(this.scratch); this.boxes.set(bk, bx); if (this.boxes.size > 3000) this.boxes.clear(); }
+          const bk0 = [res, s.type, s.w, s.h, s.level, s.lv, s.progress, s.ruined, s.ruin, s.gateClosed, s.gateBroken, s.blocks].join('|'), bk = bk0 + '|' + G.season + '|' + World.season;
+          let bx = this.boxes.get(bk);
+          // estação nova: medir o recorte de cada tipo de prédio lendo os pixels travava a troca de estação. A neve e as
+          // folhas mudam pouco o contorno: vale o recorte de outra estação com mais folga (os de antes nunca são cortados)
+          if (!bx) { const o = this.boxes.get(this.anySeason.get(bk0)); if (o) { const W = this.scratch.width, H = this.scratch.height, x = Math.max(0, o.x - 10), y = Math.max(0, o.y - 10); bx = { x, y, w: Math.min(W - x, o.w + 20), h: Math.min(H - y, o.h + 20), wide: true }; this.boxes.set(bk, bx); } }
+          if (!bx) { bx = this.box(this.scratch); if (this.boxes.size > 3000) { this.boxes.clear(); this.anySeason.clear(); } this.boxes.set(bk, bx); this.anySeason.set(bk0, bk); }
           c = { key, cv: this.crop(this.scratch, bx, c && c.cv), bx, res, born: now, live: false, ttl: RCACHE_TTL + Math.random() * 2 }; this.map.set(s, c); this.stats.draw++;
         } else {
           // refaz numa tela de rascunho do tamanho inteiro e copia só o retângulo com desenho

@@ -82,6 +82,7 @@ const OBJ = [null,
 for (const o of OBJ) if (o) o.regrow = YEAR_DAYS * DAY_LEN;
 
 const CH = 16; // tiles por chunk
+const CHUNK_BUDGET = 4; // ms por quadro para repintar pedaços do chão que já têm uma versão antiga na tela
 const HALF = TILE / 2; // resolução interna (pixel art 2x)
 
 const World = {
@@ -875,10 +876,25 @@ const World = {
   },
 
   // ---------------------------------------------------------------- desenho do terreno
+  // Repintar aos poucos: quando a estação muda ou uma obra apaga os pedaços guardados (World.chunks), a tela inteira
+  // precisaria ser repintada num quadro só (meio segundo parado). Por isso cada pedaço pintado também fica em chunkOld,
+  // que ninguém apaga: durante o desenho do jogo (chunkLazy), passado o tempo do quadro (CHUNK_BUDGET ms), o pedaço
+  // antigo aparece mais um quadro e o novo é pintado no seguinte. chunkOld só vale no mesmo mapa e lugar (ao entrar
+  // numa caverna ou num cômodo, ou ao gerar o mundo, ele é esquecido).
+  chunkOld: new Map(), chunkOldCtx: null, chunkLazy: false, chunkSpent: 0,
+  chunkCtx() {
+    const pl = typeof G !== 'undefined' ? (G.place ? 'p' : '') + (G.dungeon ? 'd' : '') : '';
+    if (this.chunkOldCtx && this.chunkOldCtx.tiles === this.tiles && this.chunkOldCtx.pl === pl) return;
+    this.chunkOld = new Map(); this.chunkOldCtx = { tiles: this.tiles, pl };
+  },
   getChunk(cx, cy) {
     const key = cx + ',' + cy;
     let c = this.chunks.get(key);
     if (c) { this.chunks.delete(key); this.chunks.set(key, c); return c; }
+    this.chunkCtx();
+    const old = this.chunkOld.get(key);
+    if (old && this.chunkLazy && this.chunkSpent >= CHUNK_BUDGET) return old;
+    const t0 = performance.now();
     if (this.chunks.size > 220) this.chunks.delete(this.chunks.keys().next().value);
     c = document.createElement('canvas');
     c.width = c.height = CH * HALF;
@@ -888,6 +904,9 @@ const World = {
       this.paintTile(g, x, y, tx * HALF, ty * HALF);
     }
     this.chunks.set(key, c);
+    this.chunkOld.delete(key); this.chunkOld.set(key, c);
+    if (this.chunkOld.size > 260) this.chunkOld.delete(this.chunkOld.keys().next().value);
+    this.chunkSpent += performance.now() - t0;
     return c;
   },
   // cor do terreno na estação atual

@@ -129,6 +129,27 @@ const LZ = {
     }
     return new TextDecoder().decode(buf.subarray(0, n));
   },
+  // Compacta fora do jogo (num Web Worker), para a cópia de segurança não parar a tela: devolve uma promessa com o
+  // texto compactado. Sem Worker (navegador antigo ou bloqueado), compacta aqui mesmo.
+  worker: null, jobs: new Map(), jobN: 0,
+  compressAsync(str) {
+    if (!this.worker && this.worker !== false) {
+      try {
+        const src = `const LZ = { MAX: ${this.MAX}, RESET: ${this.RESET}, FIRST: ${this.FIRST}, ${this.compress.toString()} };
+          onmessage = e => postMessage({ id: e.data.id, out: LZ.compress(e.data.str) });`;
+        const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+        this.worker = new Worker(url);
+        this.worker.onmessage = e => { const j = this.jobs.get(e.data.id); if (j) { this.jobs.delete(e.data.id); j.ok(e.data.out); } };
+        this.worker.onerror = () => { this.worker = false; for (const j of this.jobs.values()) j.fallback(); this.jobs.clear(); };
+      } catch (e) { this.worker = false; }
+    }
+    if (!this.worker) return Promise.resolve(this.compress(str));
+    return new Promise(ok => {
+      const id = ++this.jobN;
+      this.jobs.set(id, { ok, fallback: () => ok(this.compress(str)) });
+      this.worker.postMessage({ id, str });
+    });
+  },
 };
 
 class MinHeap {

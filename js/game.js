@@ -1909,11 +1909,14 @@ const Game = {
 
     // terreno
     const CPX = CH * TILE;
+    // pedaços apagados (estação nova, obras) são repintados aos poucos: veja World.getChunk
+    World.chunkLazy = true; World.chunkSpent = 0;
     for (let gy = Math.floor(cy / CPX); gy <= Math.floor((cy + ch) / CPX); gy++)
       for (let gx = Math.floor(cx / CPX); gx <= Math.floor((cx + cw) / CPX); gx++) {
         if (gx < 0 || gy < 0 || gx * CH >= WORLD_W || gy * CH >= WORLD_H) continue;
         ctx.drawImage(World.getChunk(gx, gy), gx * CPX - cx, gy * CPX - cy, CPX + 1 / z, CPX + 1 / z);
       }
+    World.chunkLazy = false;
     const amb = Ambience.on();
     if (amb && Ambience.outdoors()) Ambience.drawWater(ctx, cx, cy, cw, ch, t);
 
@@ -2267,29 +2270,45 @@ const Game = {
 // a janela aberta e, no menu, a tela em que você estava (com o herói que estava criando).
 const Resume = {
   KEY: 'medieval_resume',
-  write() {
+  // seq: cada cópia recebe um número; a compactada fora do jogo só é gravada se nenhuma cópia mais nova veio antes
+  seq: 0, busy: false,
+  write(later) {
+    const n = ++this.seq;
     try {
       let st;
       if (G.state === 'play') {
         if (G.dungeon) return; // dentro de cavernas fica valendo a última cópia de fora
         const win = UI.cur && !UI.panel.classList.contains('hidden') ? { fn: UI.cur.fn, args: UI.cur.args || [] } : null;
-        st = { kind: 'game', slot: G.slot, win, map: !!MapView.isOpen, sel: UI.sel, data: 'LZ1:' + LZ.compress(JSON.stringify(Game.snapshot())) };
+        const json = JSON.stringify(Game.snapshot());
+        st = { kind: 'game', slot: G.slot, win, map: !!MapView.isOpen, sel: UI.sel };
+        // a cópia de todo dia (later) é compactada fora do jogo; ao fechar ou trocar de aba, tem que ser na hora
+        if (later) {
+          const head = JSON.stringify(st);
+          this.busy = true;
+          LZ.compressAsync(json).then(z => {
+            this.busy = false;
+            if (n !== this.seq || G.state !== 'play') return;
+            try { sessionStorage.setItem(this.KEY, head.slice(0, -1) + ',"data":' + JSON.stringify('LZ1:' + z) + '}'); } catch (e) { /* sem espaço na aba */ }
+          });
+          return;
+        }
+        st.data = 'LZ1:' + LZ.compress(json);
       } else if (G.state === 'menu') st = { kind: 'menu', card: Menu.card || 'main', hero: Menu.hero };
       if (st) sessionStorage.setItem(this.KEY, JSON.stringify(st));
-    } catch (e) { /* sem espaço na aba: recarregar volta ao menu */ }
+    } catch (e) { this.busy = false; /* sem espaço na aba: recarregar volta ao menu */ }
   },
   clear() { try { sessionStorage.removeItem(this.KEY); } catch (e) { /* nada guardado */ } },
   watch() {
     window.addEventListener('pagehide', () => this.write());
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.write(); });
-    // a cópia de segurança junta e compacta o jogo inteiro (num jogo grande, um tranco): só a cada 2 minutos e com você
-    // parado ou numa janela — nunca no meio de uma caminhada
+    // a cópia de segurança junta o jogo inteiro (o tranco que sobra é pequeno: a compactação vai para fora do jogo):
+    // só a cada 2 minutos e com você parado ou numa janela — nunca no meio de uma caminhada
     let last = 0, px = 0, py = 0, still = 0;
     setInterval(() => {
-      if (G.state !== 'play') return;
+      if (G.state !== 'play' || this.busy) return;
       const moved = Math.abs(P.x - px) + Math.abs(P.y - py) > 4; px = P.x; py = P.y;
       still = moved ? 0 : still + 1;
-      if (Date.now() - last >= 120000 && (G.paused || still >= 2)) { last = Date.now(); this.write(); }
+      if (Date.now() - last >= 120000 && (G.paused || still >= 2)) { last = Date.now(); this.write(true); }
     }, 1500);
   },
   // devolve true se voltou para algum lugar (senão o jogo abre no menu inicial)

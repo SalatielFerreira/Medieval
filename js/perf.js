@@ -148,3 +148,29 @@ const Perf = {
   const cu0 = Content2.update.bind(Content2);
   Content2.update = function (dt) { try { cu0(dt); } finally { Perf.update(dt); } };
 }
+
+// ---------------------------------------------------------------- desenhos das estações prontos antes
+// Na troca de estação, as árvores, pedras e plantas eram redesenhadas de uma vez (de 100 a 170 ms parado, com folhas de
+// outono e neve pintadas pixel a pixel). Agora cada estação é desenhada uma vez só e guardada; e a próxima estação é
+// preparada antes, num momento em que a tela está parada (jogo pausado ou com uma janela aberta).
+{
+  const SPR = Perf.sprites = new Map(), mk0 = World.makeSprites.bind(World);
+  World.makeSprites = function () {
+    const s = this.season, got = SPR.get(s);
+    if (got) { this.sprites = got; return; }
+    mk0(); SPR.set(s, this.sprites);
+  };
+  // prepara a estação s sem trocar a que está na tela
+  Perf.prepSeason = function (s) {
+    if (SPR.has(s)) return false;
+    const cur = World.season, spr = World.sprites;
+    World.season = s;
+    try { World.makeSprites(); } finally { World.season = cur; World.sprites = spr; }
+    return true;
+  };
+  setInterval(() => {
+    if (typeof G === 'undefined' || G.state !== 'play' || G.dungeon || World.busy || World.season < 0) return;
+    const calm = G.paused || (UI.panel && !UI.panel.classList.contains('hidden'));
+    if (calm) Perf.prepSeason((World.season + 1) % 4);
+  }, 2000);
+}
