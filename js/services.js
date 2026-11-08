@@ -91,19 +91,8 @@ Object.assign(Services, {
   // o que não cabe na página vira partes (◀ 1/2 ▶), sem cortar nenhum quadro
   paginate() {
     const root = UI.panel && UI.panel.querySelector('.sv-root'), box = root && root.querySelector('.sv-pg'), list = box && box.querySelector('.sv-pl');
-    if (!list || document.body.classList.contains('small')) return;
-    const items = [...list.children], over = () => box.scrollHeight > box.clientHeight + 1;
-    if (!over() || items.length < 2) return;
-    const pages = []; let start = 0;
-    while (start < items.length) {
-      items.forEach(c => { c.hidden = true; });
-      let end = start;
-      for (let i = start; i < items.length; i++) { items[i].hidden = false; if (over() && i > start) { items[i].hidden = true; break; } end = i + 1; }
-      pages.push([start, end]); start = end;
-    }
-    const key = root.dataset.g + ':' + root.dataset.t, P0 = UI.sel.svPg || (UI.sel.svPg = {}), n = pages.length, k = Math.min(P0[key] || 0, n - 1);
-    items.forEach((c, i) => { c.hidden = i < pages[k][0] || i >= pages[k][1]; });
-    root.querySelector('.sv-sub').insertAdjacentHTML('beforeend', `<span class="cr-pager"><button data-act="svpg" data-k="${key}" data-d="-1" ${k ? '' : 'disabled'}>◀</button><b>${k + 1}/${n}</b><button data-act="svpg" data-k="${key}" data-d="1" ${k < n - 1 ? '' : 'disabled'}>▶</button></span>`);
+    if (!list) return;
+    UI.pageList({ items: [...list.children], over: () => box.scrollHeight > box.clientHeight + 1, key: root.dataset.g + ':' + root.dataset.t, store: UI.sel.svPg || (UI.sel.svPg = {}), act: 'svpg', host: root.querySelector('.sv-sub') });
   },
 });
 

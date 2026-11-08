@@ -232,7 +232,7 @@ const Society = {
     }
     return res;
   },
-  run(vi) { const E = this.E(vi); if (E.me) return; if (P.gold < 50) { UI.msg('A candidatura custa 50 🪙.', 'bad'); return; } P.gold -= 50; E.me = true; UI.msg(`🗳️ Você é candidato em ${World.villages[vi].name}. A eleição é em ${Calendar.short(E.next)}.`, 'gold'); },
+  run(vi) { const E = this.E(vi), v = World.villages[vi]; if (E.me) return; if (v && !v.free && G.civs[v.civ] && G.civs[v.civ].ruler === 'player') { UI.msg(`🗳️ ${v.name} é do seu reino: o rei não disputa a eleição das próprias vilas.`, 'bad'); return; } if (P.gold < 50) { UI.msg('A candidatura custa 50 🪙.', 'bad'); return; } P.gold -= 50; E.me = true; UI.msg(`🗳️ Você é candidato em ${World.villages[vi].name}. A eleição é em ${Calendar.short(E.next)}.`, 'gold'); },
   campaign(vi) {
     const E = this.E(vi); if (!E.me) return; if (P.gold < 40) { UI.msg('Um comício custa 40 🪙.', 'bad'); return; }
     P.gold -= 40; E.push += 4; this.cascading = true; const m0 = UI.msg; UI.msg = () => {}; try { for (const r of People.residents(vi)) People.addAff(r, 2); } finally { UI.msg = m0; this.cascading = false; }
@@ -321,13 +321,7 @@ const Society = {
         <div class="soc-guests">${cand.map(p => `<button class="${sel.includes(p.id) ? 'on' : ''}" data-act="socPick" data-p="${p.id}">${UI.esc(p.name)} <small>${SOC_GROUPS[this.groupOf(p)].icon}</small></button>`).join('')}</div>
         <div class="act-row"><button class="primary" data-act="socBanquet" ${sel.length && S.banquetDay !== G.day ? '' : 'disabled'}>🍷 Servir o banquete</button></div></div>`;
     } else if (tab === 'politics') {
-      const dd = x => U.dist(x.v.x, x.v.y, P.x / TILE, P.y / TILE) - (this.E(x.vi).me ? 1e6 : 0), vs = World.villages.map((v, vi) => ({ v, vi })).sort((x, y) => dd(x) - dd(y)).slice(0, 6);
-      h += vs.map(({ v, vi }) => { const E = this.E(vi), C = this.candidates(vi), res = this.votes(vi), el = this.elders(vi);
-        return `<div class="card"><div class="sec">🗳️ ${UI.esc(v.name)} <span>eleição em ${Calendar.short(E.next)}</span></div>
-          <p class="dt-desc">Conselho de anciãos (voto vale 3): ${el.map(p => UI.esc(p.name)).join(', ') || '—'}. ${v.lord === 'player' ? '<b class="ok">Você governa esta vila.</b>' : ''}</p>
-          <div class="list">${C.map(c => `<div class="item"><span class="ic">${v.chief === c.id ? '🏅' : '👤'}</span><div class="info"><b>${UI.esc(People.full(c))}</b><small>${res[c.id] || 0} votos${E.support === c.id ? ' · seu apoio' : ''}</small></div>${E.support === c.id ? '' : `<button data-act="socSupport" data-v="${vi}" data-p="${c.id}">Apoiar</button>`}</div>`).join('')}
-            ${E.me ? `<div class="item"><span class="ic">⭐</span><div class="info"><b>Você</b><small>${res.player || 0} votos</small></div><button class="primary" data-act="socCampaign" data-v="${vi}">📣 Comício (40 🪙)</button></div>` : ''}</div>
-          ${!E.me && v.lord !== 'player' ? `<div class="act-row"><button data-act="socRun" data-v="${vi}">🗳️ Candidatar-se (50 🪙)</button></div>` : ''}</div>`; }).join('') || '<p class="muted">Nenhuma vila por perto.</p>';
+      h += Politics.page(); // eleições das vilas, os tronos e as notícias (politics.js)
     } else {
       const L = S.secrets.filter(s => !s.used);
       h += `<p class="dt-desc">Segredos vêm dos seus confidentes, de conversas de taverna e, com o submundo a seu favor, de informantes. Na conversa com a pessoa você decide: guardar, espalhar ou chantagear.</p><div class="list">${L.map(s => { const p = G.people[s.pid]; return `<div class="item"><span class="ic">🤫</span><div class="info"><b>${UI.esc(s.text)}</b><small>${p ? UI.esc(People.full(p)) : ''}</small></div>${p ? `<button data-act="tk" data-op="open" data-id="${p.id}">💬</button>` : ''}</div>`; }).join('') || '<p class="muted">Você não sabe segredo nenhum... ainda.</p>'}</div>

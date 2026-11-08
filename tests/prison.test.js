@@ -40,7 +40,8 @@ module.exports = async () => {
       ok(G.ents.some(e => e.placeNpc && e.npc === pr), 'o morador preso não está na cela');
       Places.exit(true);
       // a lista de construção não tem mais Arena e Cemitério
-      Game.becomeRuler(0, 't'); UI.close(); UI.showBuild(); UI.close();
+      // rei de outro reino (no seu próprio reino ninguém prende o rei)
+      Game.becomeRuler(ci === 0 ? 1 : 0, 't'); UI.close(); UI.showBuild(); UI.close();
       const all = UI.buildCats.flatMap(c => c[3]); ok(!all.includes('c:arena') && !all.includes('c:cemetery'), 'Arena ou Cemitério ainda na lista');
       // jogo salvo no meio da pena
       Crime.W()[ci] = { bounty: 300, crimes: ['roubo'], resist: false }; Crime.prison(ci);

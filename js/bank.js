@@ -1,7 +1,7 @@
 'use strict';
 // O banco de cada reino: é onde fica o tesouro nacional e onde o povo (e você) guarda e movimenta o dinheiro.
 //  • Todo reino da IA já tem o seu banco perto do castelo, com nome próprio. No reino que você governa, você funda o
-//    banco (Portfólio → o seu reino → Resumo → Fundar o banco), escolhe o lugar no mapa e dá o nome.
+//    banco (Portfólio → Reinado → o seu reino → Tesouro → Fundar o banco), escolhe o lugar no mapa e dá o nome.
 //  • No balcão: conta que rende (os juros quem define é o rei), aplicações a prazo (títulos do Tesouro: o dinheiro
 //    financia o reino e volta com juros), empréstimos do reino, emprestar aos moradores, investir em famílias e vilas,
 //    expedições de comércio (risco e lucro), cofre particular para guardar itens e, de noite, dá para tentar arrombar
@@ -153,6 +153,16 @@ const Bank = {
     }
   },
 
+  // o quadro do banco no Reinado (aba Tesouro): reserva, dívida, crise e juros — ou fundar o banco
+  // extra: o que vai dentro do quadro, depois do banco (o Reinado põe ali o seu bolso ⇄ tesouro)
+  kingCard(ci, extra) {
+    const H = this.health(ci), K = H.K; extra = extra || '';
+    if (!this.has(ci)) return `<div class="card bank-k atenção"><div class="sec">🏦 O reino ainda não tem banco</div><p class="dt-desc">Sem banco, ninguém cobre o rombo quando o tesouro fica no vermelho: com ${BANK_CRISIS} meses de crise o reino quebra. Funde o banco do reino, escolha o lugar e o nome.</p>
+        <div class="act-row"><button class="primary" data-act="bankFound" data-c="${ci}" ${Inv.has(CIVIC.bank.cost) ? '' : 'disabled'}>🏦 Fundar o banco (${Object.entries(CIVIC.bank.cost).map(([k, n]) => `${n} ${ITEMS[k].name}`).join(', ')})</button></div>${extra}</div>`;
+    return `<div class="card bank-k ${H.level}"><div class="sec">🏦 ${UI.esc(K.name)} <span>${{ saudável: '✔ contas saudáveis', atenção: '⚠️ atenção', crítico: '🚨 crise', anarquia: '💥 anarquia' }[H.level]}</span></div>
+        <div class="bank-k-row"><span>Reserva <b>${K.reserve} 🪙</b></span><span>Dívida do reino <b class="${K.debt > H.cap * 0.7 ? 'bad' : ''}">${K.debt} / ${H.cap} 🪙</b></span><span>Crise <b class="${K.crisis ? 'bad' : ''}">${K.crisis}/${BANK_CRISIS}</b></span><span>Juros da conta <b>${(K.rate * 100).toFixed(1)}%</b></span></div>
+        <div class="act-row"><button class="primary" data-act="bank" data-c="${ci}" data-t="tesouro">🏦 Empréstimos, títulos e auditoria</button><button data-act="bankName" data-c="${ci}">✏️ Renomear</button></div>${extra}</div>`;
+  },
   // ---------------------------------------------------------------- tesouro nacional (o rei)
   setRate(ci, r) { if (!this.mine(ci)) return; this.K(ci).rate = r; this.log(ci, `📊 Juros da conta: ${(r * 100).toFixed(1)}% ao mês.`); },
   borrow(ci, n) {
@@ -189,15 +199,19 @@ const Bank = {
     this.log(ci, `🔎 Auditoria: ${caught} corrupto(s), ${st} 🪙 recuperados.`);
   },
   // saúde das contas do reino (para as janelas)
+  // (o saldo do mês é a conta completa do reino, a mesma do Resumo e das Finanças: treasury.js)
   health(ci) {
-    const c = G.civs[ci], K = this.K(ci), fc = Game.civForecast(c), net = fc.income - fc.upkeep;
+    const c = G.civs[ci], K = this.K(ci), net = Treasury.month(c).net;
     const level = c.anarchy ? 'anarquia' : K.crisis >= 2 ? 'crítico' : K.crisis || K.debt > this.creditCap(c) * 0.7 ? 'atenção' : 'saudável';
     return { c, K, net, level, cap: this.creditCap(c) };
   },
 
   // ---------------------------------------------------------------- todo mês
   // depois da economia de cada reino: o banco cobre o rombo (enquanto tiver reserva e crédito) ou o reino entra em crise
-  monthCiv(c, expect) {
+  // expect: o tesouro previsto no fim do mês só com o que é obrigatório (netMust); lost: o rombo do soldo que o
+  // Game.tickCiv já zerou. O banco cobre o mês inteiro: paga o soldo (vira dívida) e põe no tesouro o que falta para os
+  // outros gastos obrigatórios do mês (dívida, tributos, títulos).
+  monthCiv(c, expect, lost) {
     if (c.anarchy) return;
     const K = this.K(c.id), mine = c.ruler === 'player', cap = this.creditCap(c);
     K.reserve += Math.round(c.pop * (0.4 + K.rate * 30)); // o povo deposita (juros maiores atraem mais)
@@ -207,7 +221,7 @@ const Bank = {
     let red = false;
     if (expect < 0) {
       const need = -expect;
-      if (this.has(c.id) && K.reserve >= need && K.debt + need <= cap) { K.reserve -= need; K.debt += need; c.happy = Math.min(100, c.happy + 4.5); if (mine) Game.note(`🏦 ${K.name} cobriu o rombo de ${need} 🪙 do tesouro de ${CIV_DEFS[c.id].short} (dívida: ${K.debt} 🪙).`); }
+      if (this.has(c.id) && K.reserve >= need && K.debt + need <= cap) { K.reserve -= need; K.debt += need; c.treasury += Math.max(0, need - (lost || 0)); c.happy = Math.min(100, c.happy + 4.5); if (mine) Game.note(`🏦 ${K.name} cobriu o rombo de ${need} 🪙 do tesouro de ${CIV_DEFS[c.id].short} (dívida: ${K.debt} 🪙).`); }
       else red = true;
     }
     if (K.debt > cap) red = true;
@@ -262,7 +276,7 @@ const Bank = {
     c.ruler = 'npc'; c.rulerId = leader.id; c.rulerName = `Chefe anarquista ${leader.name}`;
     c.anarchy = { since: G.day, until: G.day + U.rint(4, 7), leader: leader.id };
     c.treasury = 0; c.garrison = 0; c.happy = 15; c.tax = 0; c.rebel = 0;
-    if (wasMine) { c.atWar = true; c.relation = -60; if (G.mainRealm === ci) { const o = G.civs.find(x => x.ruler === 'player'); G.mainRealm = o ? o.id : null; } }
+    if (wasMine) { c.atWar = true; c.relation = -60; Game.onLoseRealm(ci); }
     Heraldry.apply();
     World.villages.forEach(v => { if (v.civ === ci && !v.free) { v.free = true; v.anarch = ci; } });
     // o povo sem rei vira bárbaro: acampamentos novos perto das vilas
@@ -443,8 +457,8 @@ Object.assign(FURN, { vaultdoor: { block: true, light: 1, lr: 90, lcol: '#ffd36b
   const tc0 = Game.tickCiv.bind(Game);
   Game.tickCiv = function (c) {
     if (c.anarchy) { c.treasury = 0; c.garrison = 0; c.happy = Math.max(5, Math.min(30, c.happy)); return; }
-    const fc = this.civForecast(c), expect = c.treasury + fc.income - fc.upkeep;
-    tc0(c); Bank.monthCiv(c, expect);
+    const fc = this.civForecast(c), base = c.treasury + fc.income - fc.upkeep, expect = c.treasury + Treasury.month(c).netMust;
+    tc0(c); Bank.monthCiv(c, expect, Math.max(0, -base));
   };
   const mt0 = Lifesim.monthTick.bind(Lifesim);
   Lifesim.monthTick = function () { mt0(); Bank.monthTick(); };
@@ -484,25 +498,11 @@ Object.assign(FURN, { vaultdoor: { block: true, light: 1, lr: 90, lcol: '#ffd36b
     if (fn === 'showCastle' && args && args[0] !== undefined) body = body.replace(/<button data-act="loans" data-k="crown"[^>]*>[^<]*<\/button>/, `<button data-act="bank" data-c="${args[0]}" data-t="credito">🏦 ${UI.esc(Bank.name(args[0]))}: empréstimos e contas</button>`);
     return op0(title, body, fn, args, sub);
   };
-  // na administração do reino: o banco e o tesouro nacional
-  const kp0 = UI.kingdomPage.bind(UI);
-  UI.kingdomPage = function (ci) {
-    let h = kp0(ci);
-    if (this.sel.ksub !== 'resumo') return h;
-    const H = Bank.health(ci), has = Bank.has(ci), K = H.K;
-    h = h.replace('<small>Tesouro do reino</small>', `<small>Tesouro no ${UI.esc(K.name)}</small>`);
-    const card = has ? `<div class="card bank-k ${H.level}"><div class="sec">🏦 ${UI.esc(K.name)} <span>${{ saudável: '✔ contas saudáveis', atenção: '⚠️ atenção', crítico: '🚨 crise', anarquia: '💥 anarquia' }[H.level]}</span></div>
-        <div class="bank-k-row"><span>Reserva <b>${K.reserve} 🪙</b></span><span>Dívida do reino <b class="${K.debt > H.cap * 0.7 ? 'bad' : ''}">${K.debt} / ${H.cap} 🪙</b></span><span>Crise <b class="${K.crisis ? 'bad' : ''}">${K.crisis}/${BANK_CRISIS}</b></span><span>Juros da conta <b>${(K.rate * 100).toFixed(1)}%</b></span></div>
-        <div class="act-row"><button class="primary" data-act="bank" data-c="${ci}" data-t="tesouro">👑 Tesouro Nacional</button><button data-act="bankName" data-c="${ci}">✏️ Renomear</button></div></div>`
-      : `<div class="card bank-k atenção"><div class="sec">🏦 O reino ainda não tem banco</div><p class="dt-desc">Sem banco, ninguém cobre o rombo quando o tesouro fica no vermelho: com ${BANK_CRISIS} meses de crise o reino quebra. Funde o banco do reino, escolha o lugar e o nome.</p>
-        <div class="act-row"><button class="primary" data-act="bankFound" data-c="${ci}" ${Inv.has(CIVIC.bank.cost) ? '' : 'disabled'}>🏦 Fundar o banco (${Object.entries(CIVIC.bank.cost).map(([k, n]) => `${n} ${ITEMS[k].name}`).join(', ')})</button></div></div>`;
-    return h.replace('<div class="tiles big">', card + '<div class="tiles big">');
-  };
   // avisos de crise
   const ka0 = UI.kAlerts.bind(UI);
   UI.kAlerts = function () {
     const out = ka0();
-    for (const c of G.civs.filter(x => x.ruler === 'player')) { const K = Bank.K(c.id); if (K.crisis) out.unshift([`🚨 ${CIV_DEFS[c.id].short} em crise financeira (${K.crisis}/${BANK_CRISIS}): o reino pode quebrar.`, 'k:' + c.id]); else if (!Bank.has(c.id)) out.push([`🏦 ${CIV_DEFS[c.id].short} não tem banco: funde um no Resumo do reino.`, 'k:' + c.id]); }
+    for (const c of G.civs.filter(x => x.ruler === 'player')) { const K = Bank.K(c.id); if (K.crisis) out.unshift([`🚨 ${CIV_DEFS[c.id].short} em crise financeira (${K.crisis}/${BANK_CRISIS}): o reino pode quebrar.`, 'k:' + c.id]); else if (!Bank.has(c.id)) out.push([`🏦 ${CIV_DEFS[c.id].short} não tem banco: funde um em Reinado → Tesouro.`, 'k:' + c.id]); }
     return out;
   };
   const cu0 = Content2.update.bind(Content2);
@@ -527,8 +527,6 @@ Object.assign(FURN, { vaultdoor: { block: true, light: 1, lr: 90, lcol: '#ffd36b
         case 'borrow': Bank.borrow(ci, n); break;
         case 'repay': Bank.repay(ci, n === Infinity ? Bank.K(ci).debt : n); break;
         case 'bond': Bank.bond(ci); break;
-        case 'give': Bank.give(ci, n); break;
-        case 'take2': Bank.take(ci, n); break;
         case 'audit': Bank.audit(ci); break;
         case 'loan': Loans.take('crown', ci, undefined, n); break;
         case 'pay': Loans.pay(+d.i, d.all === '1'); break;
@@ -605,7 +603,7 @@ UI.showBank = function (ci, tab, robbing) {
       <div class="kgrid two"><div class="card"><div class="sec">📊 Juros da conta do povo</div><p class="dt-desc">Juros maiores atraem mais depósitos para a reserva, mas acima de 1% o tesouro do reino paga a diferença todo mês.</p><div class="act-row">${BANK_RATES.map(r => `<button class="${K.rate === r ? 'primary' : ''}" data-act="bk" data-op="rate" data-c="${ci}" data-n="${r}">${(r * 100).toFixed(1)}%</button>`).join('')}</div></div>
         <div class="card"><div class="sec">🧾 Dinheiro do banco para o tesouro</div><div class="act-row">${[1, 200, 500, 1000, 5000].map(n => btn('borrow', n, `+${n}`, K.reserve >= n && K.debt + n <= H.cap)).join('')}</div><div class="act-row">${[1, 100, 500, 5000].map(n => btn('repay', n, `Pagar ${n}`, K.debt > 0 && c.treasury > 0)).join('')}${btn('repay', 'all', 'Pagar tudo', K.debt > 0 && c.treasury > 0)}</div></div>
         <div class="card"><div class="sec">📜 Emitir títulos</div><p class="dt-desc">O povo compra títulos: ${300 + Math.round(c.pop * 1.5)} 🪙 agora, ${Math.round((300 + Math.round(c.pop * 1.5)) * 1.3)} 🪙 a pagar em 6 meses. Não pagar é calote (crise).</p>${btn('bond', 0, '📜 Emitir', K.bonds.length < 3)}${K.bonds.length ? `<small class="muted"> ${K.bonds.map(b => `${b.pay} 🪙 em ${Calendar.short(b.due)}`).join(' · ')}</small>` : ''}</div>
-        <div class="card"><div class="sec">💝 Seu bolso e o tesouro</div><div class="act-row">${[1, 100, 500, 5000].map(n => btn('give', n, `Doar ${n}`, P.gold >= n)).join('')}</div><div class="act-row">${[1, 100, 500, 5000].map(n => btn('take2', n, `Retirar ${n}`, c.treasury >= n)).join('')}</div><small class="muted">Doar agrada o povo; retirar desagrada o povo e as famílias.</small></div>
+        <div class="card"><div class="sec">💝 Seu bolso e o tesouro</div><p class="dt-desc">Pôr e tirar ouro do tesouro fica num lugar só: Portfólio → Reinado → Tesouro.</p><button data-act="knav" data-k="k:${ci}/tesouro">👑 Abrir o Tesouro do reino</button></div>
         <div class="card"><div class="sec">🔎 Auditoria <span>100 🪙</span></div><p class="dt-desc">Procura conselheiros corruptos e recupera metade do que foi desviado${c.stolen ? ` (${c.stolen} 🪙 sumiram)` : ''}.</p>${btn('audit', 0, '🔎 Auditar as contas', c.treasury >= 100)}</div>
         <div class="card"><div class="sec">✏️ O nome</div><p class="dt-desc">${UI.esc(K.name)}</p><button data-act="bankName" data-c="${ci}">Renomear o banco</button></div></div>
       ${K.log.length ? `<div class="card"><div class="sec">📒 Livro do banco</div>${K.log.map(l => `<div class="bank-log"><small>${Calendar.short(l.day)}</small> ${UI.esc(l.t)}</div>`).join('')}</div>` : ''}`;

@@ -57,7 +57,7 @@ module.exports = async () => {
       Diplo.declareWar(1, 6, 'teste'); Math.random = () => 0.01; try { Pacts.offerHostage(kid2.id, 6); } finally { Math.random = rnd; }
       ok(!Diplo.atWar(1, 6) && Pacts.bound(1, 6), 'entregar o filho como refém não trouxe a paz');
       Diplo.declareWar(1, 6, 'teste'); ok(!kid2.alive, 'o refém não morreu quando você atacou');
-      UI.sel.knav = 'x:pacts'; UI.showKingdom(); ok(html().includes('Casamento entre dinastias') && html().includes('Tratados de'), 'página dos tratados');
+      UI.sel.knav = 'x:pacts'; UI.showKingdom(); ok(html().includes('Casamento entre dinastias') && html().includes('data-op="trade"'), 'os tratados (Reinado → Diplomacia)');
       // ---------------- painel do reino
       Board.record(); G.day++; G.civs[1].treasury += 500; Board.record();
       const H = Board.hist(1); ok(H.length >= 2 && H[H.length - 1].tre > H[H.length - 2].tre - 1, 'histórico do painel');

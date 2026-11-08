@@ -37,8 +37,9 @@ module.exports = async () => {
       const g0 = P.gold; Nobility.monthTick(); ok(P.gold > g0, 'o feudo do Duque não rendeu');
       ok(Crime.commit(ci, 'teste', 100, null, null, true) === false, 'o Duque pagou multa no próprio reino');
       const vi = World.villages.findIndex(v => v && !v.free && v.civ === ci);
-      Chiefdom.grant(vi, 'teste'); UI.sel.knav = 'crown'; UI.showKingdom();
-      ok(!!document.querySelector('[data-act="nbLeaveV"]') && !!document.querySelector('[data-act="nbLeaveT"]'), 'faltam os botões de deixar o poder');
+      Chiefdom.grant(vi, 'teste'); UI.sel.knav = 'crown'; UI.showKingdom(); // renunciar ao título: junto das vantagens, em Títulos e corte
+      ok(!!document.querySelector('[data-act="nbLeaveT"]'), 'falta o botão de renunciar ao título');
+      UI.sel.knav = 'v:' + vi; UI.showKingdom(); ok(!!document.querySelector('[data-act="nbLeaveV"]'), 'falta o botão de deixar o governo na página da vila');
       UI.act('nbLeaveV', { v: vi }); ok(World.villages[vi].lord !== 'player', 'não deixou o governo da vila');
       UI.act('nbLeaveT', { c: ci }); ok(Court.levelIn(ci) < 0, 'não renunciou ao título');
       // 6. banco: bolsa, fundo, renda vitalícia e seguro

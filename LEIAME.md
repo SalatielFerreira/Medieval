@@ -88,6 +88,70 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Novidades: Portfólio em menos páginas
+
+- **Cada aba cabe na janela:** no computador, quase todas as abas do Portfólio ficam numa página só, sem rolar. O **Painel do
+  reino** não rola mais (faixa do reino mais baixa, números em três colunas, os seis gráficos lado a lado); no **Reinado**, o
+  Tesouro, o Conselho e as Obras cabem numa página, e os quadros se encaixam como tijolos (um quadro baixo sobe para o espaço
+  ao lado de um alto).
+- **Listas que crescem** (ranking das Grandes Casas, negócios, meses do Painel, avisos, concorrência) viram partes ◀ 1/2 ▶ no
+  alto da página, em mais colunas: o ranking passou de 16 para 7 partes num jogo de três anos; as inquietas, as companhias de
+  mercenários e os registros dos Jogos cabem numa página ou duas.
+- **Celular deitado:** nada fica escondido ou cortado — as abas de Gestão (Avisos, Painel, Sociedades, Serviços e Jogos) e
+  Títulos e corte agora viram páginas inteiras (antes parte delas sumia); no Reinado, os papéis e a faixa do rei dividem a
+  mesma linha e as listas viram duas a quatro colunas (Brasão de 9 para 5 páginas, Obras de 6 para 3, Conselho de 7 para 4,
+  a sua vila de 17 para 7). Textos longos ficam em uma ou duas linhas; o texto inteiro aparece ao parar o dedo/mouse em cima.
+- **Visão geral:** Atenção mostra os três primeiros avisos e "e mais N avisos" leva a Avisos.
+- **Sua vila:** as lojas aparecem sem o nome da vila no fim ("Moinho" em vez de "Moinho de Campo Dourado").
+
+## Novidades: o Reinado reúne tudo
+
+- **Uma janela só para o que você governa:** Portfólio → Gestão → 👑 **Reinado**, que aparece sempre. Saíram do menu Seus
+  reinos, Suas vilas, Coroa e títulos, Vilas e guardas, Finanças do reino, Sociedade e Tratados; os atalhos antigos (avisos,
+  botões do castelo e do banco) abrem o lugar novo.
+- **Papéis no alto:** um botão para cada reino seu, um para cada vila que você governa e ⚜️ Títulos e corte (todo herói tem).
+- **Rei:** a faixa do reino mostra tesouro, saldo do mês, povo, guarnição e alertas (só ali). Abas: **Reino** (população,
+  trigo, impostos, o que precisa de você, lojas sem dono e renunciar ao trono) · **Tesouro** (entradas e saídas do mês, o
+  histórico, o banco, pôr e tirar ouro do seu bolso, armazéns, orçamento, moeda e alfândega) · **Leis e justiça** (decretos,
+  leis, tribunal, prisão e procurados) · **Conselho** (dilema, complôs, as quatro cadeiras e os espiões) · **Vassalos e
+  audiências** (audiências, feudos e cavaleiros) · **Diplomacia** (uma linha por reino: presente, aliança, guerra e paz, não
+  agressão, vassalagem, comércio e tributo; casamentos e reféns) · **Exército** (recrutar, escolta, moral, treino, generais e
+  guardas do castelo) · **Obras** (investimentos, fronteiras, castelo e Grandes Obras) · **Corte** (festival, torneio e outras
+  cerimônias, baile, bobo, herdeiros e crônica) · **Brasão**. Com mais de um reino, o que vale para a dinastia (orçamento,
+  moeda, dilemas, espiões, generais, herdeiros...) fica no reino principal.
+- **Governador:** a página da vila tem o crescimento, a economia e as rendas, as lojas, a eleição da vila, os guardas, as lojas
+  sem dono, construir, anexar ao seu reino e "Deixar o governo".
+- **Títulos e corte:** títulos (com as vantagens e a renúncia de cada um), corte e relação com os 7 reinos, como virar
+  governador e fundar uma vila, e a Sociedade.
+- Pôr e tirar ouro do tesouro agora é só no Reinado → Tesouro (o banco leva até lá).
+
+## Novidades: um sistema de cada
+
+O que existia em dobro virou uma coisa só, sempre a que tem efeito de verdade no jogo:
+
+- **Conselho:** um por reino, na aba Conselho do reino no Reinado (tesoureiro, general, espião-mor e diplomata). São eles que trazem o dilema do mês no **Reinado → Conselho** (o sacerdote e o mestre espião do Reinado saíram). Conselheiro desleal e ambicioso trama; todos os complôs (do conselho, de barões, herdeiros e golpistas) são descobertos pelo espião-mor e julgados num lugar só: **Reinado → Conselho** (prender, exilar, executar ou perdoar).
+- **Tratados:** casamento entre dinastias (agora também dá direito ao trono de lá), comércio, tributo e reféns ficam na aba **Tratados** do Reinado. A **Diplomacia** do Reinado tem a não agressão e a vassalagem. Saíram o casamento real, o refém, o comércio e a livre passagem repetidos do Reinado e o "Exigir tributo" de uma vez da coroa.
+- **Justiça:** saíram o Tribunal do Rei e a audiência com o povo da coroa. Os casos vão ao tribunal das **Leis**; os pedidos do povo (lobos, poço, capela) e as brigas de herança viram **Audiências** do Reinado. Os decretos com o mesmo nome das leis (feira livre, toque de recolher, caça, escolas) saíram: ficam as leis, com o melhor dos dois.
+- **Moeda:** uma só, a do **Reinado → Tesouro** (desvalorizar e moeda forte); "Cunhar moedas" saiu.
+- **Corte:** o torneio é o **Grande Torneio real** (também no Reinado → Corte); o **baile** ficou com o efeito do banquete (grandes casas mais leais e o povo festeja); o festival continua.
+- **Exército:** recrutar é um só, na página do reino, com a quantidade (+1 ou até 6). A guarnição vai até **30** soldados em todo lugar; as Muralhas deixam o portão e os guardas mais fortes.
+- **Tesouro:** o saldo do mês é a mesma conta completa no Resumo do reino, nas Finanças, no banco e no aviso "o tesouro acaba", com todas as entradas e saídas (decretos, obras, orçamento, tratados, leis, feudos, dívida do banco...). A dívida é só a do banco (o empréstimo do dilema também), o histórico é o do Painel do reino, e sacar do tesouro tem sempre a regra do banco (o povo e as famílias não gostam).
+- A aba **Prisão e justiça** do Reinado não mostra mais "Corte e legado" ao voltar para ela.
+- Jogos salvos antigos são convertidos ao carregar.
+
+## Correções: regras do reino coerentes
+
+- **Rei não é nobre de si mesmo:** ao virar rei, o título de nobreza que você tinha naquele reino sai (os títulos dos outros reinos continuam); a guarda do seu reino deixa de procurar você, e você sai da corte de outro rei.
+- **Vila do seu reino é do reino:** se você governava uma vila do reino que passou a ser seu, ela passa à coroa (o imposto vai para o tesouro e o morador mais respeitado cuida dela até a eleição). O rei não disputa a eleição das próprias vilas, mas pode erguer a muralha delas.
+- **Guerra contra quem lhe deu um título:** se o reino ataca você, o título fica, mas salário, feudos, desconto e voz param até a paz; se é um reino seu que declara a guerra, você perde o título de lá. Vila que você governa num reino em guerra com você não paga imposto.
+- **Perder o reino limpa o que era seu:** decretos, inflação, conselho, vassalos e julgamentos não ficam presos no reino perdido; sem nenhum reino, complôs, generais e espiões acabam.
+- **Renúncia e sucessão:** o herdeiro escolhido no Reinado assume na renúncia e quando você morre; a renúncia nunca escolhe quem já é rei de outro reino; ao renunciar você vira Duque de verdade (o título aparece no seu nome).
+- **Moeda desvalorizada** encarece os preços pelos meses avisados (antes acabava em um mês).
+- **Feudos** só de vilas do seu reino; o tributo vai para o tesouro do reino da vila e o feudo acaba se a vila sair do reino. Cada reino vassalo paga ao reino seu de quem é vassalo.
+- **Fundar vila livre** só em terra selvagem; dentro do seu reino a vila nasce do reino; no reino de outro, não dá.
+- **Diplomacia do Reinado** usa a relação entre os reinos (a mesma da guerra e das alianças), não a sua relação pessoal. Tratados e tributos entre dois reinos seus acabam (não criam mais ouro do nada).
+- Jogos salvos antigos são acertados ao carregar.
+
 ## Correções: menos travadas
 
 - **Troca de estação e virada do mês sem parar a tela:** o chão apagado por uma estação nova ou por obras é repintado aos poucos (o desenho de antes fica na tela até o novo ficar pronto), em vez de tudo num quadro só (antes, até 0,7 s parado).
@@ -379,7 +443,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 - **👑 O trono:** a coroa passa de pai para filho, a não ser que alguém a tome. As únicas formas são matar o rei (na guerra ou na sala do trono) ou comprar todo o círculo do rei (general, tesoureiro, camareiro e capitão da guarda) e atacar sem que ninguém o proteja: com todos comprados, a guarda sai da sala do trono.
   - Suborne pela conversa ou pelo castelo; quem recusa pode contar ao rei.
   - Famílias descontentes dão golpes nos reinos da IA (às vezes você ouve o boato antes).
-  - Contra você: uma família com pouca lealdade compra o seu conselho e manda soldados traidores atacar onde você estiver, sem a guarda ajudar. Se você vencer, a família é expulsa; se morrer, a coroa vai para os golpistas e o seu herdeiro fica com os outros reinos. O mestre espião pode descobrir o complô antes (Reinado → Espionagem).
+  - Contra você: uma família com pouca lealdade compra o seu conselho e manda soldados traidores atacar onde você estiver, sem a guarda ajudar. Se você vencer, a família é expulsa; se morrer, a coroa vai para os golpistas e o seu herdeiro fica com os outros reinos. O mestre espião pode descobrir o complô antes (Reinado → Conselho).
 
 ## Novidades: o dobro de obras nas vilas (36 → 70)
 

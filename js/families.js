@@ -143,9 +143,11 @@ const Families = {
     // impostos das vilas do jogador
     const mine = World.villages.filter(v => v.lord === 'player');
     if (mine.length) {
-      let g = 0;
-      mine.forEach(v => { g += People.residents(World.villages.indexOf(v)).length * Court.villageTax(); });
+      let g = 0; const held = [];
+      // vila de um reino em guerra com você não paga o governador inimigo (o imposto fica retido até a paz)
+      mine.forEach(v => { if (!v.free && Court.atOdds(v.civ)) { held.push(v.name); return; } g += People.residents(World.villages.indexOf(v)).length * Court.villageTax(); });
       if (g) { P.gold += g; Game.note(`🏘️ Suas vilas pagaram ${g} 🪙 de impostos.`); }
+      if (held.length) Game.note(`🏘️ ${held.join(', ')} não pagou imposto: o reino está em guerra com você.`);
     }
   },
   // famílias sem ninguém vivo saem da lista (e seus empreendimentos fecham)
@@ -339,10 +341,13 @@ const Families = {
     const vx = Math.floor(P.x / TILE), vy = Math.floor(P.y / TILE) - 2;
     if (G.dungeon) return { ok: 'Não dá para fundar vilas dentro de cavernas.' };
     if (P.sailing) return { ok: 'Desembarque primeiro.' };
-    const r = this.siteOk(vx, vy);
-    let civ = World.terr[World.idx(vx, vy)];
+    let r = this.siteOk(vx, vy);
+    let civ = World.inb(vx, vy) ? World.terr[World.idx(vx, vy)] : -1;
+    // vila livre só nasce em terra selvagem; dentro de um reino seu ela nasce do reino; no reino de outro, não dá
+    const realm = civ >= 0 && G.civs[civ] && G.civs[civ].ruler === 'player';
+    if (r === true && civ >= 0 && !realm) r = `Esta terra é de ${CIV_DEFS[civ].name}: funde em terra selvagem ou no seu reino.`;
     if (civ < 0) civ = World.capitals.map((c, i) => ({ i, d: U.dist(c.x, c.y, vx, vy) })).sort((a, b) => a.d - b.d)[0].i;
-    return { ok: r, x: vx, y: vy, civ };
+    return { ok: r, x: vx, y: vy, civ, realm };
   },
   // nome livre para uma vila nova (não pode repetir o de outra vila ou reino)
   nameErr(name) {
@@ -364,7 +369,8 @@ const Families = {
     name = (name || '').trim();
     if (!name || this.nameErr(name)) name = 'Vila ' + G.surname;
     if (this.nameErr(name)) name = name + ' ' + (G.founded.length + 1);
-    const spec = { name, x: s.x, y: s.y, civ: s.civ, lord: 'player', day: G.day, free: true };
+    // no seu reino a vila nasce do reino (o rei manda nela pelo reino, sem ser governador); em terra selvagem, livre e sua
+    const spec = s.realm ? { name, x: s.x, y: s.y, civ: s.civ, day: G.day, free: false } : { name, x: s.x, y: s.y, civ: s.civ, lord: 'player', day: G.day, free: true };
     const v = this.makeVillage(spec);
     G.founded.push(spec);
     const vi = World.villages.indexOf(v);
@@ -377,9 +383,9 @@ const Families = {
     this.settle(v, vi, 3);
     Towns.init(); Towns.show(v); this.refresh();
     P.y += 2 * TILE;
-    Diplo.chronicle(`🏘️ ${G.name} ${G.surname} fundou a ${v.name}, uma vila livre que não pertence a reino nenhum.`, true);
+    Diplo.chronicle(s.realm ? `🏘️ ${G.name} ${G.surname} fundou a ${v.name} em ${CIV_DEFS[s.civ].name}.` : `🏘️ ${G.name} ${G.surname} fundou a ${v.name}, uma vila livre que não pertence a reino nenhum.`, true);
     UI.banner(`🏘️ ${v.name} foi fundada!`);
-    UI.msg(`Você é o senhor da ${v.name}. Os moradores pagam 2 🪙 por pessoa todo mês, e a vila cresce com o tempo.`, 'gold', true);
+    UI.msg(s.realm ? `A ${v.name} nasceu como vila de ${CIV_DEFS[s.civ].short}: paga imposto ao tesouro do reino, e os moradores escolhem quem cuida dela.` : `Você é o senhor da ${v.name}. Os moradores pagam 2 🪙 por pessoa todo mês, e a vila cresce com o tempo.`, 'gold', true);
     Progress.diary(`🏘️ Fundou a ${v.name}.`);
     Progress.add('villages');
     return true;
@@ -440,6 +446,7 @@ const Families = {
       for (const id of h.children) { const k = G.people[id]; if (k && k.alive && !k.kin) { k.rank = 'heir'; k.home = h.home; k.civ = r.civ; } }
       f.noble = true; f.seat = 'castle'; f.loyalty = 90;
       Heraldry.apply(); c.ruler = 'npc'; c.rulerId = h.id; c.rulerName = People.title(h) + ' ' + h.name; c.garrison = Math.max(4, Math.round(r.str / 2)); c.happy = Math.max(c.happy, 45); c.rebel = 0;
+      if (wasMine) Game.onLoseRealm(r.civ);
       Diplo.chronicle(`👑 A ${this.name(f)} tomou o trono de ${Diplo.name(r.civ)}! ${c.rulerName} ${f.surname} inicia uma nova dinastia.`, true);
       UI.banner(`👑 Nova dinastia em ${CIV_DEFS[r.civ].short}: Casa ${f.surname}`);
       if (wasMine) { c.relation = -60; UI.msg(`Você perdeu o trono de ${CIV_DEFS[r.civ].name} para a ${this.name(f)}!`, 'bad'); Progress.diary(`🔥 Perdeu o trono de ${CIV_DEFS[r.civ].short} para a Casa ${f.surname}.`); }

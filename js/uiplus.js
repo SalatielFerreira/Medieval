@@ -3,13 +3,13 @@
 //  1. Central de avisos: um sino no HUD com tudo o que precisa de você (prazos, dilemas, convites, perigos), e um
 //     botão que leva direto à janela certa.
 //  2. Ficha do item: para que serve, onde conseguir, onde vende melhor, quem gosta e o que faz.
-//  3. Finanças do reino: entradas, saídas, saldo, quantos meses o tesouro aguenta, histórico e riscos.
+//  3. (as Finanças do reino viraram a aba Tesouro do Reinado, reinado.js)
 //  4. Oficinas: quanto vale o que você faz contra o custo dos ingredientes.
 //  5. Construção: quanto rende por mês, em quantos meses se paga e o que consome.
 //  6. Conversa: amizade com a barra até o próximo nível e o benefício, o que a pessoa quer agora e o resto organizado.
 //  7. Mapa com camadas: seus negócios, favoritos, guerras, religiões, feiras e leilões, feudos.
 //  8. Conselho de guerra: chance estimada de vitória e o que se ganha e perde.
-//  9. Portfólio → Gestão: Avisos, Finanças, Negócios, Sociedade e Reinado como páginas do menu lateral.
+//  9. Portfólio → Gestão: Avisos e Reinado (sempre) como páginas do menu lateral.
 
 const UIP = {
   // ---------------------------------------------------------------- utilidades
@@ -35,8 +35,8 @@ const UIP = {
       for (const i of S.invites) { const p = G.people[i.pid]; add('💌', `${p ? p.name : '?'} convida você para ${i.name} em ${World.villages[i.vi].name}.`, () => UIP.goPage('x:society', 'events'), 1, `até ${Calendar.short(i.until)}`); }
       const sp = Society.spouse(); if (sp && sp.rom < 45) add('💔', `${sp.name} sente a sua falta (romance ${Math.round(sp.rom)}).`, () => UI.showTalk(sp.id), 2);
       for (const p of G.people.filter(q => q.alive && q.lent)) add('💸', `Você deve ${p.lent} 🪙 a ${p.name} (amizade em risco).`, () => UI.showTalk(p.id), G.day - (p.lentDay || 0) >= 5 ? 2 : 1);
-      for (const [vi, E] of Object.entries(S.elect)) if (E.tie) add('⚖️', `Empate na eleição de ${World.villages[vi].name}: você decide quem governa.`, () => UIP.goPage('x:society', 'politics'), 3, `até ${Calendar.short(E.tie.day + 1)}`);
-      for (const [vi, E] of Object.entries(S.elect)) if (E.me && !E.tie) add('🗳️', `Você é candidato em ${World.villages[vi].name}: eleição em ${Calendar.short(E.next)}.`, () => UIP.goPage('x:society', 'politics'), 1);
+      for (const [vi, E] of Object.entries(S.elect)) if (E.tie) add('⚖️', `Empate na eleição de ${World.villages[vi].name}: você decide quem governa.`, () => World.villages[vi].lord === 'player' ? Reinado.go('v:' + vi) : UIP.goPage('x:society', 'politics'), 3, `até ${Calendar.short(E.tie.day + 1)}`);
+      for (const [vi, E] of Object.entries(S.elect)) if (E.me && !E.tie) add('🗳️', `Você é candidato em ${World.villages[vi].name}: eleição em ${Calendar.short(E.next)}.`, () => World.villages[vi].lord === 'player' ? Reinado.go('v:' + vi) : UIP.goPage('x:society', 'politics'), 1);
       const rv = Society.rivals(); if (rv.length) add('⚔️', `${rv.length} rival(is) podem desafiar você para um duelo.`, () => UIP.goPage('x:society', 'friends'), 1);
     }
     if (typeof Commerce !== 'undefined') {
@@ -51,8 +51,11 @@ const UIP = {
     if (P.hunger < 20) add('🍖', 'Você está com fome: coma algo.', () => UI.showInventory(), 2);
     return out.sort((a, b) => b.urg - a.urg);
   },
+  // abre uma página do Portfólio (os avisos usam): o Reinado e a Sociedade vão para o lugar certo do Reinado
   goPage(k, tab) {
-    if (k === 'x:reign') UI.sel.rgTab = tab; if (k === 'x:society') UI.sel.socTab = tab; if (k === 'x:board') UI.sel.bbTab = tab;
+    if (k === 'x:reign') { Reinado.go('rg', tab); return; }
+    if (k === 'x:society') { UI.sel.socTab = tab || UI.sel.socTab; Reinado.go('t', 'sociedade'); return; }
+    if (k === 'x:board') UI.sel.bbTab = tab;
     UI.sel.knav = k; UI.showKingdom();
   },
   alertsPage() {
@@ -124,45 +127,6 @@ const UIP = {
       <div class="card ii-sec"><div class="sec">💝 Quem gosta</div><p class="dt-desc">${likes.length ? `Os ${likes.join(', ')} pagam 25% a mais e adoram ganhar de presente.` : 'Nenhum povo em especial.'}${GIFTABLE.includes(k) ? ' É um bom presente.' : ''}${lovers.length ? ` Favorito de: ${lovers.join(', ')}.` : ''}</p></div></div>`;
   },
   showItem(k) { UI.open(`📖 ${ITEMS[k] ? ITEMS[k].name : ''}`, `<div class="iinfo">${this.itemPage(k)}</div>`, 'showItemInfo', [k], 'Ficha do item'); },
-  // ---------------------------------------------------------------- 3. finanças do reino
-  finance(c) {
-    const fc = Game.civForecast(c), inc = [], exp = [], R = typeof Reign !== 'undefined' ? Reign.R() : null, main = R && Reign.main() === c;
-    inc.push(['👪 Impostos', fc.income]);
-    if (R) {
-      const fief = Object.entries(R.fiefs).filter(([vi, f]) => !f.rebel && World.villages[vi] && World.villages[vi].civ === c.id).reduce((a, [vi]) => a + Reign.tribute(+vi), 0); if (fief) inc.push(['🏰 Tributo dos feudos', fief]);
-      const vas = G.civs.filter(v => v.overlord === c.id && v.ruler !== 'player').reduce((a, v) => a + Math.round(v.treasury * 0.1), 0); if (vas) inc.push(['👑 Reinos vassalos', vas]);
-      if (main) { const tr = R.treaties.reduce((a, t) => a + Math.round(fc.income * (t.kind === 'commerce' ? 0.05 : t.kind === 'passage' ? 0.03 : 0)), 0); if (tr) inc.push(['📜 Tratados', tr]); if (R.customs) inc.push(['🛃 Alfândega', Math.round(R.customs / 100 * (Reign.realms().reduce((a, x) => a + x.pop, 0) * 0.4 + (G.caravans || []).length * 25))]); }
-    }
-    exp.push(['⚔️ Soldo da guarnição', fc.upkeep]);
-    if (typeof Crown !== 'undefined' && Crown.upkeep(c)) exp.push(['📜 Decretos', Crown.upkeep(c)]);
-    if (R && main) { exp.push(['📊 Orçamento (exército, corte, obras, igreja)', Reign.budgetCost()]); if (R.debt) exp.push(['🏦 Dívida com banqueiros', Math.min(60, R.debt)]); if (R.court.jester) exp.push(['🃏 Bobo da corte', 15]); }
-    const tin = inc.reduce((a, x) => a + x[1], 0), tout = exp.reduce((a, x) => a + x[1], 0);
-    return { inc, exp, tin, tout, net: tin - tout, fc };
-  },
-  financePage() {
-    const ruled = G.civs.filter(c => c.ruler === 'player');
-    if (!ruled.length) return UI.pageHead('💰', 'Finanças do reino', 'Você ainda não governa um reino') + '<div class="card kalone"><p class="muted">Quando governar um reino, as contas aparecem aqui.</p></div>';
-    let h = UI.pageHead('💰', 'Finanças do reino', 'Entradas, saídas e o que vem pela frente (estimativa do mês)');
-    for (const c of ruled) {
-      const f = this.finance(c), H = (typeof Reign !== 'undefined' && Reign.R().hist && Reign.R().hist[c.id]) || [];
-      const months = f.net < 0 ? Math.floor(c.treasury / -f.net) : null;
-      const risks = [];
-      if (f.fc.wheat < f.fc.need) risks.push('🌾 falta trigo: o povo vai passar fome');
-      if (c.happy < 40) risks.push(`😠 felicidade ${Math.round(c.happy)}: risco de revolta`);
-      if (c.inflation) risks.push('📈 inflação: tudo mais caro');
-      if (Diplo.warsOf(c.id).length) risks.push(`⚔️ em guerra com ${Diplo.warsOf(c.id).map(w => CIV_DEFS[w.a === c.id ? w.b : w.a].short).join(', ')}`);
-      if (c.garrison < 6) risks.push(`🛡️ guarnição fraca (${c.garrison})`);
-      const max = Math.max(1, ...H, c.treasury);
-      h += `<div class="card fin-card"><div class="sec">${Heraldry.armsSvg(c.id, 16)} ${CIV_DEFS[c.id].name} <span>tesouro ${c.treasury} 🪙 · ${f.net >= 0 ? `<b class="ok">${this.money(f.net)}/mês</b>` : `<b class="bad">${this.money(f.net)}/mês</b>`}</span></div>
-        <div class="fin-cols"><div><small class="fin-h">Entradas · ${this.money(f.tin)}</small>${f.inc.map(([l, v]) => `<div class="fin-r"><span>${l}</span><b class="ok">+${v}</b></div>`).join('')}</div>
-          <div><small class="fin-h">Saídas · −${f.tout} 🪙</small>${f.exp.map(([l, v]) => `<div class="fin-r"><span>${l}</span><b class="bad">−${v}</b></div>`).join('')}</div></div>
-        ${months !== null ? `<p class="bad">⚠️ ${months < 1 ? 'O tesouro já não cobre as despesas: as dívidas vão crescer.' : `Neste ritmo, o tesouro acaba em ${months} ${months === 1 ? 'mês' : 'meses'}.`}</p>` : '<p class="ok">✔ O tesouro está crescendo.</p>'}
-        ${H.length ? `<div class="fin-chart">${H.concat([c.treasury]).slice(-12).map((v, i, A) => `<i style="height:${Math.max(4, v / max * 100)}%" title="${v} 🪙" class="${i === A.length - 1 ? 'now' : ''}"></i>`).join('')}</div><small class="muted">Tesouro nos últimos ${Math.min(12, H.length + 1)} meses</small>` : ''}
-        ${risks.length ? `<div class="fin-risk">${risks.map(r => `<span>${r}</span>`).join('')}</div>` : ''}
-        <div class="act-row"><button data-act="knav" data-k="k:${c.id}">Administrar ${CIV_DEFS[c.id].short}</button>${typeof Reign !== 'undefined' ? '<button data-act="alPage" data-k="x:reign" data-t="money">📊 Orçamento, moeda e alfândega</button>' : ''}</div></div>`;
-    }
-    return h;
-  },
   // ---------------------------------------------------------------- 5. o que uma construção rende
   // lucro estimado de um empreendimento por mês (2 funcionários): produção vendida − salários − insumos
   bizProfit(k) {
@@ -204,7 +168,7 @@ const UIP = {
     if (p.lent) wants.push(`💸 espera os ${p.lent} 🪙 que emprestou`);
     if (p.rival) wants.push(p.vendetta ? `🗡️ quer vingar ${p.vendetta}` : '⚔️ é seu rival');
     if (p.spouse === 'player' && (p.attn || 0) < G.day - 1) wants.push('💞 quer a sua atenção');
-    if (p.hostage !== undefined) wants.push('🔒 é refém na sua corte');
+    if (typeof Pacts !== 'undefined' && Pacts.S().host.some(h => h.pid === p.id && Pacts.mine(h.to))) wants.push('🔒 é refém na sua corte');
     return `<div class="tk-x"><div class="tk-x-lv"><small>${cur ? (p.sex === 'f' ? cur[2] : cur[1]) : 'Estranho'}${next ? ` → <b>${p.sex === 'f' ? next[2] : next[1]}</b> (faltam ${Math.ceil(next[0] - p.aff)})` : ' · nível máximo'}</small><div class="tk-x-bar"><i style="width:${pct}%"></i></div>${next && next[3] ? `<small class="muted">Libera: ${next[3]}</small>` : ''}</div>
       ${wants.length ? `<div class="tk-x-w">${wants.map(w => `<span>${UI.esc(w)}</span>`).join('')}</div>` : ''}</div>`;
   },
@@ -238,8 +202,9 @@ const UIP = {
   const nh0 = UI.navHtml.bind(UI);
   UI.navHtml = function (groups, cur, act, body) {
     if (act === 'knav' && !groups.some(g => g[0] === 'Gestão')) {
-      const n = UIP.alerts().length, king = typeof Reign !== 'undefined' && Reign.isKing();
-      const items = [['x:alerts', '🔔', 'Avisos', n, UIP.alerts().some(a => a.urg >= 3)], ...(typeof Board !== 'undefined' ? Board.navItems() : []), king ? ['x:finance', '💰', 'Finanças do reino'] : null, ['x:board', '📊', 'Negócios', Biz.list().length], ['x:society', '🤝', 'Sociedade'], ['x:merc', '⚔️', 'Mercenários', typeof Mercs !== 'undefined' ? Mercs.mine().length || '' : ''], ['x:games', '🏅', 'Jogos', typeof Games !== 'undefined' && Games.S().on ? '!' : ''], king ? ['x:reign', '👑', 'Reinado', Reign.R().dilemma ? '!' : ''] : null].filter(Boolean);
+      // o Reinado aparece sempre: rei, governador ou nenhum dos dois (aí só Títulos e corte); o número é o de alertas
+      const n = UIP.alerts().length, rn = Reinado.badge();
+      const items = [['x:alerts', '🔔', 'Avisos', n, UIP.alerts().some(a => a.urg >= 3)], ...(typeof Board !== 'undefined' ? Board.navItems() : []), ['x:board', '📊', 'Negócios', Biz.list().length], ['x:merc', '⚔️', 'Mercenários', typeof Mercs !== 'undefined' ? Mercs.mine().length || '' : ''], ['x:games', '🏅', 'Jogos', typeof Games !== 'undefined' && Games.S().on ? '!' : ''], ['x:reign', '👑', 'Reinado', rn || '', rn > 0]];
       groups = [groups[0], ['Gestão', items], ...groups.slice(1)];
     }
     return nh0(groups, cur, act, body);
@@ -247,22 +212,26 @@ const UIP = {
   const kp0 = UI.kPage.bind(UI);
   UI.kPage = function (nav) {
     if (nav === 'x:alerts') return UIP.alertsPage();
-    if (nav === 'x:finance') return UIP.financePage();
     if (nav === 'x:board') return UI.pageHead('📊', 'Negócios', 'Seus empreendimentos, encomendas, guildas e mercados') + UIP.capture(() => UIP._raw.board(UI.sel.bbTab));
-    if (nav === 'x:society') return UI.pageHead('🤝', 'Sociedade', 'Reputação, amigos, eventos, política e segredos') + UIP.capture(() => UIP._raw.society(UI.sel.socTab));
     if (nav === 'x:merc') return UI.pageHead('⚔️', 'Mercenários', 'Companhias livres para a guerra e para golpes') + Mercs.page();
     if (nav === 'x:games') return UI.pageHead('🏅', 'Jogos dos Sete Reinos', 'Justa, arco e flecha e duelos entre os reinos') + Games.page();
-    if (nav === 'x:reign') return UI.pageHead('👑', `${Reign.titleName()} ${UI.esc(G.name)}`, 'Conselho, audiências, vassalos, espionagem, herdeiros, diplomacia, tesouro, exército e corte') + UIP.capture(() => UIP._raw.reign(UI.sel.rgTab));
     return kp0(nav);
   };
-  // as janelas de Negócios, Sociedade e Reinado abrem como páginas do Portfólio
-  UIP._raw = { board: UI.showBizBoard.bind(UI), society: Society.show.bind(Society), reign: Reign.show.bind(Reign) };
+  // as janelas de Negócios e Sociedade abrem como páginas do Portfólio (a Sociedade dentro do Reinado → Títulos e corte)
+  UIP._raw = { board: UI.showBizBoard.bind(UI), society: Society.show.bind(Society) };
   UI.showBizBoard = function (tab) { UI.sel.bbTab = tab || UI.sel.bbTab; UI.sel.knav = 'x:board'; UI.showKingdom(); };
-  Society.show = function (tab) { UI.sel.socTab = tab || UI.sel.socTab; UI.sel.knav = 'x:society'; UI.showKingdom(); };
-  Reign.show = function (tab) { if (!Reign.isKing()) return UIP._raw.reign(tab); UI.sel.rgTab = tab || UI.sel.rgTab; UI.sel.knav = 'x:reign'; UI.showKingdom(); };
-  // as páginas novas do Portfólio rolam (não são cortadas em quadros) — menos o Reinado, que é dividido em páginas
+  Society.show = function (tab) { UI.sel.socTab = tab || UI.sel.socTab; Reinado.go('t', 'sociedade'); };
+  // as páginas novas do Portfólio: no computador cada uma se arruma dentro da janela (as listas que crescem viram partes
+  // ◀ 1/2 ▶ — Services.paginate e companhia); no celular viram páginas inteiras, como as outras (UI.fitReino)
   const fr0 = UI.fitReino.bind(UI);
-  UI.fitReino = function (nav, pkey) { const nv = nav || this.sel.knav || ''; if (nv === 'x:reign') return fr0('x:reign', pkey || 'reign/' + (this.sel.rgTab || 'council')); if (nv.startsWith('x:')) { const body = this.panel && this.panel.querySelector('.iconnav .snav-body'); if (body) body.classList.remove('kfit'); return; } return fr0(nav, pkey); };
+  UI.fitReino = function (nav, pkey) {
+    const nv = nav || this.sel.knav || '';
+    if (nv.startsWith('x:') && nv !== 'x:reign') {
+      if (document.body.classList.contains('small')) return fr0(nv, pkey || nv + '/' + JSON.stringify(this.sel.svSub || {}) + (this.sel.rvTab || ''));
+      const body = this.panel && this.panel.querySelector('.iconnav .snav-body'); if (body) body.classList.remove('kfit'); return;
+    }
+    return fr0(nav, pkey);
+  };
   // 2. ficha do item no inventário e nas oficinas; o botão "Usar" sem uso some
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
@@ -334,10 +303,8 @@ const UIP = {
     if (a === 'alPage') { UIP.goPage(d.k, d.t); return; }
     return a0(a, d);
   };
-  // o sino de avisos e o histórico do tesouro
+  // o sino de avisos (o histórico do tesouro é o do Painel do reino, realmboard.js)
   let bellT = 0;
   const u0 = Content2.update.bind(Content2);
   Content2.update = function (dt) { u0(dt); bellT -= dt; if (bellT <= 0) { bellT = 1; UIP.bell(); } };
-  const mt0 = Lifesim.monthTick.bind(Lifesim);
-  Lifesim.monthTick = function () { mt0(); if (typeof Reign !== 'undefined') { const R = Reign.R(); R.hist = R.hist || {}; for (const c of G.civs.filter(x => x.ruler === 'player')) { const H = R.hist[c.id] || (R.hist[c.id] = []); H.push(c.treasury); if (H.length > 12) H.shift(); } } };
 }

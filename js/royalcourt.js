@@ -23,7 +23,8 @@ const RoyalCourt = {
   },
   canBeInvited(ci) {
     const c = G.civs[ci];
-    return c.ruler !== 'player' && !c.atWar && c.relation >= COURT_INVITE.rel && this.renown(ci) >= COURT_INVITE.renown && !this.isMember(ci);
+    // soberano não serve na corte de outro rei
+    return c.ruler !== 'player' && !G.civs.some(x => x.ruler === 'player') && !c.atWar && c.relation >= COURT_INVITE.rel && this.renown(ci) >= COURT_INVITE.renown && !this.isMember(ci);
   },
   officeName(k) { const o = COURT_OFFICES[k]; return P.sex === 'f' ? o.f : o.name; },
 
@@ -39,7 +40,7 @@ const RoyalCourt = {
     }
     if (!cur) return;
     const c = G.civs[cur.civ];
-    if (c.ruler === 'player') { this.leave('agora você é o próprio rei', true); return; }
+    if (c.ruler === 'player' || G.civs.some(x => x.ruler === 'player')) { this.leave('agora você é soberano', true); return; }
     if (c.atWar || c.relation < 10) { this.leave(c.atWar ? 'você está em guerra com o reino' : 'o rei perdeu a confiança em você'); return; }
     const away = G.day - cur.lastVisit;
     if (away > COURT_ABSENCE.expel) { this.leave('você sumiu do castelo por tempo demais'); Game.addRelation(cur.civ, -10); return; }
@@ -64,6 +65,7 @@ const RoyalCourt = {
   },
   join(ci) {
     if (!G.courtInvite || G.courtInvite.civ !== ci) return false;
+    if (G.civs.some(x => x.ruler === 'player')) { G.courtInvite = null; UI.msg('Você é soberano: não serve na corte de outro rei.', 'bad'); return false; }
     const old = this.C();
     if (old && old.civ !== ci) this.leave(`você aceitou servir a ${CIV_DEFS[ci].short}`, true);
     G.courtier = { civ: ci, office: 'advisor', since: G.day, lastVisit: G.day, audience: -99 };
@@ -120,6 +122,8 @@ const RoyalCourt = {
   propose(other, act) {
     const cur = this.C();
     if (!cur || cur.office !== 'diplomat') return;
+    // tratar de aliança ou paz com um reino seu, do lado de lá da mesa, seria negociar consigo mesmo
+    if (G.civs[other] && G.civs[other].ruler === 'player') { UI.msg('Como embaixador, você não negocia com um reino que é seu.', 'bad'); return; }
     const a = cur.civ, rel = Diplo.rel(a, other), king = G.civs[a].rulerName;
     const chance = act === 'ally' ? (rel >= 30 ? 0.75 : 0.25) : act === 'peace' ? 0.6 : rel < -20 ? 0.6 : 0.2;
     if (Math.random() > chance) { UI.msg(`👑 ${king} ouve a proposta, mas não concorda.`, 'bad'); Game.addRelation(a, -1); return; }

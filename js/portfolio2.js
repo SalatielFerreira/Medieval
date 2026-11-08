@@ -91,7 +91,7 @@ const Houses = {
     list.push(['ranking', '📜', 'Ranking', `<div class="hs2-head"><span>#</span><span>Casa</span><span>Influência</span><span>Riqueza</span><span>Gente</span><span>Lealdade</span></div><div class="hs2-rows sv-pl">${all.map((x, i) => { const l = Math.round(x.f.loyalty || 0);
       return `<button class="hs2-row ${x.f.player ? 'you' : ''} ${Families.activeRevoltOf(x.f) ? 'rev' : ''}" ${this.open(x.f)}><span class="hs2-n">${i + 1}º</span><span class="hs2-nm">${this.crest(x.f, 24)}<span><b>${esc(Families.name(x.f))}${x.f.noble ? ' 👑' : ''}</b><small>${this.civ(x.f)}</small></span></span>
         <span class="hs2-inf"><i style="width:${x.inf / maxInf * 100}%"></i><em>⭐ ${x.inf}</em></span><span>💰 ${Math.round(x.f.wealth || 0).toLocaleString('pt-BR')}</span><span>👥 ${Families.members(x.f).length}</span>
-        <span class="hs2-loy"><i style="width:${x.f.player ? 100 : l}%;background:${l < 25 ? '#c0392b' : l < 45 ? '#d6a040' : '#6a9a4a'}"></i><em>${x.f.player ? '—' : l}</em></span></button>`; }).join('')}</div>`]);
+        <span class="hs2-loy"><i style="width:${x.f.player ? 100 : l}%;background:${l < 25 ? '#c0392b' : l < 45 ? '#d6a040' : '#6a9a4a'}"></i><em>💛 ${x.f.player ? '—' : l}</em></span></button>`; }).join('')}</div>`]);
     // 🗺️ por reino
     const civs = G.civs.filter(c => !c.dead);
     list.push(['reinos', '🗺️', 'Por reino', `<div class="hs2-civs sv-pl">${civs.map(c => { const fs = all.filter(x => x.f.civ === c.id);

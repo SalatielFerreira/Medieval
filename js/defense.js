@@ -107,7 +107,7 @@ const Defense = {
 // ------------------------------------------------------------------ a guarnição espalhada pelo reino
 // Os soldados da guarnição não ficam só na porta do castelo: cerca de um terço guarda o castelo, o resto é repartido entre
 // as vilas do reino (as maiores primeiro, até 6 por vila) e alguns patrulham as estradas do território. Como todo mundo no
-// jogo, eles só aparecem perto de você; o número de cada lugar sai da guarnição do reino (Portfólio → Reino → Recrutar).
+// jogo, eles só aparecem perto de você; o número de cada lugar sai da guarnição do reino (Portfólio → Reinado → Exército → Recrutar).
 // o k-ésimo de n pontos num leque (como as sementes de um girassol): cobre a área inteira, do centro até a borda
 function spreadPoint(cx, cy, r0, r1, k, n, seed) {
   const a = k * 2.39996 + (seed || 0), f = Math.sqrt((k + 0.5) / Math.max(1, n)), r = r0 + (r1 - r0) * f;

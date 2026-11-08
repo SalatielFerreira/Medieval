@@ -426,11 +426,12 @@ const FamilyCrime = {
 };
 
 // ====================================================================== sucessão do trono
-// Quando o rei morre, o filho mais velho herda o reino e os outros seguem como príncipes. Se o herdeiro tiver menos de
+// Quando o rei morre, o herdeiro escolhido no Reinado (ou, sem escolha, o filho mais velho) herda o reino e os outros
+// seguem como príncipes. Se o herdeiro tiver menos de
 // 16 anos e a mãe (ou o pai) estiver viva, ela governa como rainha regente; quando ele faz 16, assume o trono e ela
 // vira rainha-mãe (consorte do reino).
 const Succession = {
-  pass(realms, chosen, eldest, spouse) {
+  pass(realms, chosen, eldest, spouse, picked) {
     const playerIsKing = eldest === chosen;
     const age = p => p === chosen ? P.age : p.age;
     G.regency = G.regency || [];
@@ -444,7 +445,7 @@ const Succession = {
         note = `${spouse.name} governa como ${spouse.sex === 'f' ? 'rainha regente' : 'rei regente'} até ${playerIsKing ? 'você' : eldest.name} fazer 16 anos.`;
       } else if (!playerIsKing) {
         this.seat(c, eldest, 'ruler');
-        note = `${eldest.name}, ${eldest.sex === 'f' ? 'a filha' : 'o filho'} mais velho, assumiu o trono. Você é ${chosen.sex === 'f' ? 'princesa' : 'príncipe'}.`;
+        note = `${eldest.name}, ${picked ? (eldest.sex === 'f' ? 'a herdeira escolhida' : 'o herdeiro escolhido') : eldest.sex === 'f' ? 'a filha mais velha' : 'o filho mais velho'}, assumiu o trono. Você é ${chosen.sex === 'f' ? 'princesa' : 'príncipe'}.`;
       }
       if (spouse && c.ruler === 'player') spouse.rank = 'consort';
     }
@@ -456,8 +457,10 @@ const Succession = {
   },
   // põe uma pessoa no trono (governo da IA)
   seat(c, p, rank) {
+    const was = c.ruler === 'player';
     c.ruler = 'npc'; c.rulerId = p.id; p.rank = rank; p.home = { type: 'castle', civ: c.id }; p.civ = c.id;
     c.rulerName = `${p.sex === 'f' ? 'Rainha' : 'Rei'} ${p.name}`;
+    if (was) Game.onLoseRealm(c.id);
     const e = G.spawned.get(p.id); if (e) { e.dead = true; G.spawned.delete(p.id); }
   },
   // todo mês: o herdeiro fez 16 anos? então assume e a regente vira rainha-mãe

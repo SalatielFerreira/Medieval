@@ -85,7 +85,7 @@ const Rivalry = {
         <span class="act-row"><button data-act="rivpeace" data-f="${f.id}" ${P.gold >= this.peaceCost(f) ? '' : 'disabled'}>🤝 Indenizar (${this.peaceCost(f)} 🪙)</button></span></div>`;
     }).join('');
     return `<div class="card"><div class="sec">⚔️ Concorrência <span>${list.length ? list.length + ' família(s) com rancor' : 'tudo em paz'}</span></div>
-      ${rows || '<p class="muted">Nenhuma família está brava com os seus negócios.</p>'}
+      ${rows ? `<div class="riv-rows bzb-pg">${rows}</div>` : '<p class="muted">Nenhuma família está brava com os seus negócios.</p>'}
       <p class="dt-desc">Seus empreendimentos tiram fregueses das lojas do mesmo ramo na vila, e a família dona junta rancor: com <b>30</b> ela reclama, com <b>60</b> sabota (rouba o caixa ou a prateleira) e com <b>90</b> declara guerra à sua família. Preços justos (110% ou mais) deixam o rancor crescer devagar; vender barato demais dobra. Indenizar ou investir nos negócios deles (Finanças) acalma; sem disputa, ele esfria sozinho.</p></div>`;
   },
   // destaques do mês: quem mais enriqueceu vira notícia

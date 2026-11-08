@@ -1,5 +1,5 @@
 'use strict';
-// Tribunal e leis (Reinado → ⚖️ Leis e tribunal): o rei cria leis e julga casos na sala do trono.
+// Tribunal e leis (Reinado → ⚖️ Leis e justiça): o rei cria leis e julga casos na sala do trono.
 //  • Leis: até 5 em vigor. Cada uma agrada uns grupos e irrita outros (nobreza, clero, povo, mercadores, guildas,
 //    submundo), mexe na felicidade, no tesouro e na lealdade das famílias desses grupos; algumas mudam o jogo
 //    (o vinho fica mais caro, as feiras mais baratas, os duelos viram crime, os crimes diminuem).
@@ -12,10 +12,10 @@ const LAWS = {
   duelos:   { name: 'Proibir os duelos', icon: '🚫', desc: 'Duelos de honra viram crime no reino.', g: { clero: 1, povo: 0.5, nobreza: -1.5 }, happy: 0.3, crime: -0.05 },
   vinho:    { name: 'Imposto sobre o vinho', icon: '🍷', desc: 'Vinho, cerveja e hidromel pagam imposto: +20% no preço e mais ouro no tesouro.', g: { povo: -1, mercadores: -1 }, income: 0.18, happy: -0.4 },
   culto:    { name: 'Liberdade de culto', icon: '🕊️', desc: 'Cada um reza para o deus que quiser.', g: { clero: -1.5, povo: 0.8, mercadores: 0.5 }, happy: 0.6 },
-  recolher: { name: 'Toque de recolher', icon: '🌙', desc: 'Ninguém na rua depois do anoitecer: bem menos crimes.', g: { povo: -1, submundo: -2, mercadores: -0.5 }, crime: -0.35, happy: -0.5 },
+  recolher: { name: 'Toque de recolher', icon: '🌙', desc: 'Ninguém na rua depois do anoitecer: bem menos crimes e os bandidos demoram 2× mais para voltar.', g: { povo: -1, submundo: -2, mercadores: -0.5 }, crime: -0.35, happy: -0.5 },
   armas:    { name: 'Proibir o porte de armas', icon: '🗡️', desc: 'Só soldados andam armados: menos brigas e roubos.', g: { nobreza: -1, submundo: -1.5, povo: 0.3 }, crime: -0.2 },
   feira:    { name: 'Feira livre', icon: '🎪', desc: 'Sem taxas nas feiras: compras 10% mais baratas no reino, menos ouro no tesouro.', g: { mercadores: 2, guildas: -1 }, income: -0.06 },
-  escola:   { name: 'Escola para todos', icon: '📚', desc: 'O reino paga mestres para as crianças.', g: { povo: 1.2, clero: 0.5 }, income: -0.08, happy: 0.8 },
+  escola:   { name: 'Escola para todos', icon: '📚', desc: 'O reino paga mestres para as crianças: os jovens ficam mais inteligentes todo mês.', g: { povo: 1.2, clero: 0.5 }, income: -0.08, happy: 0.8 },
   caca:     { name: 'Caça real', icon: '🦌', desc: 'As florestas são do rei: caçar sem licença dá multa.', g: { nobreza: 1.2, povo: -1 }, income: 0.04 },
   divida:   { name: 'Fim da prisão por dívida', icon: '⛓️', desc: 'Quem deve não vai mais preso.', g: { povo: 1.5, mercadores: -1.5 }, happy: 0.5 },
   combate:  { name: 'Julgamento por combate', icon: '⚔️', desc: 'O acusado pode provar a inocência na espada.', g: { nobreza: 1, clero: -1 } },
@@ -60,6 +60,8 @@ const Laws = {
       for (const c of ruled) { if (d.happy) c.happy = U.clamp(c.happy + d.happy, 0, 100); if (d.income) c.treasury = Math.max(0, c.treasury + Math.round(c.pop * d.income)); }
       for (const f of Object.values(Families.F())) if (!f.player && ruled.some(c => c.id === f.civ)) { const n = d.g[this.famGroup(f)]; if (n) f.loyalty = U.clamp(f.loyalty + n * 1.2, 0, 100); }
     }
+    // a escola para todos (o antigo decreto "Escolas do reino"): os jovens dos seus reinos ficam mais inteligentes
+    if (this.has('escola')) for (const c of ruled) for (const p of Families.civPeople(c.id).filter(q => q.age >= 6 && q.age < 30).sort(() => Math.random() - 0.5).slice(0, 8)) { Ranking.stats(p); p.int = Math.min(99, p.int + 2); }
     // a fama de justo do rei
     if (L.justice) { this.rep('povo', L.justice / 25); for (const c of ruled) c.happy = U.clamp(c.happy + L.justice / 40, 0, 100); }
     // a verdade às vezes aparece
@@ -107,35 +109,29 @@ const Laws = {
     this.log(txt); UI.msg(txt, 'gold');
   },
   justiceName() { const j = this.L().justice; return j >= 25 ? 'Justo' : j >= 8 ? 'Correto' : j > -8 ? 'Comum' : j > -25 ? 'Duvidoso' : 'Tirano'; },
-  // ---------------------------------------------------------------- a página
-  page() {
+  // ---------------------------------------------------------------- os quadros do Reinado (aba Leis e justiça)
+  chip(d) { return Object.entries(d.g).map(([g, n]) => `<i class="${n > 0 ? 'ok' : 'bad'}">${SOC_GROUPS[g] ? SOC_GROUPS[g].icon : ''}${n > 0 ? '+' : '−'}</i>`).join('') + (d.income ? `<i class="${d.income > 0 ? 'ok' : 'bad'}">🪙${d.income > 0 ? '+' : '−'}</i>` : '') + (d.happy ? `<i class="${d.happy > 0 ? 'ok' : 'bad'}">😊${d.happy > 0 ? '+' : '−'}</i>` : '') + (d.crime ? '<i class="ok">🛡️ menos crimes</i>' : ''); },
+  // as leis (valem em todos os seus reinos), como peças da grade "Leis e decretos" do Reinado
+  lawTiles() {
     const L = this.L(), esc = UI.esc.bind(UI);
-    const chip = d => Object.entries(d.g).map(([g, n]) => `<i class="${n > 0 ? 'ok' : 'bad'}">${SOC_GROUPS[g] ? SOC_GROUPS[g].icon : ''} ${n > 0 ? '+' : '−'}</i>`).join('') + (d.income ? `<i class="${d.income > 0 ? 'ok' : 'bad'}">🪙 ${d.income > 0 ? '+' : '−'}</i>` : '') + (d.happy ? `<i class="${d.happy > 0 ? 'ok' : 'bad'}">😊 ${d.happy > 0 ? '+' : '−'}</i>` : '') + (d.crime ? '<i class="ok">🛡️ menos crimes</i>' : '');
-    const cases = L.cases.map(cs => `<div class="card law-case ${cs.grave ? 'grave' : ''}"><div class="sec">⚖️ ${esc(cs.crime)} <span>${esc(World.villages[cs.vi] ? World.villages[cs.vi].name : '')} · espera desde ${Calendar.short(cs.day)}</span></div>
-        <p><b>${esc(cs.name)}</b> é acusado(a) de que ${esc(cs.text)}. Acusação de <b>${esc(cs.victim)}</b>.</p>
+    return Object.entries(LAWS).map(([k, d]) => `<div class="law ${this.has(k) ? 'on' : ''}"><b>${d.icon} ${esc(d.name)}</b><small>${esc(d.desc)}</small><div class="law-g">${this.chip(d)}</div>
+        ${this.has(k) ? `<button data-act="lawRevoke" data-k="${k}">Revogar</button>` : `<button class="primary" data-act="lawEnact" data-k="${k}" ${L.active.length >= LAW_MAX ? 'disabled' : ''}>Decretar</button>`}</div>`).join('');
+  },
+  // o tribunal: a fama de juiz, os casos e as últimas decisões
+  casesHtml() {
+    const L = this.L(), esc = UI.esc.bind(UI);
+    const cases = L.cases.map(cs => `<div class="law-case ${cs.grave ? 'grave' : ''}"><b>⚖️ ${esc(cs.crime)}: ${esc(cs.name)} <small>${esc(World.villages[cs.vi] ? World.villages[cs.vi].name : '')} · desde ${Calendar.short(cs.day)}</small></b>
+        <small>Acusado(a) de que ${esc(cs.text)}. Acusação de <b>${esc(cs.victim)}</b>.</small>
         <div class="law-ev"><span>Provas</span><i class="pbar"><i style="width:${cs.ev}%"></i></i><b>${cs.ev}%</b><small>${cs.wit} testemunha(s) · ${cs.ev >= 70 ? 'provas fortes' : cs.ev >= 40 ? 'provas duvidosas' : 'quase nada contra'}</small></div>
         <div class="act-row">${VERDICTS.filter(([k]) => k !== 'combate' || this.has('combate')).map(([k, l]) => `<button class="${k === 'forca' ? 'danger' : ''}" data-act="lawJudge" data-i="${cs.id}" data-v="${k}">${l}</button>`).join('')}</div></div>`).join('');
-    return `<div class="card law-top"><div class="sec">⚖️ A sua fama de juiz: <b>${this.justiceName()}</b> <span>${L.justice > 0 ? '+' : ''}${L.justice}</span></div><p class="dt-desc">Condenar culpados e absolver inocentes deixa o povo confiante (felicidade e reputação). Errar o contrário, ou deixar casos esperando mais de 3 meses, faz o povo murmurar.</p></div>
-      <div class="sec" style="margin:8px 2px">🏛️ Tribunal <span>${L.cases.length} caso(s)</span></div>${cases || '<div class="card"><p class="muted">Nenhum caso esperando julgamento. Novos casos chegam todo mês.</p></div>'}
-      <div class="sec" style="margin:12px 2px 6px">📜 Leis em vigor <span>${L.active.length}/${LAW_MAX}</span></div>
-      <div class="law-grid">${Object.entries(LAWS).map(([k, d]) => `<div class="card law ${this.has(k) ? 'on' : ''}"><div class="sec">${d.icon} ${esc(d.name)}</div><p class="dt-desc">${esc(d.desc)}</p><div class="law-g">${chip(d)}</div>
-        ${this.has(k) ? `<button data-act="lawRevoke" data-k="${k}">🗑️ Revogar</button>` : `<button class="primary" data-act="lawEnact" data-k="${k}" ${L.active.length >= LAW_MAX ? 'disabled' : ''}>📜 Decretar</button>`}</div>`).join('')}</div>
-      ${L.log.length ? `<div class="card"><div class="sec">📒 Decisões</div>${L.log.slice(0, 8).map(l => `<div class="bank-log"><small>${Calendar.short(l.day)}</small> ${esc(l.t)}</div>`).join('')}</div>` : ''}`;
+    return `<div class="card law-court ${L.cases.length ? 'wide' : ''}"><div class="sec">🏛️ Tribunal <span>${L.cases.length} caso(s) · fama de juiz: <b>${this.justiceName()}</b> (${L.justice > 0 ? '+' : ''}${L.justice})</span></div>
+      ${cases ? `<div class="rn-grid2">${cases}</div>` : '<p class="muted">Nenhum caso esperando julgamento. Novos casos chegam todo mês.</p>'}
+      <small class="muted">Condenar culpados e absolver inocentes deixa o povo confiante; errar, ou deixar casos esperando mais de 3 meses, faz o povo murmurar.</small>
+      ${L.log.length ? `<div class="law-log">${L.log.slice(0, 3).map(l => `<div class="bank-log"><small>${Calendar.short(l.day)}</small> ${esc(l.t)}</div>`).join('')}</div>` : ''}</div>`;
   },
 };
 
 {
-  // a aba Leis e tribunal no Reinado
-  const sh0 = Reign.show.bind(Reign);
-  Reign.show = function (tab) {
-    const t = tab || UI.sel.rgTab || 'council';
-    let a = null; const op = UI.open; UI.open = (...x) => { a = x; };
-    try { sh0(t === 'law' ? 'council' : tab); } finally { UI.open = op; }
-    if (!a) return;
-    let b = a[1].replace(/(<div class="tabs">)/, '$1').replace(/(<button[^>]*data-act="rgTab" data-t="council"[^>]*>)/, `<button class="${t === 'law' ? 'on' : ''}" data-act="rgTab" data-t="law">⚖️ Leis e tribunal${Laws.L().cases.length ? ` (${Laws.L().cases.length})` : ''}</button>$1`);
-    if (t === 'law') { UI.sel.rgTab = 'law'; b = b.replace(/(<button[^>]*) class="on"([^>]*data-t="council")/, '$1 class=""$2'); const i = b.indexOf('<div class="tabs">'), j = b.indexOf('</div>', i) + 6; b = b.slice(0, j) + Laws.page(); }
-    return UI.open(a[0], b, a[2], [t], a[4]);
-  };
   // efeitos das leis no jogo
   const pr0 = Game.price.bind(Game);
   Game.price = function (ci, k) {
@@ -156,9 +152,9 @@ const Laws = {
   Lifesim.monthTick = function () { mt0(); Laws.monthTick(); };
   const a0 = UI.act.bind(UI);
   UI.act = function (a, d) {
-    if (a === 'lawEnact') { Laws.enact(d.k); Reign.show('law'); return; }
-    if (a === 'lawRevoke') { Laws.revoke(d.k); Reign.show('law'); return; }
-    if (a === 'lawJudge') { Laws.judge(+d.i, d.v); Reign.show('law'); return; }
+    if (a === 'lawEnact') { Laws.enact(d.k); Reinado.refresh(); return; }
+    if (a === 'lawRevoke') { Laws.revoke(d.k); Reinado.refresh(); return; }
+    if (a === 'lawJudge') { Laws.judge(+d.i, d.v); Reinado.refresh(); return; }
     return a0(a, d);
   };
 }

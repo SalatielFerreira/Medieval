@@ -468,7 +468,7 @@ const People = {
     }
   },
   // ofício sem herdeiro: o rei escolhe um morador sem emprego da mesma vila para cuidar da loja
-  // (rei NPC escolhe na hora; no reino do jogador, o ofício fica vago até você nomear alguém — Portfólio → seu reino)
+  // (rei NPC escolhe na hora; no reino do jogador, o ofício fica vago até você nomear alguém — Portfólio → Reinado: aba Reino ou a página da vila)
   // cargo real ou na corte (família real, cavaleiros, conselheiros e quem mora no castelo): não trabalha em loja
   isCourt(p) {
     return !!p && (['ruler', 'consort', 'heir', 'knight'].includes(p.rank) || !!p.council || (p.home && p.home.type === 'castle') ||
@@ -505,7 +505,7 @@ const People = {
     if (v.free || (c && c.ruler === 'player') || v.lord === 'player') {
       G.vacancies = (G.vacancies || []).filter(x => !(x.vi === vi && x.rank === p.rank));
       G.vacancies.push({ vi, rank: p.rank, day: G.day });
-      UI.msg(`🏪 O ofício de ${RANKS[p.rank][p.sex]} de ${v.name} ficou sem dono. Escolha quem vai cuidar da loja (Portfólio → Vilas e guardas).`, 'gold', true);
+      UI.msg(`🏪 O ofício de ${RANKS[p.rank][p.sex]} de ${v.name} ficou sem dono. Escolha quem vai cuidar da loja (Portfólio → Reinado: na página da vila ou na aba Reino do seu reino).`, 'gold', true);
       return;
     }
     const q = this.shopCandidates(vi, p.rank)[0];

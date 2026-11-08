@@ -1,6 +1,7 @@
 'use strict';
-// A corte: títulos de nobreza para o herói, conselho real (tesoureiro, general, espião-mor e diplomata),
-// conspirações, casamentos arranjados e rivalidades entre as famílias.
+// A corte: títulos de nobreza para o herói, o conselho de cada reino seu (tesoureiro, general, espião-mor e diplomata
+// — o único conselho do jogo: o Reinado lê estas cadeiras para os dilemas e para a espionagem), casamentos arranjados e
+// rivalidades entre as famílias. Os complôs dos conselheiros nascem aqui e vão para a lista única do Reinado (reign.js).
 
 const NOBLE_TITLES = [
   { k: 'knight', m: 'Cavaleiro', f: 'Dama',     icon: '🛡️', rel: 25, serv: 8,  fee: 0,    lvl: 3,  caps: 2, stipend: 0,  tax: 2, perks: '+2 capangas · 5% de desconto nas lojas do reino' },
@@ -112,13 +113,17 @@ const Court = {
   },
   capBonus() { const t = this.title(); return t ? t.caps : 0; },
   villageTax() { const t = this.title(); return t ? t.tax : 2; },
-  canFound() { return true; }, // qualquer um pode fundar a própria vila (basta o ouro e um lugar aberto)
-  discount(ci) { const l = this.levelIn(ci); return l >= 0 ? 0.05 + l * 0.02 : 0; },
-  // cada reino onde você tem título paga a renda do título (menos os reinos que já são seus)
+  // o reino está contra você: em guerra com um reino seu (ou com você)
+  atOdds(ci) { const c = G.civs[ci]; if (!c || c.ruler === 'player') return false; return !!c.atWar || G.civs.some(r => r.ruler === 'player' && Diplo.atWar(r.id, ci)); },
+  // o título vale agora? no próprio reino não (o rei não é nobre de si mesmo) e, em guerra, as vantagens ficam suspensas
+  // (o inimigo não paga salário nem feudo, não dá desconto nem voz) até a paz
+  titleLive(ci) { const c = G.civs[ci]; return this.levelIn(ci) >= 0 && !!c && c.ruler !== 'player' && !this.atOdds(ci); },
+  discount(ci) { const l = this.levelIn(ci); return l >= 0 && this.titleLive(ci) ? 0.05 + l * 0.02 : 0; },
+  // cada reino onde você tem título paga a renda do título (menos os reinos que já são seus e os que estão em guerra)
   stipendTick() {
     for (const ci of this.titledCivs()) {
       const t = NOBLE_TITLES[this.levelIn(ci)], c = G.civs[ci];
-      if (!t || !t.stipend || !c || c.ruler === 'player') continue;
+      if (!t || !t.stipend || !c || !this.titleLive(ci)) continue;
       const g = Math.min(t.stipend, Math.max(0, c.treasury - 50));
       if (g > 0) { c.treasury -= g; P.gold += g; Game.note(`${t.icon} Renda do título de ${this.titleName(this.levelIn(ci), ci)}: +${g} 🪙.`); }
     }
@@ -132,6 +137,8 @@ const Court = {
       p.comp = U.clamp(base + U.rint(-2, 3) + (p.age > 40 ? 1 : 0), 1, 10);
       p.corrupt = Math.random() < (p.trait === 'ganancioso' ? 0.55 : p.trait === 'leal' ? 0.05 : 0.18);
     }
+    // a ambição (junto com a lealdade) decide quem trama contra você
+    if (p.amb === undefined) p.amb = U.clamp(U.rint(10, 70) + (p.trait === 'ganancioso' || p.trait === 'orgulhoso' ? 20 : p.trait === 'leal' ? -20 : 0), 0, 100);
     return p;
   },
   council(ci) { const c = G.civs[ci]; return c.council || (c.council = { treasurer: null, general: null, spy: null, diplomat: null }); },
@@ -161,7 +168,7 @@ const Court = {
   // um dia no conselho de cada reino do jogador
   dayTick() {
     this.warMonth();
-    G.plotsC = G.plotsC || [];
+    const R = typeof Reign !== 'undefined' ? Reign.R() : null;
     for (const c of G.civs) {
       if (c.ruler !== 'player') continue;
       const ci = c.id, fc = Game.civForecast(c);
@@ -187,28 +194,22 @@ const Court = {
         }
         if (seat === 'general' && c.garrison < Game.maxGarrison(c) && p.comp >= 4 && c.treasury >= 25 && Math.random() < 0.5 + p.comp * 0.04) { c.garrison++; c.treasury -= 25; }
         if (seat === 'diplomat') for (const o of G.civs) if (o.id !== ci) Diplo.addRel(ci, o.id, p.comp * 0.12);
-        // conspiração
-        if (p.aff < -5 && !G.plotsC.some(x => !x.done && x.pid === p.id) && Math.random() < 0.12) {
-          G.plotsC.push({ id: G.day * 10 + Object.keys(COUNCIL).indexOf(seat), civ: ci, pid: p.id, seat, day: G.day, ripe: G.day + U.rint(4, 7) * ECON_DAYS, found: false, done: false });
+        // conspiração: o desleal trama, e o ambicioso trama mais (vai para a lista única de complôs do Reinado, que
+        // descobre, julga e faz o golpe acontecer)
+        if (R && p.aff < -5 && !R.plots.some(x => x.pid === p.id) && Math.random() < 0.12 * (0.5 + (this.traits(p).amb || 50) / 100)) {
+          Reign.newPlot(p.id, Reign.SEAT_PLOT[seat] || 'coup', { ci, seat, ripe: G.day + U.rint(4, 7) * ECON_DAYS });
         }
       }
-      // o espião-mor investiga
+      // o espião-mor investiga a corrupção
       const spy = this.member(ci, 'spy'), chance = spy ? 0.08 + spy.comp * 0.06 : 0.03;
       for (const seat in COUNCIL) {
         const p = this.member(ci, seat);
         if (p && p.corrupt && !p.exposed && p !== spy && Math.random() < chance) { p.exposed = true; UI.msg(`🕵️ ${spy ? spy.name + ' descobriu' : 'Rumores dizem'} que ${p.name} (${COUNCIL[seat].m}) é corrupt${p.sex === 'f' ? 'a' : 'o'}! (${c.stolen || 0} 🪙 desviados)`, 'bad'); }
       }
-      for (const pl of G.plotsC.filter(x => !x.done && x.civ === ci)) {
-        const p = G.people[pl.pid];
-        if (!p || !p.alive) { pl.done = true; continue; }
-        if (!pl.found && Math.random() < chance) { pl.found = true; UI.banner('🕵️ Conspiração descoberta!'); UI.msg(`${spy ? spy.name : 'Um informante'} descobriu que ${People.full(p)} conspira contra você! Decida o destino del${p.sex === 'f' ? 'a' : 'e'} em Reino → Conselho.`, 'bad'); }
-        if (!pl.found && G.day >= pl.ripe) this.strike(pl, p);
-      }
     }
   },
-  // a conspiração não descoberta acontece
+  // a conspiração de um conselheiro que ninguém descobriu acontece (chamado pelo Reign.plotStrike, com pl.civ = o reino)
   strike(pl, p) {
-    pl.done = true;
     const c = G.civs[pl.civ];
     p.council = null; this.council(pl.civ)[pl.seat] = null;
     if (pl.seat === 'treasurer') {
@@ -232,28 +233,8 @@ const Court = {
     }
     Diplo.chronicle(`🗡️ Intriga na corte de ${CIV_DEFS[pl.civ].short}: ${People.full(p)} traiu o soberano.`, true);
   },
-  judge(plId, verdict) {
-    const pl = (G.plotsC || []).find(x => x.id === plId), p = pl && G.people[pl.pid];
-    if (!pl || !p) return;
-    pl.done = true;
-    const f = Families.of(p), c = G.civs[pl.civ];
-    if (verdict === 'pardon') {
-      People.addAff(p, 35);
-      if (Math.random() < 0.3) { pl.done = false; pl.found = false; pl.ripe = G.day + U.rint(5, 9) * ECON_DAYS; }
-      UI.msg(`Você perdoou ${p.name}. ${p.sex === 'f' ? 'Ela' : 'Ele'} jura lealdade... desta vez.`, 'gold');
-    } else if (verdict === 'exile') {
-      p.council = null; this.council(pl.civ)[pl.seat] = null; p.home = { type: 'wild' }; People.addAff(p, -60);
-      if (f) f.loyalty = Math.max(0, f.loyalty - 20);
-      UI.msg(`${People.full(p)} foi banid${p.sex === 'f' ? 'a' : 'o'} do reino.`);
-    } else {
-      p.council = null; this.council(pl.civ)[pl.seat] = null;
-      People.die(p, 'executado por traição');
-      if (f) f.loyalty = Math.max(0, f.loyalty - 40);
-      c.happy = Math.max(0, c.happy - 4);
-      UI.msg(`${People.full(p)} foi executad${p.sex === 'f' ? 'a' : 'o'}. A família dele está furiosa.`, 'bad');
-    }
-  },
-  plotsOf(ci) { return (G.plotsC || []).filter(x => !x.done && x.found && x.civ === ci); },
+  // complôs descobertos num reino (a lista é a do Reinado)
+  plotsOf(ci) { return typeof Reign !== 'undefined' ? Reign.plotsOf(ci) : []; },
 
   // ------------------------------------------------------------ casamentos arranjados para os filhos
   marriageable(child) {
@@ -427,3 +408,15 @@ const Court = {
     return out;
   },
 };
+
+{
+  // um reino seu declarou guerra ao reino que lhe deu um título: a coroa de lá o considera traidor e tira o título.
+  // Quando é o outro reino que ataca, o título fica (as vantagens só ficam suspensas até a paz: Court.titleLive).
+  const dw0 = Diplo.declareWar.bind(Diplo);
+  Diplo.declareWar = function (a, b, why) {
+    const had = !this.atWar(a, b), r = dw0(a, b, why);
+    if (had && this.atWar(a, b) && G.civs[a] && G.civs[a].ruler === 'player' && G.civs[b] && G.civs[b].ruler !== 'player' && Court.levelIn(b) >= 0) Court.loseTitle(`${CIV_DEFS[a].short} declarou guerra a ${CIV_DEFS[b].short}`, b);
+    else if (had && this.atWar(a, b) && G.civs[b] && G.civs[b].ruler === 'player' && G.civs[a] && G.civs[a].ruler !== 'player' && Court.levelIn(a) >= 0) UI.msg(`⚜️ ${CIV_DEFS[a].short} está em guerra com você: as vantagens do seu título de lá (renda, feudos, desconto e voz) ficam suspensas até a paz.`, 'bad');
+    return r;
+  };
+}

@@ -736,67 +736,126 @@ const UI = {
   // Todas usam o mesmo tamanho de ícone e texto (nada é encolhido).
   // Telas grandes: o mesmo visual das telas pequenas, mas tudo numa página só — os quadros se arrumam numa grade
   // (classe .kdesk + data-nav, ver css "Portfólio no computador").
-  // Telas pequenas: o conteúdo vira páginas inteiras (um quadro nunca é cortado ao meio; só uma lista maior que a
-  // tela é dividida, repetindo o título do quadro). Arraste para o lado para trocar de página; os pontinhos embaixo
-  // mostram em qual você está.
+  // Telas pequenas (e o Reinado também no computador): o conteúdo vira páginas inteiras. Um quadro que não cabe vai para
+  // a página seguinte; um quadro grande "escorre" (a lista de dentro continua na página seguinte, repetindo o título).
+  // Arraste para o lado para trocar de página; os pontinhos embaixo mostram em qual você está. Regras e como escrever um
+  // quadro que caiba: DESENVOLVIMENTO.md, "Paginador do Portfólio".
   fitReino(nav, pkey) {
     nav = nav || this.sel.knav;
     const body = this.panel.querySelector('.iconnav .snav-body'), box = body && body.querySelector('.kpg');
     if (!box) return;
     const small = document.body.classList.contains('small');
+    // fonte do título (Cinzel) ainda carregando: as alturas vão mudar — arruma de novo quando ela chegar
+    if (document.fonts && document.fonts.status === 'loading' && !this._fontWait) { this._fontWait = true; document.fonts.ready.then(() => { this._fontWait = false; if (this.cur && this.cur.fn === 'showKingdom') this.refresh(); }); }
     body.classList.add('kfit');
     // Reinado e as páginas dos seus reinos: também no computador o conteúdo é dividido em páginas (quadros dois a dois)
-    const two = nav === 'x:reign' || nav.startsWith('k:'), desk2 = !small && two;
-    const isHead = el => el.matches('.pg-head, .tabs, .subtabs, .ktabs, .rg-top');
+    const two = nav === 'x:reign', desk2 = !small && two;
+    const isHead = el => el.matches('.pg-head, .tabs, .subtabs, .ktabs, .rg-top, .rn-roles');
     const flat = [];
-    const walk = parent => { for (const el of [...parent.children]) { if (small && el.matches('.fam-d, .biz-d, .atl-d, .gc-d, .ln-d')) continue; if (el.matches('.kbody, .fam-m, .biz-m, .atl-m, .gc-m, .ln-m') || (two && el.matches('.kgrid, .reign, .law-grid')) || (el.tagName === 'DIV' && !el.className && el.children.length > 1)) walk(el); else flat.push(el); } };
+    const walk = parent => { for (const el of [...parent.children]) { if (small && el.matches('.fam-d, .biz-d, .atl-d, .gc-d, .ln-d')) continue; if (el.matches('.kbody, .fam-m, .biz-m, .atl-m, .gc-m, .ln-m') || (small && el.matches('.sv-root, .sv-pg, .bboard, .sv-cols, .rv-wrap, .cr-page, .cr-col, .soc, .tpair, .bzb-nb, .nb-k2, .bzb-painel, .bzb-contas, .ln2-two')) || (two && el.matches('.kgrid, .reign, .law-grid')) || (el.tagName === 'DIV' && !el.className && el.children.length > 1)) walk(el); else flat.push(el); } };
     walk(box);
     const head = [], units = [];
     for (const el of flat) (units.length === 0 && isHead(el) ? head : units).push(el);
     const bottom = () => body.getBoundingClientRect().bottom - 2;
-    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')));
+    // (no Reinado, o quadro em si não é lista: o título dele nunca fica sozinho numa página; divide-se a lista de dentro)
+    const lists = (el, tiles) => [el, ...el.querySelectorAll('*')].filter(d => d.children.length >= 3 && !d.closest('.tpair, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-ties, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour') && !d.matches('select, svg, svg *, .seg, .chips, .swatches, .hswatch, .tabs, .act-row, .titles' + (tiles ? '' : ', .tiles')) && !(two && d.matches('.card')));
     const deepList = (el, tiles) => lists(el, tiles).sort((x, y) => y.children.length - x.children.length)[0] || null;
     if (!small && !desk2) {
-      const on = (nav.startsWith('d:') && nav !== 'd:rank' && nav !== 'd:heroes') || nav.startsWith('s:') || nav.startsWith('c:') || nav.startsWith('a:') || ['overview', 'crown', 'family', 'villages', 'biz', 'atlas', 'families', 'tree'].includes(nav);
+      const on = (nav.startsWith('d:') && nav !== 'd:rank' && nav !== 'd:heroes') || nav.startsWith('s:') || nav.startsWith('c:') || nav.startsWith('a:') || ['overview', 'crown', 'family', 'biz', 'atlas', 'families', 'tree'].includes(nav);
       body.classList.toggle('kfit', on); box.classList.toggle('kdesk', on);
       if (on) box.dataset.nav = nav;
       return;
     }
     // telas pequenas: páginas inteiras lado a lado, trocadas arrastando
-    const W = body.clientWidth, H = body.clientHeight - 14; // 14 = espaço dos pontinhos
+    // (o rodapé com os pontinhos — no computador, com as setas; e a folga de baixo que as páginas do celular ganham na trilha)
+    const W = body.clientWidth, H = body.clientHeight - (desk2 ? 32 : 14) - (two ? 0 : 12);
     const pages = [];
     let cur;
-    const fresh = () => { cur = document.createElement('div'); cur.className = 'kpg kpage' + (two ? ' kd2' : ''); cur.style.width = W + 'px'; cur.dataset.nav = nav; for (const h of head) cur.appendChild(h.cloneNode(true)); body.innerHTML = ''; body.appendChild(cur); };
-    const fits = () => cur.scrollHeight <= H + 1;
+    // no computador, os quadros dois a dois se encaixam como tijolos (grade de linhas de 2px: cada quadro ocupa as linhas
+    // da altura dele e o seguinte sobe para o buraco que ficar ao lado de um quadro mais baixo)
+    const mas = two;
+    const gap = small ? 3 : 8, span = el => { el.style.gridRowEnd = 'span ' + Math.max(1, Math.ceil((el.getBoundingClientRect().height + gap) / 2)); };
+    const fresh = () => { cur = document.createElement('div'); cur.className = 'kpg kpage' + (two ? ' kd2' : '') + (mas ? ' kmas' : ''); cur.style.width = W + 'px'; cur.style.boxSizing = 'border-box'; cur.style.paddingRight = '6px'; cur.dataset.nav = nav; for (const h of head) cur.appendChild(h.cloneNode(true)); body.innerHTML = ''; body.appendChild(cur); };
+    const fits = () => { if (mas) for (const c of cur.children) span(c); return cur.scrollHeight <= H + 1; };
     const hasContent = () => cur.children.length > head.length;
-    const push = () => { pages.push(cur); fresh(); };
-    // um quadro vai inteiro; só o que é maior que a tela inteira tem a lista dividida (repetindo o título do quadro)
-    const place = (u, depth) => {
-      cur.appendChild(u);
-      if (fits()) return;
-      // cabe inteiro numa página nova? então vai para a próxima; senão é dividido a partir daqui (sem deixar buraco)
-      const uh = u.getBoundingClientRect().height, headH = head.reduce((h, e) => h + e.getBoundingClientRect().height + 12, 0);
-      u.remove();
-      if (hasContent() && uh <= H - headH) { push(); cur.appendChild(u); return; }
-      const L0 = depth < 4 ? deepList(u, true) : null;
-      if (!L0) { cur.appendChild(u); push(); return; }
-      const path = []; for (let e = L0; e !== u; e = e.parentNode) path.unshift([...e.parentNode.children].indexOf(e));
-      const rows = [...L0.children];
-      const shell = () => { const k = u.cloneNode(true); let L = k; for (const i of path) L = L.children[i]; L.innerHTML = ''; return [k, L]; };
-      let [k, L] = shell(); cur.appendChild(k);
-      for (const row of rows) {
-        L.appendChild(row);
-        if (fits()) continue;
-        row.remove();
-        if (L.children.length) { push(); [k, L] = shell(); cur.appendChild(k); L.appendChild(row); if (fits()) continue; row.remove(); }
-        // nem uma linha sozinha cabe: divide essa linha por dentro
-        k.remove(); place(row, depth + 1); [k, L] = shell(); cur.appendChild(k);
+    const push = () => { if (mas) for (const c of cur.children) span(c); pages.push(cur); fresh(); };
+    const used = () => { const top = cur.getBoundingClientRect().top; let b = top; for (const c of cur.children) b = Math.max(b, c.getBoundingClientRect().bottom); return b - top; };
+    // Quadro maior que o espaço: ele "escorre" para as páginas seguintes. O quadro é desmontado em peças (os filhos dele;
+    // um filho grande — uma lista, uma grade — é desmontado nas linhas dele) e remontado página a página numa cópia vazia
+    // do quadro, com o título (.sec) repetido na continuação. Um subtítulo nunca fica sozinho no pé da página.
+    const keep = '.fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour';
+    const solid = 'select, svg, canvas, button, .ju-cells, .seg, .chips, .swatches, .tabs, .act-row, .titles, .rn-it, .rn-row, .rn-dip, .law, .rn-seat';
+    // (desmonta-se uma lista — filhos parecidos — ou o que não cabe numa página inteira; um quadro dentro de uma grade vai inteiro)
+    const homog = c => { const k = [...c.children], m = {}; if (k.length < 3) return false; for (const x of k) { const t = x.tagName + '.' + String(x.className).split(' ')[0]; m[t] = (m[t] || 0) + 1; } return Math.max(...Object.values(m)) >= k.length * 0.6; };
+    const atoms = (el, chain, depth, out) => {
+      const room = H - head.reduce((h, e) => h + e.getBoundingClientRect().height + 6, 0);
+      for (const c of [...el.children]) {
+        const h = c.getBoundingClientRect().height, big = h > H * 0.3;
+        if (depth < 4 && c.children.length && ((big && homog(c)) || h > room) && !c.matches(solid) && !c.closest(keep)) atoms(c, chain.concat([c]), depth + 1, out);
+        else out.push({ node: c, chain });
       }
-      if (!L.children.length) k.remove();
+      return out;
+    };
+    const isSub = el => el.matches('.sec, .law-h, .cr-next-h, h4, h5, .fin-h');
+    const flow = u => {
+      cur.appendChild(u); const A = atoms(u, [], 0, []); u.remove();
+      let shell, map, n, title = null, carried = false;
+      const open = cont => { shell = u.cloneNode(false); map = new Map(); n = 0; if (cont && title) { const t = title.cloneNode(true); t.classList.add('kcont'); shell.appendChild(t); } cur.appendChild(shell); };
+      const box = chain => { let p = shell; for (const o of chain) { let c = map.get(o); if (!c) { c = o.cloneNode(false); p.appendChild(c); map.set(o, c); } p = c; } return p; };
+      const prune = () => { for (const c of [...map.values()].reverse()) if (!c.children.length && !c.textContent.trim()) { c.remove(); for (const [k, v] of map) if (v === c) map.delete(k); } };
+      open(false);
+      for (let i = 0; i < A.length; i++) {
+        const a = A[i];
+        if (!a.chain.length && a.node.matches('.sec') && i > 0) title = a.node; else if (!i && a.node.matches('.sec')) title = a.node;
+        box(a.chain).appendChild(a.node);
+        if (fits()) { n++; carried = false; continue; }
+        a.node.remove(); prune();
+        if (!n && hasContent() && cur.children.length > head.length + 1) { shell.remove(); push(); open(false); i--; continue; }
+        // nem a peça sozinha cabe: desmonta a peça também (se der); senão vai assim mesmo
+        if (!n && a.node.children.length >= 2 && !a.node.matches(solid) && !a.node.closest(keep)) { box(a.chain).appendChild(a.node); const sub = atoms(a.node, a.chain.concat([a.node]), 3, []); a.node.remove(); A.splice(i, 1, ...sub); i--; continue; }
+        if (!n) { box(a.chain).appendChild(a.node); n++; continue; }
+        // o subtítulo que ficaria no pé da página desce junto
+        const carry = [];
+        while (n > 1 && !carried) { const last = A[i - 1 - carry.length]; if (!last || !isSub(last.node) || last.node.parentNode === null) break; last.node.remove(); carry.unshift(last); n--; }
+        prune(); push(); open(true);
+        for (const c of carry) { box(c.chain).appendChild(c.node); n++; }
+        // a peça volta a ser conferida na página nova (sem levar o subtítulo de novo, se ainda não couber)
+        carried = carry.length > 0; i--;
+      }
+      if (!n) shell.remove();
+    };
+    const solo = u => u.getBoundingClientRect().height;
+    const place = u => {
+      cur.appendChild(u);
+      // celular, no Reinado: os quadros ocupam a largura toda; os baixos ficam lado a lado, dois a dois
+      if (small && two && u.matches('.card') && !u.matches('.wide') && u.getBoundingClientRect().height < H * 0.42) u.classList.add('khalf');
+      if (fits()) return true;
+      const uh = solo(u); u.remove();
+      // (um quadro de desenho — mapa, árvore — nunca é desmontado: vai inteiro para uma página dele)
+      if (u.matches(keep)) { if (hasContent()) push(); cur.appendChild(u); return true; }
+      const headH = head.reduce((h, e) => h + e.getBoundingClientRect().height + 8, 0), room = H - headH;
+      // quadro grande e a página ainda com espaço: ele começa aqui e continua na próxima
+      if (hasContent() && uh > room * (desk2 ? 0.66 : 0.5) && H - used() > room * 0.3) { flow(u); return true; }
+      if (hasContent() && uh <= room) return false; // cabe inteiro numa página nova
+      if (hasContent()) push();
+      flow(u); return true;
     };
     fresh();
-    // um quadro marcado com .kalone fica sozinho na página dele
-    for (const u of units) { const alone = u.matches('.kalone'); if (alone && hasContent()) push(); place(u, 0); if (alone && hasContent()) push(); }
+    const queue = units.slice();
+    while (queue.length) {
+      const u = queue.shift();
+      // um quadro marcado com .kalone fica sozinho na página dele
+      const alone = u.matches('.kalone');
+      if (alone && hasContent()) push();
+      if (place(u)) { if (alone && hasContent()) push(); continue; }
+      // não coube: no Reinado, um quadro menor que vem depois pode ocupar o espaço que sobrou (sem página meio vazia)
+      if (two) for (let j = 0; j < Math.min(queue.length, 8); j++) {
+        const v = queue[j]; if (v.matches('.kalone')) continue;
+        cur.appendChild(v); if (fits()) { queue.splice(j, 1); j--; continue; } v.remove();
+      }
+      push(); queue.unshift(u);
+    }
+    if (mas) for (const c of cur.children) span(c);
     if (hasContent() || !pages.length) pages.push(cur);
     body.innerHTML = '';
     const track = document.createElement('div'); track.className = 'kpages';
@@ -805,8 +864,11 @@ const UI = {
     dots.innerHTML = pages.length > 1 ? (desk2 ? '<button class="kd-arr" data-d="-1" title="Página anterior">‹</button>' : '') + pages.map((_, i) => `<i data-i="${i}"></i>`).join('') + (desk2 ? `<span class="kd-n"></span><button class="kd-arr" data-d="1" title="Próxima página">›</button>` : '') : '';
     if (desk2) body.classList.add('kd2b');
     body.appendChild(track); body.appendChild(dots);
+    if (mas) for (const p of pages) for (const c of p.children) span(c); // (a altura de cada quadro já na página de verdade)
+    // textos cortados (uma ou duas linhas): o texto inteiro fica na dica
+    for (const p of pages) for (const el of p.querySelectorAll('small:not([title]), .rn-t b:not([title]), .sec > span:not([title]), .law > b:not([title]), .dt-desc:not([title])')) if (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) el.title = el.textContent.trim();
     // quadros dois a dois: o que ficar sozinho na linha ocupa a largura toda (sem meia linha vazia)
-    if (two) for (const pg of pages) {
+    if (two && !mas) for (const pg of pages) {
       const kids = [...pg.children], half = el => el && el.offsetWidth < pg.clientWidth * 0.7;
       for (let i = 0; i < kids.length; i++) { if (!half(kids[i])) continue; if (half(kids[i + 1])) { i++; continue; } kids[i].classList.add('kd-solo'); }
     }
@@ -820,6 +882,24 @@ const UI = {
     if (desk2 && pages.length > 1) track.addEventListener('wheel', e => { if (Math.abs(e.deltaY) < 20 || this._kwT > Date.now()) return; this._kwT = Date.now() + 450; track.scrollTo({ left: (Math.round(track.scrollLeft / W) + Math.sign(e.deltaY)) * W, behavior: 'smooth' }); }, { passive: true });
     track.scrollLeft = Math.min(S.kpageOf[key] || 0, pages.length - 1) * W;
     mark();
+  },
+  // Lista que cresce com o jogo, no computador: o que não cabe vira partes (◀ 1/2 ▶), sem cortar nenhum item.
+  // items: as linhas; over(): o conteúdo passa da janela?; key: onde guardar a parte aberta (store[key]); host: onde vai o
+  // ◀ 1/2 ▶; act: a ação dos botões (UI.act(act, { k, d }) soma d em store[k] e redesenha). Usado por Portfolio.paginate e
+  // pageAdv, Services.paginate, BizBoard.paginate, o Painel do reino (meses) e os Avisos.
+  pageList({ items, over, key, host, store, act }) {
+    if (document.body.classList.contains('small') || !host || !over() || items.length < 2) return 0;
+    const pages = []; let start = 0;
+    while (start < items.length) {
+      items.forEach(c => { c.hidden = true; });
+      let end = start;
+      for (let i = start; i < items.length; i++) { items[i].hidden = false; if (over() && i > start) { items[i].hidden = true; break; } end = i + 1; }
+      pages.push([start, end]); start = end;
+    }
+    const n = pages.length, k = Math.min(store[key] || 0, n - 1);
+    items.forEach((c, i) => { c.hidden = i < pages[k][0] || i >= pages[k][1]; });
+    host.insertAdjacentHTML('beforeend', `<span class="cr-pager"><button data-act="${act}" data-k="${key}" data-d="-1" ${k ? '' : 'disabled'}>◀</button><b>${k + 1}/${n}</b><button data-act="${act}" data-k="${key}" data-d="1" ${k < n - 1 ? '' : 'disabled'}>▶</button></span>`);
+    return n;
   },
   // cena de abertura das janelas: medalhão (ícone ou retrato), título, frase e números. Temas: gold, green, red, blue,
   // earth, purple, amber, stone (cores de fundo em css "Cena de abertura")
@@ -841,22 +921,17 @@ const UI = {
   pageHead(ic, title, sub) { return `<div class="pg-head"><span class="pg-ic">${ic}</span><div><h3>${title}</h3>${sub ? `<small>${sub}</small>` : ''}</div></div>`; },
 
   // ============================================================ Reino
-  // Você (visão geral, coroa, família, vilas e guardas, empreendimentos) · Seus reinos (um por reino) · O mundo
+  // Você (visão geral, família, empreendimentos, Grandes Casas, Linhagens) · Gestão (uiplus.js; nela o Reinado reúne os
+  // seus reinos, as vilas que você governa e os títulos — reinado.js)
   showKingdom(ci) {
-    const S = this.sel, ruled = G.civs.filter(c => c.ruler === 'player');
-    if (ci !== undefined && ci >= 0 && G.civs[ci] && G.civs[ci].ruler === 'player') S.knav = 'k:' + ci;
-    if (!S.knav) S.knav = ruled.length ? 'k:' + ruled[0].id : 'overview';
+    const S = this.sel;
+    if (ci !== undefined && ci >= 0 && G.civs[ci] && G.civs[ci].ruler === 'player') S.knav = 'k:' + ci; // o Reinado abre este reino
+    if (!S.knav) S.knav = G.civs.some(c => c.ruler === 'player') ? 'x:reign' : 'overview';
     if (S.knav === 'market' || S.knav === 'news') S.knav = 'overview'; // páginas que saíram do Reino
-    if (S.knav.startsWith('k:') && !ruled.some(c => 'k:' + c.id === S.knav)) S.knav = ruled.length ? 'k:' + ruled[0].id : 'overview';
-    const mine = Urban.myVillages(), alerts = this.kAlerts();
-    if (S.knav.startsWith('v:') && !mine.some(({ i }) => 'v:' + i === S.knav)) S.knav = 'overview';
-    const groups = [['Você', [['overview', '🏠', 'Visão geral', alerts.length, alerts.length > 0], ['crown', '👑', 'Coroa e títulos'], ['family', '👪', 'Família'],
-      ['villages', '🏘️', 'Vilas e guardas', mine.length], ['biz', '💼', 'Empreendimentos', Biz.list().length], ['families', '🏛️', 'Grandes Casas'], ['tree', '🌳', 'Linhagens']]]];
-    if (ruled.length) groups.push(['Seus reinos', ruled.map(c => ['k:' + c.id, Heraldry.armsSvg(c.id, 16), CIV_DEFS[c.id].short,
-      c.rebel > 0 || c.atWar ? '!' : '', c.rebel > 0 || c.atWar])]);
-    // as vilas em que você é o governador: cada uma com a sua administração
-    if (mine.length) groups.push(['Suas vilas', mine.map(({ v, i }) => ['v:' + i, '🏘️', v.name, v.raid && v.raid.until >= G.day ? '!' : '', !!(v.raid && v.raid.until >= G.day)])]);
-    // (o grupo O mundo saiu: Grandes Casas e Linhagens ficam em Você e o atlas do Reino saiu do menu)
+    if (typeof Reinado !== 'undefined') Reinado.route(); // os atalhos antigos (k:, v:, crown, villages...) caem no Reinado
+    const alerts = this.kAlerts();
+    const groups = [['Você', [['overview', '🏠', 'Visão geral', alerts.length, alerts.length > 0], ['family', '👪', 'Família'],
+      ['biz', '💼', 'Empreendimentos', Biz.list().length], ['families', '🏛️', 'Grandes Casas'], ['tree', '🌳', 'Linhagens']]]];
     const page = this.kPage(S.knav);
     this.open('Portfólio', `<div class="iconnav">${this.navHtml(groups, S.knav, 'knav', `<div class="kpg">${page}</div>`)}</div>`, 'showKingdom', [], 'Você, seus reinos e o mundo');
     this.fitReino();
@@ -875,7 +950,6 @@ const UI = {
       const s = CIV_DEFS[c.id].short, fc = Game.civForecast(c);
       if (c.rebel > 0) out.push([`⚠️ ${s}: o povo está à beira da revolta (${c.rebel}/3).`, 'k:' + c.id]);
       if (fc.wheat < fc.need) out.push([`🌾 ${s}: falta trigo, o povo vai passar fome.`, 'k:' + c.id]);
-      for (const pl of Court.plotsOf(c.id)) out.push([`🗡️ ${s}: conspiração descoberta no conselho.`, 'k:' + c.id]);
       for (const r of (G.revolts || []).filter(r => !r.done && r.civ === c.id)) out.push([`🔥 ${s}: a ${Families.name(Families.get(r.fam) || { surname: '?' })} se revoltou.`, 'k:' + c.id]);
     }
     for (const a of (G.assaults || []).filter(a => a.state !== 'done')) out.push([`🚩 ${Diplo.name(a.att)} ${a.state === 'march' ? 'marcha contra' : 'ataca'} ${Sieges.targetName(a)}.`, 'villages']);
@@ -893,74 +967,17 @@ const UI = {
       const res = (label, val, ic, hue, sub) => `<div class="stile ov" style="--hue:${hue}"><span class="ov-ic">${ic}</span><small>${label}</small><b>${val}</b>${sub ? `<em class="ov-sub">${sub}</em>` : ''}</div>`;
       const alerts = this.kAlerts();
       return this.pageHead(t.king ? '👑' : '🛡️', `${this.esc(G.name)} ${this.esc(G.surname || '')}`, `${this.esc(t.text)} · nível ${P.level} · ${P.age} anos · ${Calendar.full(G.day)}`)
-        + (alerts.length ? `<div class="card"><div class="sec">⚠️ Atenção</div>${alerts.map(([txt, k]) => `<div class="alert row">${this.esc(txt)}<button data-act="knav" data-k="${k}">Ver</button></div>`).join('')}</div>` : '')
+        // (os três primeiros; o resto fica em Avisos, para a página caber na janela)
+        + (alerts.length ? `<div class="card"><div class="sec">⚠️ Atenção${alerts.length > 3 ? ` <span>${alerts.length} avisos</span>` : ''}</div>${alerts.slice(0, 3).map(([txt, k]) => `<div class="alert row">${this.esc(txt)}<button data-act="knav" data-k="${k}">Ver</button></div>`).join('')}${alerts.length > 3 ? `<div class="alert row more">e mais ${alerts.length - 3} ${alerts.length - 3 === 1 ? 'aviso' : 'avisos'}<button data-act="knav" data-k="x:alerts">Ver todos</button></div>` : ''}</div>` : '')
         + `<div class="card ov-card"><div class="sec">Seus domínios <span>clique para abrir</span></div><div class="tiles big">
-          ${link(ruled.length ? 'k:' + ruled[0].id : 'crown', 'Reinos governados', ruled.length, '👑', 45)}${link('villages', 'Vilas que você governa', mine.length, '🏘️', 120)}
-          ${link('biz', 'Empreendimentos', Biz.list().length, '💼', 28)}${link('villages', 'Guardas', Guards.all().length, '🛡️', 210)}
+          ${link(ruled.length ? 'k:' + ruled[0].id : 'crown', 'Reinos governados', ruled.length, '👑', 45)}${link(mine.length ? 'v:' + mine[0].i : 'villages', 'Vilas que você governa', mine.length, '🏘️', 120)}
+          ${link('biz', 'Empreendimentos', Biz.list().length, '💼', 28)}${link(ruled.length ? 'k:' + ruled[0].id + '/exercito' : mine.length ? 'v:' + mine[0].i : 'villages', 'Guardas', Guards.all().length, '🛡️', 210)}
           ${link('family', 'Família', (Families.members(f).length + 1) + (Families.members(f).length ? ' pessoas' : ' pessoa'), '👪', 330)}${link('crown', 'Título', Court.title() ? this.esc(Court.titleName()) : '—', Court.title() ? Court.title().icon : '⚜️', 275)}</div></div>
         <div class="card ov-card"><div class="sec">Recursos pessoais</div><div class="tiles big">
           ${res('Ouro', `${P.gold} <i class="ov-u">🪙</i>`, '💰', 45)}${res('Influência', `⭐ ${Families.influence(f)}`, '🏛️', 200)}
           ${res('Capangas', `${Game.allies().length} / ${Game.followerCap()}`, '⚔️', 0, `<i class="ov-bar"><i style="width:${Math.round(Game.allies().length / Math.max(1, Game.followerCap()) * 100)}%"></i></i>`)}${res('Fama', `🌟 ${Court.fame()}`, '📣', 35)}
           ${res('Devoção', `🙏 ${Faith.piety()}`, '⛪', 260)}${res('Caravanas na estrada', `🐫 ${Market.mine().length}`, '🐫', 90)}</div></div>
         `;
-    }
-    if (nav === 'crown') {
-      const t = Court.T();
-      const titleTxt = Court.title() ? `${Court.title().icon} Você é <b>${this.esc(Court.titleName())}</b>.<span class="tperks"> Vantagens: ${Court.title().perks}.</span>` : 'Você ainda não tem título de nobreza.';
-      return this.pageHead('👑', 'Coroa e títulos', ruled.length ? `Você governa ${ruled.map(c => CIV_DEFS[c.id].short).join(', ')}` : 'Os caminhos até o trono')
-        + `<div class="tpair"><div class="card"><div class="sec">⚜️ Título de nobreza</div><p>${titleTxt}</p>
-          <div class="titles">${NOBLE_TITLES.map((nt, i) => `<span class="tchip ${t.lvl >= i ? 'on' : ''}">${nt.icon} ${P.sex === 'f' ? nt.f : nt.m}</span>`).join('')}</div>
-          <div class="tladder" style="--prog:${Math.max(0, t.lvl) / (NOBLE_TITLES.length - 1) * 100}%">${NOBLE_TITLES.map((nt, i) => `<div class="tstep ${t.lvl > i ? 'done' : t.lvl === i ? 'cur' : t.lvl + 1 === i ? 'next' : ''}"><span class="tmedal">${nt.icon}</span><small>${P.sex === 'f' ? nt.f : nt.m}</small></div>`).join('')}</div>
-          ${Court.titledCivs().length > 1 ? `<div class="tlist">${Court.titledCivs().map(c => `<span class="tchip on">${NOBLE_TITLES[Court.levelIn(c)].icon} ${this.esc(Court.titleName(Court.levelIn(c), c))}</span>`).join('')}</div>` : ''}
-          <small class="muted">Peça no castelo de cada reino. Você pode ter um título em cada reino, mesmo sendo rei.</small></div>
-        ${(() => { const got = CIVIL_TITLES.filter(ct => Court.hasCivil(ct.id));
-          return `<div class="card civil-card"><div class="sec">🎖️ Título civil</div><p>${got.length ? `Você é <b>${got.map(ct => ct.icon + ' ' + Court.civilName(ct)).join(', ')}</b>.` : 'Você ainda não tem título civil.'}</p>
-          <div class="titles">${CIVIL_TITLES.map(ct => `<span class="tchip ${Court.hasCivil(ct.id) ? 'on' : ''}">${ct.icon} ${Court.civilName(ct)}</span>`).join('')}</div>
-          <div class="tmedals">${CIVIL_TITLES.map(ct => `<div class="tstep ${Court.hasCivil(ct.id) ? 'got' : 'locked'}"><span class="tmedal">${ct.icon}</span><small>${Court.civilName(ct)}</small></div>`).join('')}</div>
-          <small class="muted">Ganhos pelos seus feitos · ${got.length}/${CIVIL_TITLES.length}</small></div></div>`; })()}
-        ${(() => {
-          // corte do rei: só o convite pendente (aceitar ou recusar) ou a corte em que você já está
-          const inv = G.courtInvite, cur = RoyalCourt.C();
-          if (inv && !RoyalCourt.isMember(inv.civ)) {
-            const c = G.civs[inv.civ], o = COURT_OFFICES.advisor;
-            return `<div class="card court-inv kalone"><div class="sec">👑 Convite da corte</div>
-              <div class="ci-letter"><div class="ci-seal">${Heraldry.armsSvg(inv.civ, 46)}</div><div class="ci-text">
-                <p><b>${this.esc(c.rulerName)}</b> convida você para a corte de <b>${CIV_DEFS[inv.civ].name}</b>.</p>
-                <div class="ci-office">${o.icon} <b>${RoyalCourt.officeName('advisor')}</b> · ~${o.pay} 🪙 por mês</div></div></div>
-              <small class="muted">${cur ? `Aceitar faz você deixar a corte de ${CIV_DEFS[cur.civ].short}. ` : ''}Na corte é preciso aparecer no castelo de tempos em tempos.</small>
-              <div class="act-row"><button class="primary" data-act="cjoin" data-c="${inv.civ}">✔ Aceitar</button><button data-act="cdecline" data-c="${inv.civ}">Recusar</button></div></div>`;
-          }
-          if (cur) {
-            const o = COURT_OFFICES[cur.office];
-            return `<div class="card court-inv kalone"><div class="sec">👑 Sua corte</div>
-              <div class="ci-letter"><div class="ci-seal">${Heraldry.armsSvg(cur.civ, 46)}</div><div class="ci-text">
-                <p>Você está na corte de <b>${CIV_DEFS[cur.civ].name}</b>.</p>
-                <div class="ci-office">${o.icon} <b>${RoyalCourt.officeName(cur.office)}</b></div></div></div>
-              <small class="muted">Troque de cargo e peça audiências no castelo do rei.</small></div>`;
-          }
-          // o reino que está mais perto de mandar o convite
-          const best = G.civs.filter(c => c.ruler !== 'player').map(c => ({ c, rn: RoyalCourt.renown(c.id), rel: Math.round(c.relation) }))
-            .sort((a, b) => (Math.min(b.rn, COURT_INVITE.renown) + Math.min(b.rel, COURT_INVITE.rel)) - (Math.min(a.rn, COURT_INVITE.renown) + Math.min(a.rel, COURT_INVITE.rel)))[0];
-          const bar = (v, max) => `<span class="ci-bar"><i style="width:${Math.max(0, Math.min(100, v / max * 100))}%"></i></span>`;
-          return `<div class="card court-inv kalone"><div class="sec">👑 Convite da corte</div>
-            <div class="ci-letter empty"><div class="ci-seal">📜</div><div class="ci-text"><p>Nenhum convite no momento.</p>
-              <small class="muted">O rei convida quem tem reconhecimento ${COURT_INVITE.renown}+ e relação ${COURT_INVITE.rel}+ com o reino.</small></div></div>
-            ${best ? `<div class="ci-near"><div class="ci-near-h">Mais perto de convidar: <b>${CIV_DEFS[best.c.id].short}</b></div>
-              <div class="ci-row"><span>Reconhecimento</span>${bar(best.rn, COURT_INVITE.renown)}<b>${best.rn}/${COURT_INVITE.renown}</b></div>
-              <div class="ci-row"><span>Relação</span>${bar(best.rel, COURT_INVITE.rel)}<b>${Math.max(0, best.rel)}/${COURT_INVITE.rel}</b></div></div>` : ''}</div>`;
-        })()}
-        ${(() => {
-          // relação com cada reino num medidor simples: de -100 (inimigo) a +100 (aliado)
-          const face = r => r >= 75 ? '😀' : r >= 40 ? '🙂' : r >= 10 ? '😐' : r > -20 ? '😶' : r > -60 ? '😠' : '😡';
-          const rows = G.civs.map(c => {
-            const mine = c.ruler === 'player', r = mine ? 100 : Math.round(c.relation), pct = (r + 100) / 2;
-            const col = mine ? '#e8c06a' : r >= 40 ? '#5fd35f' : r >= 10 ? '#9be37a' : r > -20 ? '#c9b48a' : r > -60 ? '#e8944a' : '#e05a4a';
-            return `<div class="rmeter"><span class="cdot" style="background:${Game.civColor(c.id)}"></span><b>${CIV_DEFS[c.id].short}</b>
-              <span class="rm-bar"><i style="width:${pct}%;background:${col}"></i><em></em></span>
-              <span class="rm-val">${c.atWar && !mine ? '<span class="badge">GUERRA</span> ' : ''}${mine ? '👑' : face(r)} ${mine ? 'seu reino' : (r > 0 ? '+' : '') + r}</span></div>`;
-          }).join('');
-          return `<div class="card rel-card kalone"><div class="sec">🤝 Sua relação com os 7 reinos <span>−100 inimigo · +100 aliado</span></div><div class="rmeters">${rows}</div></div>`;
-        })()}`;
     }
     if (nav === 'family') {
       const f = Families.ensurePlayer(), mem = Families.members(f).filter(p => p.alive);
@@ -991,30 +1008,6 @@ const UI = {
         ${kids.length ? `<div class="card"><div class="sec">💒 Casamentos arranjados <span>150 🪙</span></div>${kids.map(k => `<div class="crow2">${this.personLine(k)} <button data-act="match" data-id="${k.id}">Arranjar casamento</button></div>`).join('')}
           <small class="muted">Case seus filhos com herdeiros de outros reinos (alianças) ou com as famílias mais poderosas (lealdade e fim de rivalidades).</small></div>` : ''}
         <div class="act-row"><button data-act="knav" data-k="tree">🌳 Árvore da família e relações</button></div></div>`;
-    }
-    if (nav === 'villages') {
-      const mine = Urban.myVillages(), site = Families.playerSite(), have = k => k === 'gold' ? P.gold : Inv.count(k);
-      const vrow = ({ v, i }) => { const res = People.residents(i).length, post = { kind: 'village', vi: i };
-        return `<div class="crow"><span class="ri">🏘️</span><span><b>${this.esc(v.name)}</b><small>${v.free ? 'Vila livre' : CIV_DEFS[v.civ].short} · nível ${v.level || 1} · ${res} moradores · impostos ${res * Court.villageTax()} 🪙/dia · guardas ${Guards.at(post).length}/${Guards.cap(post)}</small></span>
-          <span class="act-row">${Borders.annexTarget(i) >= 0 ? `<button class="primary" data-act="vannex" data-v="${i}" title="A vila entra no seu reino com a terra em volta">👑 Anexar ao ${this.esc(CIV_DEFS[Borders.annexTarget(i)].short)}</button>` : ''}<button data-act="vping" data-v="${i}" title="Marcar no mapa">📍</button></span></div>`; };
-      return this.pageHead('🏘️', 'Vilas e guardas', 'O governador recebe impostos e manda nas estradas e nos imóveis da vila')
-        + `<div class="card vchief"><div class="sec">Vilas que você governa <span>${mine.length}</span></div>${mine.map(vrow).join('') || '<div class="vg-empty"><span class="vg-emb">🏘️</span><b>Nenhuma vila ainda</b><small>Peça, conquiste ou funde a sua.</small></div><p class="muted vg-none">Nenhuma ainda.</p>'}
-          <small class="muted">Como governador, use Construir → Reformas e Obras para mudar, demolir e erguer imóveis e estradas dentro da vila.</small></div>
-        ${this.guardsHtml()}
-        ${this.vacancyHtml()}
-        <div class="card"><div class="sec">Como virar governador de uma vila</div><div class="ways">
-          <div class="way"><span class="way-ic">📜</span><b>Pedir ao rei</b><small>No castelo do reino, com boa relação e ouro.</small></div>
-          <div class="way"><span class="way-ic">⚔️</span><b>Conquistar</b><small>Converse com o governador da vila e desafie-o. O rei decide se é uma afronta.</small></div>
-          <div class="way"><span class="way-ic">🏗️</span><b>Fundar</b><small>A Vila ${this.esc(G.surname)}, livre de qualquer reino (${FOUND_COST.gold.toLocaleString('pt-BR')} Salin).</small></div></div></div>
-        <div class="card found"><div class="sec">🏗️ Fundar uma vila (você escolhe o nome)</div>
-          <p class="dt-desc">Fique no centro de um lugar aberto (longe de outras vilas e castelos) e funde uma vila com o nome da sua família, livre de qualquer reino. Colonos se mudam para lá e pagam impostos a você.</p>
-          <div class="found-row"><span class="found-lab">Custo</span><div class="cost">${this.fmtCost(FOUND_COST, have)}</div></div>
-          ${(() => { const gold = Math.min(100, P.gold / FOUND_COST.gold * 100);
-            return `<div class="vg-req two">
-              <div class="vg-step ${P.gold >= FOUND_COST.gold ? 'ok' : ''}"><span>🪙</span><b>${P.gold} / ${FOUND_COST.gold}</b><i class="vg-bar"><i style="width:${gold}%"></i></i></div>
-              <div class="vg-step ${site.ok === true ? 'ok' : ''}"><span>📍</span><b>Lugar aberto</b><em>${site.ok === true ? '✔' : 'procure'}</em></div></div>`; })()}
-          <div class="found-go"><div class="found-st ${site.ok === true ? 'ok' : 'bad'}">${site.ok === true ? 'Este lugar serve: a vila será livre, sem pertencer a reino nenhum.' : this.esc(site.ok)}</div>
-            <button class="primary" data-act="found" ${site.ok === true && Inv.has(FOUND_COST) ? '' : 'disabled'}>🏘️ Fundar aqui</button></div></div>`;
     }
     if (nav === 'biz') {
       const biz = Biz.list();
@@ -1061,7 +1054,6 @@ const UI = {
         + `<div class="biz-d"><div class="card">${biz.map(s => { const fc = Biz.forecast(s); return `<div class="crow"><span class="ri">${Game.buildIcon(s.type)}</span><span><b>${BUILDINGS[s.type].name}</b><small>${Biz.workerCount(s)}/${BIZ_TYPES[s.type].slots} funcionários · salários ${fc.wages} 🪙/dia${s.till ? ` · caixa ${s.till} 🪙` : ''}</small></span><span class="act-row"><button data-act="bizopen" data-s="${s.id}">Abrir</button></span></div>`; }).join('')
           || '<p class="muted">Nenhum ainda. Construa uma Fazenda Comercial, Moinho, Serraria, Pedreira, Mina, Ferraria, Empório ou a sua Taverna, e contrate moradores das vilas próximas.</p>'}</div></div>`;
     }
-    if (nav.startsWith('k:')) return this.kingdomPage(+nav.slice(2));
     if (nav === 'atlas') return this.atlasHtml();
     if (nav === 'families') {
       const all = Families.ranking(), total = G.people.filter(p => p.alive).length;
@@ -1093,111 +1085,83 @@ const UI = {
       return this.pageHead('🌳', 'Linhagens', 'Sua árvore genealógica e as relações entre as casas') + this.lineageMobile(f) + `<div class="ln-d">${this.treeBody(f)}</div>`; }
     return '';
   },
-  // um reino governado pelo jogador: uma fileira de abas e o conteúdo
-  kingdomPage(ci) {
-    const S = this.sel, c = G.civs[ci], d = CIV_DEFS[ci], fc = Game.civForecast(c);
-    const have = k => k === 'gold' ? c.treasury : (c.stock[k] || 0);
-    const net = fc.income - fc.upkeep, wheatNet = fc.wheat - fc.need;
-    const subs = [['resumo', '📊 Resumo'], ['coroa', '👑 Decretos e ações'], ['economia', '💰 Economia'], ['obras', '🏗️ Obras'], ['exercito', '🛡️ Exército e povo'], ['conselho', '🎩 Conselho'], ['diplo', '🤝 Diplomacia'], ['brasao', '⚜️ Bandeira e brasão']];
-    if (!subs.some(([k]) => k === S.ksub)) S.ksub = 'resumo';
-    const st = subs.map(([k, lab]) => `<button class="tab ${S.ksub === k ? 'on' : ''}" data-act="ksub" data-s="${k}">${lab}${k === 'conselho' && Court.plotsOf(ci).length ? ' <span class="badge">!</span>' : ''}</button>`).join('');
-    let sec = '';
-    if (S.ksub === 'resumo') {
-      sec = `<div class="tiles big">
-          <div class="stile"><small>População</small><b>${c.pop} / ${Game.popCap(c)}</b></div>
-          <div class="stile"><small>Felicidade</small><b class="${c.happy < 30 ? 'bad' : ''}">${Math.round(c.happy)}%</b><span class="pbar"><i style="width:${c.happy}%;background:${c.happy < 30 ? '#c0392b' : '#5fd35f'}"></i></span></div>
-          <div class="stile"><small>Tesouro do reino</small><b>${c.treasury} 🪙</b></div>
-          <div class="stile"><small>Saldo por mês</small><b class="${net < 0 ? 'bad' : 'ok'}">${net >= 0 ? '+' : ''}${net} 🪙</b></div>
-          <div class="stile"><small>Guarnição</small><b>${c.garrison} / ${Game.maxGarrison(c)}</b></div>
-          <div class="stile"><small>Trigo por mês</small><b class="${wheatNet < 0 ? 'bad' : 'ok'}">${wheatNet >= 0 ? '+' : ''}${wheatNet} 🌾</b></div>
-        </div>
-        ${c.rebel > 0 ? `<div class="alert">⚠️ O povo está à beira da revolta (${c.rebel}/3 meses). Baixe impostos ou faça um festival (aba Exército e povo).</div>` : ''}
-        ${wheatNet < 0 ? '<div class="alert">⚠️ Falta trigo: o povo vai passar fome. Invista em Fazendas Reais (aba Obras) ou deposite trigo (aba Economia).</div>' : ''}
-        <div class="card"><div class="sec">Impostos</div><div class="taxbox">
-          <button data-act="tax" data-c="${ci}" data-d="-0.05" ${c.tax <= 0 ? 'disabled' : ''}>−5%</button><div class="val">${Math.round(c.tax * 100)}%</div>
-          <button data-act="tax" data-c="${ci}" data-d="0.05" ${c.tax >= 0.5 ? 'disabled' : ''}>+5%</button>
-          <div class="muted">Arrecadação: <b>${fc.income} 🪙/dia</b> · soldos da guarnição: −${fc.upkeep} 🪙/dia.<br>Cada +5% rende ~${Math.round(c.pop * 0.1)} 🪙/dia, mas reduz a felicidade em cerca de 8 pontos.</div></div></div>`;
-    } else if (S.ksub === 'economia') {
-      sec = `<div class="kgrid two"><div class="card"><div class="sec">Tesouro do reino</div><div class="bignum">${c.treasury} 🪙</div>
-          <div class="act-row"><button data-act="kgold" data-c="${ci}" data-n="-100" ${c.treasury >= 100 ? '' : 'disabled'}>Sacar 100</button><button data-act="kgold" data-c="${ci}" data-n="-all" ${c.treasury > 0 ? '' : 'disabled'}>Sacar tudo</button></div></div>
-        <div class="card"><div class="sec">Seu ouro pessoal</div><div class="bignum">${P.gold} 🪙</div>
-          <div class="act-row">${[1, 100, 1000, 5000].map(n => `<button data-act="kgold" data-c="${ci}" data-n="${n}" ${P.gold >= n ? '' : 'disabled'}>Depositar ${n}</button>`).join('')}<button data-act="kgold" data-c="${ci}" data-n="all" ${P.gold > 0 ? '' : 'disabled'}>Depositar tudo</button></div></div></div>
-        <div class="card"><div class="sec">Armazéns do reino</div><table class="trade"><tr><th>Recurso</th><th>Estoque</th><th>Produção/dia</th><th>Você tem</th><th></th></tr>${KINGDOM_RES.map(k => `<tr>
-          <td>${UI.ii(k)} ${ITEMS[k].name}</td><td><b>${c.stock[k] || 0}</b></td><td class="ok">+${fc.prod[k]}</td><td>${Inv.count(k)}</td>
-          <td><button data-act="kres" data-c="${ci}" data-k="${k}" data-n="-10" ${(c.stock[k] || 0) >= 10 ? '' : 'disabled'}>Retirar 10</button><button data-act="kres" data-c="${ci}" data-k="${k}" data-n="10" ${Inv.count(k) >= 10 ? '' : 'disabled'}>Depositar 10</button></td></tr>`).join('')}</table></div>`;
-    } else if (S.ksub === 'diplo') {
-      sec = `<p class="muted">Relações de ${d.short} com os outros reinos. Os custos saem do tesouro do reino (${c.treasury} 🪙).</p><div class="rels">` + G.civs.filter(o => o.id !== ci).map(o => {
-        const r = Math.round(Diplo.rel(ci, o.id)), war = Diplo.atWar(ci, o.id), al = Diplo.allied(ci, o.id);
-        return `<div class="relrow dip"><span class="cdot" style="background:${Game.civColor(o.id)}"></span>
-          <span><b>${CIV_DEFS[o.id].name}</b><small>${this.esc(o.rulerName)} · guarnição ${o.garrison}</small></span>
-          <span class="pbar"><i style="left:50%;width:${Math.abs(r) / 2}%;${r < 0 ? 'transform:translateX(-100%);background:#c0392b' : 'background:#5fd35f'}"></i><em></em></span>
-          <span class="rlab">${r} ${war ? '<span class="badge">GUERRA</span>' : al ? '<span class="tag">ALIADO</span>' : ''}</span>
-          <span class="act-row">${o.ruler === 'player' ? '<small class="muted">seu reino</small>' : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="gift" ${c.treasury >= 100 ? '' : 'disabled'} title="Presentes: +12 de relação">🎁 100</button>
-            ${war ? `<button class="danger" data-act="wbattle" data-c="${ci}" data-o="${o.id}">⚔️ Partir para a batalha</button><button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="peace">📜 Mensageiro de paz</button>`
-              : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="ally" ${!al && r >= 40 && c.treasury >= 200 ? '' : 'disabled'} title="Exige relação 40+">🤝 Aliança 200</button>
-                 <button class="danger" data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="war">📜 Mensageiro de guerra</button>`}`}</span></div>`;
-      }).join('') + '</div>';
-    } else if (S.ksub === 'brasao' && Heraldry.lead(ci) !== ci) {
-      const L = Heraldry.lead(ci);
-      sec = `<div class="card herald-prev"><div class="sec">Bandeira e brasão</div>
-          <div class="hp-row">${Heraldry.flagSvg(ci, 150, 100)}${Heraldry.armsSvg(ci, 92)}</div>
-          <p class="dt-desc">${this.esc(d.name)} leva a bandeira e o brasão de <b>${this.esc(CIV_DEFS[L].name)}</b>, o seu reino principal. Os dois continuam reinos diferentes, com nomes e relações próprios.</p>
-          <div class="act-row"><button data-act="hfollow" data-c="${ci}" data-v="0">🛡️ Usar bandeira e brasão próprios</button></div></div>`;
-    } else if (S.ksub === 'brasao') {
-      const hx = Heraldry.get(ci);
-      const pick = (k, v, inner, label, on) => `<button class="hpick ${on ? 'on' : ''}" data-act="hset" data-c="${ci}" data-k="${k}" data-v="${v}" title="${label}">${inner}<small>${label}</small></button>`;
-      sec = `<div class="kgrid two">
-        <div class="card herald-prev"><div class="sec">Prévia</div>
-          <div class="hp-row">${Heraldry.flagSvg(ci, 150, 100)}${Heraldry.armsSvg(ci, 92)}</div>
-          <div class="hp-name">${this.esc(d.name)}</div>${G.mainRealm !== null && G.mainRealm !== undefined && G.mainRealm !== ci && G.civs[G.mainRealm] && G.civs[G.mainRealm].ruler === 'player' ? `<div class="act-row"><button data-act="hfollow" data-c="${ci}" data-v="1">🛡️ Usar a marca de ${this.esc(CIV_DEFS[G.mainRealm].short)}</button></div>` : ''}
-          <div class="act-row"><button data-act="hreset" data-c="${ci}">↺ Voltar ao original</button></div>
-          <small class="muted">A bandeira tremula nas torres do castelo e o brasão fica sobre o portão.</small></div>
-        <div class="card"><div class="sec">Nome do reino</div>
-          <div class="cr-names"><label>Nome completo<input id="hName" maxlength="32" value="${this.esc(d.name)}"></label><label>Nome curto<input id="hShort" maxlength="14" value="${this.esc(d.short)}"></label></div>
-          <div class="act-row" style="margin-top:6px"><button class="primary" data-act="hname" data-c="${ci}">✍️ Renomear o reino</button></div>
-          <div class="sec" style="margin-top:12px">Cor do reino</div>
-          <div class="hswatch">${TINCTURES.map(([c, n]) => `<button class="sw ${hx.color === c ? 'on' : ''}" data-act="hset" data-c="${ci}" data-k="color" data-v="${c}" title="${n}" style="background:${c}"></button>`).join('')}</div>
-          <div class="sec" style="margin-top:12px">Metal (segunda cor)</div>
-          <div class="hswatch">${METALS.map(([c, n]) => `<button class="sw ${hx.metal === c ? 'on' : ''}" data-act="hset" data-c="${ci}" data-k="metal" data-v="${c}" title="${n}" style="background:${c}"></button>`).join('')}</div>
-          <small class="muted">A cor aparece nas fronteiras, no mapa, nos guardas e nos telhados.</small></div></div>
-        <div class="card"><div class="sec">Bandeira</div><div class="hgrid">${FLAG_PATTERNS.map(([k, n]) => pick('flag', k, Heraldry.flagSvg(ci, 54, 36, { flag: k }), n, hx.flag === k)).join('')}</div></div>
-        <div class="card"><div class="sec">Brasão: divisão do escudo</div><div class="hgrid">${ARMS_DIVISIONS.map(([k, n]) => pick('division', k, Heraldry.armsSvg(ci, 34, { division: k }), n, hx.division === k)).join('')}</div>
-          <div class="sec" style="margin-top:12px">Brasão: símbolo</div><div class="hgrid">${CHARGES.map(ch => pick('charge', ch, Heraldry.armsSvg(ci, 34, { charge: ch }), '', hx.charge === ch)).join('')}</div></div>`;
-    } else if (S.ksub === 'coroa') {
-      sec = this.crownHtml(ci);
-    } else if (S.ksub === 'conselho') {
-      sec = this.councilHtml(ci);
-    } else if (S.ksub === 'obras') {
-      sec = `<p class="muted">As obras são pagas com o tesouro e os armazéns do reino, não com o seu bolso. Para mexer em casas, lojas, estradas e até mudar o castelo de lugar, use Construir → Reformas e Obras.</p><div class="kgrid">${Object.entries(INVESTMENTS).map(([k, inv]) => {
-        const can = Object.entries(inv.cost).every(([r, n]) => have(r) >= n);
-        return `<div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">${inv.icon}</div><div><b>${inv.name}</b><div class="dt-cat">Nível ${c.invest[k]}</div></div></div>
-          <p class="dt-desc">${inv.desc}</p><div class="cost">${this.fmtCost(inv.cost, have)}</div>
-          <button class="primary" data-act="invest" data-c="${ci}" data-k="${k}" ${can ? '' : 'disabled'}>Investir</button></div>`;
-      }).join('')}${(() => {
-        const lvl = Borders.lvl(ci), max = lvl >= BORDER_MAX, cost = Borders.cost(ci), gain = max ? 0 : Borders.nextGain(ci);
-        const can = !max && gain > 0 && Object.entries(cost).every(([r, n]) => have(r) >= n);
-        return `<div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🗺️</div><div><b>Expandir fronteiras</b><div class="dt-cat">Nível ${lvl} de ${BORDER_MAX}</div></div></div>
-          <p class="dt-desc">${max ? 'As fronteiras já estão no máximo.' : gain ? `A fronteira avança ${Borders.STEP} blocos sobre a terra selvagem: +${gain} blocos para o reino.` : 'Não há terra selvagem na fronteira do reino.'}</p>
-          <div class="cost">${max ? '' : this.fmtCost(cost, have)}</div>
-          <button class="primary" data-act="kborder" data-c="${ci}" ${can ? '' : 'disabled'}>Expandir</button></div>`;
-      })()}</div>`;
-    } else {
-      const capOk = Game.allies().length < Game.followerCap(), post = { kind: 'castle', civ: ci };
-      sec = `<div class="kgrid">
-        <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🛡️</div><div><b>Recrutar guarnição</b><div class="dt-cat">${c.garrison} / ${Game.maxGarrison(c)} soldados</div></div></div>
-          <p class="dt-desc">Soldados defendem o castelo e as vilas.</p><div class="cost">${this.fmtCost({ gold: 40, wheat: 5 }, have)}</div>
-          <button class="primary" data-act="krecruit" data-c="${ci}" ${have('gold') >= 40 && have('wheat') >= 5 && c.garrison < Game.maxGarrison(c) ? '' : 'disabled'}>Recrutar +1</button></div>
-        <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">⚔️</div><div><b>Convocar escolta</b><div class="dt-cat">Seguidores ${Game.allies().length} / ${Game.followerCap()}</div></div></div>
-          <p class="dt-desc">Um soldado da guarnição passa a seguir você como capanga.</p>
-          <button class="primary" data-act="kescort" data-c="${ci}" ${c.garrison > 1 && capOk ? '' : 'disabled'}>Convocar</button></div>
-        <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🎉</div><div><b>Festival</b><div class="dt-cat">Felicidade atual ${Math.round(c.happy)}%</div></div></div>
-          <p class="dt-desc">Uma grande festa: +10 de felicidade agora e mais no próximo mês.</p><div class="cost">${this.fmtCost({ gold: 100, wheat: 40 }, have)}</div>
-          <button class="primary" data-act="kfest" data-c="${ci}" ${have('gold') >= 100 && have('wheat') >= 40 ? '' : 'disabled'}>Realizar festival</button></div>
-        <div class="card inv-card"><div class="dt-head"><div class="dt-ic sm">🏰</div><div><b>Guardas no castelo</b><div class="dt-cat">${Guards.at(post).length} / ${Guards.cap(post)} capangas</div></div></div>
-          <p class="dt-desc">Converse com um capanga e escolha "Mandar fazer guarda" para deixá-lo defendendo o castelo.</p></div></div>`;
+  // ------------------------------------------------------------ títulos, corte e relação (Reinado → Títulos e corte)
+  // título de nobreza e título civil, lado a lado
+  titlesPairHtml() {
+    const t = Court.T();
+    const titleTxt = Court.title() ? `${Court.title().icon} Você é <b>${this.esc(Court.titleName())}</b>.<span class="tperks"> Vantagens: ${Court.title().perks}.</span>` : 'Você ainda não tem título de nobreza.';
+    return `<div class="tpair"><div class="card"><div class="sec">⚜️ Título de nobreza</div><p>${titleTxt}</p>
+      <div class="titles">${NOBLE_TITLES.map((nt, i) => `<span class="tchip ${t.lvl >= i ? 'on' : ''}">${nt.icon} ${P.sex === 'f' ? nt.f : nt.m}</span>`).join('')}</div>
+      <div class="tladder" style="--prog:${Math.max(0, t.lvl) / (NOBLE_TITLES.length - 1) * 100}%">${NOBLE_TITLES.map((nt, i) => `<div class="tstep ${t.lvl > i ? 'done' : t.lvl === i ? 'cur' : t.lvl + 1 === i ? 'next' : ''}"><span class="tmedal">${nt.icon}</span><small>${P.sex === 'f' ? nt.f : nt.m}</small></div>`).join('')}</div>
+      ${Court.titledCivs().length > 1 ? `<div class="tlist">${Court.titledCivs().map(c => `<span class="tchip on">${NOBLE_TITLES[Court.levelIn(c)].icon} ${this.esc(Court.titleName(Court.levelIn(c), c))}</span>`).join('')}</div>` : ''}
+      <small class="muted">Peça no castelo de cada reino. Você pode ter um título em cada reino, mesmo sendo rei.</small></div>
+    ${(() => { const got = CIVIL_TITLES.filter(ct => Court.hasCivil(ct.id));
+      return `<div class="card civil-card"><div class="sec">🎖️ Título civil</div><p>${got.length ? `Você é <b>${got.map(ct => ct.icon + ' ' + Court.civilName(ct)).join(', ')}</b>.` : 'Você ainda não tem título civil.'}</p>
+      <div class="titles">${CIVIL_TITLES.map(ct => `<span class="tchip ${Court.hasCivil(ct.id) ? 'on' : ''}">${ct.icon} ${Court.civilName(ct)}</span>`).join('')}</div>
+      <div class="tmedals">${CIVIL_TITLES.map(ct => `<div class="tstep ${Court.hasCivil(ct.id) ? 'got' : 'locked'}"><span class="tmedal">${ct.icon}</span><small>${Court.civilName(ct)}</small></div>`).join('')}</div>
+      <small class="muted">Ganhos pelos seus feitos · ${got.length}/${CIVIL_TITLES.length}</small></div></div>`; })()}`;
+  },
+  // a corte do rei: o convite pendente, a corte em que você está ou quem está mais perto de convidar
+  courtInvHtml() {
+    // corte do rei: só o convite pendente (aceitar ou recusar) ou a corte em que você já está
+    const inv = G.courtInvite, cur = RoyalCourt.C();
+    if (inv && !RoyalCourt.isMember(inv.civ)) {
+      const c = G.civs[inv.civ], o = COURT_OFFICES.advisor;
+      return `<div class="card court-inv kalone"><div class="sec">👑 Convite da corte</div>
+        <div class="ci-letter"><div class="ci-seal">${Heraldry.armsSvg(inv.civ, 46)}</div><div class="ci-text">
+          <p><b>${this.esc(c.rulerName)}</b> convida você para a corte de <b>${CIV_DEFS[inv.civ].name}</b>.</p>
+          <div class="ci-office">${o.icon} <b>${RoyalCourt.officeName('advisor')}</b> · ~${o.pay} 🪙 por mês</div></div></div>
+        <small class="muted">${cur ? `Aceitar faz você deixar a corte de ${CIV_DEFS[cur.civ].short}. ` : ''}Na corte é preciso aparecer no castelo de tempos em tempos.</small>
+        <div class="act-row"><button class="primary" data-act="cjoin" data-c="${inv.civ}">✔ Aceitar</button><button data-act="cdecline" data-c="${inv.civ}">Recusar</button></div></div>`;
     }
-    return this.pageHead(Heraldry.armsSvg(ci, 30), d.name, `Governado por ${this.esc(G.name)} · ${this.esc(d.desc)}`)
-      + `<div class="tabs subtabs">${st}</div><div class="kbody">${sec}</div>`;
+    if (cur) {
+      const o = COURT_OFFICES[cur.office];
+      return `<div class="card court-inv kalone"><div class="sec">👑 Sua corte</div>
+        <div class="ci-letter"><div class="ci-seal">${Heraldry.armsSvg(cur.civ, 46)}</div><div class="ci-text">
+          <p>Você está na corte de <b>${CIV_DEFS[cur.civ].name}</b>.</p>
+          <div class="ci-office">${o.icon} <b>${RoyalCourt.officeName(cur.office)}</b></div></div></div>
+        <small class="muted">Troque de cargo e peça audiências no castelo do rei.</small></div>`;
+    }
+    // o reino que está mais perto de mandar o convite
+    const best = G.civs.filter(c => c.ruler !== 'player').map(c => ({ c, rn: RoyalCourt.renown(c.id), rel: Math.round(c.relation) }))
+      .sort((a, b) => (Math.min(b.rn, COURT_INVITE.renown) + Math.min(b.rel, COURT_INVITE.rel)) - (Math.min(a.rn, COURT_INVITE.renown) + Math.min(a.rel, COURT_INVITE.rel)))[0];
+    const bar = (v, max) => `<span class="ci-bar"><i style="width:${Math.max(0, Math.min(100, v / max * 100))}%"></i></span>`;
+    return `<div class="card court-inv kalone"><div class="sec">👑 Convite da corte</div>
+      <div class="ci-letter empty"><div class="ci-seal">📜</div><div class="ci-text"><p>Nenhum convite no momento.</p>
+        <small class="muted">O rei convida quem tem reconhecimento ${COURT_INVITE.renown}+ e relação ${COURT_INVITE.rel}+ com o reino.</small></div></div>
+      ${best ? `<div class="ci-near"><div class="ci-near-h">Mais perto de convidar: <b>${CIV_DEFS[best.c.id].short}</b></div>
+        <div class="ci-row"><span>Reconhecimento</span>${bar(best.rn, COURT_INVITE.renown)}<b>${best.rn}/${COURT_INVITE.renown}</b></div>
+        <div class="ci-row"><span>Relação</span>${bar(best.rel, COURT_INVITE.rel)}<b>${Math.max(0, best.rel)}/${COURT_INVITE.rel}</b></div></div>` : ''}</div>`;
+  },
+  // a sua relação pessoal com cada reino
+  relCardHtml() {
+    // relação com cada reino num medidor simples: de -100 (inimigo) a +100 (aliado)
+    const face = r => r >= 75 ? '😀' : r >= 40 ? '🙂' : r >= 10 ? '😐' : r > -20 ? '😶' : r > -60 ? '😠' : '😡';
+    const rows = G.civs.map(c => {
+      const mine = c.ruler === 'player', r = mine ? 100 : Math.round(c.relation), pct = (r + 100) / 2;
+      const col = mine ? '#e8c06a' : r >= 40 ? '#5fd35f' : r >= 10 ? '#9be37a' : r > -20 ? '#c9b48a' : r > -60 ? '#e8944a' : '#e05a4a';
+      return `<div class="rmeter"><span class="cdot" style="background:${Game.civColor(c.id)}"></span><b>${CIV_DEFS[c.id].short}</b>
+        <span class="rm-bar"><i style="width:${pct}%;background:${col}"></i><em></em></span>
+        <span class="rm-val">${c.atWar && !mine ? '<span class="badge">GUERRA</span> ' : ''}${mine ? '👑' : face(r)} ${mine ? 'seu reino' : (r > 0 ? '+' : '') + r}</span></div>`;
+    }).join('');
+    return `<div class="card rel-card kalone"><div class="sec">🤝 Sua relação com os 7 reinos <span>−100 inimigo · +100 aliado</span></div><div class="rmeters">${rows}</div></div>`;
+  },
+  // como virar governador e fundar a sua vila
+  villageWaysHtml() {
+    const site = Families.playerSite(), have = k => k === 'gold' ? P.gold : Inv.count(k);
+    return `<div class="card"><div class="sec">Como virar governador de uma vila</div><div class="ways">
+      <div class="way"><span class="way-ic">📜</span><b>Pedir ao rei</b><small>No castelo do reino, com boa relação e ouro.</small></div>
+      <div class="way"><span class="way-ic">⚔️</span><b>Conquistar</b><small>Converse com o governador da vila e desafie-o. O rei decide se é uma afronta.</small></div>
+      <div class="way"><span class="way-ic">🏗️</span><b>Fundar</b><small>A Vila ${this.esc(G.surname)}, livre de qualquer reino (${FOUND_COST.gold.toLocaleString('pt-BR')} Salin).</small></div></div></div>
+    <div class="card found"><div class="sec">🏗️ Fundar uma vila (você escolhe o nome)</div>
+      <p class="dt-desc">Fique no centro de um lugar aberto em terra selvagem (fora dos reinos, longe de outras vilas e castelos) e funde uma vila com o nome da sua família, livre de qualquer reino. Colonos se mudam para lá e pagam impostos a você. No seu reino, a vila nasce do reino.</p>
+      <div class="found-row"><span class="found-lab">Custo</span><div class="cost">${this.fmtCost(FOUND_COST, have)}</div></div>
+      ${(() => { const gold = Math.min(100, P.gold / FOUND_COST.gold * 100);
+        return `<div class="vg-req two">
+          <div class="vg-step ${P.gold >= FOUND_COST.gold ? 'ok' : ''}"><span>🪙</span><b>${P.gold} / ${FOUND_COST.gold}</b><i class="vg-bar"><i style="width:${gold}%"></i></i></div>
+          <div class="vg-step ${site.ok === true ? 'ok' : ''}"><span>📍</span><b>Lugar aberto</b><em>${site.ok === true ? '✔' : 'procure'}</em></div></div>`; })()}
+      <div class="found-go"><div class="found-st ${site.ok === true ? 'ok' : 'bad'}">${site.ok === true ? 'Este lugar serve: a vila será livre, sem pertencer a reino nenhum.' : this.esc(site.ok)}</div>
+        <button class="primary" data-act="found" ${site.ok === true && Inv.has(FOUND_COST) ? '' : 'disabled'}>🏘️ Fundar aqui</button></div></div>`;
   },
   personLine(p, extra) {
     if (!p) return '<span class="muted">—</span>';
@@ -1338,10 +1302,11 @@ const UI = {
     this.open('Porto', h, 'showPort', [sid], 'Peixes, tubarões, polvos e baleias');
   },
   // lojas cujo dono morreu sem filho, nas vilas e reinos do jogador: escolha quem assume
-  vacancyHtml() {
-    const V = People.openVacancies();
+  // only: só as vagas destas vilas (cada vila aparece num lugar só do Reinado)
+  vacancyHtml(only) {
+    const V = People.openVacancies().filter(x => !only || only(x.vi));
     if (!V.length) return '';
-    return `<div class="card vacancy kalone"><div class="sec">🏪 Lojas sem dono <span>escolha quem vai cuidar</span></div>${V.slice(0, 4).map(x => {
+    return `<div class="card vacancy"><div class="sec">🏪 Lojas sem dono <span>escolha quem vai cuidar</span></div>${V.slice(0, 4).map(x => {
       const v = World.villages[x.vi], cands = People.shopCandidates(x.vi, x.rank).slice(0, 3);
       return `<div class="vac-row"><b>${RANKS[x.rank].m} · ${this.esc(v.name)}</b><div class="act-row">${cands.map(q => `<button data-act="sappoint" data-v="${x.vi}" data-r="${x.rank}" data-id="${q.id}">${this.esc(q.name)}, ${q.age} anos</button>`).join('') || '<small class="muted">Ninguém sem emprego na vila por enquanto.</small>'}</div></div>`;
     }).join('')}${V.length > 4 ? `<small class="muted">E mais ${V.length - 4}. Nomeie estes primeiro, ou vá até a loja fechada.</small>` : ''}</div>`;
@@ -1353,13 +1318,16 @@ const UI = {
     return `<div class="card"><div class="sec">👑 Nomear quem assume</div><p class="muted">Escolha um morador da vila, sem emprego, para virar ${RANKS[rank].m.toLowerCase()} e reabrir a loja.</p>
       <div class="act-row">${cands.map(q => `<button class="primary" data-act="sappoint" data-v="${vi}" data-r="${rank}" data-id="${q.id}">${this.esc(q.name)}, ${q.age} anos</button>`).join('') || '<small class="muted">Ninguém sem emprego na vila agora. Quando alguém crescer ou chegar, volte aqui.</small>'}</div></div>`;
   },
-  guardsHtml() {
-    const list = Guards.all(), places = Guards.places();
+  // post: só os guardas deste posto (o castelo de um reino, uma vila que você governa) ou, com 'away', os que estão de
+  // guarda fora dos seus lugares (no caminho ou esperando numa vila ou cidade): cada guarda aparece num lugar só
+  guardsHtml(post) {
+    const pick = q => !post ? true : post === 'away' ? !Guards.mine(q) : Guards.same(q, post);
+    const list = Guards.all().filter(p => pick(p.post)), places = Guards.places().filter(pick);
     if (!list.length && !places.length) return '';
     const rows = list.map(p => { const st = People.capangaStats(p); return `<div class="crow"><span class="ri">🛡️</span><span><b>${this.esc(People.full(p))}</b><small>guarda em ${this.esc(Guards.name(p.post))} · ⭐ nível ${st.lvl} · ⚔️ ${st.dmg} · 🛡️ ${st.def}</small></span>
       <span class="act-row"><button data-act="tk" data-op="unguard" data-id="${p.id}">👣 Chamar de volta</button></span></div>`; }).join('');
     const sum = places.map(post => `${this.esc(Guards.name(post))}: ${Guards.at(post).length}/${Guards.cap(post)}`).join(' · ');
-    return `<div class="card" style="margin-top:10px"><div class="sec">🛡️ Guardas <span>${sum || 'sem vila nem castelo'}</span></div>${rows || '<p class="muted">Nenhum capanga de guarda. Converse com um capanga e escolha “Mandar fazer guarda”.</p>'}</div>`;
+    return `<div class="card rn-guards"><div class="sec">🛡️ ${post === 'away' ? 'Capangas de guarda fora dos seus lugares' : 'Guardas'} <span>${post === 'away' ? list.length : sum || 'sem vila nem castelo'}</span></div>${rows || '<p class="muted">Nenhum capanga de guarda. Converse com um capanga e escolha “Mandar fazer guarda”.</p>'}</div>`;
   },
 
   // ------------------------------------------------------------ empreendimento do jogador
@@ -2025,7 +1993,7 @@ const UI = {
         <button data-act="vask" data-v="${i}" ${ok ? '' : 'disabled'}>📜 Pedir o governo — ${need.gold} 🪙</button></div>`;
     }).join('');
     return `<div class="card" style="margin-top:10px"><div class="sec">🏘️ Governo das vilas <span>o governador manda nas estradas e nos imóveis da vila</span></div>${rows}
-      <small class="muted">Também dá para virar governador fundando uma vila (Portfólio → Vilas e guardas) ou pela força: converse com o governador da vila e desafie-o. Atacar uma vila não é guerra com a coroa: o rei decide se foi uma afronta.</small></div>`;
+      <small class="muted">Também dá para virar governador fundando uma vila (Portfólio → Reinado → Títulos e corte → Vilas) ou pela força: converse com o governador da vila e desafie-o. Atacar uma vila não é guerra com a coroa: o rei decide se foi uma afronta.</small></div>`;
   },
   relBar(c) { return `<b>${Math.round(c.relation)}</b> ${Game.relationText(c)}`; },
 
@@ -2221,66 +2189,6 @@ const UI = {
       <p class="dt-desc">Vantagens: ${r.t.perks}.</p>
       <small class="muted">Serviços: caçar bandidos no reino, salvar caravanas, vencer batalhas e torneios, esmagar revoltas, tributos e doações às igrejas.</small>
       <div class="act-row"><button class="primary" data-act="title" data-c="${ci}" ${r.checks.every(x => x[1]) ? '' : 'disabled'}>${r.t.icon} Pedir o título</button></div></div>`;
-  },
-
-  // ------------------------------------------------------------ decretos e ações do rei
-  crownHtml(ci) {
-    const c = G.civs[ci], up = Crown.upkeep(c), pet = Crown.petition();
-    const petHtml = pet && pet.ci === ci ? `<div class="card cr-pet kalone"><div class="sec">🔔 Audiência com o povo</div>
-        <p>${pet.t.icon} ${this.esc(pet.t.text(pet.v))}</p>
-        <div class="act-row"><button class="primary" data-act="cpet" data-y="1" ${c.treasury >= pet.t.cost ? '' : 'disabled'}>${pet.t.yes}${pet.t.cost ? ` — ${pet.t.cost} 🪙` : ''}</button><button data-act="cpet" data-y="0">${pet.t.no}</button></div></div>` : '';
-    const decs = Object.entries(DECREES).map(([k, d]) => { const on = !!(c.decrees && c.decrees[k]), h = DECREE_HAPPY[k] || 0;
-      return `<div class="cr-dec ${on ? 'on' : ''}"><span class="cr-ic">${d.icon}</span><span class="cr-t"><b>${d.name}</b><small>${d.desc}</small></span>
-        <span class="cr-cost">${d.cost ? d.cost + ' 🪙/mês' : 'sem custo'}${h ? `<br><small class="${h > 0 ? 'ok' : 'bad'}">${h > 0 ? '+' : ''}${h} felicidade</small>` : ''}</span>
-        <button class="${on ? '' : 'primary'}" data-act="cdec" data-c="${ci}" data-k="${k}">${on ? 'Revogar' : 'Decretar'}</button></div>`; }).join('');
-    const acts = Object.entries(Crown.ACTIONS).map(([k, a]) => { const cd = Crown.cd(c, k), cant = cd || c.treasury < a.cost || (k === 'monumento' && (c.monument || 0) >= 3);
-      return `<div class="cr-act"><span class="cr-ic">${a.icon}</span><span class="cr-t"><b>${a.name}${k === 'monumento' && c.monument ? ` (${c.monument}/3)` : ''}</b><small>${a.desc}</small></span>
-        <button class="primary" data-act="cact" data-c="${ci}" data-k="${k}" ${cant ? 'disabled' : ''}>${cd ? `em ${cd} ${cd === 1 ? 'mês' : 'meses'}` : a.cost ? a.cost + ' 🪙' : 'Fazer'}</button></div>`; }).join('');
-    const kc = Crown.knightCandidates(ci);
-    const knights = kc.map(p => `<div class="crow"><span class="ri">${p.sex === 'm' ? '🧔' : '👩'}</span><span><b>${this.esc(People.full(p))}</b><small>${People.title(p)}, ${p.age} anos · 💪 força ${p.str} · ${this.esc(People.homeName(p))}</small></span>
-      <span class="act-row"><button data-act="cknight" data-c="${ci}" data-id="${p.id}" ${c.treasury >= 150 ? '' : 'disabled'}>🗡️ Sagrar — 150 🪙</button></span></div>`).join('') || '<p class="muted">Ninguém forte o bastante no reino agora.</p>';
-    const others = G.civs.filter(o => o.id !== ci && o.ruler !== 'player');
-    const trib = others.map(o => { const r = Diplo.strength(ci) / Math.max(1, Diplo.strength(o.id)), war = Diplo.atWar(ci, o.id), cd = ((c.crownCd || {})['trib' + o.id] || -99) > G.day;
-      return `<div class="crow"><span class="ri"><span class="cdot" style="background:${Game.civColor(o.id)}"></span></span><span><b>${CIV_DEFS[o.id].name}</b><small>tesouro ~${o.treasury} 🪙 · ${r >= 1.3 ? '<span class="ok">mais fraco que você: deve pagar</span>' : '<span class="bad">forte: deve recusar</span>'}</small></span>
-        <span class="act-row"><button data-act="ctrib" data-c="${ci}" data-o="${o.id}" ${war || cd ? 'disabled' : ''}>${war ? 'em guerra' : cd ? 'aguarde' : '📜 Exigir tributo'}</button></span></div>`; }).join('');
-    const tr = Crown.trial();
-    const trialHtml = tr && tr.ci === ci ? `<div class="card cr-pet kalone"><div class="sec">⚖️ Tribunal do Rei</div><p>${tr.t.icon} ${this.esc(tr.t.text(tr.v))}</p>
-        <div class="act-row">${tr.t.opts.map((o, i) => `<button class="${i ? '' : 'primary'}" data-act="ctrial" data-i="${i}">${o[0]}</button>`).join('')}</div></div>` : '';
-    const works = Object.entries(WORKS).map(([k, w]) => { const st = Crown.work(c, k), part = Math.ceil(w.gold / w.months), pr = st ? Math.min(1, st.paid / w.months) : 0;
-      return `<div class="cr-act cr-work ${st && st.done ? 'done' : ''}"><span class="cr-ic">${w.icon}</span><span class="cr-t"><b>${w.name}</b><small>${w.desc}</small>
-        ${st && !st.done ? `<span class="cr-prog"><i style="width:${Math.round(pr * 100)}%"></i></span><small>${st.paid}/${w.months} parcelas${st.stalled ? ' · <b class="bad">parada: falta ouro</b>' : ''}</small>` : ''}</span>
-        ${st && st.done ? '<span class="ok">✔ pronta</span>' : st ? `<span class="muted">${part} 🪙/mês</span>` : `<button class="primary" data-act="cwork" data-c="${ci}" data-k="${k}" ${c.treasury >= part ? '' : 'disabled'}>Começar · ${w.months} × ${part} 🪙</button>`}</div>`; }).join('');
-    return `${petHtml}${trialHtml}
-      <div class="card kalone"><div class="sec">📜 Decretos <span>${up ? `custam ${up} 🪙 por mês ao tesouro${c.decreeOff ? ' · <b class="bad">SUSPENSOS: falta ouro</b>' : ''}` : 'nenhum em vigor'}</span></div>${decs}</div>
-      <div class="card kalone"><div class="sec">👑 Ações do soberano <span>pagas com o tesouro (${c.treasury} 🪙)</span>${c.inflation ? ` <span class="bad">inflação: ${c.inflation} meses</span>` : ''}</div>${acts}</div>
-      <div class="kgrid two"><div class="card"><div class="sec">🗡️ Sagrar cavaleiros <span>os mais fortes do reino</span></div>${knights}</div>
-        <div class="card"><div class="sec">📜 Exigir tributo <span>a cada 6 meses por reino</span></div>${trib}</div></div>
-      <div class="card kalone"><div class="sec">🏗️ Grandes Obras reais <span>pagas em parcelas mensais · até duas ao mesmo tempo</span></div>${works}</div>`;
-  },
-
-  // ------------------------------------------------------------ conselho real
-  councilHtml(ci) {
-    const S = this.sel, plots = Court.plotsOf(ci), c = G.civs[ci];
-    let h = plots.map(pl => { const p = G.people[pl.pid]; return `<div class="alert">🗡️ <b>${this.esc(People.full(p))}</b> (${COUNCIL[pl.seat].m}) conspira contra você!
-      <div class="act-row"><button data-act="judge" data-p="${pl.id}" data-v="pardon">🤝 Perdoar</button><button data-act="judge" data-p="${pl.id}" data-v="exile">🚪 Banir</button><button class="danger" data-act="judge" data-p="${pl.id}" data-v="execute">⚔️ Executar</button></div></div>`; }).join('');
-    h += `<p class="muted">Cada conselheiro é uma pessoa do reino, com competência ⭐ e lealdade próprias (a amizade com você). Conselheiros desleais podem conspirar; o espião-mor descobre corruptos e traidores.${c.stolen && Court.member(ci, 'spy') ? ` Desvios descobertos até agora: ${c.stolen} 🪙.` : ''}</p><div class="kgrid two">`;
-    for (const seat in COUNCIL) {
-      const d = COUNCIL[seat], p = Court.member(ci, seat);
-      h += `<div class="card"><div class="sec">${d.icon} ${d.m}</div>`;
-      if (p) {
-        const loyal = Math.round(p.aff);
-        h += `<div class="crow2">${this.personLine(p, Families.of(p) ? 'Casa ' + Families.of(p).surname : '')}</div>
-          <div class="kv"><div>Competência<b>${'⭐'.repeat(Math.ceil(p.comp / 2))} ${p.comp}</b></div><div>Lealdade<b class="${loyal < 15 ? 'bad' : loyal > 50 ? 'ok' : ''}">${loyal}</b></div>${p.exposed ? '<div>Situação<b class="bad">CORRUPTO</b></div>' : ''}</div>
-          <div class="act-row"><button data-act="tk" data-op="open" data-id="${p.id}">💬 Falar</button><button data-act="cdismiss" data-c="${ci}" data-s="${seat}">Dispensar</button></div>`;
-      } else h += `<p class="muted">Cargo vago.</p>`;
-      h += `<small class="muted">${d.desc}</small>`;
-      if (S.cseat === seat) {
-        h += '<div class="sec" style="margin-top:8px">Candidatos</div>' + Court.candidates(ci).map(q => `<div class="crow"><span class="ri">${q.sex === 'm' ? '👨' : '👩'}</span><span><b>${this.esc(People.full(q))}</b><small>${People.title(q)}, ${q.age} anos · ⭐ ${q.comp} · lealdade ${Math.round(q.aff)}</small></span>
-          <span class="act-row"><button class="primary" data-act="appoint" data-c="${ci}" data-s="${seat}" data-id="${q.id}">Nomear</button></span></div>`).join('');
-      } else h += `<div class="act-row"><button data-act="cpick" data-s="${seat}">${p ? 'Trocar' : 'Nomear alguém'}</button></div>`;
-      h += '</div>';
-    }
-    return h + '</div>';
   },
 
   // ------------------------------------------------------------ casamentos arranjados
@@ -2505,9 +2413,6 @@ const UI = {
       case 'cdec': Crown.toggle(+d.c, d.k); break;
       case 'cact': Crown.act(+d.c, d.k); break;
       case 'cknight': Crown.knight(+d.c, +d.id); break;
-      case 'ctrib': Crown.demand(+d.c, +d.o); break;
-      case 'cpet': Crown.answer(d.y === '1'); break;
-      case 'ctrial': Crown.judge(+d.i); break;
       case 'cwork': Crown.startWork(+d.c, d.k); break;
       // volta para a janela de onde você veio
       case 'wback': {
@@ -2568,14 +2473,15 @@ const UI = {
       case 'bcat': this.sel.bcat = d.k; this.sel.build = null; this.showBuild(); return;
       case 'vping': { const v = World.villages[+d.v]; if (v) { G.ping = { x: v.x + 0.5, y: v.y - 0.5, name: v.name }; this.msg(`📍 Destino marcado: ${v.name}.`, 'gold'); } break; }
       case 'tax': Game.setTax(+d.c, +d.d); break;
-      case 'kgold': Game.kGold(+d.c, d.n); break;
+      // sacar e depositar no tesouro: um jeito só, a regra do banco (sacar desagrada o povo e as famílias)
+      case 'kgold': { const ci = +d.c, c = G.civs[ci]; if (d.n === '-all') Bank.take(ci, c.treasury); else if (d.n === 'all') Bank.give(ci, P.gold); else if (+d.n < 0) Bank.take(ci, -d.n); else Bank.give(ci, +d.n); break; }
       case 'kres': Game.kRes(+d.c, d.k, +d.n); break;
       case 'invest': Game.invest(+d.c, d.k); break;
       case 'kborder': Borders.expand(+d.c); break;
       case 'vannex': { const vi = +d.v, ci = Borders.annexTarget(vi); if (ci < 0) break;
         Dialog.confirm({ icon: '👑', title: 'Anexar ao reino', text: `${World.villages[vi].name} deixa de ser livre e passa a fazer parte do ${CIV_DEFS[ci].name}, levando a terra selvagem em volta (raio de 17 blocos). Você continua governador da vila.`, ok: 'Anexar' }, () => { Borders.annex(vi); this.refresh(); });
         return; }
-      case 'krecruit': Game.kRecruit(+d.c); break;
+      case 'krecruit': Game.kRecruit(+d.c, +d.n || 1); break;
       case 'kescort': Game.kEscort(+d.c); break;
       case 'kfest': Game.kFestival(+d.c); break;
       case 'quit': this.close(); Game.toMenu(); return;
@@ -2626,7 +2532,6 @@ const UI = {
       case 'appoint': Court.appoint(+d.c, d.s, People.get(+d.id)); this.sel.cseat = null; break;
       case 'cpick': this.sel.cseat = d.s; break;
       case 'cdismiss': Court.dismiss(+d.c, d.s); break;
-      case 'judge': Court.judge(+d.p, d.v); break;
       case 'match': this.showMatch(+d.id); return;
       case 'domatch': { const ch = People.get(+d.id), q = People.get(+d.q); if (Court.arrange(ch, q)) { this.sel.knav = 'family'; this.showKingdom(); return; } break; }
       case 'tree': this.showTree(+d.f); return;
@@ -2710,7 +2615,7 @@ const UI = {
       case 'csel': this.sel.craft = +d.r; break;
       case 'cst': this.sel.st = d.s; break;
       case 'bsel': this.sel.build = d.k; break;
-      case 'ksub': this.sel.ksub = d.s; break;
+      case 'ksub': this.sel.ksub = d.s; this.sel.knav = 'k:' + Reinado.ci(); this.showKingdom(); return; // atalho antigo: aba do reino no Reinado
       case 'bizsub': this.sel.bizsub = d.s; break;
       case 'kping': {
         const cp = World.capitals[+d.c];

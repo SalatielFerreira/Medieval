@@ -79,5 +79,20 @@ const RealmView = {
 Board.page = function (ci) { return RealmView.page(ci); };
 {
   const a0 = UI.act.bind(UI);
-  UI.act = function (a, d) { if (a === 'rvtab') { UI.sel.rvTab = d.t; UI.sel.knav = 'x:painel'; UI.showKingdom(); return; } return a0(a, d); };
+  UI.act = function (a, d) {
+    if (a === 'rvtab') { UI.sel.rvTab = d.t; UI.sel.knav = 'x:painel'; UI.showKingdom(); return; }
+    if (a === 'lppg') { const P0 = UI.sel.lpPg || (UI.sel.lpPg = {}); P0[d.k] = Math.max(0, (P0[d.k] || 0) + +d.d); UI.showKingdom(); return; }
+    return a0(a, d);
+  };
+  // no computador, o Painel e os Avisos cabem na janela: a tabela de meses e a lista de avisos viram partes (◀ 1/2 ▶)
+  const sk0 = UI.showKingdom.bind(UI);
+  UI.showKingdom = function (...a) {
+    const r = sk0(...a), S = UI.sel, body = UI.panel && UI.panel.querySelector('.iconnav .snav-body');
+    try {
+      const over = () => body.scrollHeight > body.clientHeight + 1, store = S.lpPg || (S.lpPg = {});
+      if (body && S.knav === 'x:painel' && S.rvTab === 'meses') UI.pageList({ items: [...body.querySelectorAll('.rv-tbl tr')].slice(1), over, key: 'meses', store, act: 'lppg', host: body.querySelector('.rv-tabs') });
+      if (body && S.knav === 'x:alerts') UI.pageList({ items: [...body.querySelectorAll('.al-list > .al-row')], over, key: 'alerts', store, act: 'lppg', host: body.querySelector('.pg-head') });
+    } catch (e) { console.error(e); }
+    return r;
+  };
 }

@@ -3,7 +3,7 @@
 //  • seus empreendimentos têm no máximo 2 funcionários (produzem o mesmo com menos gente) e você define o preço;
 //  • cada tipo de estabelecimento vende o que é dele, com itens novos (farinha, pão doce, sidra, manteiga, pérola...);
 //  • o nível das vilas sobe conforme o poder econômico delas (moradores, lojas com dono, obras, negócios, comércio);
-//  • o governador tem a janela de administração da vila (Portfólio → Suas vilas).
+//  • o governador administra a vila na página dela no Reinado (Portfólio → Reinado → a vila).
 
 // ------------------------------------------------------------------ itens novos
 Object.assign(ITEMS, {
@@ -200,58 +200,45 @@ const VillageEcon = {
   Gate.monthTick = function () { for (const s of this.list()) { const d = this.peek(s); if (d) d.lastCars = d.cars || 0; } return gm0(); };
 }
 
-// ------------------------------------------------------------------ janela de administração da vila (governador)
+// ------------------------------------------------------------------ administração da vila (governador)
+// Os quadros da página da vila no Reinado (reinado.js põe a faixa com nível, moradores e guardas, a eleição, os guardas
+// e o "Deixar o governo"): crescimento, poder econômico, rendas, como crescer e as lojas e obras.
 const VillageAdmin = {
-  page(vi) {
+  cards(vi) {
     const v = World.villages[vi]; if (!v) return '<p class="muted">Vila não encontrada.</p>';
-    const S = UI.sel, sub = ['resumo', 'economia', 'gente'].includes(S.vsub) ? S.vsub : 'resumo', f = VillageEcon.forecast(vi);
-    const tabs = `<div class="tabs subtabs">${[['resumo', '📊 Resumo'], ['economia', '💰 Economia'], ['gente', '👪 Gente e obras']].map(([k, l]) => `<button class="tab ${sub === k ? 'on' : ''}" data-act="vsub" data-s="${k}">${l}</button>`).join('')}</div>`;
-    const head = UI.pageHead('🏘️', v.name, `${v.free ? 'Vila livre' : 'Vila de ' + CIV_DEFS[v.civ].name} · você é o governador`) + tabs;
-    const sign = n => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(2);
-    if (sub === 'resumo') {
-      const pct = f.next !== null ? U.clamp((v.prosper - f.from) / (f.next - f.from) * 100, 0, 100) : 100;
-      const res = People.residents(vi), cap = Families.vcap(v);
-      return head + `<div class="card"><div class="sec">⭐ Nível ${f.lvl}${f.next !== null ? ` → ${f.lvl + 1}` : ' (máximo)'} <span>prosperidade ${Math.floor(v.prosper)}${f.next !== null ? ` / ${f.next}` : ''}</span></div>
-          <div class="va-bar"><i style="width:${pct}%"></i></div>
-          <div class="tiles big">
-            <div class="stile"><small>Crescimento por mês</small><b class="${f.per >= 0 ? 'ok' : 'bad'}">${sign(f.per)}</b></div>
-            <div class="stile"><small>Próximo nível</small><b>${f.next === null ? '—' : f.months === null ? 'parado' : f.months <= 1 ? 'este mês' : `~${f.months} meses`}</b></div>
-            <div class="stile"><small>Poder econômico</small><b>${Math.round(f.power)}</b></div>
-            <div class="stile"><small>Moradores</small><b>${res.length} / ${cap}</b></div></div>
-          <p class="dt-desc">${v.grow ? `Mês passado: ${sign(v.grow.d)}${v.grow.raided ? ' (a vila foi saqueada)' : ''}. ` : ''}O nível sobe com a <b>prosperidade</b>, que cresce todo mês conforme o <b>poder econômico</b> da vila — e cada nível exige uma economia maior.${v.free && f.lvl >= REALM_LVL ? ' A vila já pode virar o seu reino: erga o Castelo (Construir → Moradia).' : v.free ? ` No nível ${REALM_LVL} ela pode virar o seu reino.` : ''}</p></div>
-        <div class="card"><div class="sec">📈 De onde vem o crescimento <span>por mês</span></div>
-          <div class="kv"><div>Economia (poder ${Math.round(f.power)} − exigência do nível ${f.lvl})<b class="${f.econ >= 0 ? 'ok' : 'bad'}">${sign(f.econ)}</b></div>
-            <div>Humor do povo${v.free ? ' (vila livre)' : ' e tesouro do reino'}<b class="${f.mood >= 0 ? 'ok' : 'bad'}">${sign(f.mood)}</b></div>
-            <div>Obras da vila (escola, banhos, padaria...)<b class="ok">${sign(f.works)}</b></div></div></div>`;
-    }
-    if (sub === 'economia') {
-      const parts = VillageEcon.parts(vi), works = VillageWorks.of(vi), rent = works.reduce((a, s) => a + ((VWORKS[s.type] || {}).rent || 0), 0);
-      const gates = Gate.list().filter(s => s.village === vi);
-      const tips = [];
-      if (!parts[1] || parts[1][2] < World.structs.filter(s => Shops.isShop(s) && s.village === vi && s.owner !== 'player').length * 6) tips.push('Ponha um responsável em todas as lojas e obras (aba Gente e obras).');
-      for (const [k, d] of Object.entries(VWORKS).filter(([k]) => !works.some(s => s.type === k)).sort((a, b) => ((b[1].pm || 0) + (b[1].rent || 0) / 40) - ((a[1].pm || 0) + (a[1].rent || 0) / 40)).slice(0, 3)) tips.push(`Construa ${d.icon} ${d.name}${d.pm ? ` (+${Math.round(d.pm * VILLAGE_GROWTH * 100) / 100} de prosperidade por mês)` : ''}${d.rent ? ` · aluguel de ${d.rent} 🪙` : ''}.`);
-      if (!gates.length) tips.push('Um portão na muralha cobra pedágio e as caravanas que passam aquecem o comércio.');
-      if (!World.structs.some(s => !s.removed && s.village === vi && s.type === 'vmarket')) tips.push('A Feira na praça dá +8 de poder econômico.');
-      return head + `<div class="card"><div class="sec">💪 Poder econômico <span>${Math.round(VillageEcon.power(vi))}</span></div>
-          <div class="kv">${parts.map(([ic, l, n]) => `<div>${ic} ${l}<b class="${n >= 0 ? 'ok' : 'bad'}">${n >= 0 ? '+' : ''}${Math.round(n)}</b></div>`).join('')}</div>
-          <p class="dt-desc">Para subir do nível ${f.lvl} sem depender da sorte, a vila precisa de mais de <b>${Math.round((f.lvl - 1) * 0.2 * 50)}</b> de poder econômico.</p></div>
-        <div class="card"><div class="sec">🪙 Rendas da vila <span>por mês</span></div>
-          <div class="kv"><div>Aluguéis das obras (vão para você, o governador)<b>${rent} 🪙</b></div>
-            ${typeof NpcWorks !== 'undefined' ? `<div>🏦 Caixa da vila (doações, festas, entradas)<b>${NpcWorks.fundOf(vi)} 🪙</b></div>` : ''}
-            ${gates.map(s => { const d = Gate.peek(s) || {}; return `<div>🚪 Portão: pedágio ${d.toll || 0} 🪙 · entrada ${d.fee || 0} 🪙<b>${d.lastMonth !== undefined ? d.lastMonth : 0} 🪙 no mês passado</b></div>`; }).join('')}</div></div>
-        <div class="card"><div class="sec">💡 Como fazer a vila crescer</div><ul class="glog">${tips.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
-    }
-    // gente e obras
+    const f = VillageEcon.forecast(vi), sign = n => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(2);
+    const pct = f.next !== null ? U.clamp((v.prosper - f.from) / (f.next - f.from) * 100, 0, 100) : 100;
+    const grow = `<div class="card va-grow"><div class="sec">📈 Prosperidade <span>${Math.floor(v.prosper)}${f.next !== null ? ` / ${f.next} para o nível ${f.lvl + 1}` : ' · nível máximo'}</span></div>
+        <div class="va-bar"><i style="width:${pct}%"></i></div>
+        <div class="kv"><div>Economia (poder ${Math.round(f.power)} − exigência do nível ${f.lvl})<b class="${f.econ >= 0 ? 'ok' : 'bad'}">${sign(f.econ)}</b></div>
+          <div>Humor do povo${v.free ? ' (vila livre)' : ' e tesouro do reino'}<b class="${f.mood >= 0 ? 'ok' : 'bad'}">${sign(f.mood)}</b></div>
+          <div>Obras da vila (escola, banhos, padaria...)<b class="ok">${sign(f.works)}</b></div>
+          <div>Próximo nível<b>${f.next === null ? '—' : f.months === null ? 'parado' : f.months <= 1 ? 'este mês' : `~${f.months} meses`}</b></div></div>
+        <small class="muted">${v.grow ? `Mês passado: ${sign(v.grow.d)}${v.grow.raided ? ' (a vila foi saqueada)' : ''}. ` : ''}${v.free && f.lvl >= REALM_LVL ? 'A vila já pode virar o seu reino: erga o Castelo (Construir → Moradia).' : v.free ? `No nível ${REALM_LVL} ela pode virar o seu reino.` : 'Cada nível exige uma economia maior.'}</small></div>`;
+    const parts = VillageEcon.parts(vi), works = VillageWorks.of(vi), rent = works.reduce((a, s) => a + ((VWORKS[s.type] || {}).rent || 0), 0);
+    const gates = Gate.list().filter(s => s.village === vi);
+    const tipL = [];
+    if (!parts[1] || parts[1][2] < World.structs.filter(s => Shops.isShop(s) && s.village === vi && s.owner !== 'player').length * 6) tipL.push('Ponha um responsável em todas as lojas e obras.');
+    for (const [, d] of Object.entries(VWORKS).filter(([k]) => !works.some(s => s.type === k)).sort((a, b) => ((b[1].pm || 0) + (b[1].rent || 0) / 40) - ((a[1].pm || 0) + (a[1].rent || 0) / 40)).slice(0, 3)) tipL.push(`Construa ${d.icon} ${d.name}${d.pm ? ` (+${Math.round(d.pm * VILLAGE_GROWTH * 100) / 100} de prosperidade por mês)` : ''}${d.rent ? ` · aluguel de ${d.rent} 🪙` : ''}.`);
+    if (!gates.length) tipL.push('Um portão na muralha cobra pedágio e as caravanas que passam aquecem o comércio.');
+    if (!World.structs.some(s => !s.removed && s.village === vi && s.type === 'vmarket')) tipL.push('A Feira na praça dá +8 de poder econômico.');
+    const econ = `<div class="card va-econ"><div class="sec">💪 Poder econômico <span>${Math.round(VillageEcon.power(vi))} · para subir sem sorte: mais de ${Math.round((f.lvl - 1) * 0.2 * 50)}</span></div>
+        <div class="kv">${parts.map(([ic, l, n]) => `<div>${ic} ${l}<b class="${n >= 0 ? 'ok' : 'bad'}">${n >= 0 ? '+' : ''}${Math.round(n)}</b></div>`).join('')}</div>
+        <div class="sec va-sub">🪙 Rendas da vila <span>por mês</span></div>
+        <div class="kv"><div>Aluguéis das obras (vão para você, o governador)<b>${rent} 🪙</b></div>
+          ${typeof NpcWorks !== 'undefined' ? `<div>🏦 Caixa da vila (doações, festas, entradas)<b>${NpcWorks.fundOf(vi)} 🪙</b></div>` : ''}
+          ${gates.map(s => { const d = Gate.peek(s) || {}; return `<div>🚪 Portão: pedágio ${d.toll || 0} 🪙 · entrada ${d.fee || 0} 🪙<b>${d.lastMonth !== undefined ? d.lastMonth : 0} 🪙 no mês passado</b></div>`; }).join('')}</div></div>`;
+    const tips = `<div class="card va-tips"><div class="sec">💡 Como fazer a vila crescer</div><ul class="glog">${tipL.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
+    // lojas e obras com responsável; os moradores sem emprego
     const shops = World.structs.filter(s => !s.removed && !s.hidden && Shops.isShop(s) && s.village === vi && s.owner !== 'player');
-    const works = VillageWorks.of(vi), res = People.residents(vi);
-    const idle = res.filter(p => People.commoner && People.commoner(p) && !p.shop && !p.job && p.age >= 18).length;
-    const nm = s => (Places.def(s) ? Places.def(s).name(s) : (CIV_STRUCTS[s.type] || {}).name || s.type);
-    return head + `<div class="card"><div class="sec">🏪 Lojas e obras <span>${shops.filter(s => Shops.keeper(s)).length}/${shops.length} com responsável</span></div>
-        ${shops.map(s => { const k = Shops.keeper(s); return `<div class="crow"><span class="ri">${(VWORKS[s.type] || CIVIC[s.type] || {}).icon || '🏠'}</span><span><b>${UI.esc(nm(s))}</b><small>${k ? `${People.title(k)} ${UI.esc(People.full(k))}` : 'sem responsável'}</small></span>
-          <span class="act-row">${k ? `<button data-act="tk" data-op="open" data-id="${k.id}">💬</button>` : `<button class="primary" data-act="vfill" data-s="${s.id}">Pôr alguém</button>`}</span></div>`; }).join('') || '<p class="muted">Nenhuma loja ainda.</p>'}</div>
-      <div class="card"><div class="sec">👪 Moradores <span>${res.length} · ${idle} sem emprego</span></div>
-        <div class="kv"><div>Lugar para morar<b>${res.length} / ${Families.vcap(v)}</b></div><div>Obras da vila<b>${works.length}</b></div><div>Portões<b>${Gate.list().filter(s => s.village === vi).length}</b></div></div>
-        <div class="act-row"><button data-act="vbuild">🏗️ Construir obras na vila</button></div></div>`;
+    const res = People.residents(vi), idle = res.filter(p => People.commoner && People.commoner(p) && !p.shop && !p.job && p.age >= 18).length;
+    // (sem o "de <vila>" no fim: a página já é da vila)
+    const tail = ' ' + v.name, cut = n => { for (const w of [' de', ' da', ' do']) if (n.endsWith(w + tail)) return n.slice(0, -(w + tail).length); return n; };
+    const nm = s => cut(Places.def(s) ? Places.def(s).name(s) : (CIV_STRUCTS[s.type] || {}).name || s.type);
+    const people = `<div class="card va-shops wide"><div class="sec">🏪 Lojas e obras <span>${shops.filter(s => Shops.keeper(s)).length}/${shops.length} com responsável · ${works.length} obras · ${gates.length} portões · ${idle} morador(es) sem emprego</span></div>
+        <div class="va-shopgrid">${shops.map(s => { const k = Shops.keeper(s); return `<div class="crow"><span class="ri">${(VWORKS[s.type] || CIVIC[s.type] || {}).icon || '🏠'}</span><span><b>${UI.esc(nm(s))}</b><small>${k ? `${People.title(k)} ${UI.esc(People.full(k))}` : 'sem responsável'}</small></span>
+          <span class="act-row">${k ? `<button data-act="tk" data-op="open" data-id="${k.id}">💬</button>` : `<button class="primary" data-act="vfill" data-s="${s.id}">Pôr alguém</button>`}</span></div>`; }).join('') || '<p class="muted">Nenhuma loja ainda.</p>'}</div></div>`;
+    return grow + econ + people + tips;
   },
   // põe o primeiro morador disponível como responsável
   fill(s) {
@@ -264,14 +251,8 @@ const VillageAdmin = {
   },
 };
 {
-  const kp0 = UI.kPage.bind(UI);
-  UI.kPage = function (nav) {
-    if (nav && nav.startsWith('v:')) { const vi = +nav.slice(2), v = World.villages[vi]; if (v && v.lord === 'player') return VillageAdmin.page(vi); this.sel.knav = 'overview'; return kp0('overview'); }
-    return kp0(nav);
-  };
   const act1 = UI.act.bind(UI);
   UI.act = function (a, d) {
-    if (a === 'vsub') { this.sel.vsub = d.s; this.refresh && this.refresh(); return; }
     if (a === 'vfill') { VillageAdmin.fill(World.structs[+d.s]); this.refresh && this.refresh(); return; }
     if (a === 'vbuild') { this.sel.bcat = 'obras'; this.close(); UI.toggle('showBuild'); return; }
     return act1(a, d);

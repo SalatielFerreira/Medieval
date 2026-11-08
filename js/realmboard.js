@@ -66,7 +66,7 @@ const Board = {
   // os itens do grupo Gestão do Portfólio
   navItems() {
     const th = G.civs.filter(c => c.ruler === 'player').reduce((a, c) => a + this.threats(c.id).filter(t => t.lvl >= 3).length, 0);
-    return [['x:painel', '📈', 'Painel do reino', th || '', th > 0], ['x:pacts', '📜', 'Tratados', Pacts.S().host.length || ''], ['x:clima', SEASONS[Season.idx()].icon, 'Estações e clima']];
+    return [['x:painel', '📈', 'Painel do reino', th || '', th > 0]]; // os Tratados ficam no Reinado → Diplomacia
   },
   // ---------------------------------------------------------------- a página
   page(ci) {
@@ -95,8 +95,6 @@ const Board = {
   const kp0 = UI.kPage.bind(UI);
   UI.kPage = function (nav) {
     if (nav === 'x:painel') return UI.pageHead('📈', 'Painel do reino', 'População, tesouro, felicidade, exército, banco e ameaças, mês a mês') + Board.page(UI.sel.rbCiv);
-    if (nav === 'x:pacts') return UI.pageHead('📜', 'Tratados', 'Casamentos entre dinastias, comércio, tributos e reféns') + Pacts.page();
-    if (nav === 'x:clima') return UI.pageHead(SEASONS[Season.idx()].icon, 'Estações e clima', 'O que a estação e o tempo de cada reino mudam no jogo') + Clima.page();
     return kp0(nav);
   };
   const a0 = UI.act.bind(UI);

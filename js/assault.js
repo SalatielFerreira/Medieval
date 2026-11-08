@@ -5,10 +5,8 @@
 //  • você invade (Conselho de Guerra → "Invadir o castelo"): vencer = o reino inimigo é seu;
 //  • o inimigo invade o seu castelo (às vezes, em vez da batalha em campo): perder = o reino cai nas mãos dele.
 // A batalha em campo aberto continua existindo: serve para enfraquecer a guarnição do adversário.
-// Guarnição máxima de um castelo: 30 soldados; até 10 catapultas por exército.
+// Guarnição máxima de um castelo: GARRISON_MAX (30, em game.js); até 10 catapultas por exército.
 
-const CASTLE_GARRISON_MAX = 30;
-Game.maxGarrison = function () { return CASTLE_GARRISON_MAX; };
 // as catapultas: até 10 por exército (conselho, arsenal e o exército da IA)
 War.limits = function (wc) { const c = G.civs[wc.side]; return { soldiers: wc.own ? Math.min(WAR_MAX, c.garrison) : 0, cats: Math.min(WAR_CATS_MAX, Math.floor((wc.own ? c.treasury : P.gold) / WAR_CAT_COST)) }; };
 {
@@ -39,7 +37,7 @@ const Assault = {
     const stored = Math.min(WAR_CATS_MAX, (typeof Arsenal !== 'undefined' ? Arsenal.A().catapult : 0) || 0);
     const mine = War.armyOf(side, Object.assign({}, wc.cfg, { cats: Math.min(WAR_CATS_MAX, cats + (defend ? 0 : stored)) }));
     const dc = G.civs[def];
-    const defArmy = defend ? Object.assign(mine, { archers: Math.max(40, mine.archers) }) : { soldiers: Math.min(CASTLE_GARRISON_MAX, dc.garrison), archers: 40, cats: Math.min(WAR_CATS_MAX, Math.floor(dc.treasury / 400)), cav: Math.min(6, War.knightsOf(def)), king: true };
+    const defArmy = defend ? Object.assign(mine, { archers: Math.max(40, mine.archers) }) : { soldiers: Math.min(GARRISON_MAX, dc.garrison), archers: 40, cats: Math.min(WAR_CATS_MAX, Math.floor(dc.treasury / 400)), cav: Math.min(6, War.knightsOf(def)), king: true };
     const attArmy = defend ? War.armyOf(enemy) : mine;
     if (Routine.phase() !== 'day') G.time = NIGHT_LEN + (8 - 6) / 15 * DAYLIGHT_LEN;
     P.mounted = false; P.sailing = false; P.fishing = null;
@@ -273,7 +271,7 @@ const Assault = {
         : `<button class="primary" data-act="wfield">⚔️ Batalha em campo aberto</button><button class="primary" data-act="wassault">🏰 Invadir o castelo de ${CIV_DEFS[wc.enemy].short}</button>`;
       const note = wc.assault === 'defend'
         ? `<div class="card"><div class="sec">🏰 Cerco ao seu castelo</div><p class="dt-desc">${CIV_DEFS[wc.enemy].short} vem arrombar o seu portão e chegar até você. Os seus arqueiros atiram de cima das muralhas; se o portão cair, defendam o pátio. Se você cair, o reino cai.</p></div>`
-        : `<div class="card"><div class="sec">🧭 Duas estratégias</div><p class="dt-desc"><b>Campo aberto:</b> os exércitos se enfrentam e o perdedor perde soldados da guarnição (bom para enfraquecer o inimigo).<br><b>Assalto ao castelo:</b> arrombe o portão (catapultas, aríetes do arsenal e golpes), entre no pátio e derrube o rei: vencer = o reino é seu. Eles defendem com até ${CASTLE_GARRISON_MAX} soldados atrás das muralhas.</p></div>`;
+        : `<div class="card"><div class="sec">🧭 Duas estratégias</div><p class="dt-desc"><b>Campo aberto:</b> os exércitos se enfrentam e o perdedor perde soldados da guarnição (bom para enfraquecer o inimigo).<br><b>Assalto ao castelo:</b> arrombe o portão (catapultas, aríetes do arsenal e golpes), entre no pátio e derrube o rei: vencer = o reino é seu. Eles defendem com até ${GARRISON_MAX} soldados atrás das muralhas.</p></div>`;
       body = body.replace(/<div class="act-row wc-go">[\s\S]*?<\/div>$/, `${note}<div class="act-row wc-go">${btn}</div>`);
     }
     return op0(title, body, fn, args, sub);

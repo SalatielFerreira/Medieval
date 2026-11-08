@@ -4,8 +4,9 @@
 //      voz nas eleições das vilas do reino, feudos (vilas que pagam renda ao nobre, saída do tesouro do reino),
 //      relação com a coroa que cresce sozinha, multas menores (o Duque não paga multa no reino) e, para o Duque,
 //      o direito de erguer muralha e portão em qualquer vila do reino.
-//  • Deixar o poder: na página "Coroa e títulos" do Portfólio você renuncia ao trono de um reino, ao governo de uma
-//    vila (o morador mais respeitado assume até a próxima eleição) ou a um título de nobreza.
+//  • Deixar o poder (Portfólio → Reinado): renunciar ao trono fica na aba Reino do reino, deixar o governo de uma vila
+//    na página da vila (o morador mais respeitado assume até a próxima eleição) e renunciar a um título de nobreza
+//    junto das vantagens dele, em Títulos e corte.
 const NOBLE_POWERS = [
   // por título: [voz nas eleições, vilas do feudo, relação por mês, desconto nas multas, ergue muralha nas vilas do reino]
   { voice: 8,  fiefs: 0, rel: 0, fine: 0,    walls: false },
@@ -17,7 +18,8 @@ const NOBLE_POWERS = [
 const FIEF_RENT = 3; // Salin por morador da vila do feudo, todo mês
 
 const Nobility = {
-  power(ci) { const l = Court.levelIn(ci); return l >= 0 ? NOBLE_POWERS[Math.min(l, NOBLE_POWERS.length - 1)] : null; },
+  // nada no próprio reino (o rei não é nobre de si mesmo) nem num reino em guerra com você (suspenso até a paz)
+  power(ci) { const l = Court.levelIn(ci); return l >= 0 && Court.titleLive(ci) ? NOBLE_POWERS[Math.min(l, NOBLE_POWERS.length - 1)] : null; },
   // o que o título dá, em palavras (para as janelas)
   lines(lvl) {
     const p = NOBLE_POWERS[lvl], t = NOBLE_TITLES[lvl], out = [];
@@ -73,20 +75,6 @@ const Nobility = {
       text: `Você devolve o título a ${G.civs[ci].ruler === 'player' ? 'você mesmo' : G.civs[ci].rulerName} e perde todos os poderes dele em ${CIV_DEFS[ci].name} (renda, feudos, voz e desconto). Para tê-lo de novo, será preciso pedir outra vez, do começo.` },
       () => { Court.loseTitle('você renunciou', ci); Game.addRelation(ci, -3); UI.refresh(); });
   },
-  // a página "Coroa e títulos": os poderes de cada título e os cargos que você pode deixar
-  cardsHtml() {
-    const esc = UI.esc.bind(UI), ruled = G.civs.filter(c => c.ruler === 'player'), vils = Urban.myVillages(), tit = Court.titledCivs();
-    const pw = tit.length ? `<div class="card nb-pow"><div class="sec">⚜️ Poderes dos seus títulos</div>${tit.map(ci => { const l = Court.levelIn(ci), f = this.fiefsOf(ci);
-      return `<div class="nb-t"><b>${NOBLE_TITLES[l].icon} ${esc(Court.titleName(l, ci))}</b><ul>${this.lines(l).map(x => `<li>${x}</li>`).join('')}</ul>${f.length ? `<small class="muted">Feudo agora: ${f.map(x => `${esc(x.v.name)} (${x.n})`).join(', ')}</small>` : ''}</div>`; }).join('')}</div>`
-      : `<div class="card nb-pow"><div class="sec">⚜️ O que cada título dá</div><small class="muted">Peça no castelo de um reino. Cada título vale no reino que o concedeu, e os poderes se somam:</small>${NOBLE_TITLES.map((t, l) => `<div class="nb-t"><b>${t.icon} ${P.sex === 'f' ? t.f : t.m}</b><ul>${this.lines(l).slice(1).map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>`;
-    const rows = [
-      ...ruled.map(c => `<div class="nb-row"><span>${Heraldry.armsSvg(c.id, 16)} Soberano de <b>${CIV_DEFS[c.id].short}</b></span><button class="danger" data-act="abdicate" data-c="${c.id}">👑 Renunciar ao trono</button></div>`),
-      ...vils.map(({ v, i }) => `<div class="nb-row"><span>🏘️ Governador de <b>${esc(v.name)}</b></span><button class="danger" data-act="nbLeaveV" data-v="${i}">Deixar o governo</button></div>`),
-      ...tit.map(ci => `<div class="nb-row"><span>${NOBLE_TITLES[Court.levelIn(ci)].icon} <b>${esc(Court.titleName(Court.levelIn(ci), ci))}</b></span><button class="danger" data-act="nbLeaveT" data-c="${ci}">Renunciar ao título</button></div>`),
-    ];
-    const leave = `<div class="card nb-leave"><div class="sec">🏳️ Deixar o poder</div>${rows.length ? rows.join('') : '<small class="muted">Você não tem trono, vila nem título para deixar.</small>'}</div>`;
-    return pw + leave;
-  },
 };
 
 {
@@ -114,9 +102,6 @@ const Nobility = {
   };
   const mt0 = Lifesim.monthTick.bind(Lifesim);
   Lifesim.monthTick = function () { mt0(); Nobility.monthTick(); };
-  // a página "Coroa e títulos" do Portfólio ganha os poderes e o "Deixar o poder"
-  const kp0 = UI.kPage.bind(UI);
-  UI.kPage = function (nav) { const h = kp0(nav); return nav === 'crown' ? h + Nobility.cardsHtml() : h; };
   // o cartão do título no castelo mostra o que o próximo título dá
   const tc0 = UI.titleCard.bind(UI);
   UI.titleCard = function (ci) {

@@ -163,9 +163,10 @@ const Politics = {
       if (m && !R.plots.some(x => x.kind === 'usurp')) {
         const f = Object.values(Families.F()).find(f => !f.player && f.civ === m.id && f.loyalty < 25 && f.wealth >= 300 && Families.adults(f).length >= 2 && Math.random() < 0.1);
         const h = f && Families.head(f);
-        if (h) { Reign.newPlot(h.id, 'usurp'); const pl = R.plots.find(x => x.pid === h.id); if (pl) pl.fam = f.id; }
+        if (h) { const pl = Reign.newPlot(h.id, 'usurp', { ci: m.id }); if (pl) pl.fam = f.id; }
       }
-      for (const pl of R.plots.filter(x => x.kind === 'usurp')) for (const k in R.council) { const mb = Reign.member(k); if (mb && !mb.boughtBy && Math.random() < 0.5) { mb.boughtBy = pl.fam; mb.loyal = Math.max(0, (mb.loyal || 50) - 25); break; } }
+      // os golpistas compram, um por mês, os conselheiros do reino (o conselho do reino, court.js)
+      for (const pl of R.plots.filter(x => x.kind === 'usurp')) for (const mb of Reign.councilors(pl.ci)) { if (!mb.boughtBy && Math.random() < 0.5) { mb.boughtBy = pl.fam; mb.aff = Math.max(-100, (mb.aff || 0) - 25); break; } }
     }
   },
   npcCoup(pl, f) {
@@ -194,7 +195,7 @@ const Politics = {
     const m = Reign.main(), p = G.people[pl.pid], f = Families.get(pl.fam);
     if (!m || !p || !p.alive) return;
     if (G.place || G.dungeon || War.isBattle() || G.siege) { G.coupWait = pl; return; }
-    const R = Reign.R(), boughtN = Object.keys(R.council).filter(k => { const mb = Reign.member(k); return mb && mb.boughtBy === pl.fam; }).length;
+    const boughtN = Reign.councilors(m.id).filter(mb => mb.boughtBy === pl.fam).length;
     const n = 4 + boughtN + Math.min(4, Math.floor(((f && f.wealth) || 0) / 400));
     G.coup = { ci: m.id, pid: p.id, fam: pl.fam, t: 150 };
     const a0 = Math.random() * Math.PI * 2;
@@ -218,7 +219,7 @@ const Politics = {
     if (!c || c.ruler !== 'player') return;
     if (f) { f.loyalty = 55; f.wealth = Math.round(f.wealth * 0.2); for (const q of Families.adults(f)) { q.home = { type: 'wild' }; People.addAff(q, -40); } }
     if (p && p.alive) p.jail = G.day + 12;
-    for (const k in Reign.R().council) { const mb = Reign.member(k); if (mb && mb.boughtBy === C.fam) { delete mb.boughtBy; mb.loyal = 20; } }
+    for (const mb of Reign.councilors(C.ci)) if (mb.boughtBy === C.fam) { delete mb.boughtBy; mb.aff = Math.min(mb.aff || 0, -10); }
     UI.banner('⚔️ O golpe foi esmagado!');
     UI.msg(`⚔️ Você venceu os traidores! ${p ? People.full(p) : 'O chefe do golpe'} foi preso e a ${f ? Families.name(f) : 'família'} foi expulsa do reino. Os conselheiros que se venderam estão de olho baixo.`, 'gold', true);
     Court.addFame(15); this.log(`⚔️ Você esmagou o golpe da ${f ? Families.name(f) : 'família'}.`);
@@ -259,9 +260,19 @@ const Politics = {
       <div class="act-row">${!running ? `<button class="primary" data-act="pol" data-op="run" data-v="${vi}" ${P.gold >= 50 ? '' : 'disabled'}>🗳️ Candidatar-se (50 🪙)</button>` : `<button data-act="pol" data-op="rally" data-v="${vi}" ${P.gold >= 40 ? '' : 'disabled'}>📣 Comício (40 🪙)</button>`}
         <button data-act="pol" data-op="donate" data-v="${vi}" ${P.gold >= 100 ? '' : 'disabled'}>🏗️ Doar 100 🪙 às obras</button><button data-act="pol" data-op="party" data-v="${vi}" ${P.gold >= 150 && v.partyDay !== G.day ? '' : 'disabled'}>🎉 Festa (150 🪙)</button></div></div>`;
   },
+  // as famílias que podem tramar contra o seu trono (Reinado → Conselho, dentro do quadro dos complôs)
+  throneCard() {
+    if (typeof Reign === 'undefined' || !Reign.isKing()) return '';
+    const m = Reign.main(), fams = Object.values(Families.F()).filter(f => !f.player && f.civ === m.id && Families.adults(f).length).sort((a, b) => a.loyalty - b.loyalty).slice(0, 4);
+    const R = Reign.R(), bought = Reign.councilors(m.id).filter(mb => mb.boughtBy !== undefined && R.plots.some(x => x.found && x.fam === mb.boughtBy));
+    return `<div class="pol-throne"><small class="muted">Quem pode tramar (famílias com pouca lealdade e dinheiro compram o conselho e mandam traidores; os complôs não descobertos atacam em 2 meses):</small>
+      <div class="rn-fams">${fams.map(f => `<span>🏛️ ${UI.esc(Families.name(f))} · lealdade <b class="${f.loyalty < 25 ? 'bad' : f.loyalty > 60 ? 'ok' : ''}">${Math.round(f.loyalty)}</b> · ${Math.round(f.wealth)} 🪙</span>`).join('') || '<span>ninguém</span>'}</div>
+      ${bought.length ? `<p class="bad">🤫 Conselheiros comprados pelos golpistas: ${bought.map(mb => UI.esc(mb.name)).join(', ')}.</p>` : ''}</div>`;
+  },
   page() {
-    const S = this.S(), here = World.villages.map((v, vi) => ({ v, vi, d: U.dist(P.x / TILE, P.y / TILE, v.x, v.y) })).filter(x => x.v && !x.v.ruin || x.v.lord === 'player');
-    const show = here.filter(x => Society.E(x.vi).tie).concat(here.filter(x => !Society.E(x.vi).tie && (x.v.lord === 'player' || Society.E(x.vi).me))).concat(here.filter(x => x.v.lord !== 'player' && !Society.E(x.vi).me && !Society.E(x.vi).tie).sort((a, b) => a.d - b.d).slice(0, 4));
+    // as vilas que você governa ficam de fora: a eleição delas está na página da vila, no Reinado
+    const S = this.S(), here = World.villages.map((v, vi) => ({ v, vi, d: U.dist(P.x / TILE, P.y / TILE, v.x, v.y) })).filter(x => x.v && !x.v.ruin && x.v.lord !== 'player');
+    const show = here.filter(x => Society.E(x.vi).tie).concat(here.filter(x => !Society.E(x.vi).tie && Society.E(x.vi).me)).concat(here.filter(x => !Society.E(x.vi).me && !Society.E(x.vi).tie).sort((a, b) => a.d - b.d).slice(0, 4));
     let h = `<div class="card"><div class="sec">🗳️ Como funcionam as eleições</div><p class="dt-desc">O governador de cada vila é eleito pelo povo para um mandato de ${POL_TERM} meses (${POL_TERM} anos de vida). Pesa o que cada um fez pela vila (🏗️ obras, doações, festas, investimentos e bandidos derrotados por perto), o relacionamento com os moradores (💞) e a fama (⭐). Os anciãos votam com peso 3. Só concorre quem se inscreve (nos 3 meses antes da eleição) e candidato não vota. Quem governa também precisa se reeleger.</p></div>`;
     h += show.map(x => this.villageCard(x.vi)).join('');
     // tronos
@@ -271,13 +282,6 @@ const Politics = {
         <small>${b ? `🤫 Você comprou ${b} de ${L.length}${b === L.length ? ' — <b class="ok">ninguém protege o rei na sala do trono</b>' : ''}` : 'Para tomar o trono: compre todo o círculo (fale com eles no castelo) ou mate o rei na guerra ou na sala do trono.'}${plot ? ` · 🗡️ <b class="bad">A ${UI.esc(Families.name(Families.get(plot.fam)) || '')} trama um golpe</b>` : ''}</small></span></div>`;
     }).join('');
     h += `<div class="card"><div class="sec">👑 Os tronos <span>a coroa passa de pai para filho, a não ser que alguém a tome</span></div>${kings}</div>`;
-    if (typeof Reign !== 'undefined' && Reign.isKing()) {
-      const m = Reign.main(), fams = Object.values(Families.F()).filter(f => !f.player && f.civ === m.id && Families.adults(f).length).sort((a, b) => a.loyalty - b.loyalty).slice(0, 4);
-      const R = Reign.R(), bought = Object.keys(R.council).map(k => Reign.member(k)).filter(mb => mb && mb.boughtBy !== undefined && R.plots.some(x => x.found && x.fam === mb.boughtBy));
-      h += `<div class="card"><div class="sec">🛡️ O seu trono <span>${CIV_DEFS[m.id].short}</span></div><p class="dt-desc">Famílias com pouca lealdade e dinheiro tramam: compram o seu conselho e mandam soldados traidores atacar você. O mestre espião descobre os complôs (Reinado → Espionagem); os não descobertos atacam em 2 meses.</p>
-        ${fams.map(f => `<div class="crow"><span class="ri">🏛️</span><span><b>${UI.esc(Families.name(f))}</b><small>lealdade <b class="${f.loyalty < 25 ? 'bad' : f.loyalty > 60 ? 'ok' : ''}">${Math.round(f.loyalty)}</b> · riqueza ${Math.round(f.wealth)} 🪙</small></span></div>`).join('')}
-        ${bought.length ? `<p class="bad">🤫 Conselheiros comprados pelos golpistas: ${bought.map(mb => UI.esc(mb.name)).join(', ')}.</p>` : ''}</div>`;
-    }
     if (S.log.length) h += `<div class="card"><div class="sec">📒 Notícias da política</div>${S.log.slice(0, 8).map(l => `<div class="bank-log"><small>${Calendar.short(l.day)}</small> ${UI.esc(l.t)}</div>`).join('')}</div>`;
     return h;
   },
@@ -312,6 +316,7 @@ const Politics = {
     E.next = G.day + POL_TERM;
     if (v.ruin >= 3 && !People.residents(vi).length) return;
     const wasMe = v.lord === 'player'; if (wasMe) E.me = true;
+    if (!v.free && G.civs[v.civ] && G.civs[v.civ].ruler === 'player') E.me = false; // o rei não concorre contra si mesmo
     Politics.registerTick(vi, true);
     const res = this.votes(vi), ids = Object.keys(res); if (!ids.length) { E.me = false; return; }
     ids.sort((a, b) => res[b] - res[a]);
@@ -378,16 +383,6 @@ const Politics = {
     if (e && e.kind === 'bandit' && (!src || src === P || src.kind === 'ally')) { const vi = World.villages.findIndex(v => U.dist(v.x, v.y, e.x / TILE, e.y / TILE) < 20); if (vi >= 0) Politics.addDeed(vi, 'player', 1.5); }
     return r;
   };
-  // a página de política fica na aba Política da Sociedade
-  const sh0 = Society.show.bind(Society);
-  Society.show = function (tab) {
-    const t = tab || UI.sel.socTab || 'rep';
-    if (t !== 'politics') return sh0(tab);
-    let a = null; const op = UI.open; UI.open = (...x) => { a = x; }; try { sh0('politics'); } finally { UI.open = op; }
-    if (!a) return;
-    const b = a[1], i = b.indexOf('<div class="tabs">'), j = i >= 0 ? b.indexOf('</div>', i) + 6 : 0;
-    return UI.open(a[0], b.slice(0, j) + Politics.page(), a[2], a[3], a[4]);
-  };
   // o círculo do rei: suborno pela conversa (só quem é do círculo de um rei da IA)
   const as0 = Lifesim.acts.bind(Lifesim);
   Lifesim.acts = function (p, acts) {
@@ -433,7 +428,7 @@ const Politics = {
   const rp0 = Reign.resolvePlot.bind(Reign);
   Reign.resolvePlot = function (i, how) {
     const pl = this.R().plots[i];
-    if (pl && pl.kind === 'usurp') { for (const k in this.R().council) { const mb = this.member(k); if (mb && mb.boughtBy === pl.fam) delete mb.boughtBy; } const f = Families.get(pl.fam); if (f) f.loyalty = how === 'pardon' ? 55 : 35; }
+    if (pl && pl.kind === 'usurp') { for (const mb of this.councilors(pl.ci)) if (mb.boughtBy === pl.fam) delete mb.boughtBy; const f = Families.get(pl.fam); if (f) f.loyalty = how === 'pardon' ? 55 : 35; }
     return rp0(i, how);
   };
   // morreu no golpe: a coroa vai para a família golpista (o herdeiro fica com os outros reinos)
@@ -444,8 +439,7 @@ const Politics = {
       const c = G.civs[C.ci], p = G.people[C.pid], f = Families.get(C.fam);
       G.coup = null; for (const e of G.ents) if (e.tag === 'coup') e.dead = true;
       if (c && c.ruler === 'player' && p && p.alive) {
-        Succession.seat(c, p, 'ruler'); c.relation = -50; c.atWar = false; if (f) f.loyalty = 95;
-        if (G.mainRealm === C.ci) { const o = G.civs.find(x => x.ruler === 'player'); G.mainRealm = o ? o.id : null; }
+        Succession.seat(c, p, 'ruler'); c.relation = -50; c.atWar = false; if (f) f.loyalty = 95; // seat chama Game.onLoseRealm
         Heraldry.apply();
         UI.msg(`🗡️👑 Os golpistas venceram: ${c.rulerName}${f ? ` (${Families.name(f)})` : ''} tomou o trono de ${CIV_DEFS[C.ci].short}.`, 'bad', true);
         Diplo.chronicle(`🗡️ ${c.rulerName} derrubou ${G.name} ${G.surname || ''} num golpe e tomou ${CIV_DEFS[C.ci].name}.`, true);
@@ -469,7 +463,8 @@ const Politics = {
       if (d.op === 'party') Politics.party(vi);
       if (d.op === 'support') Society.support(vi, +d.p);
       if (d.op === 'tie') Politics.decide(vi, d.p);
-      Society.show('politics'); return;
+      // a página continua onde estava: a vila que você governa (Reinado) ou a Política da Sociedade
+      if (UI.cur && UI.cur.fn === 'showKingdom') UI.refresh(); else Society.show('politics'); return;
     }
     return a0(a, d);
   };

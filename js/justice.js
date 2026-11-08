@@ -34,7 +34,7 @@ const Justice = {
     if (!p || !p.alive || !G.civs[ci]) return false;
     if (this.jailedIn(p) >= 0) return true;
     if (this.full(ci)) {
-      if (this.mine(ci)) { const Q = this.S().queue[ci] || (this.S().queue[ci] = []); if (!Q.some(x => x.pid === p.id)) Q.push({ pid: p.id, why, day: G.day }); if (!quiet) UI.msg(`⛓️ A prisão de ${CIV_DEFS[ci].short} está lotada: ${People.full(p)} espera na fila. Solte alguém ou condene à morte (Reinado → Prisão e justiça).`, 'bad', true); return false; }
+      if (this.mine(ci)) { const Q = this.S().queue[ci] || (this.S().queue[ci] = []); if (!Q.some(x => x.pid === p.id)) Q.push({ pid: p.id, why, day: G.day }); if (!quiet) UI.msg(`⛓️ A prisão de ${CIV_DEFS[ci].short} está lotada: ${People.full(p)} espera na fila. Solte alguém ou condene à morte (Reinado → Leis e justiça).`, 'bad', true); return false; }
       this.npcMakeRoom(ci); if (this.full(ci)) return false;
     }
     const until = months ? G.day + months : 0;
@@ -154,16 +154,17 @@ const Justice = {
       if (L.includes(ci) && this.mine(ci) && Math.random() < 0.6) {
         if (this.arrest(p, ci, 'procurado pela coroa', 0, true)) {
           this.S().pending = (this.S().pending || 0) + 1;
-          UI.banner('⛓️ Um procurado foi preso'); UI.msg(`⛓️ Os guardas de ${CIV_DEFS[ci].short} pegaram ${People.full(p)}, procurad${p.sex === 'f' ? 'a' : 'o'} pela coroa. Decida em Reinado → Prisão e justiça: continua preso ou é condenado à morte.`, 'gold', true);
+          UI.banner('⛓️ Um procurado foi preso'); UI.msg(`⛓️ Os guardas de ${CIV_DEFS[ci].short} pegaram ${People.full(p)}, procurad${p.sex === 'f' ? 'a' : 'o'} pela coroa. Decida em Reinado → Leis e justiça: continua preso ou é condenado à morte.`, 'gold', true);
         }
       }
     }
     // bandidos calmos conversam: o bando não é hostil o tempo todo (só quando atacado)
     for (const p of G.people) if (p.alive && p.band && p.hostile && !p.hit) p.hostile = false;
   },
-  // ---------------------------------------------------------------- a aba do Reinado
-  page() {
-    const esc = UI.esc.bind(UI), S = this.S(), cs = this.myRealm();
+  // ---------------------------------------------------------------- os quadros do Reinado (aba Leis e justiça)
+  // cs: os reinos cujas prisões e procurados aparecem (o reino aberto no Reinado)
+  page(cs) {
+    const esc = UI.esc.bind(UI), S = this.S(); cs = cs || this.myRealm();
     const cells = ci => { const L = this.jail(ci); return `<div class="ju-cells">${Array.from({ length: JAIL_CELLS }, (_, c) => `<div class="ju-cell"><div class="ju-ch">⛓️ Cela ${c + 1}</div>${Array.from({ length: JAIL_PER_CELL }, (_, k) => { const x = L[c * JAIL_PER_CELL + k], p = x && G.people[x.pid];
       return p ? `<div class="ju-pr ${x.until ? '' : 'wait'}"><b>${esc(People.full(p))}</b><small>${esc(People.title(p))} · ${esc(x.why)} · ${x.until ? `sai em ${Math.max(0, x.until - G.day)} ${x.until - G.day === 1 ? 'mês' : 'meses'}` : 'você decide'}</small>
         <span><button data-act="ju" data-op="free" data-p="${p.id}" data-c="${ci}">🔓 Soltar</button>${x.until ? '' : `<button data-act="ju" data-op="keep" data-p="${p.id}" data-c="${ci}">⏳ 6 meses</button>`}<button class="danger" data-act="ju" data-op="kill" data-p="${p.id}" data-c="${ci}">☠️ Morte</button></span></div>` : '<div class="ju-pr empty">vazio</div>'; }).join('')}</div>`).join('')}</div>`; };
@@ -226,7 +227,7 @@ const Justice = {
       UI.msg(`🕊️ ${People.full(p)} largou a vida do crime e foi morar em ${People.homeName(p)} (+2 de fama).`, 'gold', true);
       UI.close(); return;
     }
-    if (op === 'jbArrest') { const ci = Justice.subject(p); if (ci >= 0 && Justice.arrest(p, ci, 'ordem do rei')) { UI.msg(`⛓️ Os guardas levaram ${People.full(p)} para a prisão de ${CIV_DEFS[ci].short}.`, 'gold'); UI.close(); } else this.showTalk(p.id, { text: 'Os guardas não têm onde pôr.', note: 'A prisão está lotada: solte alguém ou condene à morte (Reinado → Prisão e justiça).' }); return; }
+    if (op === 'jbArrest') { const ci = Justice.subject(p); if (ci >= 0 && Justice.arrest(p, ci, 'ordem do rei')) { UI.msg(`⛓️ Os guardas levaram ${People.full(p)} para a prisão de ${CIV_DEFS[ci].short}.`, 'gold'); UI.close(); } else this.showTalk(p.id, { text: 'Os guardas não têm onde pôr.', note: 'A prisão está lotada: solte alguém ou condene à morte (Reinado → Leis e justiça).' }); return; }
     if (op === 'jbKill') { const ci = Justice.subject(p); Dialog.confirm({ icon: '☠️', title: `Condenar ${People.full(p)} à morte`, danger: true, ok: 'Condenar', text: 'A família nunca vai perdoar e o povo fica com medo.' }, () => { Justice.execute(p, ci, true); UI.close(); }); return; }
     if (op === 'jbWant') { Justice.declare(p, Justice.myRealm()[0]); this.showTalk(p.id, { text: 'O que é isso?! Eu não fiz nada!', note: 'Declarado procurado no seu reino.' }); return; }
     return ta0(d);
@@ -254,21 +255,6 @@ const Justice = {
       case 'want': { const el = document.getElementById('juWho'), q = el && G.people[+el.value]; if (q) Justice.declare(q, ci); break; }
     }
     UI.refresh();
-  };
-  // a aba ⛓️ Prisão e justiça no Reinado (como a aba de Leis)
-  const sh0 = Reign.show.bind(Reign);
-  Reign.show = function (tab) {
-    const t = tab || UI.sel.rgTab || 'council';
-    let a = null; const op = UI.open; UI.open = (...x) => { a = x; };
-    try { sh0(t === 'jus' ? 'council' : tab); } finally { UI.open = op; }
-    if (!a) return;
-    const S = Justice.S(), wait = Justice.myRealm().reduce((n, ci) => n + Justice.jail(ci).filter(x => !x.until).length + (S.queue[ci] || []).length, 0);
-    let b = a[1].replace(/(<button[^>]*data-act="rgTab" data-t="aud"[^>]*>)/, `<button class="${t === 'jus' ? 'on' : ''}" data-act="rgTab" data-t="jus">⛓️ Prisão e justiça${wait ? ` (${wait})` : ''}</button>$1`);
-    if (t === 'jus') { UI.sel.rgTab = 'jus'; b = b.replace(/(<button[^>]*) class="on"([^>]*data-t="council")/, '$1 class=""$2'); const i = b.indexOf('<div class="tabs">'), j = b.indexOf('</div>', i) + 6; b = b.slice(0, j) + Justice.page(); }
-    const r = UI.open(a[0], b, a[2], [t], a[4]);
-    // no Portfólio, o Reinado é dividido em páginas que cabem na janela
-    if (UI.cur && UI.cur.fn === 'showKingdom' && UI.sel.knav === 'x:reign') UI.fitReino('x:reign');
-    return r;
   };
   const mt0 = Lifesim.monthTick.bind(Lifesim);
   Lifesim.monthTick = function () { mt0(); try { Justice.monthTick(); } catch (e) { console.error(e); } };

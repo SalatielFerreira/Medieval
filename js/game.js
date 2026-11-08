@@ -124,6 +124,8 @@ const Inv = {
 
 // pessoas na rua por vila (o resto está em casa ou no trabalho): Poucas, Normal ou Todas
 const STREET_CAP = { few: 35, normal: 60, all: Infinity };
+// guarnição máxima de um castelo (a mesma no recrutamento, no assalto ao castelo e no texto das janelas)
+const GARRISON_MAX = 30;
 const Streets = {
   ids: null, t: -1,
   // quem precisa estar na rua: uma lista feita no máximo uma vez por segundo
@@ -256,7 +258,7 @@ const Game = {
     if (!ok) throw new Error('Falha ao gerar o mundo');
     this.initCivs();
     G.family = { spouse: null, tryChild: false, dueDay: 0 };
-    G.spawned = new Map(); G.storage = {}; G.dungeons = {}; G.dungeon = null; G.place = null; G.warCall = null; G.warRest = {}; G.trial = null; G.regency = []; G.rumors = []; G.heroFallen = []; G.loans = []; G.wanted = {}; G.funerals = []; G.weather = null;
+    G.spawned = new Map(); G.storage = {}; G.dungeons = {}; G.dungeon = null; G.place = null; G.warCall = null; G.warRest = {}; G.regency = []; G.rumors = []; G.heroFallen = []; G.loans = []; G.wanted = {}; G.funerals = []; G.weather = null;
     Diplo.init();
     People.generate();
     G.diff = opts.diff || 'normal';
@@ -268,7 +270,7 @@ const Game = {
     Families.init(); Families.ensurePlayer(); Faith.ensurePriests();
     G.homes = {}; G.npcHouses = []; G.npcHouseSeq = 0; Homes.touch(); Homes.dayTick(false);
     G.title = { lvl: -1, civ: -1 }; G.titles = {}; G.civilTitles = {}; G.service = {}; G.fame = 0; G.market = {}; G.assaults = []; G.piety = 0; G.tourney = null; G.duel = null; G.joust = null;
-    G.plotsC = []; G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.vacancies = []; G.claims = []; G.graves = []; G.npcRoads = []; G.npcRoadFrom = {}; G.roadCut = {}; G.church = null; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
+    G.assassins = 0; G.shrines = {}; G.pilgrim = null; G.urban = {}; G.vwar = null; G.askDay = {}; G.econT = 0; G.ledger = []; G.vacancies = []; G.claims = []; G.graves = []; G.npcRoads = []; G.npcRoadFrom = {}; G.roadCut = {}; G.church = null; G.heraldry = {}; Heraldry.apply(); G.courtier = null; G.courtInvite = null; G.courtRefused = {}; Urban.stop(); WorldEvents.reset();
     const d = World.start.door;
     this.resetPlayer((d.x + 0.5) * TILE, (d.y + 1) * TILE);
     G.spawn = { x: P.x, y: P.y };
@@ -294,10 +296,10 @@ const Game = {
       urban: G.urban || {}, askDay: G.askDay || {}, econT: G.econT || 0, ledger: G.ledger || [], heraldry: G.heraldry || {}, ports: G.ports || {}, realms: G.realms || [], church: G.church || null, npcRoads: G.npcRoads || [], npcRoadFrom: G.npcRoadFrom || {}, roadCut: G.roadCut || {}, vacancies: G.vacancies || [], claims: G.claims || [], graves: G.graves || [], calStart: G.calStart === undefined ? CAL_START : G.calStart, mainRealm: G.mainRealm === undefined ? null : G.mainRealm, courtier: G.courtier || null, courtInvite: G.courtInvite || null, courtRefused: G.courtRefused || {}, homes: G.homes || {}, npcHouses: G.npcHouses || [], npcHouseSeq: G.npcHouseSeq || 0,
       people: this.packPeople(), family: G.family,
       fams: G.fams, famSeq: G.famSeq, playerFam: G.playerFam, revolts: G.revolts, founded: G.founded, births: G.births, lastBirths: G.lastBirths,
-      title: G.title, titles: Court.holdings(), titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, plotsC: G.plotsC, assassins: G.assassins,
+      title: G.title, titles: Court.holdings(), titleV: 2, civilTitles: G.civilTitles || {}, service: G.service, fame: G.fame, market: G.market, assaults: G.assaults, piety: G.piety, tourney: G.tourney, assassins: G.assassins,
       warCall: G.warCall ? Object.assign({}, G.warCall, { shown: false, deadline: null }) : null, warRest: G.warRest || {},
       rumors: G.rumors || [], heroFallen: G.heroFallen || [], funerals: [], loans: G.loans || [], wanted: G.wanted || {},
-      trial: G.trial || null, studyDay: G.studyDay, prayOrDay: G.prayOrDay, regency: G.regency || [],
+      studyDay: G.studyDay, prayOrDay: G.prayOrDay, regency: G.regency || [],
       shrines: G.shrines, pilgrim: G.pilgrim, prayDay: G.prayDay, pcaravans: (G.caravans || []).filter(c => c.owner === 'player' && !c.done), civs: G.civs, storage: G.storage, dungeons: G.dungeons, diplo: G.diplo,
       vciv: World.villages.map(v => v.civ),
       built: World.structs.filter(s => s.built && !s.removed).map(s => ({ type: s.type, x: s.x, y: s.y, animals: s.animals, goods: s.goods, stock: s.stock, till: s.till, workers: s.workers, autosell: s.autosell, earn: s.earn, shelf: s.shelf, oldId: s.id })),
@@ -382,10 +384,10 @@ const Game = {
     G.title = s.title || { lvl: -1, civ: -1 }; G.civilTitles = s.civilTitles || {}; if (!s.titleV && G.title.lvl >= 3) G.title.lvl++; /* Marquês entrou antes do Duque */
     G.titles = s.titles || null; Court.holdings(); Court.syncPrincipal(); /* jogos antigos: o título único vira o primeiro da lista */ G.service = s.service || {}; G.fame = s.fame || 0; G.market = s.market || {}; G.assaults = (s.assaults || []).filter(a => a.state !== 'done');
     for (const a of G.assaults) { a.spawnedEngines = 0; a.near = false; }
-    G.piety = s.piety || 0; G.tourney = s.tourney || null; G.plotsC = s.plotsC || []; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
+    G.piety = s.piety || 0; G.tourney = s.tourney || null; G.assassins = s.assassins || 0; G.shrines = s.shrines || {}; G.pilgrim = s.pilgrim ?? null; G.prayDay = s.prayDay;
     G.duel = null; G.joust = null; G.vwar = null; Urban.stop(); WorldEvents.reset();
     G.urban = s.urban || {}; G.askDay = s.askDay || {}; G.econT = s.econT || 0; G.ledger = s.ledger || []; G.heraldry = s.heraldry || {}; G.ports = s.ports || {}; G.church = s.church || null; G.npcRoads = s.npcRoads || []; G.npcRoadFrom = s.npcRoadFrom || null; G.roadCut = s.roadCut || {}; G.vacancies = s.vacancies || []; G.claims = s.claims || []; G.graves = s.graves || []; G.calStart = s.calStart === undefined ? CAL_START : s.calStart; G.mainRealm = s.mainRealm === undefined ? null : s.mainRealm; Heraldry.apply(); G.courtier = s.courtier || null; G.courtInvite = s.courtInvite || null; G.courtRefused = s.courtRefused || {};
-    G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; if (G.place) Places.exit(true); G.place = null; G.warCall = s.warCall || null; G.warRest = s.warRest || {}; G.trial = s.trial || null; G.rumors = s.rumors || []; G.heroFallen = s.heroFallen || []; G.loans = s.loans || []; G.wanted = s.wanted || {}; G.funerals = []; G.studyDay = s.studyDay; G.prayOrDay = s.prayOrDay; G.regency = s.regency || []; G.diplo = s.diplo || null; G.weather = null;
+    G.storage = s.storage || {}; G.dungeons = s.dungeons || {}; G.dungeon = null; if (G.place) Places.exit(true); G.place = null; G.warCall = s.warCall || null; G.warRest = s.warRest || {}; G.rumors = s.rumors || []; G.heroFallen = s.heroFallen || []; G.loans = s.loans || []; G.wanted = s.wanted || {}; G.funerals = []; G.studyDay = s.studyDay; G.prayOrDay = s.prayOrDay; G.regency = s.regency || []; G.diplo = s.diplo || null; G.weather = null;
     if (!G.diplo) Diplo.init();
     (s.vciv || []).forEach((c, i) => { const v = World.villages[i]; if (v && v.civ !== c) Diplo.captureVillage(v, c, true); });
     Borders.restore(); // fronteiras ampliadas e vilas anexadas
@@ -400,6 +402,8 @@ const Game = {
     Homes.restore();
     Ports.place(); Graves.place(); Urban.restore(); Towns.settle(); Ports.ensureKeepers(); Shops.ensure(); NpcRoads.restore(); World.chunks.clear(); Families.refresh(); Homes.dayTick(false);
     Towns.syncOwners(); // construções de cada vila com as cores do reino dela
+    this.fixRealms(); // jogos salvos antigos: as regras do trono coerentes (títulos, vilas, moeda, decretos)
+    this.migrateFusion(s); // jogos salvos antigos: os sistemas que existiam em dobro viram um só
     for (const p of G.people) if (p.alive && p.capanga && !p.post) this.spawnCapanga(p);
     G.state = 'play'; G.paused = false; UI.showGameUI(true);
     if (!data) UI.msg(`Bem-vindo de volta, ${G.name}! ${Calendar.full(G.day)} · ${Season.cur().icon} ${Season.cur().name}.`, 'gold');
@@ -1290,7 +1294,10 @@ const Game = {
     P.gold = share;
     // o trono fica com o filho mais velho; os outros seguem como príncipes
     const realms = G.civs.filter(x => x.ruler === 'player').map(x => x.id);
-    const eldest = kids.slice().sort((a, b) => b.age - a.age)[0];
+    // o herdeiro escolhido no Reinado (vivo e sem trono próprio) vem antes do filho mais velho
+    const R = G.urban && G.urban.reign, picked = R && R.heir !== null && R.heir !== undefined ? kids.find(k => k.id === R.heir && k.rank !== 'ruler') : null;
+    const eldest = picked || kids.slice().sort((a, b) => b.age - a.age)[0];
+    if (R) R.heir = null; // a geração nova escolhe o seu
     const spouse = G.family.spouse !== null ? People.get(G.family.spouse) : null;
     // criança pequena não sai em aventura: o tempo passa até o herdeiro escolhido ter 14 anos
     const years = Math.max(0, 14 - c.age);
@@ -1312,7 +1319,7 @@ const Game = {
     Object.assign(P, { sex: c.sex, age: c.age, hairBase: c.hair, skin: c.skin, dead: false, level: lvl, xp: 0, maxHp: 100 + (lvl - 1) * 10 });
     P.hp = P.maxHp; P.hunger = 80; P.stamina = this.maxSt(); P.x = G.spawn.x; P.y = G.spawn.y; P.statPts = 0;
     for (const civ of G.civs) if (civ.ruler === 'player') civ.rulerName = G.name;
-    const throne = realms.length ? Succession.pass(realms, c, eldest, spouse && spouse.alive ? spouse : null) : '';
+    const throne = realms.length ? Succession.pass(realms, c, eldest, spouse && spouse.alive ? spouse : null, !!picked) : '';
     for (const a of this.allies()) { const sp = freeSpotNear(P.x, P.y, 50); a.x = sp.x; a.y = sp.y; a.target = null; }
     G.ents = G.ents.filter(e => e.kind === 'ally' || U.dist(e.x, e.y, P.x, P.y) > 14 * TILE || !hostile(e, P));
     UI.hideGameOver();
@@ -1632,8 +1639,140 @@ const Game = {
     else if (G.mainRealm !== ci) Heraldry.set(ci, { follow: G.mainRealm });
     Heraldry.apply();
     if (G.siege && G.siege.civ === ci) { for (const e of G.ents) if (e.siegeOf === ci) e.dead = true; G.siege = null; }
+    this.onGainRealm(ci);
     UI.banner(`👑 ${G.name}, soberano de ${CIV_DEFS[ci].short}!`);
     UI.msg(`${how} Você agora governa ${CIV_DEFS[ci].name}! Abra o Portfólio (tecla ${Keys.label('kingdom')}) para administrar o reino.`, 'gold', true);
+  },
+  // ---------------------------------------------------------------- ganhou / perdeu um trono
+  // Um lugar só para o que muda quando um reino passa a ser seu ou deixa de ser. Antes cada caminho (conquista,
+  // fundação, herança, revolta, falência, rendição, renúncia, golpe, sucessão) limpava coisas diferentes e sobravam
+  // regras sem sentido: rei com título de nobreza no próprio reino, procurado pela própria guarda, decretos presos no
+  // reino perdido... Chamado por becomeRuler e por todos os caminhos de perder o trono (depois de c.ruler mudar).
+  onGainRealm(ci) {
+    const c = G.civs[ci]; if (!c) return;
+    // quem concede títulos neste reino agora é você: o título que você tinha aqui sai (os de outros reinos continuam)
+    if (Court.levelIn(ci) >= 0) { delete Court.holdings()[ci]; Court.syncPrincipal(); }
+    // a guarda não procura o próprio rei
+    Crime.clear(ci);
+    // a vila que você governava neste reino passa à coroa (o rei manda nela pelo reino, sem ser governador dela)
+    this.syncRealmVillages();
+    // soberano não serve na corte de outro rei
+    if (G.courtier && typeof RoyalCourt !== 'undefined') RoyalCourt.leave(`agora você é soberano de ${CIV_DEFS[ci].short}`, true);
+    G.courtInvite = null;
+    // dois reinos do mesmo dono: sem guerra, vassalagem, tratados nem tributos entre eles (não criam ouro do nada)
+    delete c.overlord;
+    for (const o of G.civs) {
+      if (o.id === ci || o.ruler !== 'player') continue;
+      if (o.overlord === ci) delete o.overlord;
+      if (Diplo.atWar(o.id, ci)) Diplo.makePeace(o.id, ci, 'agora têm o mesmo soberano');
+    }
+    const mine = x => G.civs[x] && G.civs[x].ruler === 'player';
+    if (typeof Pacts !== 'undefined') { const S = Pacts.S(); S.trade = S.trade.filter(t => !(mine(t.a) && mine(t.b))); S.trib = S.trib.filter(t => !(mine(t.from) && mine(t.to))); }
+    if (typeof Reign !== 'undefined') {
+      const R = Reign.R();
+      R.treaties = R.treaties.filter(t => !(mine(t.a) && mine(t.b)));
+      delete R.claims[ci]; delete R.spies[ci];
+    }
+    // reféns entre dois reinos seus voltam para casa
+    if (typeof Pacts !== 'undefined') for (const h of Pacts.S().host.slice()) if (mine(h.from) && mine(h.to)) Pacts.release(h);
+  },
+  onLoseRealm(ci) {
+    const c = G.civs[ci]; if (!c) return;
+    // decretos, inflação e o bônus do comércio eram do seu governo: não ficam valendo no reino perdido
+    c.decrees = {}; c.decreeOff = false; c.inflation = 0; c.tradeBonus = 0;
+    // o conselho do reino (Court) servia a você
+    if (c.council) for (const seat in c.council) { const p = G.people[c.council[seat]]; if (p && p.council && p.council.civ === ci) p.council = null; }
+    c.council = null;
+    if (G.warCall && G.warCall.side === ci && G.warCall.own) { G.warCall = null; War.badge(null); }
+    // os reinos vassalos eram seus, não do novo soberano
+    for (const o of G.civs) if (o.overlord === ci) delete o.overlord;
+    if (G.mainRealm === ci) { const o = G.civs.find(x => x.ruler === 'player'); G.mainRealm = o ? o.id : null; }
+    if (typeof Reign !== 'undefined' && G.urban && G.urban.reign) {
+      const R = Reign.R();
+      for (const vi of Object.keys(R.fiefs)) { const v = World.villages[vi]; if (!v || v.civ === ci) { const p = G.people[R.fiefs[vi].pid]; if (p) p.baron = undefined; delete R.fiefs[vi]; } }
+      if (R.dilemma && R.dilemma.ci === ci) R.dilemma = null;
+      R.treaties = R.treaties.filter(t => t.a !== ci);
+      // os complôs daquele reino (do conselho dele e os outros) acabam com ele
+      R.plots = R.plots.filter(pl => pl.ci !== ci);
+      // sem nenhum reino, o reinado acaba: complôs, generais, espiões e moeda ficam para trás (a dívida é do banco do reino)
+      if (!G.civs.some(x => x.ruler === 'player')) Object.assign(R, { plots: [], generals: [], spies: {}, dilemma: null, aud: [], debase: 0, inflUntil: 0 });
+    }
+  },
+  // vila de um reino seu não tem você como governador: passa à coroa e o morador mais respeitado cuida dela até a
+  // eleição (que você não disputa contra si mesmo). O imposto dela vai para o tesouro do reino.
+  syncRealmVillages(quiet) {
+    let n = 0;
+    World.villages.forEach((v, vi) => {
+      if (!v || v.lord !== 'player' || v.free || !G.civs[v.civ] || G.civs[v.civ].ruler !== 'player') return;
+      const pool = Politics.pool(vi), p = pool.sort((a, b) => Politics.val(vi, b) - Politics.val(vi, a))[0];
+      v.lord = undefined;
+      if (p) { v.chief = p.id; v.elected = p.id; v.lordFam = p.fam; }
+      const E = Society.E(vi); E.next = Math.min(E.next || G.day + 1, G.day + 1); E.me = false; delete E.tie;
+      const spec = (G.founded || []).find(x => x.x === v.x && x.y === v.y); if (spec) spec.lord = undefined;
+      n++;
+      if (!quiet) UI.msg(`🏘️ ${v.name} agora é uma vila do seu reino: como soberano você manda nela pelo reino e o imposto vai para o tesouro.${p ? ` ${People.full(p)} cuida da vila até a eleição.` : ''}`, 'gold');
+    });
+    if (n) Families.refresh();
+    return n;
+  },
+  // jogos salvos antes do gancho acima: acerta o que ficou incoerente (pode rodar mais de uma vez)
+  fixRealms() {
+    const mine = ci => G.civs[ci] && G.civs[ci].ruler === 'player';
+    const H = Court.holdings(); let ch = false;
+    for (const ci of Object.keys(H)) if (mine(+ci)) { delete H[ci]; ch = true; }
+    if (ch) Court.syncPrincipal();
+    for (const c of G.civs) {
+      if (mine(c.id)) Crime.clear(c.id);
+      else { if (c.decrees) c.decrees = {}; c.inflation = 0; c.tradeBonus = 0; }
+      // a moeda desvalorizada gravava "true" (acabava em um mês): vira o contador dos meses que faltam
+      if (c.inflation === true) { const R = G.urban && G.urban.reign; c.inflation = R ? Math.max(1, (R.inflUntil || 0) - G.day) : 1; }
+      if (c.tradeBonus === true) c.tradeBonus = 1;
+      // vassalagem só vale para um reino seu (entre reinos da IA era um dado sem efeito)
+      if (c.overlord !== undefined && (mine(c.id) || !mine(c.overlord))) delete c.overlord;
+    }
+    if (G.courtier && G.civs.some(c => c.ruler === 'player')) G.courtier = null;
+    this.syncRealmVillages(true);
+  },
+  // Jogos salvos de antes da fusão dos sistemas duplicados (pode rodar mais de uma vez: o que é convertido sai do lugar
+  // antigo). Conselho do Reinado → as cadeiras do conselho de cada reino; complôs do conselho (G.plotsC) → a lista única
+  // do Reinado; comércio, livre passagem e reféns do Reinado → Tratados; decretos com o mesmo nome das leis → as leis;
+  // dívida da coroa com os banqueiros → dívida com o banco do reino; tribunal e audiência da coroa pendentes: descartados.
+  migrateFusion(s) {
+    s = s || {};
+    const mine = ci => !!G.civs[ci] && G.civs[ci].ruler === 'player';
+    const main = G.mainRealm !== null && G.mainRealm !== undefined && mine(G.mainRealm) ? G.mainRealm : (G.civs.find(c => c.ruler === 'player') || { id: -1 }).id;
+    const R = G.urban && G.urban.reign;
+    if (R) {
+      delete R.council; // as cadeiras do Court valem; o conselho antigo do Reinado não tinha efeito
+      R.plots = R.plots || [];
+      for (const pl of R.plots) { if (pl.ci === undefined) pl.ci = main; if (pl.ripe === undefined) pl.ripe = (pl.day || G.day) + 2; }
+      // tratados de comércio e de livre passagem → um tratado de comércio dos Tratados (sem renda em dobro)
+      if (typeof Pacts !== 'undefined') {
+        const S = Pacts.S();
+        for (const t of R.treaties || []) if ((t.kind === 'commerce' || t.kind === 'passage') && mine(t.a) && G.civs[t.b] && !mine(t.b) && !Pacts.trade(t.a, t.b)) S.trade.push({ a: t.a, b: t.b, since: G.day, until: G.day + PACT_MONTHS });
+        // reféns sem prazo do Reinado → reféns dos Tratados (12 meses, guardados no castelo do reino principal)
+        for (const id of R.hostages || []) { const p = G.people[id]; if (p && p.alive && p.hostage !== undefined && main >= 0 && !S.host.some(h => h.pid === id)) { const from = p.hostage; delete p.hostage; Pacts.give(id, from, main); } else if (p) delete p.hostage; }
+      }
+      R.treaties = (R.treaties || []).filter(t => t.kind === 'nonagg');
+      delete R.hostages;
+      // a dívida da coroa (empréstimo do dilema) vira dívida com o banco do reino
+      if (R.debt > 0 && main >= 0 && typeof Bank !== 'undefined') { Bank.K(main).debt += Math.round(R.debt); Bank.log(main, `🧾 A dívida antiga da coroa com os banqueiros (${Math.round(R.debt)} 🪙) passou para o banco.`); }
+      delete R.debt; delete R.hist; // o histórico do tesouro é o do Painel do reino
+      if (R.court) delete R.court.tourney;
+    }
+    // complôs do conselho de cada reino (G.plotsC) → a lista única do Reinado
+    const old = s.plotsC || G.plotsC || [];
+    if (old.length && typeof Reign !== 'undefined') {
+      const RR = Reign.R();
+      for (const pl of old) { const p = G.people[pl.pid]; if (pl.done || !p || !p.alive || !mine(pl.civ) || RR.plots.some(x => x.pid === pl.pid)) continue; RR.plots.push({ pid: pl.pid, kind: Reign.SEAT_PLOT[pl.seat] || 'coup', seat: pl.seat, ci: pl.civ, day: pl.day || G.day, ripe: pl.ripe || G.day + 4, found: !!pl.found }); }
+    }
+    delete G.plotsC; delete G.trial; delete G.petition;
+    // decretos com o mesmo nome de uma lei → a lei (vale em todos os seus reinos); o decreto sai
+    const DEC_LAW = { feira: 'feira', toque: 'recolher', caca: 'caca', escolas: 'escola' };
+    for (const c of G.civs) {
+      if (c.decrees) for (const k in DEC_LAW) if (k in c.decrees) { if (c.decrees[k] && mine(c.id) && typeof Laws !== 'undefined') { const L = Laws.L(); if (!L.active.includes(DEC_LAW[k]) && L.active.length < LAW_MAX) L.active.push(DEC_LAW[k]); } delete c.decrees[k]; }
+      if (c.crownCd) for (const k of Object.keys(c.crownCd)) if (k === 'cunhar' || k === 'banquete' || k === 'recrutar' || k.startsWith('trib')) delete c.crownCd[k];
+    }
   },
   conquer(ci) {
     const c = G.civs[ci];
@@ -1712,7 +1851,9 @@ const Game = {
 
   // ================================================================ economia dos reinos
   popCap(c) { return 180 + c.invest.housing * 40; },
-  maxGarrison(c) { return 18 + c.invest.walls * 6; },
+  // o teto da guarnição de um castelo é um número só (o mesmo do assalto ao castelo, assault.js); as Muralhas deixam o
+  // portão e os guardas mais fortes, não aumentam a guarnição
+  maxGarrison() { return GARRISON_MAX; },
   civForecast(c) {
     const d = CIV_DEFS[c.id], f = c.pop / 150;
     const byRes = { wheat: 'farms', wood: 'sawmill', stone: 'quarry', iron_ore: 'mines' };
@@ -1738,7 +1879,7 @@ const Game = {
       if (c.garrison < this.maxGarrison(c) && c.treasury > 150) { c.garrison = Math.min(this.maxGarrison(c), c.garrison + 2); c.treasury -= 80; }
       if (!c.atWar && c.relation < 0) c.relation = Math.min(0, c.relation + 2);
     } else {
-      Crown.monthCiv(c); // decretos, audiências e efeitos das ações do rei
+      Crown.monthCiv(c); // decretos, Grandes Obras e efeitos das ações do rei
       if (!fed) UI.msg(`⚠️ ${CIV_DEFS[c.id].short}: falta trigo! O povo passa fome.`, 'bad');
       if (c.happy < 15) {
         c.rebel++;
@@ -1750,6 +1891,7 @@ const Game = {
   rebellion(c) {
     const rebel = People.create({ rank: 'ruler', civ: c.id, home: { type: 'castle', civ: c.id }, age: U.rint(30, 50), aff: -80, trait: U.pick(['orgulhoso', 'corajoso']) });
     Heraldry.apply(); c.ruler = 'npc'; c.rulerId = rebel.id; c.rulerName = People.title(rebel) + ' ' + rebel.name; c.atWar = true; c.garrison = 8; c.happy = 55; c.rebel = 0; c.relation = -80; c.tax = 0.12;
+    this.onLoseRealm(c.id);
     UI.banner(`🔥 Revolta em ${CIV_DEFS[c.id].short}!`);
     UI.msg(`O povo de ${CIV_DEFS[c.id].name} se revoltou e coroou ${c.rulerName}. Você perdeu o reino!`, 'bad');
   },
@@ -1770,6 +1912,7 @@ const Game = {
   econTick() {
     const gold0 = P.gold, inv0 = Object.assign({}, P.inv);
     this.ledger = [];
+    this.syncRealmVillages(); // vila que entrou num reino seu (captura, fronteira) passa à coroa
     const farms = World.structs.filter(s => s.owner === 'player' && s.type === 'farm' && !s.removed).length, crop = Season.cur().farm;
     if (farms && crop) { for (const s of World.structs) if (s.owner === 'player' && s.type === 'farm' && !s.removed) { s.goods = s.goods || {}; s.goods.wheat = (s.goods.wheat || 0) + crop; } this.note(`🌾 Suas fazendas produziram ${farms * crop} de trigo (recolha nelas).`); }
     else if (farms) this.note('❄️ No inverno as fazendas não produzem.');
@@ -1824,16 +1967,6 @@ const Game = {
 
   // ---------------------------------------------------------------- ações do painel do reino
   setTax(ci, d) { const c = G.civs[ci]; c.tax = U.clamp(Math.round((c.tax + d) * 100) / 100, 0, 0.5); },
-  kGold(ci, n) {
-    const c = G.civs[ci];
-    if (n === '-all') { P.gold += c.treasury; c.treasury = 0; }
-    else if (n === 'all') { c.treasury += P.gold; P.gold = 0; }
-    else {
-      const v = +n;
-      if (v < 0 && c.treasury >= -v) { c.treasury += v; P.gold -= v; }
-      if (v > 0 && P.gold >= v) { c.treasury += v; P.gold -= v; }
-    }
-  },
   kRes(ci, k, n) {
     const c = G.civs[ci];
     if (n < 0 && (c.stock[k] || 0) >= -n) { c.stock[k] += n; Inv.add(k, -n); }
@@ -1847,12 +1980,14 @@ const Game = {
     c.invest[k]++;
     UI.msg(`${inv.name} de ${CIV_DEFS[ci].short} agora no nível ${c.invest[k]}.`, 'gold');
   },
-  kRecruit(ci) {
-    const c = G.civs[ci];
-    if (c.treasury < 40 || c.stock.wheat < 5 || c.garrison >= this.maxGarrison(c)) return;
+  // recrutar é um só (o "recrutar 6" da coroa virou a quantidade daqui): 40 🪙 e 5 de trigo por soldado, até o teto
+  kRecruit(ci, n) {
+    const c = G.civs[ci]; n = Math.max(1, Math.floor(n || 1));
+    n = Math.min(n, this.maxGarrison(c) - c.garrison, Math.floor(c.treasury / 40), Math.floor((c.stock.wheat || 0) / 5));
+    if (n <= 0) return;
     const before = Garrison.plan(ci);
-    c.treasury -= 40; c.stock.wheat -= 5; c.garrison++;
-    UI.msg(`🪖 Soldado recrutado: ${Garrison.where(ci, before)}.`, 'gold');
+    c.treasury -= 40 * n; c.stock.wheat -= 5 * n; c.garrison += n;
+    UI.msg(n === 1 ? `🪖 Soldado recrutado: ${Garrison.where(ci, before)}.` : `🪖 ${n} soldados recrutados: ${Garrison.where(ci, before)}.`, 'gold');
   },
   kEscort(ci) {
     const c = G.civs[ci];

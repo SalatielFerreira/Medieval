@@ -244,7 +244,9 @@ const Urban = {
       if (sqDist(cx, cy, v.x, v.y) > VILLAGE_R + 2) return `Precisa ficar dentro de ${v.name}`;
       if (a.kind === 'chief' && World.villages[a.vi] !== v) return 'Fora da sua vila';
       if (def.king && a.kind === 'chief') return 'Só o rei pode erguer uma arena';
-      if (def.chief && !s && v.lord !== 'player') return `Só o governador de ${v.name} pode erguer a muralha`; // nem o rei: a muralha é do governador da vila
+      // a muralha é do governador da vila ou, nas vilas do reino (que não têm você como governador), do rei — a mesma regra
+      // do muro e do portão (Gate.wallAuthErr)
+      if (def.chief && !s && v.lord !== 'player' && !(a.kind === 'king' && !v.free && v.civ === a.civ)) return `Só o governador de ${v.name}${v.free ? '' : ` ou quem governa ${CIV_DEFS[v.civ].name}`} pode erguer a muralha`;
       return null;
     }
     // construções do jogador: em todo o mapa e nas vilas independentes, menos dentro de um reino que não é seu
@@ -486,8 +488,9 @@ const Urban = {
     if (k === 'u:demolish') return { name: 'Demolir', icon: '💥', sub: 'reforma', can: true, btn: '💥 Escolher a construção',
       desc: 'Derruba uma construção e devolve metade do material. As suas podem ser demolidas em qualquer lugar; imóveis das vilas só pelo governador ou pelo rei.' };
     const d = CIVIC[k.slice(2)];
-    if (d.chief) return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · só o governador da vila`, can: Inv.has(d.cost) && this.myVillages().length > 0, btn: '📍 Construir na vila',
-      desc: d.desc + (this.myVillages().length ? ' Fica dentro de uma vila em que você é o governador.' : ' Você não é governador de nenhuma vila: só o governador pode erguer a muralha (nem o rei).') };
+    if (d.chief) { const can = this.myVillages().length > 0 || G.civs.some(c => c.ruler === 'player');
+      return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · governador da vila ou rei`, can: Inv.has(d.cost) && can, btn: '📍 Construir na vila',
+        desc: d.desc + (can ? ' Fica dentro de uma vila que você governa ou de uma vila do seu reino.' : ' Você não governa vila nem reino: só o governador da vila ou o rei podem erguer a muralha.') }; }
     return { name: d.name, icon: d.icon, cost: d.cost, sub: `${d.w}×${d.h} · imóvel da vila`, can: Inv.has(d.cost), btn: '📍 Construir na vila',
       desc: d.desc + ' Fica dentro de uma vila sua (governador) ou de qualquer vila do seu reino (rei).' };
   },
@@ -506,6 +509,8 @@ const Chiefdom = {
     const v = World.villages[vi], c = G.civs[v.civ], need = this.askNeed(vi);
     G.askDay = G.askDay || {};
     if (v.lord === 'player') return;
+    if (v.free || !c || c.anarchy) { UI.msg('Esta vila não tem rei a quem pedir.', 'bad'); return; }
+    if (c.ruler === 'player') { UI.msg('Esta vila já é do seu reino: como soberano você manda nela pelo reino.', 'bad'); return; }
     if (c.atWar) { UI.msg('O rei não conversa com inimigos da coroa.', 'bad'); return; }
     if (c.relation < need.rel) { UI.msg(`Precisa de relação ${need.rel}+ com ${CIV_DEFS[v.civ].short}.`, 'bad'); return; }
     if (P.gold < need.gold) { UI.msg(`O governo de ${v.name} custa ${need.gold} 🪙.`, 'bad'); return; }
@@ -581,6 +586,8 @@ const Chiefdom = {
   },
   grant(vi, why) {
     const v = World.villages[vi];
+    // o rei não é governador de vila do próprio reino (mandaria duas vezes e o imposto iria para o bolso)
+    if (!v.free && G.civs[v.civ] && G.civs[v.civ].ruler === 'player') { UI.msg(`🏘️ ${v.name} já é do seu reino: como soberano você manda nela pelo reino.`, 'gold'); return; }
     v.lord = 'player'; v.lordFam = undefined;
     Families.refresh();
     UI.banner(`🏘️ Governador de ${v.name}!`);

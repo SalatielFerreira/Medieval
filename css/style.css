@@ -4958,3 +4958,354 @@ body.small .kpage.kd2 > .card > .act-row:last-child { margin-top: auto; }
 .kpage.kd2 > .card:has(> .pc-row) > :not(.pc-row) { grid-column: 1 / -1; }
 .kpage.kd2 > .card > .pc-row { margin: 0; padding: 6px 8px; border-radius: 9px; background: rgba(0, 0, 0, .2); border: 1px solid rgba(214, 174, 96, .14); }
 .kpage[data-nav="x:reign"] > .pg-head { display: none; }
+
+/* ===================================================== Reinado unificado (js/reinado.js) */
+/* a faixa dos papéis do herói: um botão por reino, por vila e Títulos e corte */
+.rn-roles { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; padding: 0 0 6px; border-bottom: 1px solid rgba(214, 174, 96, .25); min-width: 0; }
+.rn-title { font-family: 'Cinzel', Georgia, serif; font-size: 17px; color: #ffe9b0; letter-spacing: .5px; white-space: nowrap; flex: none; }
+.rn-rbtns { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.rn-role { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 13px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(214, 174, 96, .3); color: #e8d6ae; position: relative; }
+.rn-role svg { width: 18px; height: 18px; flex: none; }
+.rn-role.on { background: linear-gradient(180deg, rgba(232, 192, 106, .35), rgba(120, 80, 20, .35)); border-color: #e8c06a; color: #fff3cf; box-shadow: 0 0 10px rgba(232, 192, 106, .25); }
+.rn-role em { font-style: normal; font-size: 10.5px; min-width: 16px; height: 16px; line-height: 16px; text-align: center; border-radius: 8px; background: #c0392b; color: #fff; padding: 0 4px; }
+.rn-tabs { flex-wrap: wrap; gap: 4px; }
+.rn-tabs .tab { padding: 5px 9px; font-size: 12.5px; }
+.rn-vic { font-size: 24px; }
+/* linhas compactas: decretos, obras, ações, investimentos */
+.rn-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; }
+.rn-rows2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.rn-it { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 4px 7px; border-radius: 8px; background: rgba(0, 0, 0, .22); }
+.rn-it.on { background: rgba(232, 192, 106, .12); box-shadow: inset 0 0 0 1px rgba(232, 192, 106, .35); }
+.rn-ic { font-size: 19px; text-align: center; }
+.rn-t { min-width: 0; display: flex; flex-direction: column; }
+.rn-t b { font-size: 12.5px; color: #f8ecd0; } .rn-t b i { font-style: normal; font-weight: 400; color: #c9b48a; font-size: 11px; margin-left: 4px; }
+.rn-t small { font-size: 11px; color: #b5a07a; line-height: 1.25; } .rn-t small i { font-style: normal; } .rn-t .cost { display: inline-flex; margin-left: 6px; vertical-align: middle; transform: scale(.9); transform-origin: left center; }
+.rn-it > button, .rn-it .act-row button { padding: 4px 9px; font-size: 11.5px; white-space: nowrap; }
+.rn-it .act-row { flex-wrap: nowrap; gap: 4px; margin: 0; }
+.rn-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 7px; margin-bottom: 3px; border-radius: 8px; background: rgba(0, 0, 0, .22); }
+.rn-row > span:first-child { min-width: 0; display: flex; flex-direction: column; }
+.rn-row b { font-size: 12.5px; color: #f8ecd0; } .rn-row b i { font-style: normal; font-size: 11px; margin-left: 4px; } .rn-row svg { vertical-align: -3px; }
+.rn-row small { font-size: 11px; color: #b5a07a; }
+.rn-row .act-row { margin: 0; gap: 4px; flex-wrap: wrap; justify-content: flex-end; } .rn-row .act-row button { padding: 3px 8px; font-size: 11.5px; }
+.rn-note p { margin: 2px 0 4px; }
+/* tesouro */
+.rn-fin .fin-cols { grid-template-columns: 1fr 1fr 0.9fr; }
+.rn-fin p { margin: 2px 0; font-size: 12.5px; } .rn-fin .ok { color: #9fdc7c; } .rn-fin .bad { color: #f08a72; }
+.rn-fin .fin-chart { height: 58px; }
+.rn-res { display: flex; flex-direction: column; gap: 3px; }
+.rn-r { display: grid; grid-template-columns: minmax(0, 1.4fr) 50px 70px 70px auto; align-items: center; gap: 6px; font-size: 12px; padding: 2px 6px; border-radius: 7px; background: rgba(0, 0, 0, .2); }
+.rn-r b { color: #f8ecd0; text-align: right; } .rn-r small { color: #b5a07a; font-size: 11px; } .rn-r small.ok { color: #9fdc7c; }
+.rn-r .act-row { margin: 0; gap: 3px; } .rn-r button { padding: 2px 7px; font-size: 11px; }
+.rn-pocket .act-row { margin: 3px 0; gap: 4px; } .rn-pocket button { padding: 4px 9px; font-size: 12px; }
+.rn-bud { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 6px; border-radius: 8px; background: rgba(0, 0, 0, .2); }
+.rn-bud > span:first-child { display: flex; flex-direction: column; } .rn-bud b { font-size: 12.5px; } .rn-bud small { font-size: 10.5px; color: #b5a07a; }
+.rn-bud .wc-step button { width: 24px; height: 24px; } .rn-bud .wc-step b { min-width: 22px; }
+.rn-coin p, .rn-customs p, .rn-ball p, .rn-jester p { margin: 2px 0 4px; font-size: 12px; }
+/* conselho */
+.rn-seat .rn-who b { display: block; font-size: 13px; color: #f8ecd0; } .rn-seat .rn-who small { font-size: 11px; color: #b5a07a; }
+.rn-kv { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; color: #c9b48a; margin: 4px 0; } .rn-kv b { color: #f8ecd0; } .rn-kv .bad b { color: #f08a72; } .rn-kv .ok b { color: #9fdc7c; }
+.rn-seat > small.muted { font-size: 11px; line-height: 1.3; }
+.rn-seat .act-row button, .rn-dilemma .act-row button { padding: 4px 9px; font-size: 12px; }
+.rn-dilemma p { margin: 2px 0 6px; }
+.rn-meter { display: grid; grid-template-columns: 56px 1fr 34px; align-items: center; gap: 8px; font-size: 12.5px; margin: 3px 0; }
+.rn-bar { height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .4); overflow: hidden; } .rn-bar i { display: block; height: 100%; background: linear-gradient(90deg, #a8791a, #ffd54a); }
+.rn-meter b { text-align: right; } .rn-meter b.bad { color: #f08a72; }
+.rn-aud { padding: 6px 8px; border-radius: 8px; background: rgba(0, 0, 0, .22); } .rn-aud > small { color: #e8c06a; font-size: 11px; } .rn-aud p { margin: 2px 0 4px; font-size: 12.5px; }
+.rn-aud .act-row button { padding: 3px 8px; font-size: 11.5px; }
+.rn-heir { display: flex; flex-direction: column; gap: 3px; padding: 4px 7px; margin-bottom: 3px; border-radius: 8px; background: rgba(0, 0, 0, .22); }
+.rn-heir > b { font-size: 12.5px; } .rn-heir > b small { font-weight: 400; color: #b5a07a; font-size: 11px; margin-left: 4px; } .rn-heir .act-row { margin: 0; gap: 3px; } .rn-heir button { padding: 2px 7px; font-size: 11px; }
+.rn-chr { display: grid; grid-template-columns: 1fr; gap: 2px 14px; font-size: 12px; } .rn-chr small { color: #b5a07a; margin-right: 4px; }
+/* diplomacia: uma linha por reino */
+.rn-dip { display: grid; grid-template-columns: 170px 150px minmax(0, 1fr); grid-template-areas: "n r t" "n r a"; align-items: center; gap: 2px 10px; padding: 5px 8px; margin-bottom: 4px; border-radius: 8px; background: rgba(0, 0, 0, .22); }
+.rn-dip.mine { display: flex; opacity: .7; }
+.rn-dn { grid-area: n; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 7px; align-items: center; min-width: 0; }
+.rn-dn svg { grid-row: span 2; } .rn-dn b { font-size: 13px; color: #f8ecd0; } .rn-dn small { font-size: 10.5px; color: #b5a07a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rn-dip.mine .rn-dn { display: flex; gap: 7px; }
+.rn-rel { grid-area: r; display: grid; grid-template-columns: 1fr 34px; align-items: center; gap: 6px; }
+.rn-rel .pbar { position: relative; height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .4); display: block; overflow: hidden; } .rn-rel .pbar i { position: absolute; top: 0; bottom: 0; } .rn-rel .pbar em { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: rgba(255, 255, 255, .35); }
+.rn-rel b { font-size: 12.5px; text-align: right; } .rn-rel b.ok { color: #9fdc7c; } .rn-rel b.bad { color: #f08a72; }
+.rn-dt { grid-area: t; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; } .rn-dt:empty { display: none; }
+.rn-dip > .act-row { grid-area: a; margin: 0; gap: 4px; flex-wrap: wrap; } .rn-dip > .act-row button { padding: 3px 8px; font-size: 11.5px; }
+/* leis e tribunal, compactos */
+.law-box .law-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.law-box .law { display: flex; flex-direction: column; gap: 3px; padding: 6px 7px; border-radius: 8px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 174, 96, .15); }
+.law-box .law.on { border-color: var(--gold); background: linear-gradient(180deg, rgba(214, 174, 96, .16), rgba(0, 0, 0, .1)); }
+.law-box .law b { font-size: 12px; color: #f8ecd0; } .law-box .law small { font-size: 10.5px; color: #b5a07a; line-height: 1.25; }
+.law-box .law button { margin-top: auto; padding: 3px 7px; font-size: 11px; align-self: flex-start; }
+.law-court .law-case { padding: 6px 8px; border-radius: 8px; background: rgba(0, 0, 0, .22); display: flex; flex-direction: column; gap: 2px; }
+.law-court .law-case > b { font-size: 12.5px; } .law-court .law-case > b small { font-weight: 400; color: #b5a07a; font-size: 11px; } .law-court .law-case > small { font-size: 11.5px; color: #c9b48a; }
+.law-court .law-ev { margin: 2px 0; } .law-court .act-row button { padding: 3px 7px; font-size: 11px; }
+.law-log { margin-top: 4px; }
+/* governador */
+.va-shopgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 8px; }
+.va-grow .kv, .va-econ .kv, .va-rent .kv { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; }
+.va-grow .kv div, .va-econ .kv div, .va-rent .kv div { padding: 4px 8px; }
+.va-tips ul { margin: 2px 0; padding-left: 18px; font-size: 12px; }
+/* a faixa e as abas cabem no celular */
+body.small .rn-roles { gap: 6px; margin-bottom: 4px; padding-bottom: 4px; }
+body.small .rn-title { font-size: 13px; }
+body.small .rn-rbtns { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+body.small .rn-role { padding: 3px 8px; font-size: 11.5px; flex: none; }
+body.small .rn-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } body.small .rn-tabs .tab { flex: none; padding: 4px 8px; font-size: 11px; }
+body.small .rn-grid2, body.small .rn-rows2, body.small .rn-chr, body.small .va-shopgrid { grid-template-columns: 1fr; }
+body.small .law-box .law-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.small .rn-dip { grid-template-columns: 1fr 110px; grid-template-areas: "n r" "t t" "a a"; }
+body.small .rn-fin .fin-cols { grid-template-columns: 1fr; }
+body.small .rn-r { grid-template-columns: minmax(0, 1fr) 40px 60px auto; } body.small .rn-r small:not(.ok) { display: none; }
+/* Reinado no computador: cabeçalho mais baixo e quadros mais justos, para cada aba caber numa página */
+body:not(.small) .kpage.kd2[data-nav="x:reign"] { gap: 8px; }
+body:not(.small) .kpage.kd2[data-nav="x:reign"] > .card { padding: 8px 11px; }
+body:not(.small) .kpage.kd2[data-nav="x:reign"] > .card > .sec { margin-bottom: 5px; }
+body:not(.small) .kpage.kd2[data-nav="x:reign"] .dt-desc { margin: 2px 0 4px; font-size: 12px; }
+.kpg[data-nav="x:reign"] .rg-top { padding: 5px 10px; margin: 0; gap: 8px; }
+.kpg[data-nav="x:reign"] .rg-chip { padding: 2px 9px; }
+.kpg[data-nav="x:reign"] .rg-who b { font-size: 16px; }
+.kpg[data-nav="x:reign"] .rn-roles { margin: 0; padding: 0 0 5px; }
+.kpg[data-nav="x:reign"] .rn-role { padding: 3px 10px; }
+.rn-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.rn-tiles > div { background: rgba(0, 0, 0, .28); border-radius: 8px; padding: 5px 9px; display: flex; flex-direction: column; }
+.rn-tiles small { font-size: 10px; letter-spacing: .8px; text-transform: uppercase; color: #b9a67e; } .rn-tiles b { font-size: 17px; color: #f8ecd0; } .rn-tiles b.bad { color: #f08a72; } .rn-tiles b.ok { color: #9fdc7c; }
+.rn-tax .taxbox .val { font-size: 26px; }
+.rn-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px 8px; }
+.rn-seats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.rn-seat { display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; border-radius: 9px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 174, 96, .15); }
+.rn-sh { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #e8c06a; font-weight: 700; }
+.rn-seat > .act-row { margin-top: auto; gap: 4px; } .rn-seat p { margin: 2px 0; }
+.law-h { font-size: 12px; color: #e8c06a; font-weight: 700; margin: 2px 0 4px; } .law-h small { font-weight: 400; color: #b5a07a; margin-left: 6px; }
+.law-box .law-grid + .law-h { margin-top: 8px; }
+.law-box .law.dec .law-g i { color: #d8c69c; }
+.rn-fams { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0; } .rn-fams span { font-size: 11.5px; padding: 2px 8px; border-radius: 9px; background: rgba(0, 0, 0, .25); }
+.rn-fams b.bad { color: #f08a72; } .rn-fams b.ok { color: #9fdc7c; }
+.pol-throne { margin-top: 6px; padding-top: 5px; border-top: 1px dashed rgba(214, 174, 96, .25); }
+.rn-money .dt-desc { margin: 0 0 4px; }
+.bank-k .rn-pocket { margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(214, 174, 96, .25); }
+.bank-k .rn-pocket small { font-size: 11px; }
+.va-sub { margin-top: 6px; }
+/* diplomacia em uma linha por reino */
+.rn-dip { grid-template-columns: 160px 140px minmax(0, 1fr); grid-template-areas: "n r a"; }
+.rn-dip > .act-row .tag, .rn-dip > .act-row .badge { align-self: center; }
+body.small .rn-dip { grid-template-columns: 1fr 110px; grid-template-areas: "n r" "a a"; }
+body.small .rn-grid3, body.small .rn-seats { grid-template-columns: 1fr; }
+body.small .rn-tiles b { font-size: 14px; }
+/* leis e decretos: o botão ao lado do nome, para a grade caber na página */
+.law-box .law { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 2px 6px; align-content: start; }
+.law-box .law > b { grid-column: 1; align-self: center; line-height: 1.2; }
+.law-box .law > button { grid-column: 2; grid-row: 1; margin: 0; padding: 2px 7px; font-size: 10.5px; }
+.law-box .law > small, .law-box .law > .law-g { grid-column: 1 / -1; }
+.law-box .law-g i { font-size: 10px; padding: 0 5px; }
+.rn-fin .fin-cols { grid-template-columns: 1fr 1fr; gap: 10px; }
+.rn-hist small { font-size: 11px; color: #b5a07a; } .rn-hist .fin-chart { height: 40px; margin: 2px 0 0; }
+.rn-budget .rn-money { margin-top: 6px; padding-top: 5px; border-top: 1px dashed rgba(214, 174, 96, .25); }
+.rn-money .act-row { margin: 0; gap: 4px; } .rn-money .act-row button { padding: 3px 9px; font-size: 12px; }
+.law-box .law-sec { margin: 6px 0 5px; }
+body:not(.small) .law-box .law-grid { gap: 4px; } body:not(.small) .law-box .law { padding: 4px 6px; gap: 1px 6px; }
+body:not(.small) .law-box .law > small { line-height: 1.2; }
+/* celular: o cabeçalho do Reinado (papéis, faixa e abas) mais baixo, sobrando altura para os quadros */
+body.small .kpg[data-nav="x:reign"] .rn-roles { padding-bottom: 3px; margin-bottom: 3px; gap: 6px; }
+body.small .kpg[data-nav="x:reign"] .rn-role { padding: 2px 8px; font-size: 11px; line-height: 1.35; }
+body.small .kpg[data-nav="x:reign"] .rn-role svg { width: 14px; height: 14px; }
+body.small .kpg[data-nav="x:reign"] .rn-title { font-size: 12px; }
+body.small .kpg[data-nav="x:reign"] .rg-top { padding: 2px 8px; margin: 0 0 3px; }
+body.small .kpg[data-nav="x:reign"] .rg-who b { font-size: 12px; }
+body.small .kpg[data-nav="x:reign"] .rn-tabs { margin: 0 0 4px !important; }
+body.small .kpg[data-nav="x:reign"] .rn-tabs .tab { padding: 2px 8px; font-size: 11px; line-height: 1.35; }
+body.small .rn-grid3 { grid-template-columns: 1fr 1fr; }
+body.small .law-box .law-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body.small .rn-it > button, body.small .rn-it .act-row button { padding: 3px 8px; }
+
+/* ===================================================== Portfólio em menos páginas (paginador: UI.fitReino)
+   Celular deitado: no Reinado, os papéis e a faixa do rei dividem a mesma linha (o nome do reino já está no botão do
+   papel) e as abas vêm logo embaixo — sobra mais altura para os quadros em cada página. */
+body.small .kpage.kd2[data-nav="x:reign"] { row-gap: 3px; padding-bottom: 0; }
+body.small .kpage.kd2[data-nav="x:reign"] > .rn-roles { grid-column: 1; margin: 0 !important; padding: 0; border: 0; align-self: center; }
+body.small .kpage.kd2[data-nav="x:reign"] > .rn-roles .rn-title { display: none; }
+body.small .kpage.kd2[data-nav="x:reign"] > .rg-top { grid-column: 2; margin: 0 !important; padding: 0 4px; justify-content: flex-end; background: none; border: 0; box-shadow: none; gap: 4px; align-self: center; }
+body.small .kpage.kd2[data-nav="x:reign"] > .rg-top .rg-who, body.small .kpage.kd2[data-nav="x:reign"] > .rg-top .rg-arms { display: none; }
+body.small .kpage.kd2[data-nav="x:reign"] > .rg-top .rg-chip { padding: 2px 6px; column-gap: 3px; }
+body.small .kpage.kd2[data-nav="x:reign"] > .rn-tabs { margin: 0 !important; }
+/* celular: decretos e leis em linhas baixas (nome e custo; o texto numa linha só — o texto inteiro fica na dica) */
+body.small .law-box .law-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+body.small .law-box .law { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto; gap: 0 6px; padding: 3px 4px 3px 7px; align-items: center; }
+body.small .law-box .law > b { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.small .law-box .law > small { grid-column: 1; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+body.small .law-box .law > .law-g { grid-column: 1; display: flex; gap: 3px; } body.small .law-box .law-g i { font-size: 10px; padding: 0 4px; }
+body.small .law-box .law > button { grid-column: 2; grid-row: 1 / span 3; align-self: center; padding: 0 8px; font-size: 11px; }
+body.small .law-box .law-sec { margin: 4px 0 3px; }
+body.small .kpage.kd2 > .card.wide { grid-column: 1 / -1; }
+/* celular: no Reinado cada quadro ocupa a largura toda e as listas de dentro se dividem em colunas (assim as páginas
+   enchem por igual, sem meia página vazia ao lado de um quadro alto) */
+body.small .kpage.kd2.kmas { grid-auto-rows: 2px; row-gap: 0 !important; column-gap: 6px; grid-auto-flow: row dense; align-items: start; }
+body.small .kpage.kd2.kmas > * { align-self: start; }
+body.small .kpage.kd2[data-nav="x:reign"] > .card { grid-column: 1 / -1; }
+body.small .kpage.kd2[data-nav="x:reign"] > .card.khalf { grid-column: auto; }
+body.small .kpg[data-nav="x:reign"] .card :is(.rn-grid2, .rn-rows2, .rn-grid3, .rn-chr, .rn-res) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.small .kpg[data-nav="x:reign"] .card.khalf :is(.rn-grid2, .rn-rows2, .rn-grid3, .rn-chr, .rn-res) { grid-template-columns: 1fr; }
+body.small .kpg[data-nav="x:reign"] .rn-fin .fin-cols { grid-template-columns: 1fr 1fr; gap: 10px; }
+body.small .kpg[data-nav="x:reign"] .rn-res { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 8px; }
+body.small .kpg[data-nav="x:reign"] .card > .sec { margin-bottom: 3px; }
+body.small .kpg[data-nav="x:reign"] .card { padding: 6px 9px; }
+/* celular: o subtítulo do quadro numa linha só (o texto inteiro fica na dica) */
+body.small .kpg[data-nav="x:reign"] .card > .sec { white-space: nowrap; gap: 8px; min-width: 0; }
+body.small .kpg[data-nav="x:reign"] .card > .sec > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* celular: Diplomacia com o reino (nome e relação) à esquerda e os botões numa fileira à direita */
+body.small .kpg[data-nav="x:reign"] .rn-dip { grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "n a" "r a"; gap: 1px 8px; padding: 2px 6px; margin-bottom: 2px; }
+body.small .kpg[data-nav="x:reign"] .rn-dip > .act-row { gap: 4px; }
+body.small .kpg[data-nav="x:reign"] .rn-dip > .act-row button { padding: 0 6px; font-size: 11px; }
+body.small .kpg[data-nav="x:reign"] .rn-dip > .act-row { gap: 3px; }
+body.small .kpg[data-nav="x:reign"] .rn-dip .rn-dn small { display: none; }
+body.small .kpg[data-nav="x:reign"] .rn-dip .rn-rel { grid-template-columns: 1fr 30px; }
+/* celular: as quatro celas da prisão lado a lado, com os lugares vazios baixos */
+body.small .kpg[data-nav="x:reign"] .ju-cells { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+body.small .kpg[data-nav="x:reign"] .ju-cell { padding: 4px; gap: 3px; }
+body.small .kpg[data-nav="x:reign"] .ju-pr.empty { padding: 1px 4px; font-size: 10px; }
+/* celular: as quatro cadeiras do conselho numa fileira; textos longos em até duas linhas (o resto fica na dica) */
+body.small .kpg[data-nav="x:reign"] .rn-seats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+body.small .kpg[data-nav="x:reign"] .rn-seat { padding: 4px 6px; }
+body.small .kpg[data-nav="x:reign"] :is(.rn-seat > small.muted, .rn-t small, .dt-desc, .rn-row small) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+body.small .kpg[data-nav="x:reign"] .rn-seat .rn-kv { gap: 2px 8px; margin: 2px 0; }
+/* vila do governador: lojas e obras em linhas baixas (quatro colunas no computador, três no celular) */
+.va-shopgrid .crow { padding: 3px 6px; margin-bottom: 3px; gap: 6px; grid-template-columns: 22px minmax(0, 1fr) auto; }
+.va-shopgrid .crow .ri { font-size: 16px; }
+.va-shopgrid .crow b, .va-shopgrid .crow small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+body:not(.small) .va-shopgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body.small .kpg[data-nav="x:reign"] .va-shopgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 6px; }
+/* celular: a prévia do brasão e o nome lado a lado */
+
+body.small .kpg[data-nav="x:reign"] .herald-prev .hp-row svg:first-child { width: 96px; height: 64px; }
+/* computador: quadros do Reinado encaixados como tijolos (UI.fitReino marca a altura de cada um em linhas de 2px) */
+body:not(.small) .kpage.kd2.kmas { grid-auto-rows: 2px; row-gap: 0; column-gap: 10px; grid-auto-flow: row dense; align-items: start; }
+body:not(.small) .kpage.kd2.kmas > * { align-self: start; }
+/* Reinado: textos de explicação em até duas linhas (o texto inteiro fica na dica), candidatos lado a lado */
+.kpg[data-nav="x:reign"] :is(.rn-money .dt-desc, .rn-seat > small.muted, .rn-plots > p.muted, .pol-throne .dt-desc, .va-grow > small.muted) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kpg[data-nav="x:reign"] .rn-fin .fin-chart { height: 30px; }
+.kpg[data-nav="x:reign"] .pol-cands { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 5px; margin: 4px 0; }
+.kpg[data-nav="x:reign"] .pol-c { padding: 4px 7px; gap: 2px; }
+body:not(.small) .kpg[data-nav="x:reign"] .rn-spy .rn-grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body:not(.small) .kpg[data-nav="x:reign"] .rn-seats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.kpg[data-nav="x:reign"] .rn-hist { display: flex; align-items: center; gap: 8px; } .kpg[data-nav="x:reign"] .rn-hist small { flex: none; } .kpg[data-nav="x:reign"] .rn-hist .fin-chart { flex: 1; margin: 0; }
+.kpg[data-nav="x:reign"] .pol-cands { grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); }
+/* Obras no computador: as duas grades (obras do reino e Grandes Obras) numa página só */
+body:not(.small) .kpg[data-nav="x:reign"] :is(.rn-inv, .rn-works) .rn-it { padding: 2px 6px; }
+body:not(.small) .kpg[data-nav="x:reign"] :is(.rn-inv, .rn-works) .rn-t small { line-height: 1.18; }
+body:not(.small) .kpg[data-nav="x:reign"] :is(.rn-inv, .rn-works) .rn-grid3 { gap: 4px 8px; }
+/* celular: nas páginas de Gestão (Avisos, Painel, Sociedades, Serviços, Jogos) o título some (o menu já mostra onde você
+   está) e as abas e sub-abas dividem a mesma linha, cada uma correndo de lado */
+body.small .kpage[data-nav^="x:"]:not([data-nav="x:reign"]) { display: grid !important; grid-template-columns: max-content minmax(0, 1fr); align-content: start; align-items: start; gap: 4px 6px; }
+body.small .kpage[data-nav^="x:"]:not([data-nav="x:reign"]) > * { grid-column: 1 / -1; min-width: 0; margin: 0 !important; }
+body.small .kpage[data-nav^="x:"]:not([data-nav="x:reign"]) > .pg-head { display: none; }
+body.small .kpage[data-nav^="x:"]:not([data-nav="x:reign"]) > .tabs:has(+ .tabs) { grid-column: 1; max-width: 50vw; }
+body.small .kpage[data-nav^="x:"]:not([data-nav="x:reign"]) > .tabs + .tabs { grid-column: 2; }
+body.small .kpage[data-nav^="x:"]:not([data-nav="x:reign"]) > .tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 4px; }
+body.small .kpage[data-nav^="x:"]:not([data-nav="x:reign"]) > .tabs .tab { flex: none; padding: 2px 8px; font-size: 11px; white-space: nowrap; }
+/* Painel do reino: faixa do reino mais baixa e quadros mais justos, para cada aba caber na janela */
+.rv-hero { padding: 6px 14px; gap: 12px; margin-bottom: 6px; }
+.rv-arms { width: 56px; height: 56px; } .rv-arms svg { width: 42px; height: 42px; }
+.rv-htx h3 { margin: 0; } .rv-gauge { width: 110px; height: 66px; }
+.rv-tabs { margin: 0 0 6px; } .rv-chips { margin-bottom: 6px; }
+body:not(.small) .rv-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.rv-tile { padding: 6px 10px 0; } .rv-tile > b { font-size: 20px; } .rv-spark { height: 24px; }
+.rv-side { gap: 8px; } .rv-geral { gap: 10px; } .rv-thr { padding: 4px 8px; margin-bottom: 3px; } .rv-cr { padding: 2px 6px; }
+.rv-charts { gap: 8px; } .rv-charts .rb-chart { height: 104px; }
+.rb-scroll:has(.rv-tbl) { overflow-y: visible; } .rv-tbl td, .rv-tbl th { padding-top: 2px; padding-bottom: 2px; }
+.pg-head .cr-pager { margin-left: auto; align-self: center; }
+/* celular: os gráficos e os números dois a dois */
+body.small .rv-charts, body.small .rv-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.small .rv-charts .rb-chart { height: 84px; }
+/* Painel do reino, Visão geral no computador: números e "Entre os reinos" à esquerda; ameaças e espiões à direita */
+body:not(.small) .rv-geral { grid-template-columns: 1.6fr 1fr; align-items: start; }
+body:not(.small) .rv-side { display: contents; }
+body:not(.small) .rv-geral > .rv-tiles { grid-column: 1; grid-row: 1; }
+body:not(.small) .rv-geral .rv-threats { grid-column: 2; grid-row: 1; margin: 0 !important; }
+body:not(.small) .rv-geral .rv-spy { grid-column: 2; grid-row: 2; margin: 0 !important; }
+body:not(.small) .rv-geral .rv-cmp { grid-column: 1; grid-row: 2; margin: 0 !important; }
+body:not(.small) .rv-geral .rv-cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; align-content: start; }
+body:not(.small) .rv-geral .rv-cmp > .sec { grid-column: 1 / -1; }
+body:not(.small) .rv-geral .rv-cr { grid-template-columns: 18px 64px 1fr 44px 1fr 34px; gap: 4px; }
+body:not(.small) .kpg:has(> .rv-hero) { gap: 6px !important; }
+body:not(.small) .kpg:has(> .rv-hero) > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+body:not(.small) .kpg:has(> .rv-hero) > .pg-head { padding-bottom: 6px; }
+body:not(.small) .rv-hero { padding: 4px 14px; }
+/* Grandes Casas no computador: o ranking em duas colunas (o ícone de cada número diz o que é) e as inquietas em três */
+body:not(.small) .hs2-head { display: none; }
+body:not(.small) .hs2-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; align-content: start; }
+body:not(.small) .hs2-row { grid-template-columns: 34px minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, .9fr) 44px minmax(0, .8fr); gap: 6px; padding: 3px 8px; }
+body:not(.small) .hs2-row .hs2-nm b, body:not(.small) .hs2-row .hs2-nm small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body:not(.small) .hs2-un { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+body:not(.small) .hs2-u { padding: 5px 8px; }
+/* Jogos → Registros no computador: as provas de cada edição em duas colunas (três edições por página) */
+body:not(.small) .og-edg { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 8px; }
+body:not(.small) .og-er { padding: 2px 6px; } body:not(.small) .og-ed { padding: 7px 10px; } body:not(.small) .og-edh { margin-bottom: 4px; }
+body:not(.small) .og-er span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Mercenários: cartões das companhias mais baixos (duas fileiras por página no computador, dois lado a lado no celular) */
+.sv-cogrid .sv-co { padding: 0 10px 8px; gap: 2px; }
+.sv-cogrid .sv-flag { width: 44px; height: 50px; font-size: 22px; }
+.sv-cogrid .sv-cn { margin-top: 2px; font-size: 14px; } .sv-cogrid .sv-cs { margin: 3px 0 0; gap: 2px 10px; }
+body:not(.small) .sv-cogrid { gap: 10px; }
+body.small .sv-cogrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.sv-cogrid .sv-motto { display: none; }
+.sv-cogrid .sv-rib { position: absolute; top: 6px; left: 6px; }
+.sv-cogrid .sv-ca { padding-top: 2px; }
+/* Empreendimentos no computador: Negócios em três colunas; Encomendas com os pedidos abertos em duas */
+body:not(.small) .nb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+body:not(.small) .nb-k2 { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+body:not(.small) .nb-k2 > .card:last-child > .sv-pl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 8px; align-content: start; }
+.alert.row.more { opacity: .85; font-style: italic; }
+/* Visão geral no computador: o mesmo desenho, com folgas menores para nada ficar escondido */
+body:not(.small) .kpg.kdesk[data-nav="overview"] { gap: 8px; }
+body:not(.small) .kpg.kdesk[data-nav="overview"] > .card { padding: 8px 14px; }
+body:not(.small) .kpg.kdesk[data-nav="overview"] > .card > .sec { margin-bottom: 5px; }
+body:not(.small) .kpg.kdesk[data-nav="overview"] .alert.row { padding-top: 3px; padding-bottom: 3px; margin-bottom: 3px; }
+body:not(.small) .kpg.kdesk[data-nav="overview"] .alert.row button { padding-top: 1px; padding-bottom: 1px; }
+/* celular: o título das páginas do Portfólio numa linha baixa (sem a frase de baixo) */
+body.small .kpg.kpage > .pg-head { padding-bottom: 3px; gap: 8px; }
+body.small .kpg.kpage > .pg-head small { display: none; }
+body.small .kpg.kpage > .pg-head .pg-ic { width: 26px; height: 26px; font-size: 15px; }
+body.small .kpg.kpage > .pg-head h3 { font-size: 14px; }
+/* celular: o ranking das Grandes Casas em três colunas (posição, casa, influência e lealdade) e as inquietas em duas */
+body.small .hs2-head { display: none; }
+body.small .hs2-rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px 6px; }
+body.small .hs2-row { grid-template-columns: 26px minmax(0, 1fr) 54px 44px; gap: 4px; padding: 2px 6px; font-size: 11px; }
+body.small .hs2-row > span:nth-child(4), body.small .hs2-row > span:nth-child(5) { display: none; }
+body.small .hs2-row .hs2-nm svg, body.small .hs2-row .hs2-nm canvas { display: none; }
+body.small .hs2-row .hs2-nm b, body.small .hs2-row .hs2-nm small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.small .hs2-un { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 6px; }
+body.small .hs2-u { padding: 3px 7px; }
+body.small .hs2-row .gc-crest { display: none; }
+/* celular: Grandes Casas → Pódio mais baixo (degraus menores, a sua casa ao lado) */
+body.small .hs2-top { grid-template-columns: 1.3fr 1fr; gap: 8px; }
+body.small .hs2-pods { padding: 4px; gap: 4px; } body.small .hs2-pod { padding-top: 2px; }
+body.small .hs2-pod.p1 .hs2-step { height: 34px; } body.small .hs2-pod.p2 .hs2-step { height: 22px; } body.small .hs2-pod.p3 .hs2-step { height: 14px; }
+body.small .hs2-pod .gc-crest { --s: 34px !important; }
+body.small .hs2-me { padding: 8px; gap: 8px; } body.small .hs2-me h3 { font-size: 15px; } body.small .hs2-me > div > b { font-size: 20px; }
+body.small .hs2-stats { grid-template-columns: repeat(4, 1fr); gap: 6px; } body.small .hs2-stats > div { padding: 4px; } body.small .hs2-stats span, body.small .hs2-stats b { font-size: 16px; }
+/* celular: empreendimentos e negócios dois a dois (antes, um por página) */
+body.small .bzb-lista, body.small .nb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+body.small .kpg[data-nav="biz"] .bzb-card { padding: 6px 9px; gap: 4px; }
+/* celular: nenhum quadro encolhe para caber (encolhido, ele rolaria por dentro); o paginador leva o resto para a página seguinte */
+body.small .kpg.kpage:is([data-nav="biz"], [data-nav="crown"], [data-nav="tree"]) > :is(.card, .court-inv, .rel-card) { flex: none !important; min-height: auto !important; }
+body.small .kpg.kpage[data-nav="crown"] { height: auto !important; }
+body.small .kpg .bzb-rows, body.small .kpg .ln-ties { overflow: visible !important; flex: none !important; max-height: none !important; }
+body.small .kpg .nb-k2 .card, body.small .kpg > .card { overflow: visible; }
+/* celular, Reinado → Títulos e corte: os papéis e as abas na mesma linha */
+body.small .kpg.kpage[data-nav="crown"]:has(> .rn-roles) { display: grid !important; grid-template-columns: max-content minmax(0, 1fr); align-content: start; gap: 4px 6px; }
+body.small .kpg.kpage[data-nav="crown"]:has(> .rn-roles) > * { grid-column: 1 / -1; margin: 0 !important; min-width: 0; }
+body.small .kpg.kpage[data-nav="crown"] > .rn-roles { grid-column: 1; border: 0; padding: 0; }
+body.small .kpg.kpage[data-nav="crown"] > .rn-roles .rn-title { display: none; }
+body.small .kpg.kpage[data-nav="crown"] > .cr-tabs { grid-column: 2; display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+body.small .kpg.kpage[data-nav="crown"] > .cr-tabs .tab { flex: none; padding: 2px 8px; font-size: 11px; }
+body.small .kpg.kpage > .card { overflow: visible !important; max-height: none !important; flex: none !important; }
+body.small .kpg .ln-map canvas { max-height: 200px; object-fit: contain; }
+/* Leis e justiça: o tribunal em meio quadro, um caso embaixo do outro (ao lado ficam a prisão e os procurados) */
+body:not(.small) .kpage.kd2[data-nav="x:reign"] > .card.law-court { grid-column: auto; }
+.kpg[data-nav="x:reign"] .law-court .rn-grid2 { grid-template-columns: 1fr !important; gap: 4px; }
+.kpg[data-nav="x:reign"] .law-court .law-case > small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kpg[data-nav="x:reign"] .law-court .act-row { flex-wrap: nowrap; gap: 3px; } .kpg[data-nav="x:reign"] .law-court .act-row button { padding: 0 6px; white-space: nowrap; }
+.kpg[data-nav="x:reign"] .law-court > small.muted { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Empreendimentos → Concorrência: as famílias com rancor em duas colunas (no computador, em partes ◀ 1/2 ▶ se passarem) */
+.riv-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 8px; align-content: start; }
+body:not(.small) .bzb-rival { overflow: hidden; } body:not(.small) .bzb-rival > .card { overflow: hidden; }
+body.small .og-edg { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 6px; } body.small .og-er { padding: 1px 5px; font-size: 10.5px; } body.small .og-ed { padding: 5px 8px; } body.small .og-er span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* celular: menos folga entre os quadros de cada página; os números do painel dos empreendimentos numa fileira só */
+body.small .kpg.kpage:not(.kd2) { row-gap: 6px; }
+body.small .bzb-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 6px; }
+body.small .sv-cogrid :is(.sv-fee, .sv-cap) { display: none; } body.small .sv-cogrid .sv-flag { width: 36px; height: 40px; font-size: 18px; }

@@ -80,9 +80,14 @@ const Envoy = {
 const Abdicate = {
   // quem herda a coroa: filho adulto, cônjuge, um cavaleiro da corte ou um nobre novo
   heir(ci) {
-    const kids = G.people.filter(p => p.alive && p.kin === 'child' && p.age >= 16 && !p.capanga).sort((a, b) => b.age - a.age);
+    // quem já é soberano (de outro reino) não pode herdar este: um rei por reino e um reino por rei
+    const free = p => p.rank !== 'ruler' && !G.civs.some(c => c.id !== ci && c.ruler !== 'player' && c.rulerId === p.id);
+    // o herdeiro escolhido no Reinado vem primeiro
+    const R = typeof Reign !== 'undefined' ? Reign.R() : null, ch = R && R.heir !== null && R.heir !== undefined ? G.people[R.heir] : null;
+    if (ch && ch.alive && ch.kin === 'child' && ch.age >= 16 && !ch.capanga && free(ch)) return { p: ch, why: 'o herdeiro escolhido', kin: true };
+    const kids = G.people.filter(p => p.alive && p.kin === 'child' && p.age >= 16 && !p.capanga && free(p)).sort((a, b) => b.age - a.age);
     if (kids[0]) return { p: kids[0], why: 'seu filho mais velho', kin: true };
-    const sp = G.people.find(p => p.alive && p.spouse === 'player' && !p.capanga);
+    const sp = G.people.find(p => p.alive && p.spouse === 'player' && !p.capanga && free(p));
     if (sp) return { p: sp, why: 'seu cônjuge', kin: true };
     const kn = G.people.find(p => p.alive && p.rank === 'knight' && !p.capanga && p.home.type === 'castle' && p.home.civ === ci);
     if (kn) return { p: kn, why: 'um cavaleiro da corte', kin: false };
@@ -104,9 +109,8 @@ const Abdicate = {
     if (p.capanga) p.capanga = false;
     c.ruler = 'npc'; c.rulerId = p.id; c.rulerName = People.title(p) + ' ' + p.name; c.relation = h.kin ? 100 : 70; c.atWar = false;
     Heraldry.apply();
-    if (G.mainRealm === ci) { const other = G.civs.find(o => o.ruler === 'player'); G.mainRealm = other ? other.id : null; }
-    if (G.warCall && G.warCall.side === ci && G.warCall.own) { G.warCall = null; War.badge(null); }
-    { const t = Court.holdings(); t[ci] = Math.max(t[ci] !== undefined ? t[ci] : -1, 4); } // Duque
+    Game.onLoseRealm(ci);
+    { const t = Court.holdings(); t[ci] = Math.max(t[ci] !== undefined ? t[ci] : -1, 4); Court.syncPrincipal(); } // Duque (e o título principal acompanha)
     UI.close();
     UI.banner(`👑 ${c.rulerName}, soberano de ${CIV_DEFS[ci].short}`);
     UI.msg(`👑 Você renunciou ao trono. ${People.full(p)} agora governa ${CIV_DEFS[ci].name}, e você é Duque do reino.`, 'gold', true);
@@ -127,16 +131,6 @@ const Abdicate = {
     if (a === 'envoy') { const mine = d.c === '' || d.c === undefined ? null : +d.c; if (d.op === 'send') Envoy.send(mine, +d.o, +d.g); else Envoy.open(mine, +d.o, +d.g); return; }
     if (a === 'abdicate') { Abdicate.ask(+d.c); return; }
     return act0(a, d);
-  };
-  // a renúncia aparece na janela do seu reino (dentro da página, para entrar na divisão em páginas)
-  const kpA = UI.kPage.bind(UI);
-  UI.kPage = function (nav) {
-    const h = kpA(nav), ci = nav && nav.startsWith('k:') ? +nav.slice(2) : -1;
-    if (ci < 0 || !G.civs[ci] || G.civs[ci].ruler !== 'player' || !['resumo', 'coroa'].includes(this.sel.ksub || 'resumo') || h.indexOf('data-act="abdicate"') >= 0) return h;
-    const card = `<div class="card"><div class="sec">👑 Coroa</div><p class="dt-desc">Passar a coroa adiante: ${UI.esc((() => { const hh = Abdicate.heir(ci); return hh.p ? People.full(hh.p) + ' (' + hh.why + ')' : hh.why; })())} assume o trono e você vira Duque.</p>
-        <div class="act-row"><button class="danger" data-act="abdicate" data-c="${ci}">👑 Renunciar ao trono</button></div></div>`;
-    const k = h.lastIndexOf('</div>');
-    return h.indexOf('<div class="kbody">') >= 0 && k > 0 ? h.slice(0, k) + card + h.slice(k) : h + card;
   };
   // o mensageiro chega enquanto o jogo corre; ao salvar, a resposta já vem (o ouro nunca se perde)
   const wu0 = War.update.bind(War);

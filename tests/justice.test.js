@@ -39,7 +39,7 @@ module.exports = async () => {
       ok(sub, 'nenhum súdito para testar');
       const ka = []; Lifesim.acts(sub, ka); ok(ka.some(a => a[0] === 'jbArrest') && ka.some(a => a[0] === 'jbKill') && ka.some(a => a[0] === 'jbWant'), 'faltam prender, condenar e procurado na conversa');
       UI.talkAct({ op: 'jbArrest', id: sub.id }); ok(Justice.jailedIn(sub) === 1 && sub.jail > G.day, 'não mandou prender');
-      Reign.show('jus'); ok(html().includes('Prisão e justiça') && html().includes('Cela 1') && html().includes(People.full(sub)), 'a aba Prisão e justiça não mostra o preso');
+      Reign.show('jus'); ok(html().includes('Leis e justiça') && html().includes('Cela 1') && html().includes(People.full(sub)), 'a aba Leis e justiça não mostra o preso');
       Justice.execute(sub, 1, true); ok(!sub.alive && Justice.jailedIn(sub) < 0, 'não condenou à morte');
       // procurado: pisou no reino, os guardas pegam
       const out = G.people.find(p => p.alive && p.age >= 18 && !p.kin && !p.capanga && Justice.civOf(p) >= 0 && Justice.civOf(p) !== 1 && p.home.type === 'village' && Justice.jailedIn(p) < 0 && !(p.jail > G.day));

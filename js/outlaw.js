@@ -11,7 +11,7 @@ const OutLaw = {
   O() { return G.outlaw || null; },
   hideout() { const O = this.O(); return O ? World.camps.find(c => c.x === O.hx && c.y === O.hy) || null : null; },
   campNear() { const px = P.x / TILE, py = P.y / TILE; return World.camps.find(c => !c.cleared && U.dist(px, py, c.x + 1.5, c.y + 1.5) < 10) || null; },
-  wanted() { return Object.entries(Crime.W()).filter(([, w]) => w && w.bounty > 0).map(([ci, w]) => ({ ci: +ci, w })); },
+  wanted() { return Object.entries(Crime.W()).filter(([ci]) => Crime.wanted(+ci)).map(([ci, w]) => ({ ci: +ci, w })); },
   totalBounty() { return this.wanted().reduce((a, x) => a + x.w.bounty, 0); },
   power() { const O = this.O(); return (O ? O.band * 2 : 0) + Game.allies().length * 3 + P.level; },
   canStart() {
@@ -55,6 +55,7 @@ const OutLaw = {
   // um golpe sobe a recompensa no reino e a fama de fora da lei
   heat(ci, what, n) {
     const O = this.O(); O.fame += Math.round(n / 20);
+    if (G.civs[ci] && G.civs[ci].ruler === 'player') return; // no próprio reino ninguém põe a sua cabeça a prêmio
     const w = Crime.W()[ci] || (Crime.W()[ci] = { bounty: 0, crimes: [], resist: false });
     w.bounty += n; w.crimes.push(what); if (w.crimes.length > 5) w.crimes.shift(); w.day = G.day; if (w.bounty > 400) w.resist = true;
     Game.addRelation(ci, -6);

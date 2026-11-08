@@ -206,7 +206,7 @@ const Funerals = {
       if (vi >= 0) {
         Rumors.atV(vi, `Os irmãos ${a.name} e ${b.name} brigam pela herança de ${p.name}.`);
         const v = World.villages[vi], c = G.civs[v.civ];
-        if (c && c.ruler === 'player' && !G.trial) G.trial = { ci: v.civ, vi, id: 'disputa', day: G.day, data: { a: a.id, b: b.id, dead: p.name, amount: snap.purse } };
+        if (c && c.ruler === 'player' && !v.free && typeof Reign !== 'undefined') Reign.dispute(a, b, v.civ); // vira uma audiência do Reinado
       }
     }
     // a loja ficou vaga: o melhor oficial do ofício assume
@@ -391,7 +391,8 @@ const Loans = {
 // ====================================================================== crime, prisão e guardas
 const Crime = {
   W() { return G.wanted || (G.wanted = {}); },
-  wanted(ci) { const w = this.W()[ci]; return w && w.bounty > 0 ? w : null; },
+  // no reino que é seu ninguém procura você (a guarda é sua)
+  wanted(ci) { if (G.civs[ci] && G.civs[ci].ruler === 'player') return null; const w = this.W()[ci]; return w && w.bounty > 0 ? w : null; },
   hunting(ci) { const w = this.wanted(ci); return !!(w && w.resist); },
   civAt(x, y, p) { const t = World.inb(Math.floor(x / TILE), Math.floor(y / TILE)) ? World.terr[World.idx(Math.floor(x / TILE), Math.floor(y / TILE))] : -1; return t >= 0 ? t : p && p.civ >= 0 ? p.civ : -1; },
   // alguém viu? então o reino passa a procurar você
@@ -703,12 +704,5 @@ UI.showArrest = function (ci) {
   // boatos na taverna
   const tv0 = UI.showTavern.bind(UI);
   UI.showTavern = function (sid, rumor) { if (!rumor) { const s = World.structs[sid], rs = s ? Rumors.forVillage(s.village) : []; if (rs.length && Math.random() < 0.7) rumor = U.pick(rs.slice(0, 10)).text; } return tv0(sid, rumor); };
-  // briga de herança no tribunal do rei
-  TRIALS.push({ id: 'disputa', icon: '⚖️', text: v => { const d = (G.trial && G.trial.data) || {}, a = G.people[d.a], b = G.people[d.b]; return `Os irmãos ${a ? a.name : '?'} e ${b ? b.name : '?'} disputam a herança de ${d.dead || '?'} em ${v.name}.`; },
-    opts: [
-      ['Dividir igualmente', c => { const d = G.trial.data, a = G.people[d.a], b = G.people[d.b]; for (const q of [a, b]) if (q) { q.feud = null; Mind.feel(q, 'joy', 20); } c.happy = Math.min(100, c.happy + 2); return 'Os irmãos dividem tudo e fazem as pazes (+2).'; }],
-      ['Tudo para o mais velho', c => { const d = G.trial.data, a = G.people[d.a], b = G.people[d.b]; if (a && b) { const n = Math.floor(People.purse(b) / 2); b.purse -= n; a.purse = People.purse(a) + n; Mind.feel(b, 'anger', 60); a.feud = b.feud = null; } return `${a ? a.name : 'O mais velho'} fica com a herança; ${b ? b.name : 'o irmão'} sai furioso.`; }],
-      ['A coroa fica com a herança', c => { const d = G.trial.data; let got = 0; for (const id of [d.a, d.b]) { const q = G.people[id]; if (q) { const n = Math.floor(People.purse(q) / 2); q.purse -= n; got += n; q.feud = null; Mind.feel(q, 'anger', 60); } } c.treasury += got; c.happy = Math.max(0, c.happy - 3); return `A coroa recolheu ${got} 🪙. O povo acha a decisão injusta (−3).`; }],
-    ] });
 }
 SHOPS.store.sells.push('layette');

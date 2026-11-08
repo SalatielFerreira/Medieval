@@ -35,7 +35,7 @@ module.exports = async () => {
       const cv = document.createElement('canvas').getContext('2d'); World.drawStruct(cv, s, 10, 10, 1); for (const k of ['vaultdoor', 'teller', 'strongbox', 'coinpile', 'scales', 'ledgerdesk', 'quoteboard', 'safebox']) drawFurn(cv, { k, w: 2, h: 1 }, 10, 10, 1);
       // o seu reino: tesouro nacional e o nome na administração
       Game.becomeRuler(1, 'teste'); UI.close(); const c = G.civs[1], K1 = Bank.K(1); c.treasury = 1000;
-      UI.sel.knav = 'k:1'; UI.sel.ksub = 'resumo'; UI.showKingdom(); ok(html().includes(UI.esc(K1.name)), 'o nome do banco não aparece na administração');
+      UI.sel.knav = 'k:1'; UI.sel.ksub = 'economia'; UI.showKingdom(); ok(UI.sel.rnTab === 'tesouro' && html().includes(UI.esc(K1.name)), 'o nome do banco não aparece no Reinado → Tesouro');
       Bank.setRate(1, 0.02); ok(K1.rate === 0.02, 'juros');
       const tb = c.treasury; Bank.borrow(1, 200); ok(c.treasury === tb + 200 && K1.debt === 200, 'pegar do banco'); Bank.repay(1, 200); ok(K1.debt === 0, 'pagar o banco');
       Bank.bond(1); ok(K1.bonds.length === 1, 'títulos'); Bank.give(1, 100); Bank.take(1, 100); Bank.audit(1);

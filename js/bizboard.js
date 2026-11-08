@@ -115,21 +115,9 @@ const BizBoard = {
   },
   // o que não cabe vira páginas (◀ 1/2 ▶) no lugar das abas
   paginate() {
-    const box = UI.panel && UI.panel.querySelector('.kpg .bzb-pg'); if (!box || document.body.classList.contains('small')) return;
-    const page = box.closest('.bzb-page'), items = [...box.children], over = () => page.scrollHeight > page.clientHeight + 1 || box.scrollHeight > box.clientHeight + 1;
-    if (!over() || items.length < 2) return;
-    const pages = []; let start = 0;
-    while (start < items.length) {
-      items.forEach(c => { c.hidden = true; });
-      let end = start;
-      for (let i = start; i < items.length; i++) { items[i].hidden = false; if (over() && i > start) { items[i].hidden = true; break; } end = i + 1; }
-      pages.push([start, end]); start = end;
-    }
-    const S = UI.sel, key = UI.sel.bzTab || 'painel'; S.bzPg = S.bzPg || {};
-    const n = pages.length, k = Math.min(S.bzPg[key] || 0, n - 1);
-    items.forEach((c, i) => { c.hidden = i < pages[k][0] || i >= pages[k][1]; });
-    const tabs = UI.panel.querySelector('.bzb-tabs');
-    if (tabs) tabs.insertAdjacentHTML('beforeend', `<span class="cr-pager"><button data-act="bzbpg" data-k="${key}" data-d="-1" ${k ? '' : 'disabled'}>◀</button><b>${k + 1}/${n}</b><button data-act="bzbpg" data-k="${key}" data-d="1" ${k < n - 1 ? '' : 'disabled'}>▶</button></span>`);
+    const box = UI.panel && UI.panel.querySelector('.kpg .bzb-pg'); if (!box) return;
+    const page = box.closest('.bzb-page'), S = UI.sel;
+    UI.pageList({ items: [...box.children], over: () => page.scrollHeight > page.clientHeight + 1 || box.scrollHeight > box.clientHeight + 1, key: S.bzTab || 'painel', store: S.bzPg = S.bzPg || {}, act: 'bzbpg', host: UI.panel.querySelector('.bzb-tabs') });
   },
 };
 

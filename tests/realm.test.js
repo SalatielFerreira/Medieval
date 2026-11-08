@@ -24,7 +24,7 @@ module.exports = async () => {
       Laws.L().cases = []; for (let k = 0; k < 4; k++) Laws.newCase([c1]); ok(Laws.L().cases.length > 0, 'não chegaram casos ao tribunal');
       const cs = Laws.L().cases[0]; cs.guilty = true; const j0 = Laws.L().justice; Laws.judge(cs.id, 'prisao'); ok(Laws.L().justice > j0 && G.people[cs.pid].jail > G.day, 'prender um culpado');
       if (Laws.L().cases[0]) { const c3 = Laws.L().cases[0]; c3.guilty = false; const j1 = Laws.L().justice; Laws.judge(c3.id, 'forca'); ok(Laws.L().justice < j1 && Laws.L().wrong.length, 'enforcar um inocente não pesou'); }
-      Reign.show('law'); ok(html().includes('Tribunal') && html().includes('Leis em vigor'), 'a aba de leis e tribunal');
+      Reign.show('law'); ok(html().includes('Tribunal') && html().includes('Decretos de') && html().includes('em vigor'), 'a aba de leis e tribunal');
       // mercenários
       const id = MERC_CO[0].id; Mercs.hire(id); ok(Mercs.co(id).emp === 'player', 'não contratou');
       const a1 = War.armyOf(1); ok(a1.mercs > 0, 'os mercenários não entraram no exército');

@@ -238,10 +238,10 @@ const War = {
   cede(side, enemy, rep) {
     const c = G.civs[side], att = G.civs[enemy];
     const gov = People.create({ rank: 'ruler', civ: side, home: { type: 'castle', civ: side }, age: U.rint(30, 50), aff: -40, surname: (Families.of(People.get(att.rulerId)) || {}).surname });
-    Heraldry.apply(); c.ruler = 'npc'; c.rulerId = gov.id; c.rulerName = People.title(gov) + ' ' + gov.name; c.relation = -30; c.happy = Math.max(20, c.happy - 15); c.overlord = enemy;
+    Heraldry.apply(); c.ruler = 'npc'; c.rulerId = gov.id; c.rulerName = People.title(gov) + ' ' + gov.name; c.relation = -30; c.happy = Math.max(20, c.happy - 15);
+    Game.onLoseRealm(side); // a vassalagem ao vencedor (da IA) não tinha efeito nenhum: só conta vassalo de reino seu
     const tribute = Math.round(c.treasury * 0.5); c.treasury -= tribute; att.treasury += tribute;
     if (Diplo.atWar(side, enemy)) Diplo.makePeace(side, enemy, `${CIV_DEFS[side].short} se rendeu`);
-    if (G.mainRealm === side) G.mainRealm = null;
     rep.lines.push(`👑 ${CIV_DEFS[side].name} passou para ${Diplo.name(enemy)}: ${c.rulerName} governa agora em nome de ${att.rulerName}.`, `💰 ${tribute} 🪙 do tesouro foram entregues ao vencedor.`, '🕊️ A guerra acabou. Você está vivo, mas sem essa coroa.');
     UI.banner(`🏳️ ${CIV_DEFS[side].short} se rendeu`);
     Diplo.chronicle(`🏳️ ${G.name} ${G.surname} se rendeu no campo de batalha e entregou ${CIV_DEFS[side].name} a ${Diplo.name(enemy)}.`, true);

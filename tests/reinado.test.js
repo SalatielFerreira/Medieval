@@ -1,5 +1,5 @@
-// Reinado e a página de cada reino seu: o conteúdo enquadrado em páginas que cabem na janela (no computador também,
-// com setas, bolinhas e o número da página), quadros dois a dois, a faixa do rei e os Tratados com aba própria.
+// O Reinado em páginas que cabem na janela (no computador também, com setas, bolinhas e o número da página): os quadros
+// dois a dois, a faixa dos papéis no alto, a faixa do rei com os números do reino e uma aba para cada assunto.
 'use strict';
 const { open } = require('./harness');
 const check = async (opts, label) => {
@@ -14,21 +14,20 @@ const check = async (opts, label) => {
         const track = UI.panel.querySelector('.kpages'); if (!track) { ok(false, `${name}: não foi dividido em páginas`); return; }
         const pages = [...track.children], body = UI.panel.querySelector('.snav-body').getBoundingClientRect();
         pages.forEach((pg, i) => {
-          const content = [...pg.children].filter(e => !e.matches('.pg-head, .tabs, .subtabs, .rg-top'));
+          const content = [...pg.children].filter(e => !e.matches('.pg-head, .tabs, .subtabs, .rg-top, .rn-roles'));
           ok(content.length > 0, `${name}: a página ${i + 1} está vazia`);
           const pr = pg.getBoundingClientRect();
           for (const c of content) { const cr = c.getBoundingClientRect(); if (cr.height && cr.bottom > Math.min(pr.bottom, body.bottom) + 3) { ok(false, `${name}: um quadro passa do fim da página ${i + 1} (${c.className})`); break; } }
         });
         if (pages.length > 1 && !small) ok(UI.panel.querySelectorAll('.kdots .kd-arr').length === 2, `${name}: faltam as setas das páginas`);
       };
-      for (const t of ['law', 'council', 'jus', 'aud', 'fiefs', 'spy', 'heirs', 'diplo', 'pacts', 'money', 'army', 'court']) { Reign.show(t); audit('Reinado/' + t); }
-      Reign.show('council'); ok(UI.panel.querySelector('.rg-top .rg-chip'), 'falta a faixa do rei no Reinado');
-      Reign.show('pacts'); ok(/Casamento entre dinastias/i.test(UI.panel.textContent), 'os Tratados não abriram na aba própria');
-      Reign.show('money'); ok(!/Casamento entre dinastias/i.test(UI.panel.textContent), 'os Tratados aparecem nas outras abas');
-      for (const s of ['resumo', 'coroa', 'economia', 'obras', 'exercito', 'conselho', 'diplo', 'brasao']) { UI.sel.knav = 'k:1'; UI.sel.ksub = s; UI.showKingdom(); audit('Reino/' + s); }
-      UI.sel.ksub = 'resumo'; UI.showKingdom(); ok(UI.panel.querySelector('.kpages [data-act="abdicate"]'), 'a renúncia ao trono ficou fora das páginas');
+      for (const [t] of RN_TABS) { Reinado.go('k:1', t); audit('Reinado/' + t); ok(UI.panel.querySelector('.rn-tabs .tab.on[data-t="' + t + '"]'), `a aba ${t} não ficou marcada`); }
+      Reinado.go('k:1', 'reino'); ok(UI.panel.querySelector('.rg-top .rg-chip') && UI.panel.querySelector('.rn-roles .rn-role.on'), 'falta a faixa dos papéis ou a do rei');
+      ok(UI.panel.querySelector('.kpages [data-act="abdicate"]'), 'a renúncia ao trono ficou fora das páginas');
+      Reinado.go('k:1', 'diplo'); ok(/Casamento entre dinastias/i.test(UI.panel.textContent), 'os Tratados não estão na Diplomacia');
+      Reinado.go('k:1', 'tesouro'); ok(!/Casamento entre dinastias/i.test(UI.panel.textContent), 'os Tratados aparecem nas outras abas');
       // as setas passam a página
-      Reign.show('pacts'); const tr = UI.panel.querySelector('.kpages'), nx = UI.panel.querySelector('.kd-arr[data-d="1"]');
+      Reinado.go('k:1', 'leis'); const tr = UI.panel.querySelector('.kpages'), nx = UI.panel.querySelector('.kd-arr[data-d="1"]');
       if (nx && !nx.disabled && !small) { tr.style.scrollBehavior = 'auto'; nx.click(); }
       UI.close();
       return out;

@@ -1,5 +1,6 @@
-// Portfólio enxuto: Família, Estações e clima, Reino, Tratados e Sociedade saem do menu; a Sociedade vai para Coroa e
-// títulos, a Família para Linhagens e os Tratados para o Reinado; os atalhos antigos abrem o lugar novo.
+// Portfólio enxuto: Família, Estações e clima, Reino, Tratados, Sociedade, Coroa e títulos, Vilas e guardas e Finanças saem
+// do menu; a Família vai para Linhagens e o resto para o Reinado (Títulos e corte, Diplomacia, Tesouro); os atalhos antigos
+// abrem o lugar novo.
 'use strict';
 const { open } = require('./harness');
 module.exports = async () => {
@@ -10,13 +11,12 @@ module.exports = async () => {
       UI.msg = () => {};
       const nav = () => [...UI.panel.querySelectorAll('.snav [data-act="knav"]')].map(b => b.dataset.k);
       const txt = () => (UI.panel.querySelector('.kpg') || UI.panel).textContent;
-      const check = () => { UI.sel.knav = 'overview'; UI.showKingdom(); const n = nav(); for (const k of ['family', 'x:clima', 'atlas', 'x:pacts', 'x:society', 'villages', 'x:merc', 'x:horses', 'x:board']) ok(!n.includes(k), `${k} ainda está no menu`); for (const k of ['overview', 'crown', 'tree', 'families']) ok(n.includes(k), `${k} sumiu do menu`); };
+      const check = () => { UI.sel.knav = 'overview'; UI.showKingdom(); const n = nav(); for (const k of ['family', 'x:clima', 'atlas', 'x:pacts', 'x:society', 'villages', 'crown', 'x:finance', 'x:merc', 'x:horses', 'x:board']) ok(!n.includes(k), `${k} ainda está no menu`); for (const k of ['overview', 'tree', 'families', 'x:reign']) ok(n.includes(k), `${k} sumiu do menu`); ok(!n.some(k => /^(k|v):/.test(k)), 'Seus reinos ou Suas vilas ainda estão no menu'); };
       check();
       // a Sociedade dentro de Coroa e títulos; a Família dentro de Linhagens
-      // Coroa e títulos em páginas (abas): Títulos, Vantagens, Corte e reinos, Sociedade — cada uma cabe na janela
-      UI.sel.knav = 'crown';
-      for (const [t, re] of [['titulos', /Título de nobreza/i], ['corte', /relação com os 7 reinos/i], ['vilas', /Vilas que você governa/i], ['sociedade', /Nobreza/i]]) {
-        UI.sel.crTab = t; UI.showKingdom(); ok(re.test(txt()), `a página ${t} de Coroa e títulos não mostra o que devia`);
+      // Coroa e títulos virou o papel Títulos e corte do Reinado, em páginas (abas) que cabem na janela
+      for (const [t, re] of [['titulos', /Título de nobreza/i], ['corte', /relação com os 7 reinos/i], ['vilas', /Como virar governador/i], ['sociedade', /Nobreza/i]]) {
+        UI.sel.crTab = t; UI.sel.knav = 'crown'; UI.showKingdom(); ok(UI.sel.knav === 'x:reign' && UI.sel.rnRole === 't', 'o atalho de Coroa e títulos não abriu o Reinado'); ok(re.test(txt()), `a página ${t} de Coroa e títulos não mostra o que devia`);
         const k = UI.panel.querySelector('.kpg'); ok(!k || k.scrollHeight <= k.clientHeight + 1, `a página ${t} não cabe na janela`);
       }
       // sem a página Vantagens: as vantagens aparecem embaixo do título de nobreza conforme ele é conquistado
@@ -30,15 +30,15 @@ module.exports = async () => {
       for (const c of [3, 5, 2]) Court.holdings()[c] = 0;
       UI.showKingdom(); { const c = UI.panel.querySelector('.cr-tit .card'); ok(c.scrollHeight <= c.clientHeight + 1, 'com quatro títulos, as vantagens ficam cortadas'); }
       for (const c of [1, 3, 5, 2]) delete Court.holdings()[c];
-      UI.sel.knav = 'villages'; UI.showKingdom(); ok(UI.sel.knav === 'crown' && UI.sel.crTab === 'vilas', 'o atalho de Vilas e guardas não abriu Coroa e títulos');
-      UI.sel.socTab = 'politics'; UI.sel.crTab = 'sociedade'; UI.showKingdom();
+      UI.sel.knav = 'villages'; UI.showKingdom(); ok(UI.sel.knav === 'x:reign' && UI.sel.rnRole === 't' && UI.sel.crTab === 'vilas', 'o atalho de Vilas e guardas não abriu Reinado → Títulos e corte → Vilas');
+      UI.sel.socTab = 'politics'; UI.sel.crTab = 'sociedade'; UI.sel.knav = 'x:reign'; UI.showKingdom();
       ok(UI.panel.querySelector('.cr-pager') || UI.panel.querySelector('.cr-soc').scrollHeight <= UI.panel.querySelector('.cr-soc').clientHeight + 1, 'a Política não cabe e não tem páginas');
       (UI.sel.svSub = UI.sel.svSub || {}).ln = 'casa'; UI.sel.knav = 'tree'; UI.showKingdom(); ok(!/A sua Casa/.test(txt()) && /Árvore da casa/.test(txt()), 'a página A sua Casa ainda está em Linhagens');
       // Linhagens em páginas, cabendo na janela; Grandes Casas e Linhagens no grupo Você
       for (const t of ['arvore', 'lacos']) { UI.sel.svSub.ln = t; UI.showKingdom(); const b = UI.panel.querySelector('.snav-body'); ok(b.scrollHeight <= b.clientHeight + 1, `Linhagens → ${t} não cabe na janela`); }
-      { const seq = [...UI.panel.querySelectorAll('.snav > *')].map(e => e.classList.contains('snav-g') ? '|' : e.dataset.k).join(' '); ok(/^\| overview crown .*families tree \|/.test(seq), 'Grandes Casas e Linhagens não estão em Você: ' + seq); }
+      { const seq = [...UI.panel.querySelectorAll('.snav > *')].map(e => e.classList.contains('snav-g') ? '|' : e.dataset.k).join(' '); ok(/^\| overview .*families tree \|/.test(seq), 'Grandes Casas e Linhagens não estão em Você: ' + seq); }
       // atalhos antigos
-      Society.show(); ok(UI.sel.knav === 'crown', 'o atalho da Sociedade não abriu Coroa e títulos');
+      Society.show(); ok(UI.sel.knav === 'x:reign' && UI.sel.rnRole === 't' && UI.sel.crTab === 'sociedade', 'o atalho da Sociedade não abriu Reinado → Títulos e corte');
       UI.sel.knav = 'family'; UI.showKingdom(); ok(UI.sel.knav === 'tree', 'o atalho da Família não abriu Linhagens');
       // Mercenários é uma página de Fora da lei
       UI.act('knav', { k: 'x:merc' }); ok(UI.sel.knav === 'x:outlaw' && UI.sel.olTab === 'merc' && /Companhias livres/i.test(txt()), 'Mercenários não abriu dentro de Fora da lei');
@@ -55,10 +55,10 @@ module.exports = async () => {
       UI.act('oltab', { t: 'bando' }); ok(/vida de fora da lei|O bando de/i.test(txt()) && /Serviços/.test(UI.panel.textContent), 'a página Fora da lei não abriu');
       UI.sel.knav = 'x:clima'; UI.showKingdom(); ok(UI.sel.knav === 'overview', 'Estações e clima ainda abre');
       UI.act('atlasciv', { c: 1 }); ok(UI.sel.knav === 'overview', 'o atlas dos reinos ainda abre');
-      UI.sel.knav = 'x:pacts'; UI.showKingdom(); ok(UI.sel.knav === 'overview', 'Tratados abriu para quem não é rei');
+      UI.sel.knav = 'x:pacts'; UI.showKingdom(); ok(UI.sel.knav === 'x:reign' && UI.sel.rnRole === 't', 'Tratados, para quem não é rei, não caiu em Títulos e corte');
       // rei: os Tratados dentro do Reinado
       Game.becomeRuler(0, 't'); UI.close(); check();
-      UI.sel.knav = 'x:pacts'; UI.showKingdom(); ok(UI.sel.knav === 'x:reign' && /Tratados/.test(txt()) && /CASAMENTO ENTRE DINASTIAS|Casamento entre dinastias/i.test(txt()), 'os Tratados não estão no Reinado');
+      UI.sel.knav = 'x:pacts'; UI.showKingdom(); ok(UI.sel.knav === 'x:reign' && UI.sel.rnRole === 'k:0' && UI.sel.rnTab === 'diplo' && /Casamento entre dinastias/i.test(txt()), 'os Tratados não estão no Reinado → Diplomacia');
       UI.close();
       return bad;
     });
