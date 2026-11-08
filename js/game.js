@@ -903,14 +903,17 @@ const Game = {
   talkable(e) {
     if (!e || e.dead || e.sleeping || e.battle || e.faction === 'duelist' || e.faction === 'arena' || e.faction === 'engine') return false;
     if (!e.npc && e.kind !== 'guard') return false;
-    if ((e.npc && e.npc.hostile) || hostile(e, P)) return false; // inimigo: o clique ataca
+    // inimigo: o clique ataca — menos a realeza e o conselho (rei, rainha, príncipes): com eles sempre dá para
+    // conversar, até em guerra ou com a casa deles em guerra com a sua, a não ser que estejam atacando você agora
+    if ((e.npc && e.npc.hostile) || hostile(e, P)) return this.royalTalk(e);
     return true;
   },
+  royalTalk(e) { const p = e && e.npc; return !!p && (['ruler', 'consort', 'heir'].includes(p.rank) || !!p.council) && e.target !== P && !e.angry; },
   nearestNpc() {
     let best = null, bd = 1.9 * TILE;
     for (const e of G.ents) {
       if (!e.dead && !e.npc && e.kind === 'guard' && !e.battle && !e.angry && !hostile(e, P) && U.dist(e.x, e.y, P.x, P.y) < bd) this.soldierFor(e);
-      if (e.dead || e.sleeping || !e.npc || e.npc.hostile) continue;
+      if (e.dead || e.sleeping || !e.npc || !this.talkable(e)) continue;
       const d = U.dist(e.x, e.y, P.x, P.y);
       if (d < bd) { bd = d; best = e; }
     }
@@ -2198,7 +2201,7 @@ const Game = {
       const d = U.dist(e.x, e.y, P.x, P.y);
       if (d > 5 * TILE) continue;
       tags.push([d, e]);
-      if (e.npc && !e.npc.hostile && d < td) { td = d; talkTo = e; }
+      if (e.npc && d < td && this.talkable(e)) { td = d; talkTo = e; }
     }
     tags.sort((a, b) => a[0] - b[0]);
     for (const [d, e] of tags.slice(0, 6).reverse()) this.drawTag(ctx, e, cx, cy, d, z);

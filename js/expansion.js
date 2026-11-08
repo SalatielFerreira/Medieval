@@ -233,6 +233,13 @@ const EXP_ITEMS = [
   ['venison', 'Carne de Cervo', '🥩', 'Comida', 8, { food: 14, heal: 0 }, ['meat', 'rawmeat']],
   ['truffle', 'Trufa', '🍄', 'Comida', 55, { food: 6, heal: 6 }, ['mush', 'bark']],
   ['mussels', 'Mexilhões', '🦪', 'Comida', 6, { food: 8, heal: 1 }, ['scale', 'black']],
+  // frutos do mar (pesca no mar e o mercado do porto)
+  ['shrimp', 'Camarão', '🦐', 'Comida', 8, { food: 8, heal: 2 }, ['fish', 'rose']],
+  ['crab', 'Caranguejo', '🦀', 'Comida', 12, { food: 12, heal: 2 }, ['scale', 'rose']],
+  ['lobster', 'Lagosta', '🦞', 'Comida', 45, { food: 20, heal: 8 }, ['fish', 'rose']],
+  ['oyster', 'Ostra', '🦪', 'Comida', 14, { food: 6, heal: 5 }, ['scale', 'shell']],
+  ['squid', 'Lula', '🦑', 'Comida', 16, { food: 12, heal: 2 }, ['fish', 'white']],
+  ['grilled_shrimp', 'Camarão na Brasa', '🍤', 'Comida', 22, { food: 30, heal: 12 }, ['fish', 'cooked']],
   ['pumpkin_soup', 'Sopa de Abóbora', '🥣', 'Comida', 18, { food: 38, heal: 16, buff: 'def' }, ['bowl', 'pumpkin']],
   ['onion_soup', 'Sopa de Cebola', '🥣', 'Comida', 14, { food: 30, heal: 14 }, ['bowl', 'onion']],
   ['roast_duck', 'Pato Assado', '🍗', 'Comida', 30, { food: 48, heal: 22, buff: 'str' }, ['meat', 'cooked']],
@@ -392,7 +399,7 @@ const EXP_RECIPES = [
   ['fish_pie', 1, { fish: 2, flour: 2, egg: 1 }, 'cozinha'], ['shepherd_pie', 1, { meat: 2, turnip: 2, flour: 1, onion: 1 }, 'cozinha'],
   ['porridge', 1, { barley: 2, milk: 1 }, 'fogueira'], ['pancakes', 2, { flour: 2, egg: 2, milk: 1, honey: 1 }, 'cozinha'],
   ['fruit_tart', 1, { berries: 4, flour: 2, honey: 1 }, 'cozinha'], ['jam', 2, { berries: 5, honey: 1 }, 'cozinha'],
-  ['grilled_trout', 1, { trout: 1, garlic: 1, olive_oil: 1 }, 'fogueira'], ['seafood_stew', 1, { mussels: 3, fish: 1, onion: 1, seaweed: 1 }, 'cozinha'],
+  ['grilled_trout', 1, { trout: 1, garlic: 1, olive_oil: 1 }, 'fogueira'], ['grilled_shrimp', 1, { shrimp: 3 }, 'fogueira'], ['seafood_stew', 1, { mussels: 3, fish: 1, onion: 1, seaweed: 1 }, 'cozinha'],
   ['truffle_omelette', 1, { truffle: 1, egg: 3, butter: 1 }, 'cozinha'], ['candied_apple', 2, { apple: 2, honey: 1 }, 'fogueira'],
   ['goat_cheese', 1, { goat_milk: 4, salt: 1 }, 'cozinha'], ['goat_yogurt', 2, { goat_milk: 3 }, 'cozinha'],
   ['hop_ale', 2, { barley: 3, hops: 2 }, 'cervejaria'], ['spiced_mead', 2, { honey: 3, spices: 1 }, 'cervejaria'],
@@ -497,7 +504,7 @@ const EXP_SELLS = {
   granary: ['pumpkin', 'onion', 'turnip', 'beans', 'garlic', 'peas', 'pumpkin_seed', 'onion_seed', 'turnip_seed', 'bean_seed', 'garlic_seed', 'pea_seed', 'sunflower', 'hops'],
   clinic: ['nettle', 'lavender', 'greater_healing', 'regen_potion', 'holy_water'],
   apothecary: ['giant_potion', 'luck_potion', 'bat_wing', 'venom_gland', 'grave_dust', 'lavender', 'nettle', 'mandrake', 'royal_jelly', 'vial', 'greater_healing', 'regen_potion', 'iron_skin', 'swift_potion', 'wisdom_potion', 'focus_potion', 'pestle', 'incense'],
-  fishery: ['ice', 'mussels', 'seashell', 'seaweed', 'grilled_trout', 'fish_pie', 'seafood_stew', 'fishing_net'],
+  fishery: ['ice', 'mussels', 'seashell', 'seaweed', 'grilled_trout', 'fish_pie', 'seafood_stew', 'fishing_net', 'shrimp', 'crab', 'oyster', 'squid', 'lobster'],
   winery: ['grape_juice', 'mulled_wine', 'brandy'],
   ranch: ['goat_milk', 'duck_egg', 'duck_meat', 'rabbit_meat', 'ham', 'bacon', 'shears', 'horsehair'],
   jeweler: ['quartz', 'amethyst', 'emerald', 'sapphire', 'ruby', 'pearl_necklace', 'lucky_charm', 'gold_thread', 'electrum_bar', 'rosary'],
@@ -592,7 +599,7 @@ const Expansion = {
     const r = f0();
     if (ok) {
       if (Expansion.has('fishing_net') && Math.random() < 0.45) { const f = U.pick(water === 'river' ? ['trout', 'carp'] : ['sardine', 'cod']); Inv.add(f, 1); UI.msg(`🥅 A rede trouxe também ${ITEMS[f].name}.`); }
-      if (water !== 'river' && Math.random() < 0.3) { const x = U.pick(['seashell', 'seaweed', 'mussels', 'mussels']); Inv.add(x, 1); Game.addText(P.x, P.y - 64, `+1 ${ITEMS[x].name}`, '#c8f0ff'); }
+      if (water !== 'river' && Math.random() < 0.3) { const x = U.pick(['seashell', 'seaweed', 'mussels', 'mussels', 'shrimp', 'shrimp', 'crab', 'oyster', 'squid', Math.random() < 0.25 ? 'lobster' : 'crab']); Inv.add(x, 1); Game.addText(P.x, P.y - 64, `+1 ${ITEMS[x].name}`, '#c8f0ff'); }
     }
     return r;
   };

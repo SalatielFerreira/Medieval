@@ -319,8 +319,10 @@ class Creature {
         break;
       }
       case 'villager': case 'ally': case 'sentry': {
-        if (this.npc && this.npc.horse && this.kind === 'villager' && !G.place && !this.still && !this.sleeping) {
-          if (!this._hs) { this._hs = 1; this.spMul = (this.spMul || 1) * 1.35; }
+        // moradores com cavalo e capangas montados (Equipar → Cavalo): fora dos imóveis andam a cavalo
+        const capH = this.kind === 'ally' && this.npc && this.npc.capanga && this.npc.horse;
+        if (this.npc && this.npc.horse && (this.kind === 'villager' || capH) && !G.place && !this.still && !this.sleeping) {
+          if (!this._hs) { this._hs = 1; this._hsMul = capH && typeof CapMount !== 'undefined' ? CapMount.speed(this.npc) : 1.35; this.spMul = (this.spMul || 1) * this._hsMul; }
           const lk = People.look(this.npc);
           drawHorse(ctx, x, y, this.dir, this.anim, this.moving, this.npc.horse, false);
           drawHuman(ctx, x - this.dir * 2, y - 17, Object.assign(lk, { seated: true, aim: this.aim, swing: this.swing, dir: this.dir, moving: false, anim: this.anim, hurt }));

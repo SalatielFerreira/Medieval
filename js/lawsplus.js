@@ -136,7 +136,7 @@ const LawsPlus = {
   // porto e taverna
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
-    if (fn === 'showPort' && args && World.structs[args[0]]) body = LawsPlus.portHtml(World.structs[args[0]]) + body;
+    if (fn === 'showPort' && args && World.structs[args[0]] && !String(body).includes('data-pt2')) body = LawsPlus.portHtml(World.structs[args[0]]) + body;
     if (fn === 'showTavern') body = body + LawsPlus.blackHtml();
     return op0(title, body, fn, args, sub);
   };

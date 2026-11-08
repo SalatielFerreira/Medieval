@@ -14,7 +14,7 @@ module.exports = async () => {
       ports = Ports.list(); const A = ports[0], B = ports[1];
       UI.showPort(A.id); ok(html().includes('Estaleiro'), 'o porto não tem estaleiro');
       Sea.buy('caravel'); ok(G.ship && G.ship.kind === 'caravel', 'não comprou a caravela'); ok(Sea.speed() > 1, 'o navio não é mais rápido');
-      UI.showPort(A.id); ok(html().includes('Comércio por mar') && html().includes('Zarpar para'), 'o porto não mostra comércio e viagens');
+      UI.showPort(A.id); ok(html().includes('data-k="porao"') && html().includes('data-k="zarpar"'), 'o porto não mostra comércio (porão) e viagens (zarpar)');
       const k = Sea.goods()[0], g0 = P.gold; Sea.load(A.id, k, 10); ok(G.ship.hold[k] === 10 && P.gold < g0, 'não carregou o porão');
       const g1 = P.gold; Sea.unload(B.id, k, 1e9); ok(!G.ship.hold[k] && P.gold > g1, 'não vendeu a carga');
       // viagem sem acidentes

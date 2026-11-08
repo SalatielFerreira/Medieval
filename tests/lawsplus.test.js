@@ -21,7 +21,7 @@ module.exports = async () => {
       if (!Ports.list().some(s => Sea.civOfPort(s) === ci)) { const cp = World.capitals[ci]; World.addStruct('port', cp.x + 7, cp.y + 7, 4, 3, ci); }
       const port = Ports.list().find(s => Sea.civOfPort(s) === ci);
       LawsPlus.S().smug[port.okey] = { what: 'sal', value: 300, until: G.day + 2 };
-      UI.showPort(port.id); ok(html().includes('Contrabando no porto'), 'o porto não mostra o contrabando');
+      UI.sel.ptSide = 'smug'; UI.showPort(port.id); ok(html().includes('data-k="smug"') && html().includes('data-op="catch"'), 'o porto não mostra o contrabando');
       const g0 = P.gold; LawsPlus.bribe(port); ok(P.gold > g0 && !LawsPlus.smugOf(port), 'a vista grossa não pagou');
       // mercado negro à noite
       G.time = 0; const open0 = LawsPlus.open(); Laws.revoke('recolher');

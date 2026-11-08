@@ -236,7 +236,7 @@ ACHIEVEMENTS.push(
   // no porto: estaleiro, porão e viagens
   const op0 = UI.open.bind(UI);
   UI.open = function (title, body, fn, args, sub) {
-    if (fn === 'showPort' && args && World.structs[args[0]]) body = Sea.portHtml(World.structs[args[0]]) + body;
+    if (fn === 'showPort' && args && World.structs[args[0]] && !String(body).includes('data-pt2')) body = Sea.portHtml(World.structs[args[0]]) + body;
     return op0(title, body, fn, args, sub);
   };
   const a0 = UI.act.bind(UI);
