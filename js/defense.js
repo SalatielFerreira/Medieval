@@ -206,7 +206,7 @@ const Garrison = {
   Guards.ambient = function () {
     if (G.dungeon) return;
     for (const p of this.all()) {
-      if (G.spawned.has(p.id) || !this.valid(p.post)) continue;
+      if (G.spawned.has(p.id) || p.jail > G.day || !this.valid(p.post)) continue;
       const s = this.slot(p);
       if (U.dist(P.x / TILE, P.y / TILE, s.x, s.y) < 30) this.spawn(p);
     }

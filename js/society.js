@@ -192,12 +192,13 @@ const Society = {
   },
   rivals() { return G.people.filter(p => p.alive && p.rival && p.age >= 16); },
   challenge(p) {
-    if (!p || !p.alive || G.place || G.duel || G.honor) return;
+    if (!p || !p.alive || p.jail > G.day || G.place || G.duel || G.honor) return;
     Dialog.confirm({ icon: '⚔️', title: 'Duelo de honra', text: `${People.full(p)} desafia você para um duelo de honra${p.vendetta ? `, para vingar ${p.vendetta}` : ''}. Até o primeiro que cair (ninguém morre). Recusar mancha o seu nome.`, ok: 'Aceitar o duelo', cancel: 'Recusar' },
       () => this.startDuel(p),
       () => { this.rep('nobreza', -5, 'recusou um duelo de honra'); this.rep('povo', -2); People.addAff(p, -5); Rumors.atP(`${G.name} fugiu de um duelo com ${p.name}. Covarde!`); });
   },
   startDuel(p) {
+    if (!p || p.jail > G.day) return; // preso não sai da cela para duelar
     const sp = freeSpotNear(P.x + 50, P.y, 60), st = Ranking.stats(p);
     const e = Game.spawn('villager', sp.x, sp.y, { civ: p.civ, npc: p, leash: 99 });
     e.maxHp = e.hp = 80 + (st.str || 40) * 2; e.dmg = 6 + Math.round((st.str || 40) / 8); e.angry = true; e.target = P; e.honor = true; e.aggroOv = 14;

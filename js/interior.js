@@ -288,7 +288,7 @@ const Places = {
     const P0 = G.place, at = ([x, y]) => [P0.fx0 + x, P0.fy0 + y], door = P0.back;
     const away = p => { const o = G.spawned.get(p.id); return !!o && !o.dead && !o.placeNpc && U.dist(o.x, o.y, door.x, door.y) > 14 * TILE; };
     const put = (p, spot, opts) => {
-      if (!p || !p.alive) return null;
+      if (!p || !p.alive || p.jail > G.day) return null; // presos só na cela da prisão
       const old = G.spawned.get(p.id); // a pessoa lá fora continua (volta a ser ela quando você sair)
       const [tx, ty] = at(spot);
       const civ = p.civ >= 0 ? p.civ : typeof src.owner === 'number' ? src.owner : -1;

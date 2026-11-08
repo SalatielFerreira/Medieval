@@ -88,6 +88,15 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Correções: preso só na cela
+
+- Quem está preso só aparece na cela da prisão do reino: não anda mais pela vila, não fica atrás do balcão da loja nem dentro dos prédios, não viaja, não visita outras vilas, não vira guarda, assassino nem cliente do banco e não desafia ninguém para duelo. Quem é preso perto de você some na hora; solto, volta para casa e para o trabalho.
+- A prisão mostra quem está preso nela (a lista do reino), e não só os moradores do próprio reino.
+
+## Novidades: sem avisos no canto da tela
+
+- As janelinhas de aviso que apareciam no canto da tela (como "Veio de Ferro exige uma Picareta de Bronze ou melhor.") saíram do jogo, junto com o histórico delas. O que importa continua nas janelas do jogo, nos anúncios no meio da tela e na página Avisos do Portfólio.
+
 ## Novidades: Portfólio em menos páginas
 
 - **Cada aba cabe na janela:** no computador, quase todas as abas do Portfólio ficam numa página só, sem rolar. O **Painel do
@@ -792,7 +801,6 @@ O que existia em dobro virou uma coisa só, sempre a que tem efeito de verdade n
 - **Tudo renasce em 1 ano:** arbustos de frutas, linho, ervas e argila agora também levam 1 ano do jogo para voltar, como árvores, pedras e minérios.
 
 - **Cada família tem sua casa:** o casal e os filhos (ou o adulto solteiro) dormem na própria casa. Quem não tem ocupa uma livre ou constrói uma nova perto da vila: a obra leva 3 dias, aparece com andaime e barra de progresso, e os moradores trabalham nela de dia. As casas novas ficam no jogo salvo.
-- **Avisos em janelinhas:** as mensagens aparecem em janelinhas flutuantes no tema do jogo, com ícone, botão de fechar e uma barrinha do tempo; avisos repetidos mostram ×2, ×3...
 - **Relógio alinhado:** data, estação, ano e hora numa linha só.
 
 - **Economia no ritmo de antes:** impostos, soldos, salários, renda dos reinos, guerras, revoltas e colheitas andam uma vez por mês.

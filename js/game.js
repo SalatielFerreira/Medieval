@@ -1342,7 +1342,8 @@ const Game = {
   },
 
   // ================================================================ criaturas
-  spawn(kind, x, y, opts) { const c = new Creature(kind, x, y, opts); G.ents.push(c); return c; },
+  // um preso só aparece na cela da prisão (Prison.fill liga jailOk): fora dela a criatura já nasce descartada
+  spawn(kind, x, y, opts) { const c = new Creature(kind, x, y, opts); if (opts && opts.npc && opts.npc.jail > G.day && !this.jailOk) c.dead = true; G.ents.push(c); return c; },
   spawnCapanga(p) {
     const s = freeSpotNear(P.x, P.y, 50);
     const e = this.spawn('ally', s.x, s.y, { leash: 30, npc: p });
@@ -1428,6 +1429,7 @@ const Game = {
       }
     }
     const spawnNpc = (p, x, y, leash, civ) => {
+      if (p.jail > G.day) return null; // presos só na cela
       const s = freeSpotNear(x + U.rnd(-1, 1) * TILE, y + U.rnd(-0.5, 0.5) * TILE, TILE * 2);
       const e = this.spawn('villager', s.x, s.y, { civ, npc: p, leash });
       G.spawned.set(p.id, e);
@@ -2378,7 +2380,7 @@ const Game = {
     const miniH = s.minimap ? miniSize + 22 : 0, miniW = s.minimap ? miniSize + 10 : 186;
     root.setProperty('--mini-h', miniH + 'px');
     root.setProperty('--mini-w', Math.max(186, miniW) + 'px');
-    for (const id of ['hud', 'rightcol', 'toolbar', 'log']) document.getElementById(id).style.zoom = z;
+    for (const id of ['hud', 'rightcol', 'toolbar']) document.getElementById(id).style.zoom = z;
     // telas de toque: a barra do rodapé não encolhe (os botões ficam do tamanho confortável para o dedo)
     if (small || matchMedia('(pointer: coarse)').matches) document.getElementById('toolbar').style.zoom = 1;
     const rc = document.getElementById('rightcol');

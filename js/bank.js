@@ -370,7 +370,7 @@ Object.assign(FURN, { vaultdoor: { block: true, light: 1, lr: 90, lcol: '#ffd36b
     let ck = K.clerk !== undefined ? People.get(K.clerk) : null;
     if (!ck || !ck.alive) { ck = People.create({ rank: 'merchant', civ: ci, home: { type: 'castle', civ: ci }, age: U.rint(20, 40) }); K.clerk = ck.id; }
     put(ck, L.staff[0]);
-    const cl = G.people.filter(p => p.alive && People.isAdult(p) && !p.capanga && !p.kin && p.civ === ci && !People.isCourt(p) && !G.spawned.has(p.id)).slice(0, 2);
+    const cl = G.people.filter(p => p.alive && People.isAdult(p) && !p.capanga && !p.kin && p.civ === ci && !People.isCourt(p) && !(p.jail > G.day) && !G.spawned.has(p.id)).slice(0, 2);
     cl.forEach((p, k) => { const [x, y] = at(L.wander[k]), e = Game.spawn('villager', x, y, { civ: ci, npc: p, leash: 1.6 }); e.placeNpc = true; G.spawned.set(p.id, e); });
     for (const sp of [[0.5, 4.5], [15.2, 7]]) { const [x, y] = at(sp), g = Game.spawn('guard', x, y, { civ: ci, leash: 0.4, tag: 'room' }); g.placeNpc = true; }
   };

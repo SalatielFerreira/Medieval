@@ -103,7 +103,7 @@ const Travel = {
     const px = P.x / TILE, py = P.y / TILE;
     for (const p of G.people) {
       if (this.shown.size >= 6) break;
-      if (!p.alive || !p.trip || p.trip.from === undefined || this.shown.has(p.id)) continue;
+      if (!p.alive || !p.trip || p.trip.from === undefined || this.shown.has(p.id) || p.jail > G.day) continue;
       const out = G.day === p.trip.since, back = G.day === p.trip.until - 1; if (!out && !back) continue;
       const a = World.villages[out ? p.trip.from : p.trip.vi], b = World.villages[out ? p.trip.vi : p.trip.from]; if (!a || !b) continue;
       if (this.segDist(px, py, a, b) > 26) continue;

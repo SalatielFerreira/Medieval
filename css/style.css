@@ -71,12 +71,7 @@ body.nonum .track span { display: none; }
   display: flex; align-items: center; justify-content: center; background: #f1e4c6; color: #2b1d0e; border: 1px solid #6b4a1e; }
 #toolbar .sep { width: 1px; background: rgba(214, 174, 96, 0.3); margin: 4px 2px; }
 
-#log { position: fixed; left: 14px; bottom: 14px; width: 460px; pointer-events: none; display: flex; flex-direction: column; gap: 3px; font-family: var(--ui-font); }
-body.keysbar #log, body.keysbar #toolbar { bottom: 38px; }
-#log .m { background: rgba(30, 20, 10, 0.78); color: #f3e6c8; padding: 5px 10px; border-left: 3px solid #a07a3a; border-radius: 3px; font-size: 13px; transition: opacity 1.5s; }
-#log .m.gold { border-color: #ffd54a; color: #ffe9a8; }
-#log .m.bad { border-color: #e04848; color: #ffc0b0; }
-#log .m.fade { opacity: 0; }
+body.keysbar #toolbar { bottom: 38px; }
 
 #prompt { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: rgba(30, 20, 10, 0.88); color: #f3e6c8;
   padding: 8px 16px; border: 2px solid #a07a3a; border-radius: 6px; font-size: 15px; display: none; pointer-events: none; }
@@ -634,7 +629,6 @@ table.keys td { padding: 4px 12px 4px 0; border-bottom: 1px solid rgba(214, 174,
 .tc-b[data-tc="heavy"] { right: 40px; bottom: 170px; }
 /* com toque: barra de botões vai para o topo, mensagens sobem */
 body.touchui #toolbar { top: 10px; bottom: auto; right: 50%; transform: translateX(50%); }
-body.touchui #log { bottom: 170px; }
 body.touchui #talkBtn { padding: 9px 14px; }
 
 /* telas pequenas (celular): tudo cabe sem rolar a página */
@@ -647,8 +641,6 @@ body.small #toolbar button { width: 44px; height: 42px; }
 body.small #toolbar small { display: none; }
 body.small #quick .q-load { display: none; }
 body.small #clock .clk-zone { display: none; }
-body.small #log { width: min(360px, 60vw); }
-body.small #log .m { font-size: 11.5px; padding: 3px 7px; }
 body.small #panel, body.small #panel.wide { width: 100vw; height: 100vh; height: 100dvh; max-height: none; border-radius: 0; left: 0; top: 0; transform: none; }
 body.small #panel .pb { overflow-y: auto !important; display: block !important; }
 body.small .split, body.small .kgrid.two, body.small .chest-layout { grid-template-columns: 1fr !important; height: auto !important; }
@@ -920,33 +912,6 @@ body.small #quick .q-load, body.small #quick .q-slots { display: revert; }
 
 #clock .clk-zone { line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ================================================================ avisos em janelinhas flutuantes */
-#log { width: 390px; gap: 6px; bottom: 14px; }
-.toast { position: relative; display: grid; grid-template-columns: 30px 1fr auto auto; align-items: center; gap: 8px; padding: 8px 8px 9px 9px; overflow: hidden;
-  font-size: 12.5px; line-height: 1.35; color: #f1e4c6; pointer-events: auto;
-  background: linear-gradient(180deg, rgba(36, 26, 17, 0.95), rgba(18, 12, 7, 0.93)); border: 1px solid rgba(214, 174, 96, 0.45); border-left: 3px solid #a07a3a;
-  border-radius: 10px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 230, 170, 0.08);
-  animation: tcin 0.28s ease-out; transition: opacity 0.3s, transform 0.3s; }
-.toast.gold { border-left-color: #ffd54a; color: #ffe9b0; }
-.toast.bad { border-left-color: #e04848; color: #ffd0c4; background: linear-gradient(180deg, rgba(46, 18, 14, 0.95), rgba(22, 9, 7, 0.93)); }
-.toast.out { opacity: 0; transform: translateX(-24px); }
-.tc-ic { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 8px;
-  background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(214, 174, 96, 0.35); }
-.toast.bad .tc-ic { border-color: rgba(224, 72, 72, 0.5); }
-.tc-tx { min-width: 0; }
-.tc-n { font-size: 11px; font-weight: 800; color: #ffd54a; }
-.tc-n:empty { display: none; }
-.tc-x { width: 20px; height: 20px; padding: 0; font-size: 10px; line-height: 1; color: #bfa36a; background: transparent; border: 0; box-shadow: none; opacity: 0.6; }
-.toast:hover .tc-x { opacity: 1; }
-.tc-x:hover:not(:disabled) { color: #fff; background: rgba(214, 174, 96, 0.2); }
-.tc-life { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: linear-gradient(90deg, #d6ae60, #ffd54a); transform-origin: left; opacity: 0.7; }
-.toast.bad .tc-life { background: linear-gradient(90deg, #a82424, #e04848); }
-.toast.hold .tc-life { animation-play-state: paused !important; }
-@keyframes tcin { from { opacity: 0; transform: translateX(-30px) scale(0.97); } to { opacity: 1; transform: none; } }
-@keyframes tclife { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-body.small #log { width: min(330px, 70vw); }
-body.small .toast { font-size: 11.5px; padding: 6px 7px; grid-template-columns: 24px 1fr auto auto; }
-body.small .tc-ic { width: 24px; height: 24px; font-size: 13px; }
 
 /* setas ◀ ▶ no cabeçalho das janelas principais (pulam para a janela anterior/seguinte) */
 .ph-nav { display: flex; gap: 4px; margin-left: auto; }
@@ -1453,8 +1418,6 @@ img, svg, canvas { -webkit-user-drag: none; }
 body.small #toolbar, body.touchui #toolbar { top: auto; right: auto; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom)); transform: translateX(-50%); }
 body.small #prompt, body.touchui #prompt { bottom: calc(84px + env(safe-area-inset-bottom)); }
 /* avisos: à esquerda, acima da barra (e do controle de toque) */
-body.small #log { bottom: 78px; }
-body.touchui #log { bottom: 190px; left: 14px; }
 /* relógio sem a linha da região: pizza alinhada com o mês */
 body.small #clock .clk-pie { grid-row: 1; }
 body.small #clock { row-gap: 0; }

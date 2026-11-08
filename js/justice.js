@@ -42,7 +42,7 @@ const Justice = {
     p.jail = until || G.day + 9999;
     if (p.capanga) { p.capanga = false; }
     if (p.band) { const B = typeof Bands !== 'undefined' ? Bands.S().bands[p.band] : null; if (B) Bands.S().bands[p.band] = B.filter(id => id !== p.id); }
-    const e = G.spawned.get(p.id); if (e && !e.dead && !e.placeNpc) { e.dead = true; G.spawned.delete(p.id); }
+    const e = G.spawned.get(p.id); if (e && !e.dead && !(e.placeNpc && G.place && G.place.type === 'prison')) { if (e.outside) e.outside.dead = true; e.dead = true; G.spawned.delete(p.id); }
     if (p.home && p.home.type === 'village') Rumors.atV(p.home.idx, `${People.full(p)} foi levad${p.sex === 'f' ? 'a' : 'o'} para a prisão de ${CIV_DEFS[ci].short} (${why || 'ordem do rei'}).`);
     return true;
   },

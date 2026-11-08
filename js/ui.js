@@ -19,7 +19,6 @@ const UI = {
 
   init() {
     this.panel = document.getElementById('panel');
-    this.log = document.getElementById('log');
     this.promptEl = document.getElementById('prompt');
     this.bannerEl = document.getElementById('banner');
     // a janela que abre com o dedo ainda na tela (ex.: botão Interagir) não aceita esse mesmo toque:
@@ -223,37 +222,8 @@ const UI = {
     const k = typeof x === 'string' ? x : this._itemKey.get(x), art = k && itemArt(k);
     return art ? `<i class="ii">${art}</i>` : (typeof x === 'string' ? (ITEMS[x] ? ITEMS[x].icon : '') : x.icon);
   },
-  // avisos em janelinhas flutuantes no canto: ícone, texto, fechar e uma barrinha do tempo restante.
-  // Só aparecem na tela os de problema ('bad') e os importantes (big = true); os de rotina ficam só no histórico.
-  msg(text, cls, big) {
-    if (cls !== 'bad' && !big) { this.msgLog = this.msgLog || []; this.msgLog.push({ day: G.day, text }); if (this.msgLog.length > 60) this.msgLog.shift(); return; } // (lista própria: a do Voltar é só de janelas)
-    const last = this.log.lastElementChild;
-    if (last && last.dataset.t === text && !last.classList.contains('out')) {
-      const n = (+last.dataset.n || 1) + 1; last.dataset.n = n; last.querySelector('.tc-n').textContent = '×' + n;
-      this.toastLife(last); return;
-    }
-    const m = text.match(/^((?:\p{Extended_Pictographic}|️|‍)+)\s*/u);
-    const d = document.createElement('div');
-    d.className = 'toast ' + (cls || '');
-    d.dataset.t = text; d.dataset.cls = cls || '';
-    d.innerHTML = '<span class="tc-ic"></span><span class="tc-tx"></span><span class="tc-n"></span><button class="tc-x" title="Fechar">✕</button><i class="tc-life"></i>';
-    d.querySelector('.tc-ic').textContent = m ? m[1] : cls === 'bad' ? '⚠️' : cls === 'gold' ? '✨' : '📜';
-    d.querySelector('.tc-tx').textContent = m ? text.slice(m[0].length) : text;
-    d.querySelector('.tc-x').addEventListener('click', ev => { ev.stopPropagation(); this.toastOut(d); });
-    d.addEventListener('mouseenter', () => { clearTimeout(d._t); d.classList.add('hold'); });
-    d.addEventListener('mouseleave', () => { d.classList.remove('hold'); this.toastLife(d); });
-    this.log.appendChild(d);
-    const live = [...this.log.children].filter(x => !x.classList.contains('out'));
-    while (live.length > 5) this.toastOut(live.shift());
-    this.toastLife(d);
-  },
-  toastLife(d) {
-    clearTimeout(d._t);
-    const ms = d.dataset.cls === 'bad' ? 9000 : 6500, bar = d.querySelector('.tc-life');
-    bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = `tclife ${ms}ms linear forwards`;
-    d._t = setTimeout(() => this.toastOut(d), ms);
-  },
-  toastOut(d) { if (!d || d.classList.contains('out')) return; clearTimeout(d._t); d.classList.add('out'); setTimeout(() => d.remove(), 320); },
+  // os avisos no canto da tela foram removidos: as chamadas continuam, mas não mostram nada
+  msg() {},
   banner(text) {
     this.bannerEl.textContent = text;
     this.bannerEl.classList.remove('show'); void this.bannerEl.offsetWidth;

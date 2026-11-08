@@ -19,7 +19,7 @@ const Hitmen = {
   },
   // quem aceitaria o serviço
   fit(p, kind) {
-    if (!p.alive || p.age < 18 || p.age > 52 || p.kin || p.capanga || p.spouse === 'player' || p.hit || p.band) return false;
+    if (!p.alive || p.jail > G.day || p.age < 18 || p.age > 52 || p.kin || p.capanga || p.spouse === 'player' || p.hit || p.band) return false;
     if (!RANKS[p.rank] || RANKS[p.rank].noble || RANKS[p.rank].shop || NOBLE_RANKS.includes(p.rank) || People.isCourt(p) || p.port || p.trip) return false;
     if (p.job !== undefined && p.job !== null) return false;
     if (p.jail || p.prison) return false;
@@ -34,7 +34,7 @@ const Hitmen = {
   },
   // escolhe (ou continua com) quem vai atrás de você
   pick(kind) {
-    const again = G.people.find(p => p.alive && p.hit && p.hit.kind === kind && !(G.spawned.get(p.id) && !G.spawned.get(p.id).dead));
+    const again = G.people.find(p => p.alive && !(p.jail > G.day) && p.hit && p.hit.kind === kind && !(G.spawned.get(p.id) && !G.spawned.get(p.id).dead));
     if (again) return again;
     const f = kind === 'assassin' ? this.payer() : null;
     const near = f && typeof f.seat === 'number' && World.villages[f.seat] ? (v => p => p.home.type === 'village' && World.villages[p.home.idx] && U.dist(World.villages[p.home.idx].x, World.villages[p.home.idx].y, v.x, v.y) < 60)(World.villages[f.seat]) : null;

@@ -85,13 +85,15 @@ const Prison = {
   },
   // os presos de verdade nas celas e os guardas no corredor
   fill(src, pl) {
-    const prisoners = G.people.filter(p => p && p.alive && p.jail > G.day && (p.civ === src.owner || (p.home && p.home.type === 'village' && World.villages[p.home.idx] && World.villages[p.home.idx].civ === src.owner)));
-    prisoners.slice(0, PRISON_OTHERS.length).forEach((p, i) => {
+    const inJail = typeof Justice !== 'undefined' ? Justice.jail(src.owner).map(x => G.people[x.pid]) : [];
+    const loose = G.people.filter(p => p && p.alive && p.jail > G.day && !inJail.includes(p) && (typeof Justice === 'undefined' || Justice.jailedIn(p) < 0) && (p.civ === src.owner || (p.home && p.home.type === 'village' && World.villages[p.home.idx] && World.villages[p.home.idx].civ === src.owner)));
+    const prisoners = [...inJail, ...loose].filter(p => p && p.alive && p.jail > G.day);
+    Game.jailOk = true; try { prisoners.slice(0, PRISON_OTHERS.length).forEach((p, i) => {
       const [x, y] = PRISON_OTHERS[i], old = G.spawned.get(p.id);
       const e = Game.spawn('villager', (pl.fx0 + x + 0.5) * TILE, (pl.fy0 + y + 0.85) * TILE, { civ: src.owner, npc: p, leash: 0.3 });
       e.placeNpc = true; e.still = true; e.outside = old && !old.dead && !old.placeNpc ? old : null; if (e.outside) e.outside.inRoom = true;
       G.spawned.set(p.id, e);
-    });
+    }); } finally { Game.jailOk = false; }
     for (const [x, y] of [[7, 3], [8, 8]]) { const g = Game.spawn('guard', (pl.fx0 + x + 0.5) * TILE, (pl.fy0 + y + 0.8) * TILE, { civ: src.owner, leash: 1.2 }); g.placeNpc = true; }
   },
 };

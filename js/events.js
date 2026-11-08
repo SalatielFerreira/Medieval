@@ -241,5 +241,5 @@ const Trips = {
     if (v && (p.met || p.aff >= 10)) UI.msg(war ? `⚔️ ${People.full(p)} voltou às pressas de ${v.name}: estourou uma guerra.` : `🏠 ${People.full(p)} voltou do passeio em ${v.name}.`);
   },
   // visitantes aparecem pela vila de destino (perto da taverna ou da praça)
-  visitors(vi) { return G.people.filter(p => p.alive && p.trip && p.trip.vi === vi); },
+  visitors(vi) { return G.people.filter(p => p.alive && p.trip && p.trip.vi === vi && !(p.jail > G.day)); },
 };
