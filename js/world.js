@@ -1223,8 +1223,9 @@ const World = {
     const has = s.x !== undefined, n = has && this.wallAt(s.x, s.y - 1), so = has && this.wallAt(s.x, s.y + 1), w = has && this.wallAt(s.x - 1, s.y), e = has && this.wallAt(s.x + 1, s.y);
     const vert = n || so, hor = w || e || !vert;
     const R = (x, y, ww, hh, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(X + x), Math.round(Y + y), ww, hh); };
-    const L = hor ? (w || !e ? 0 : 10) : 10, Rt = hor ? (e || !w ? 32 : 22) : 22; // trecho horizontal (de L a Rt)
-    const T = n ? 0 : 6, B = so ? 32 : 26; // trecho vertical (de T a B)
+    // com vizinho, o trecho avança 1 pixel sobre ele: sem fresta clara entre um bloco e outro
+    const L = hor ? (w ? -1 : !e ? 0 : 10) : 10, Rt = hor ? (e ? 33 : !w ? 32 : 22) : 22; // trecho horizontal (de L a Rt)
+    const T = n ? -1 : 6, B = so ? 33 : 26; // trecho vertical (de T a B)
     if (!stone) {
       // paliçada: estacas lado a lado (horizontal) ou empilhadas (vertical)
       if (vert) {

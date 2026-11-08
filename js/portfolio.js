@@ -6,7 +6,7 @@
 //  • Haras e corridas sai: tudo é feito na construção Haras (o cruzamento e o Grande Prêmio, lá dentro).
 //  • Estações e clima e o atlas dos reinos saem de vez.
 //  • Os atalhos antigos (Avisos, Grandes Casas, botões) abrem o lugar novo.
-const PF_GONE = { family: 'tree', 'x:clima': 'overview', atlas: 'overview', 'x:merc': 'x:outlaw', 'x:horses': 'overview' };
+const PF_GONE = { 'x:alerts': 'overview', family: 'tree', 'x:clima': 'overview', atlas: 'overview', 'x:merc': 'x:outlaw', 'x:horses': 'overview' };
 // Serviços: Fora da lei e Mercenários numa janela só, uma página para cada
 const OL_TABS = [['bando', '🗡️', 'Fora da lei', 'x:outlaw'], ['merc', '⚔️', 'Mercenários', 'x:merc']];
 

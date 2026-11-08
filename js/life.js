@@ -31,11 +31,14 @@ const Towns = {
     for (let y = v.y - R; y <= v.y + R; y++) for (let x = v.x - R; x <= v.x + R; x++) {
       const ring = Math.max(Math.abs(x - v.x), Math.abs(y - v.y) * 1.25 | 0) === R;
       if (!ring || Math.abs(x - v.x) < 2 || Math.abs(y - v.y) < 2) continue;
-      if (!World.inb(x, y) || World.blocked(x, y) || this.onRoad(x, y, 1, 1) || World.sgrid[World.idx(x, y)] >= 0) continue;
+      // a muralha é contínua: árvore ou pedra no caminho sai; só a estrada (a entrada da vila), a água e as construções abrem vão
+      if (!World.inb(x, y) || World.sgrid[World.idx(x, y)] >= 0 || !TINFO[World.tiles[World.idx(x, y)]].walk) continue;
+      { const t0 = World.tile(x, y); if (t0 === T.ROAD || t0 === T.BRIDGE) continue; }
       // a muralha não invade a área de outra vila (vilas vizinhas: cada uma fecha só o seu lado)
       if (World.villages.some((o, oi) => oi !== vi && o && !o.removed && Math.max(Math.abs(x - o.x), Math.abs(y - o.y) * 1.25) <= R + 1)) continue;
       const t = World.tile(x, y);
       if (t === T.WATER || t === T.BRIDGE) continue;
+      { const i = World.idx(x, y); if (World.obj[i] && OBJ[World.obj[i]].blocks) World.obj[i] = 0; }
       v.extra.walls.push(World.addStruct('vwall', x, y, 1, 1, civ, { growth: 3, village: vi }));
     }
     this.show(v);

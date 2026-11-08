@@ -64,14 +64,8 @@ const UIP = {
       + (L.length ? `<div class="card al-list">${L.map((a, i) => `<div class="al-row u${a.urg}"><span class="al-ic">${a.ic}</span><span class="al-t">${UI.esc(a.text)}${a.when ? `<small>⏳ ${UI.esc(a.when)}</small>` : ''}</span>${a.go ? `<button data-act="alGo" data-i="${i}">Ir</button>` : ''}</div>`).join('')}</div>`
         : '<div class="card kalone"><div class="dy-empty"><span>🕊️</span><b>Nada pendente</b><small>Prazos, convites, dilemas e perigos aparecem aqui (e no sino ao lado do seu retrato).</small></div></div>');
   },
-  bell() {
-    let el = document.getElementById('alertBell');
-    if (!el) { el = document.createElement('button'); el.id = 'alertBell'; el.className = 'al-bell'; el.title = 'Avisos'; el.addEventListener('click', () => { if (G.state === 'play') UIP.goPage('x:alerts'); }); document.body.appendChild(el); }
-    if (G.state !== 'play' || G.place && G.place.kind === 'battle' || UI.isOpen()) { el.classList.add('hidden'); return; } // só na tela do jogo
-    const L = this.alerts(), urg = L.some(a => a.urg >= 3);
-    el.classList.toggle('hidden', !L.length); el.classList.toggle('urg', urg);
-    const t = `🔔<b>${L.length}</b>`; if (el.innerHTML !== t) el.innerHTML = t;
-  },
+  // o sino de avisos saiu do jogo: se ainda existir (jogo aberto antes da atualização), some
+  bell() { const el = document.getElementById('alertBell'); if (el) el.remove(); },
   // ---------------------------------------------------------------- 2. ficha do item
   sources(k) {
     const out = [], it = ITEMS[k]; if (!it) return out;
@@ -204,7 +198,7 @@ const UIP = {
     if (act === 'knav' && !groups.some(g => g[0] === 'Gestão')) {
       // o Reinado aparece sempre: rei, governador ou nenhum dos dois (aí só Títulos e corte); o número é o de alertas
       const n = UIP.alerts().length, rn = Reinado.badge();
-      const items = [['x:alerts', '🔔', 'Avisos', n, UIP.alerts().some(a => a.urg >= 3)], ...(typeof Board !== 'undefined' ? Board.navItems() : []), ['x:board', '📊', 'Negócios', Biz.list().length], ['x:merc', '⚔️', 'Mercenários', typeof Mercs !== 'undefined' ? Mercs.mine().length || '' : ''], ['x:games', '🏅', 'Jogos', typeof Games !== 'undefined' && Games.S().on ? '!' : ''], ['x:reign', '👑', 'Reinado', rn || '', rn > 0]];
+      const items = [...(typeof Board !== 'undefined' ? Board.navItems() : []), ['x:board', '📊', 'Negócios', Biz.list().length], ['x:merc', '⚔️', 'Mercenários', typeof Mercs !== 'undefined' ? Mercs.mine().length || '' : ''], ['x:games', '🏅', 'Jogos', typeof Games !== 'undefined' && Games.S().on ? '!' : ''], ['x:reign', '👑', 'Reinado', rn || '', rn > 0]];
       groups = [groups[0], ['Gestão', items], ...groups.slice(1)];
     }
     return nh0(groups, cur, act, body);

@@ -74,7 +74,7 @@ async function run(width, height) {
     });
     await page.evaluate(() => { UI.close(); UI.sel.knav = 'overview'; UI.showKingdom(); });
     const menu = await page.evaluate(() => [...UI.panel.querySelectorAll('.snav .snav-i')].map(e => e.dataset.k));
-    for (const k of ['overview', 'biz', 'families', 'tree', 'x:alerts', 'x:painel', 'x:ordens', 'x:outlaw', 'x:games', 'x:reign']) if (!menu.includes(k)) fails.push(`${tag}: o menu do Portfólio não tem ${k}`);
+    for (const k of ['overview', 'biz', 'families', 'tree', 'x:painel', 'x:ordens', 'x:outlaw', 'x:games', 'x:reign']) if (!menu.includes(k)) fails.push(`${tag}: o menu do Portfólio não tem ${k}`);
     let seenTabs = 0;
     for (const nav of menu) {
       await page.evaluate(nav => { UI.sel.kpageOf = {}; UI.sel.knav = nav; UI.showKingdom(); window.__sel0 = JSON.stringify(UI.sel); }, nav);

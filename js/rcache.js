@@ -60,6 +60,9 @@ const RCache = {
     return (ctx, s, X, Y, time) => {
       // só prédios de verdade do mundo, desenhados opacos e fora das salas
       if (!this.on || !s || s.id === undefined || World.structs[s.id] !== s || ctx.globalAlpha !== 1 || G.place || G.dungeon) return draw(ctx, s, X, Y, time);
+      // trechos de muro são poucos retângulos: desenhados direto, emendam sem fresta (a cópia recortada no tamanho do
+      // quadrado deixava ver o chão entre um trecho e outro em alguns zooms)
+      if (s.w === 1 && s.h === 1 && World.wallAt(s.x, s.y)) return draw(ctx, s, X, Y, time);
       time = RCACHE_STILL; // construção parada: sempre o mesmo instante
       const res = this.res(ctx), key = this.key(s, res), now = G.realTime || 0;
       let c = this.map.get(s);
