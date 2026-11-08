@@ -173,6 +173,8 @@ O que existia em dobro virou uma coisa só, sempre a que tem efeito de verdade n
 - **Porto numa página só:** no alto, o porto (mestre, bolsa do porto, o seu ouro e o navio); embaixo, três colunas — **Vender ao porto**, **Mercado do mar** (comprar peixes, frutos do mar e produtos do mar, em abas) e o **navio** (estaleiro, porão, zarpar), o equipamento e o contrabando em abas. Lista que não cabe vira partes ◀ 1/2 ▶, sem cortar nem rolar.
 - **Frutos do mar novos:** camarão, caranguejo, lagosta, ostra e lula (vêm na pesca no mar e no porto) e o prato Camarão na Brasa (fogueira). O porto compra e vende tudo o que vem do mar.
 - **Capanga:** na janela Equipar, **Vida** (cure com comida e remédios da mochila: no capanga cada um cura o dobro) e **Cavalo** (dê um do seu haras ou compre na hora; montado, anda mais rápido, tem mais vida e golpe mais forte; tirar devolve ao haras).
+- **Ferreiro:** a forja, a bigorna e a mó abrem Criar com a oficina do ferreiro liberada (Forja, Fundição e Oficina do Armeiro); as estantes de ferramentas e de armas abrem a loja.
+- **Conversar com todos:** quem está dormindo acorda para falar com você, e clicar em qualquer parte do corpo (também de quem está a cavalo) abre a conversa.
 - **Reis e rainhas:** dá para conversar com a realeza e o conselho mesmo em guerra ou com a casa deles em guerra com a sua (só não enquanto atacam você).
 
 ## Novidades: Reinado e seus reinos em páginas

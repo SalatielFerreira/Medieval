@@ -898,10 +898,11 @@ const Game = {
     e.npc = p; G.spawned.set(p.id, e);
     return p;
   },
-  // dá para conversar com esta criatura? (pessoas, guardas e soldados; só não quem está lutando contra você agora,
+  // dá para conversar com esta criatura? (pessoas, guardas e soldados, também quem está dormindo — acorda para falar;
+  // só não quem está lutando contra você agora,
   // as tropas no campo de batalha e os duelistas da arena)
   talkable(e) {
-    if (!e || e.dead || e.sleeping || e.battle || e.faction === 'duelist' || e.faction === 'arena' || e.faction === 'engine') return false;
+    if (!e || e.dead || e.battle || e.faction === 'duelist' || e.faction === 'arena' || e.faction === 'engine') return false;
     if (!e.npc && e.kind !== 'guard') return false;
     // inimigo: o clique ataca — menos a realeza e o conselho (rei, rainha, príncipes): com eles sempre dá para
     // conversar, até em guerra ou com a casa deles em guerra com a sua, a não ser que estejam atacando você agora
@@ -913,7 +914,7 @@ const Game = {
     let best = null, bd = 1.9 * TILE;
     for (const e of G.ents) {
       if (!e.dead && !e.npc && e.kind === 'guard' && !e.battle && !e.angry && !hostile(e, P) && U.dist(e.x, e.y, P.x, P.y) < bd) this.soldierFor(e);
-      if (e.dead || e.sleeping || !e.npc || !this.talkable(e)) continue;
+      if (e.dead || !e.npc || !this.talkable(e)) continue;
       const d = U.dist(e.x, e.y, P.x, P.y);
       if (d < bd) { bd = d; best = e; }
     }
@@ -2077,10 +2078,12 @@ const Game = {
     if (G.place) for (const f of Places.furn) { if (f.flat) Places.draw(ctx, f, f.x * TILE - cx, f.y * TILE - cy, t); else furnList.push({ y: (f.y + f.h) * TILE - (f.y < 0 ? 40 : 3), k: 5, f }); }
     // pessoa sob o cursor: destaque e conversa ao clicar
     G.hoverNpc = null;
-    { let bd = 22;
+    { let bd = 24;
       for (const e of G.ents) {
         if (!this.talkable(e)) continue;
-        const d = U.dist(e.x, e.y - 16, G.mouse.wx, G.mouse.wy);
+        // o corpo inteiro conta (dos pés à cabeça); quem está a cavalo é desenhado mais alto
+        const top = e.npc && e.npc.horse && !G.place ? 44 : 30, my = U.clamp(G.mouse.wy, e.y - top, e.y - 6);
+        const d = U.dist(e.x, my, G.mouse.wx, G.mouse.wy);
         if (d < bd) { bd = d; G.hoverNpc = e; }
       }
       // soldado sem nome ainda: ganha nome e família na hora em que você aponta para ele
@@ -2197,7 +2200,7 @@ const Game = {
     let talkTo = null, td = 1.9 * TILE;
     const tags = [];
     for (const e of G.ents) {
-      if (e.dead || e.sleeping || e.kind === 'lord' || (!e.npc && e.kind !== 'guard')) continue;
+      if (e.dead || e.kind === 'lord' || (!e.npc && e.kind !== 'guard')) continue;
       const d = U.dist(e.x, e.y, P.x, P.y);
       if (d > 5 * TILE) continue;
       tags.push([d, e]);
