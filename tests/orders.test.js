@@ -31,11 +31,11 @@ module.exports = async () => {
       const s = { type: 'biz_smithy', workers: [] }; const f0 = Biz.forecast.call(Biz, s);
       ok(f0 && typeof f0.gold === 'number', 'a previsão dos empreendimentos quebrou');
       // proteção: um rei irmão corta a multa pela metade
-      const c = G.civs.find(x => !x.dead && x.ruler !== 'player' && x.rulerId != null); const king = G.people[c.rulerId]; const old = king.soc; king.soc = 'smiths';
+      const c = G.civs.find(x => !x.dead && x.ruler !== 'player' && x.rulerId != null); const king = G.people[c.rulerId]; const old = king.ssoc; king.ssoc = 'smiths';
       const w0 = (Crime.W()[c.id] || { bounty: 0 }).bounty; KOrders.S().viol = -10; Crime.commit(c.id, 'furto', 100, null, null, true);
       ok((Crime.W()[c.id].bounty - w0) === 50, 'o rei irmão não cortou a multa: ' + (Crime.W()[c.id].bounty - w0));
       ok(Prison.sentence(c.id, 600).brother === king, 'o rei irmão não encurtou a pena');
-      king.soc = old;
+      king.ssoc = old;
       // segredos (Companheiro ou mais)
       G.assassins = 2; const t = Secret.secret(); ok(typeof t === 'string' && t.length > 5, 'não há segredos');
       // doação

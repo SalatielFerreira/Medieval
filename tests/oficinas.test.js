@@ -25,6 +25,16 @@ module.exports = async () => {
       if (e) { e.sleeping = false; e.npc.horse = '#5a3a22'; G.mouse.wx = e.x; G.mouse.wy = e.y - 40; Game.render ? 0 : 0;
         let bd = 24, hit = null; for (const q of G.ents) { if (!Game.talkable(q)) continue; const top = q.npc && q.npc.horse && !G.place ? 44 : 30, my = U.clamp(G.mouse.wy, q.y - top, q.y - 6); const d = U.dist(q.x, my, G.mouse.wx, G.mouse.wy); if (d < bd) { bd = d; hit = q; } }
         ok(hit === e, 'clicar na cabeça do cavaleiro não pega a pessoa'); }
+      // conversa: os botões respondem com todos os reis e com quem é de sociedade secreta (o nome da sociedade não
+      // pode atropelar a ficha da conversa)
+      const people = [...G.civs.filter(c => c.rulerId != null).map(c => G.people[c.rulerId]), ...G.people.filter(q => q.alive && q.ssoc).slice(0, 5)].filter(Boolean);
+      for (const q of people) {
+        UI.showTalk(q.id); const a0 = q.aff; let err = null;
+        try { UI.talkAct({ op: 'compliment', id: q.id }); } catch (x) { err = x; }
+        ok(!err && (q.aff !== a0 || (q.soc && q.soc.n)), `os botões da conversa não respondem com ${q.name} (${q.rank}${q.ssoc ? ', sociedade ' + q.ssoc : ''})`);
+      }
+      { const q = people[0]; q.soc = 'smiths'; UI.showTalk(q.id); let err = null; try { UI.talkAct({ op: 'talk', id: q.id }); } catch (x) { err = x; } ok(!err && q.ssoc === 'smiths' && typeof q.soc === 'object', 'jogo salvo antigo (sociedade no campo da conversa) ainda quebra a conversa'); }
+      UI.close();
       return out;
     });
     fails.push(...r);

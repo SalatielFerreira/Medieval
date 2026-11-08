@@ -43,13 +43,15 @@ const Secret = {
   member() { return !!KOrders.S().key; },
   rank() { return this.member() ? KOrders.rank() : -1; },
   // quem é irmão de uma sociedade: os do ofício dela e quem entrou por escolha
-  isBro(p, k) { return !!p && p.alive && (p.soc === k || (!p.soc && typeof Commerce !== 'undefined' && Commerce.guildOf(p) === k)); },
+  // a sociedade de cada pessoa fica em p.ssoc (p.soc é a ficha da conversa; jogos salvos antigos guardavam o nome lá)
+  ssoc(p) { if (p && typeof p.soc === 'string') { p.ssoc = p.soc; p.soc = {}; } return p ? p.ssoc : undefined; },
+  isBro(p, k) { const m = this.ssoc(p); return !!p && p.alive && (m === k || (!m && typeof Commerce !== 'undefined' && Commerce.guildOf(p) === k)); },
   myBro(p) { const k = this.key(); return !!k && this.isBro(p, k); },
   brothers(k) { return G.people.filter(p => this.isBro(p, k) && p.age >= 16); },
   // os poderosos de cada sociedade: reis, nobres e cavaleiros (sorteados uma vez; os reis novos decidem quando assumem)
   seed() {
     const S = this.S(), keys = Object.keys(SECRET_SOC);
-    const roll = (p, ch) => { if (!p || p.socRoll) return; p.socRoll = true; if (U.hash2(p.id, 77, 3) < ch) p.soc = keys[Math.floor(U.hash2(p.id, 13, 5) * keys.length) % keys.length]; };
+    const roll = (p, ch) => { if (!p || p.socRoll) return; p.socRoll = true; if (U.hash2(p.id, 77, 3) < ch) p.ssoc = keys[Math.floor(U.hash2(p.id, 13, 5) * keys.length) % keys.length]; };
     for (const c of G.civs) if (!c.dead && c.ruler !== 'player' && c.rulerId != null) roll(G.people[c.rulerId], 0.7);
     if (!S.seeded) { for (const p of G.people) if (p.alive && ['consort', 'heir'].includes(p.rank)) roll(p, 0.35); else if (p.alive && p.rank === 'knight') roll(p, 0.3); S.seeded = true; }
   },

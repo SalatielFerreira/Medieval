@@ -9,7 +9,8 @@ const SOC_OPS = ['drink', 'congrats', 'condole', 'advice', 'dice', 'spar', 'stor
 const SOC_GOOD = ['💍', '👶', '🏅', '🎓', '🏪', '🛡️', '⚜️', '🐎'];
 const SOC_FIGHT = ['soldier', 'knight', 'mercenary', 'hunter', 'ruler', 'heir'];
 const Social = {
-  S(p) { return p.soc || (p.soc = {}); },
+  // a ficha da conversa; se um jogo salvo antigo guardou ali o nome da sociedade secreta, ele passa para p.ssoc
+  S(p) { if (typeof p.soc === 'string') { p.ssoc = p.soc; p.soc = {}; } return p.soc || (p.soc = {}); },
   done(p, op) { return this.S(p)[op] === G.day; },
   ela(p) { return p.sex === 'f' ? 'ela' : 'ele'; },
   o(p) { return p.sex === 'f' ? 'a' : 'o'; },
