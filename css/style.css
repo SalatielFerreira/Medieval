@@ -5368,3 +5368,7 @@ body.small .pt2-pane .sea-tb td.act-row { display: table-cell; white-space: nowr
 body.small .pt2 .pt2-pane .sea-tb button { padding: 2px 4px !important; font-size: 9.5px !important; }
 body.small .pt2-pane > small.muted { display: none; }
 body.small .pt2-pane .sea-tb th:nth-child(n+2):nth-child(-n+4), body.small .pt2-pane .sea-tb td:nth-child(n+2):nth-child(-n+4) { width: 11%; text-align: center; letter-spacing: 0; }
+/* resposta ao apertar E (o motivo de uma ação recusada, no balão de interação) */
+.pt-hint { color: #ffe9b0; }
+.pt-hint.bad { color: #ff9a86; }
+.pt-hint.gold { color: #ffd76a; }

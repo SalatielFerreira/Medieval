@@ -7,7 +7,7 @@ module.exports = async () => {
   try {
     const r = await page.evaluate(() => {
       const out = [], ok = (c, t) => { if (!c) out.push(t); };
-      UI.msg = () => {}; P.god = true;
+      P.god = true; // (sem silenciar UI.msg: o teste confere a resposta no balão)
       // ferreiro
       const s = World.structs.find(x => x && x.type === 'smith' && !x.removed);
       ok(s && Places.enterRoom(s), 'não entrou no ferreiro');
@@ -35,6 +35,18 @@ module.exports = async () => {
       }
       { const q = people[0]; q.soc = 'smiths'; UI.showTalk(q.id); let err = null; try { UI.talkAct({ op: 'talk', id: q.id }); } catch (x) { err = x; } ok(!err && q.ssoc === 'smiths' && typeof q.soc === 'object', 'jogo salvo antigo (sociedade no campo da conversa) ainda quebra a conversa'); }
       UI.close();
+      // E destravado: uma janela "aberta" que não está na tela não prende mais a tecla
+      if (G.place) Places.exit(true);
+      const st = World.structs.find(x => x && x.type === 'store' && !x.removed); Places.enterRoom(st);
+      const fu = Places.furn.find(q => q.act === 'shop'); P.x = (fu.x + fu.w / 2) * TILE; P.y = (fu.y + fu.h + 0.6) * TILE;
+      UI.cur = { fn: 'showInventory', args: [] }; UI.panel.classList.add('hidden');
+      Game.onKey('KeyE'); ok(UI.cur && UI.cur.fn === 'showShop' && !UI.panel.classList.contains('hidden'), 'com uma janela fantasma, o E não abriu a loja');
+      UI.close();
+      // resposta visível: a recusa aparece no balão de interação
+      const k = Shops.keeper(st); if (k) k.shop = null;
+      const wk = Places.furn.find(q => q.act === 'shop'); wk.act = 'work'; Game.interact();
+      const pm = document.getElementById('prompt').textContent; ok(/ninguém|cuidando|fechado/i.test(pm) || (UI.cur && !UI.panel.classList.contains('hidden')), 'a recusa ao apertar E não aparece em lugar nenhum: ' + pm);
+      UI.close(); Places.exit(true);
       return out;
     });
     fails.push(...r);
