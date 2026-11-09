@@ -17,7 +17,7 @@ module.exports = async () => {
       ok(Secret.brothers('smiths').length > 0, 'a sociedade não tem irmãos');
       { const b = UI.panel.querySelector('.snav-body'); ok(b.scrollHeight <= b.clientHeight + 1, 'a página das sociedades não cabe na janela'); }
       // o convite: um irmão amigo
-      const bro = Secret.brothers('smiths').find(p => p.age >= 16); bro.met = true; bro.aff = 50;
+      const bro = Secret.brothers('smiths').find(p => p.age >= 16); bro.met = true; bro.aff = 100; // amizade 100: convite garantido
       Secret.ask('smiths'); ok(Secret.S().invites.smiths, 'o irmão amigo não convidou');
       Secret.accept('smiths'); ok(KOrders.S().key === 'smiths' && KOrders.S().mission && KOrders.rankName() === 'Aprendiz', 'não entrou como Aprendiz');
       ok(Commerce.st().member === 'smiths', 'a guilda do ofício não virou a sociedade');
