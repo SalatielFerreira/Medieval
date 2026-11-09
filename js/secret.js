@@ -3,8 +3,10 @@
 // viraram uma coisa só. São sete sociedades (Templários, Illuminati, Maçonaria, Priorado de Sião, Hospitalários, Ordem
 // Teutônica e Rosa-Cruz), cada uma com os seus irmãos de verdade: os mestres de um ofício (os ferreiros são Templários,
 // os mercadores são Illuminati...) e gente poderosa — reis, nobres e cavaleiros — que entrou por escolha própria.
-//  • Entrar: só por convite. Um irmão que gosta de você (amizade) convida quando você tem o nível e a fama que a
-//    sociedade pede; ou você pede o apadrinhamento a um irmão amigo. Também dá para fundar a sua.
+//  • Entrar: só por convite, e quem manda é a amizade com um irmão que você conhece (nível e fama não contam): com
+//    amizade 100 o convite é garantido; abaixo disso, a chance cai (80+: 50% por mês, 60+: 25%, 40+: 10%). Dá para pedir
+//    o apadrinhamento (na página ou conversando com o irmão). Saiu? Volta quando um amigo convidar (a partir do mês
+//    seguinte); expulso pelo juramento, só com o convite de um amigo de amizade 100. Também dá para fundar a sua.
 //  • Graus: Aprendiz → Companheiro → Mestre → Grão-Mestre, cumprindo a missão secreta de cada mês (a de antes das ordens).
 //  • Benefícios (crescem com o grau):
 //    🛡️ irmãos poderosos protegem: no reino de um rei irmão a multa cai pela metade (Mestre: o caso é abafado) e a pena
@@ -61,7 +63,11 @@ const Secret = {
   // os irmãos que você conhece (e gostam de você)
   friends(k) { return this.brothers(k).filter(p => p.met && (p.aff || 0) >= 15).sort((a, b) => b.aff - a.aff); },
   // ---------------------------------------------------------------- convites
-  reqs(k) { const d = SECRET_SOC[k]; return P.level >= d.lvl && (G.fame || 0) >= d.fame; },
+  reqs(k) { return true; }, // (nível e fama não contam mais: quem manda é a amizade)
+  // chance de convite por mês, pela amizade com o irmão mais amigo
+  chance(aff) { return aff >= 100 ? 1 : aff >= 80 ? 0.5 : aff >= 60 ? 0.25 : aff >= 40 ? 0.1 : 0; },
+  // pode ser convidado de novo? (saiu neste mês: espera o próximo; expulso há menos de um ano: só amizade 100)
+  blocked(k, aff) { const K = KOrders.S(), S = this.S(); if ((K.left[k] || -99) === G.day) return 'Você acabou de sair: espere o mês que vem.'; if ((S.expelled && S.expelled[k] || -99) > G.day - 12 && aff < 100) return 'Os irmãos expulsaram você: só um amigo de amizade 100 convida de volta.'; return null; },
   invite(k, p) {
     const S = this.S(); if (S.invites[k] || this.member()) return;
     S.invites[k] = { by: p.id, until: G.day + 3 };
@@ -69,20 +75,23 @@ const Secret = {
     UI.msg(`🕯️ ${People.full(p)} chamou você num canto: a ${SECRET_SOC[k].name} quer você entre os irmãos. Veja em Portfólio → Sociedades secretas.`, 'gold', true);
     Progress.diary(`🕯️ Recebeu um convite secreto da ${SECRET_SOC[k].name}, por ${People.full(p)}.`);
   },
-  ask(k) {
-    const S = this.S(), d = SECRET_SOC[k], f = this.friends(k)[0];
-    if (this.member()) return;
-    if ((S.asked[k] || -99) > G.day - 2) { UI.msg('Os irmãos ainda estão pensando no seu pedido.', 'bad'); return; }
-    if (!f) { UI.msg(`Você não conhece nenhum irmão da ${d.name} que goste de você.`, 'bad'); return; }
+  // pedir o apadrinhamento (a um irmão escolhido ou ao mais amigo): amizade 100 é sim na hora
+  ask(k, who) {
+    const S = this.S(), d = SECRET_SOC[k], f = who && this.isBro(who, k) ? who : this.friends(k)[0];
+    if (this.member()) return { text: 'Você já é de uma sociedade.', note: '' };
+    if (!f) { UI.msg(`Você não conhece nenhum irmão da ${d.name} que goste de você.`, 'bad'); return { text: '...', note: 'Faça amizade com um irmão.' }; }
+    const aff = Math.round(f.aff || 0), bl = this.blocked(k, aff);
+    if (bl) { UI.msg(`${People.full(f)}: "${bl}"`, 'bad'); return { text: bl, note: '' }; }
+    if ((S.asked[k] || -99) > G.day - 1 && aff < 100) { UI.msg('Os irmãos ainda estão pensando no seu pedido (tente no mês que vem).', 'bad'); return { text: 'Ainda estamos pensando no seu pedido.', note: 'Tente no mês que vem.' }; }
     S.asked[k] = G.day;
-    if (!this.reqs(k)) { UI.msg(`${People.full(f)}: "Ainda não. A ${d.name} pede nível ${d.lvl} e ${d.fame} de fama."`, 'bad'); return; }
-    if (f.aff >= 35 || Math.random() < 0.4) this.invite(k, f);
-    else UI.msg(`${People.full(f)}: "Ainda não confio o bastante em você para isso."`, 'bad');
+    if (aff >= 100 || (aff >= 40 && Math.random() < Math.min(0.9, (aff - 30) / 70))) { this.invite(k, f); return { text: `Você é dos nossos. Bem-vindo à ${d.name}.`, note: 'Convite recebido: aceite em Sociedades secretas.' }; }
+    UI.msg(`${People.full(f)}: "Ainda não confio o bastante em você para isso."`, 'bad');
+    return { text: 'Ainda não confio o bastante em você para isso.', note: `Amizade ${aff}: com 100 o convite é garantido.` };
   },
   accept(k) {
     const S = this.S(); if (!S.invites[k]) return;
     delete S.invites[k]; S.joinOk = k;
-    KOrders.join(k); S.joinOk = null;
+    try { KOrders.join(k); } finally { S.joinOk = null; }
     if (this.key() === k) { S.invites = {}; if (typeof Commerce !== 'undefined' && !Commerce.st().myGuild) Commerce.st().member = k; }
   },
   decline(k) { const S = this.S(); const iv = S.invites[k]; delete S.invites[k]; const p = iv && G.people[iv.by]; if (p) p.aff = Math.max(-100, (p.aff || 0) - 5); },
@@ -92,7 +101,7 @@ const Secret = {
     for (const k in S.invites) if (S.invites[k].until < G.day) delete S.invites[k];
     if (!this.member()) {
       // um irmão amigo convida
-      if (!Object.keys(S.invites).length) for (const k of Object.keys(SECRET_SOC)) { const f = this.friends(k)[0]; if (f && f.aff >= 45 && this.reqs(k) && Math.random() < 0.25) { this.invite(k, f); break; } }
+      if (!Object.keys(S.invites).length) for (const k of Object.keys(SECRET_SOC).sort((a, b) => ((this.friends(b)[0] || {}).aff || 0) - ((this.friends(a)[0] || {}).aff || 0))) { const f = this.friends(k)[0]; if (!f || this.blocked(k, f.aff)) continue; if (Math.random() < this.chance(f.aff)) { this.invite(k, f); break; } }
       return;
     }
     const k = this.key(), r = this.rank();
@@ -153,12 +162,12 @@ const Secret = {
     const ben = [['🛡️', 'Irmãos protegem', 'Um rei irmão alivia a multa e a prisão; irmãos não aceitam matar você.'], ['💰', 'Investimentos', 'Os seus empreendimentos rendem mais; vendas e encomendas melhores.'],
       ['⚔️', 'Exército', 'Cavaleiros da sociedade seguem você e irmãos lutam nas suas guerras.'], ['🕯️', 'Segredos e influência', 'Cartas com os segredos do mês, reis irmãos mais amigos e votos nas eleições.']];
     const cards = Object.entries(SECRET_SOC).map(([k, s]) => {
-      const pw = this.powerful(k), f = this.friends(k), iv = S.invites[k], e = KOrders.why(k), ok = this.reqs(k);
+      const pw = this.powerful(k), f = this.friends(k), iv = S.invites[k], best = f.length ? Math.round(f[0].aff) : 0, ch = this.chance(best), bl = f.length ? this.blocked(k, best) : null;
       const btn = iv ? `<button class="primary" data-act="sec" data-op="accept" data-k="${k}">🕯️ Aceitar o convite</button>`
-        : f.length ? `<button data-act="sec" data-op="ask" data-k="${k}" ${ok ? '' : 'disabled'}>🤝 Pedir a ${esc(f[0].name)}</button>` : '<small class="muted">Faça amizade com um irmão</small>';
+        : f.length ? `<button data-act="sec" data-op="ask" data-k="${k}" ${bl || this.member() ? 'disabled' : ''}>🤝 Pedir a ${esc(f[0].name)}</button>` : '<small class="muted">Faça amizade com um irmão</small>';
       return `<div class="sc-card ${iv ? 'inv' : ''}" style="--c:${s.col};--x:${s.cross}">${this.emblem(s, 56)}<b>${esc(s.name)}</b><i class="sc-motto">"${esc(s.motto)}"</i>
         <small class="sc-trade">🔨 ${esc(Commerce.GUILDS[k] ? Commerce.GUILDS[k].trade : '')}</small>
-        <div class="sc-req"><span class="${P.level >= s.lvl ? 'ok' : ''}">⭐ nível ${s.lvl}</span><span class="${(G.fame || 0) >= s.fame ? 'ok' : ''}">✨ fama ${s.fame}</span></div>
+        <div class="sc-req"><span class="${best >= 100 ? 'ok' : ''}">🤝 amizade ${f.length ? best : '—'}/100</span><span class="${ch ? 'ok' : ''}">${bl ? '⛔ ' + (/expuls/.test(bl) ? 'expulso' : 'saiu agora') : ch >= 1 ? '🕯️ convite garantido' : ch ? `🕯️ ${Math.round(ch * 100)}% por mês` : '🕯️ sem convite (40+)'}</span></div>
         <div class="sc-pw">${pw.kings.length ? `<span>👑 ${pw.kings.length} ${pw.kings.length === 1 ? 'rei' : 'reis'}</span>` : ''}${pw.nobles.length ? `<span>🎖️ ${pw.nobles.length} ${pw.nobles.length === 1 ? 'nobre' : 'nobres'}</span>` : ''}<span>🤝 ${this.brothers(k).length} ${this.brothers(k).length === 1 ? 'irmão' : 'irmãos'}</span></div>
         <small class="sc-fr">${f.length ? `Você conhece: ${f.slice(0, 2).map(p => `${esc(p.name)} (${Math.round(p.aff)})`).join(', ')}` : 'Você não conhece nenhum irmão'}</small>
         <div class="sc-ca">${btn}</div>${iv ? `<small class="sc-ivby">convite de ${esc(People.full(G.people[iv.by]))} · até ${Calendar.short(iv.until)} · <button class="link" data-act="sec" data-op="decline" data-k="${k}">recusar</button></small>` : ''}</div>`;
@@ -167,7 +176,7 @@ const Secret = {
     // (três páginas: cabe na janela; as sociedades se dividem em partes se não couberem)
     const about = `<div class="sc-hero"><div class="sc-candle">🕯️</div><div class="sc-htx"><small>Irmandades escondidas nos Sete Reinos</small><h3>Sociedades secretas</h3><p>Ninguém entra sem ser convidado: um irmão precisa confiar em você. Lá dentro, os irmãos se protegem, enriquecem juntos e sabem o que ninguém sabe.</p></div>
         <div class="sc-ways">${ben.map(b => `<div><span>${b[0]}</span><b>${b[1]}</b><small>${b[2]}</small></div>`).join('')}</div></div>
-      <div class="sc-how"><b>Como entrar</b><span>1. Faça amizade com um irmão (converse, dê presentes).</span><span>2. Tenha o nível e a fama que a sociedade pede.</span><span>3. Peça o apadrinhamento a ele, ou espere: um irmão amigo convida você.</span></div>`;
+      <div class="sc-how"><b>Como entrar</b><span>1. Faça amizade com um irmão (converse, dê presentes).</span><span>2. Quanto maior a amizade, maior a chance do convite: com 100, ele é garantido (40+: 10% por mês, 60+: 25%, 80+: 50%).</span><span>3. Peça o apadrinhamento (aqui ou conversando com ele), ou espere o convite. Saiu? Um amigo convida você de volta.</span></div>`;
     const found = `<div class="card sc-found"><div class="sec">✨ Fundar a sua sociedade <span>${fe ? esc(fe) : 'você pode'}</span></div><p class="dt-desc">Você é o Grão-Mestre desde o primeiro dia: escolha o nome e a cor. Todo mês a sua sociedade arma um cavaleiro novo (até 6), com soldo de 20 🪙 cada.</p>
         <div class="act-row ko-found"><input id="koName" maxlength="40" placeholder="Irmandade de ${esc(G.surname || G.name)}">${KO_COLORS.map(c => `<button class="ko-col" data-act="ko" data-op="col" data-c="${c}" style="background:${c}" ${UI.sel.koCol === c ? 'data-on="1"' : ''}></button>`).join('')}
         <button class="primary" data-act="ko" data-op="found" ${fe ? 'disabled' : ''}>🕯️ Fundar — 4.000 🪙</button></div></div>`;
@@ -194,9 +203,25 @@ const Secret = {
   Game.newGame = async function (...a) { const r = await ng0(...a); if (G.state === 'play') { try { Secret.seed(); } catch (e) { console.error(e); } } return r; }; // (espera o mundo ficar pronto)
   // só entra quem foi convidado
   const why0 = KOrders.why.bind(KOrders);
-  KOrders.why = function (k) { const e = why0(k); if (e) return e; return Secret.S().joinOk === k || Secret.S().invites[k] ? null : 'Só entra quem é convidado.'; };
+  // na conversa com um irmão que você conhece: pedir para entrar na sociedade dele
+  const lac0 = Lifesim.acts.bind(Lifesim);
+  Lifesim.acts = function (p, acts) {
+    lac0(p, acts);
+    const k = p && Secret.ssoc(p) || (p && typeof Commerce !== 'undefined' ? Commerce.guildOf(p) : null);
+    if (p && p.met && p.age >= 16 && !p.capanga && k && SECRET_SOC[k] && Secret.isBro(p, k) && !Secret.member()) acts.push(['scask', `🕯️ Pedir para entrar na ${SECRET_SOC[k].name}`]);
+  };
+  const tka0 = UI.talkAct.bind(UI);
+  UI.talkAct = function (d) {
+    if (d && d.op === 'scask') { const p = People.get(+d.id); const k = p && (Secret.ssoc(p) || Commerce.guildOf(p)); if (p && k) { const r = Secret.ask(k, p); this.showTalk(p.id, r); } return; }
+    return tka0(d);
+  };
+  // convidado entra (nível, fama e a espera depois de sair não contam: o convite de um amigo basta)
+  KOrders.why = function (k) { const S = Secret.S(); if (KOrders.S().key) return 'Você já é de uma sociedade.'; if (S.joinOk === k || S.invites[k]) return null; const e = why0(k); return e || 'Só entra quem é convidado.'; };
   const lv0 = KOrders.leave.bind(KOrders);
-  KOrders.leave = function (...a) { const r = lv0(...a); if (typeof Commerce !== 'undefined') Commerce.st().member = null; return r; };
+  KOrders.leave = function (why, ...a) {
+    const k = KOrders.S().key; if (k && /expuls/.test(String(why || ''))) { const S = Secret.S(); S.expelled = S.expelled || {}; S.expelled[k] = G.day; }
+    const r = lv0(why, ...a); if (typeof Commerce !== 'undefined') Commerce.st().member = null; return r;
+  };
   // juramento: crimes (as sociedades estritas) — o de antes olhava os nomes das ordens antigas
   const cm0 = Crime.commit.bind(Crime);
   Crime.commit = function (ci, what, fine, ...rest) {
