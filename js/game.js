@@ -854,8 +854,8 @@ const Game = {
       case 'barracks': return 'Quartel — treinar soldados';
       case 'port': return '⚓ Porto';
       case 'cemetery': { const n = Graves.inCiv(s.owner).length; return `⚰️ Cemitério de ${CIV_DEFS[s.owner].short}${n ? ' — ' + n + (n === 1 ? ' lápide da família' : ' lápides da família') : ''}`; }
-      case 'store': case 'smith': case 'lumber': case 'quarry': return `${SHOPS[s.type].icon} ${SHOPS[s.type].name} de ${World.villages[s.village].name}`;
-      case 'tavern': return 'Taverna de ' + World.villages[s.village].name;
+      case 'store': case 'smith': case 'lumber': case 'quarry': return `${SHOPS[s.type].icon} ${SHOPS[s.type].name}${World.villages[s.village] ? ' de ' + World.villages[s.village].name : ''}`; // (loja de vila que sumiu: sem o nome)
+      case 'tavern': return 'Taverna' + (World.villages[s.village] ? ' de ' + World.villages[s.village].name : '');
       case 'castle': return 'Castelo — ' + CIV_DEFS[s.owner].name;
       case 'fmill': case 'fshop': case 'fforge': case 'ffarm': case 'fvine': return Families.bizName(s);
       case 'chapel': return '⛪ Capela de ' + (World.villages[s.village] ? World.villages[s.village].name : '');

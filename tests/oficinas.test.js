@@ -47,6 +47,17 @@ module.exports = async () => {
       const wk = Places.furn.find(q => q.act === 'shop'); wk.act = 'work'; Game.interact();
       const pm = document.getElementById('prompt').textContent; ok(/ninguém|cuidando|fechado/i.test(pm) || (UI.cur && !UI.panel.classList.contains('hidden')), 'a recusa ao apertar E não aparece em lugar nenhum: ' + pm);
       UI.close(); Places.exit(true);
+      // a loja abre com qualquer item na mochila (os tabardos e elmos das ordens quebravam a do ferreiro)
+      ok(Object.keys(ITEMS).every(k => ITEMS[k].key === k), 'há itens sem o próprio código');
+      for (const k in ITEMS) Inv.add(k, 1);
+      const seenR = new Set();
+      for (const q of G.people.filter(x => x.alive && x.shop && x.age >= 14 && !x.capanga)) {
+        if (seenR.has(q.rank)) continue; seenR.add(q.rank);
+        UI.close(); UI.showTalk(q.id); const b = UI.panel.querySelector('[data-op="shopnpc"]'); if (!b) continue;
+        let err = null; try { b.click(); } catch (x) { err = x.message; }
+        ok(!err && UI.cur && UI.cur.fn === 'showShop', `com tudo na mochila, a loja de ${q.name} (${q.rank}) não abriu: ${err || (UI.cur && UI.cur.fn)}`);
+      }
+      UI.close();
       return out;
     });
     fails.push(...r);
