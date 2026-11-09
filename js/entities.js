@@ -370,6 +370,20 @@ function rrPath(ctx, x, y, w, h, r) {
 }
 function rr(ctx, x, y, w, h, r, col) { ctx.fillStyle = col; rrPath(ctx, x, y, w, h, r); ctx.fill(); }
 function ell(ctx, x, y, rx, ry, col, rot) { ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), rot || 0, 0, Math.PI * 2); ctx.fill(); }
+// sombra no chão já pronta (uma imagem pequena por tamanho e zoom), em vez de duas elipses desenhadas a cada quadro
+const GROUND_SHADOW = new Map();
+function groundShadow(ctx, rx, ry, a, rx2, ry2, a2, res) {
+  if (!res) { const tf = ctx.getTransform(); res = Math.max(1, Math.min(10, Math.round(Math.hypot(tf.a, tf.b) * 2) / 2)); }
+  const key = rx + "|" + ry + "|" + a + "|" + (rx2 || 0) + "|" + (ry2 || 0) + "|" + (a2 || 0) + "|" + res;
+  let c = GROUND_SHADOW.get(key);
+  if (!c) {
+    c = document.createElement("canvas"); c.width = Math.ceil((rx * 2 + 2) * res); c.height = Math.ceil((ry * 2 + 2) * res);
+    const g = c.getContext("2d"); g.scale(res, res); g.translate(rx + 1, ry + 1);
+    ell(g, 0, 0, rx, ry, "rgba(0,0,0," + a + ")"); if (rx2) ell(g, 0, 0, rx2, ry2, "rgba(0,0,0," + a2 + ")");
+    if (GROUND_SHADOW.size > 300) GROUND_SHADOW.clear(); GROUND_SHADOW.set(key, c);
+  }
+  ctx.drawImage(c, -rx - 1, -ry - 1, c.width / res, c.height / res);
+}
 function poly(ctx, pts, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]); ctx.closePath(); ctx.fill(); }
 function limb(ctx, x1, y1, x2, y2, w, col) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
 function limb2(ctx, x1, y1, x2, y2, x3, y3, w, col) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.stroke(); }
@@ -852,8 +866,8 @@ function humanBody(ctx, o, dir, t) {
 // O corpo é desenhado uma vez por visual e por quadro (8 quadros andando, 4 parado) numa imagem guardada,
 // na resolução da tela; a cada quadro do jogo só se copia a imagem. A arma é desenhada ao vivo (segue a mira).
 // Cidade cheia: a memória cresce com a quantidade de gente (até um teto) para as figuras não ficarem saindo e voltando,
-// e cada quadro monta figuras novas só por alguns milissegundos — o resto usa outra figura pronta da mesma pessoa ou é
-// desenhado direto (sem guardar), e as figuras ficam prontas aos poucos em vez de travar a tela.
+// e cada quadro monta figuras novas só por alguns milissegundos — o resto usa outra figura pronta da mesma pessoa, e
+// os outros passos ficam prontos aos poucos. Quem ainda não tem nenhuma figura ganha a primeira na hora.
 const HUMAN_CACHE = new Map(), HUMAN_LAST = new Map(), HUMAN_POOL = [], HUMAN_SCRATCH = {};
 const HUMAN_BUDGET = { start: 0, used: 0, ms: 3 };
 function humanLimit() { return Math.max(1400, Math.min(3200, (typeof G !== 'undefined' && G.ents ? G.ents.length : 0) * 13)); }
@@ -891,29 +905,29 @@ function drawHuman(ctx, x, y, o) {
   // a figura é a mesma para as duas direções (a da esquerda é o espelho): metade das figuras na memória
   const look = [res, o.body, o.legs, o.skin, o.hair, o.hairStyle, o.beardStyle, o.beard, o.armor, o.helmet, o.cap, o.hood, o.crown, o.cape, o.outfit,
     o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, o.regalia, !!(o.weapon || o.swing > 0 || o.rod)].join('|'), key = fr.key + '|' + look;
-  let cv = HUMAN_CACHE.get(key), direct = false;
+  let cv = HUMAN_CACHE.get(key);
   if (cv) { HUMAN_CACHE.delete(key); HUMAN_CACHE.set(key, cv); } // a mais usada fica (as esquecidas saem primeiro)
   if (!cv) {
     const B = HUMAN_BUDGET, now = performance.now();
     if (now - B.start > 8) { B.start = now; B.used = 0; } // um quadro novo: o orçamento recomeça
-    if (B.used < B.ms) {
+    // sem tempo neste quadro: usa outra figura pronta da mesma pessoa (o passo certo fica para um quadro seguinte)
+    if (B.used >= B.ms) { const lk = HUMAN_LAST.get(look); cv = lk ? HUMAN_CACHE.get(lk) : null; }
+    // monta a figura dentro do orçamento — ou já, se a pessoa ainda não tem nenhuma pronta: desenhar o corpo direto
+    // custa quase o mesmo e se repetiria a cada quadro até a figura ficar pronta
+    if (!cv) {
       cv = humanBuild(o, res, fr.t); B.used += performance.now() - now;
       const lim = humanLimit();
       while (HUMAN_CACHE.size >= lim) { const k0 = HUMAN_CACHE.keys().next().value, c0 = HUMAN_CACHE.get(k0); HUMAN_CACHE.delete(k0); if (HUMAN_POOL.length < 64) HUMAN_POOL.push(c0); }
       HUMAN_CACHE.set(key, cv); HUMAN_LAST.set(look, key);
-    } else {
-      // sem tempo neste quadro: outra figura pronta da mesma pessoa ou, se não houver, o desenho direto
-      const lk = HUMAN_LAST.get(look); cv = lk ? HUMAN_CACHE.get(lk) : null;
-      if (!cv) direct = true;
     }
   }
   const bob = o.moving ? -Math.abs(Math.sin(fr.t * 12)) * 1.1 : Math.sin(fr.t * 2.2) * 0.3;
   ctx.save();
   ctx.translate(Math.round(x), Math.round(y));
   ctx.scale(s, s);
-  ell(ctx, 0, 0, 9.5, 3.2, 'rgba(0,0,0,0.26)'); ell(ctx, 0, 0, 6, 2, 'rgba(0,0,0,0.12)'); // sombra no chão
+  groundShadow(ctx, 9.5, 3.2, 0.26, 6, 2, 0.12, res); // sombra no chão (pronta)
   if (dir < 0) ctx.scale(-1, 1);
-  if (direct) humanBody(ctx, o, 1, fr.t); else ctx.drawImage(cv, -22, -46, cv.width / res, cv.height / res);
+  ctx.drawImage(cv, -22, -46, cv.width / res, cv.height / res);
   if (dir < 0) ctx.scale(-1, 1);
 
   // ---- arma ou ferramenta (no mundo: a mira não é espelhada)
@@ -978,7 +992,7 @@ function drawAnimal(ctx, x, y, kind, dir, moving, anim, hurt) {
   const H = c => hurt ? shd('#ff8a8a', c === L.d ? -0.2 : 0) : c;
   const body = H(L.c), dark = H(L.d), belly = H(L.b);
   const hop = kind === 'rabbit' && moving ? -Math.abs(Math.sin(anim * 10)) * 5 : 0;
-  ell(ctx, 0, 0, L.bx + 2, 3.6, 'rgba(0,0,0,0.26)');
+  groundShadow(ctx, L.bx + 2, 3.6, 0.26);
   ctx.translate(0, hop);
   const by = -L.leg - L.bh / 2, top = by - L.bh / 2;
   const sw = k => moving ? Math.sin(anim * 14 + k) * 0.45 : 0;
@@ -1063,7 +1077,7 @@ function drawAnimal(ctx, x, y, kind, dir, moving, anim, hurt) {
 function drawCroc(ctx, x, y, dir, moving, anim, hurt) {
   const body = hurt ? '#ff8a8a' : '#4f6030', dark = hurt ? shd('#ff8a8a', -0.2) : '#2e3a1a', belly = hurt ? '#ffb0b0' : '#b4b07a';
   ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(dir * 1.6, 1.6); // crocodilos são grandes
-  ell(ctx, 0, 0, 17, 3.2, 'rgba(0,0,0,0.26)');
+  groundShadow(ctx, 17, 3.2, 0.26);
   const sw = moving ? Math.sin(anim * 9) : Math.sin(anim * 1.5) * 0.3;
   // patas abertas
   for (const [lx, ph, far] of [[-6, 0, true], [6, Math.PI, true], [-5, Math.PI, false], [7, 0, false]]) {

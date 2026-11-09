@@ -2080,6 +2080,8 @@ const Game = {
     G.hoverNpc = null;
     { let bd = 24;
       for (const e of G.ents) {
+        // longe do cursor (o alcance é 24 em volta do corpo, que vai até 44 acima dos pés): nem vê se dá para conversar
+        if (e.dead || Math.abs(e.x - G.mouse.wx) > 26 || G.mouse.wy - e.y > 20 || e.y - G.mouse.wy > 70) continue;
         if (!this.talkable(e)) continue;
         // o corpo inteiro conta (dos pés à cabeça); quem está a cavalo é desenhado mais alto
         const top = e.npc && e.npc.horse && !G.place ? 44 : 30, my = U.clamp(G.mouse.wy, e.y - top, e.y - 6);

@@ -103,10 +103,23 @@ const News = {
     // (os moradores não falam sozinhos em balões: só o ícone do humor ou da novidade aparece)
     const ic = this.status(p); if (!ic) return;
     const bob = Math.sin(t * 2.4 + p.id) * 1.5;
-    ctx.fillStyle = 'rgba(255,248,232,0.9)'; ctx.strokeStyle = 'rgba(60,40,20,0.5)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(x, y - 9 + bob, 10.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x - 2, y + bob); ctx.lineTo(x + 2, y + bob); ctx.lineTo(x, y + 4 + bob); ctx.closePath(); ctx.fill();
-    ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(ic, x, y - 4.5 + bob); ctx.textAlign = 'left';
+    // o balão já pronto (um por ícone e zoom): escrever o emoji e desenhar o círculo a cada quadro era o mais caro
+    const tf = ctx.getTransform(), res = Math.max(1, Math.min(8, Math.round(Math.hypot(tf.a, tf.b) * 2) / 2));
+    const c = this.bubbleImg(ic, res);
+    ctx.drawImage(c, x - 12, y - 21 + bob, c.width / res, c.height / res);
+  },
+  // balão de 24×27: círculo em (12, 12), ponta embaixo e o ícone no meio
+  bubbleImg(ic, res) {
+    const B = this._bub || (this._bub = new Map()), key = ic + '|' + res;
+    let c = B.get(key); if (c) return c;
+    c = document.createElement('canvas'); c.width = Math.ceil(24 * res); c.height = Math.ceil(27 * res);
+    const g = c.getContext('2d'); g.scale(res, res);
+    g.fillStyle = 'rgba(255,248,232,0.9)'; g.strokeStyle = 'rgba(60,40,20,0.5)'; g.lineWidth = 1;
+    g.beginPath(); g.arc(12, 12, 10.5, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(10, 21); g.lineTo(14, 21); g.lineTo(12, 25); g.closePath(); g.fill();
+    g.font = '13px sans-serif'; g.textAlign = 'center'; g.fillText(ic, 12, 16.5); // (com a mesma cor do balão, como antes)
+    if (B.size > 120) B.clear(); B.set(key, c);
+    return c;
   },
   // ------------------------------------------------------------ a página do Pregoeiro (Diário → Notícias)
   famous() {

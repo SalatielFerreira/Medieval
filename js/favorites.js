@@ -4,7 +4,12 @@
 // numa seção "Favoritos" ao lado do mapa, para marcar como destino. A marca vai junto com a pessoa no jogo salvo.
 
 const Favorites = {
-  list() { return G.people.filter(p => p.alive && p.starred); },
+  // (uma vez por quadro: o minimapa pede a lista a cada quadro e percorrer todo o povo toda vez pesava)
+  list() {
+    if (this._L && this._t === G.realTime && this._pp === G.people) return this._L;
+    this._t = G.realTime; this._pp = G.people;
+    return (this._L = G.people.filter(p => p.alive && p.starred));
+  },
   // onde a pessoa está (em blocos do mapa): perto de você, onde anda; longe, a casa dela
   where(p) {
     const e = G.spawned && G.spawned.get(p.id);
@@ -17,7 +22,7 @@ const Favorites = {
     return null;
   },
   toggle(p) {
-    p.starred = !p.starred;
+    p.starred = !p.starred; this._L = null;
     return { text: p.starred ? 'Hum? Você está me olhando com atenção...' : 'Tudo bem, fica para outra vez.', note: p.starred ? `⭐ ${p.name} está nos seus favoritos: uma estrela fica sobre a cabeça e no mapa.` : `${p.name} saiu dos favoritos.` };
   },
   // estrelinha de cinco pontas

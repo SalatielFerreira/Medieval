@@ -88,6 +88,14 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
   - Armazéns, investimentos (fazendas, serrarias, pedreiras, minas, moradias e muralhas), guarnição e festivais.
   - Se o povo ficar infeliz por tempo demais, há revolta.
 
+## Correções: vilas cheias mais leves
+
+- A sombra no chão das pessoas, dos animais e dos cavalos já fica pronta (uma imagem pequena por tamanho), em vez de duas elipses desenhadas a cada quadro.
+- Os balões de humor sobre os moradores (😊 😢 😠 💸...) também ficam prontos: o emoji não é mais escrito a cada quadro.
+- Quem ainda não tem nenhuma figura pronta ganha a primeira na hora; antes o corpo era desenhado inteiro, quadro após quadro, até a figura ficar pronta.
+- A lista de favoritos (estrelas no minimapa) é feita uma vez por quadro, e a procura de quem está sob o cursor pula logo quem está longe dele.
+- Numa vila com ~140 pessoas na tela, num aparelho fraco (processador 4× mais lento), o desenho caiu de 40–43 ms para 33–37 ms por quadro, sem mudar nada no visual.
+
 ## Correções: preso só na cela
 
 - Quem está preso só aparece na cela da prisão do reino: não anda mais pela vila, não fica atrás do balcão da loja nem dentro dos prédios, não viaja, não visita outras vilas, não vira guarda, assassino nem cliente do banco e não desafia ninguém para duelo. Quem é preso perto de você some na hora; solto, volta para casa e para o trabalho.
@@ -95,7 +103,7 @@ Os mesmos atalhos também ficam na barra de botões no canto inferior direito (M
 
 ## Novidades: sem avisos no canto da tela
 
-- As janelinhas de aviso que apareciam no canto da tela (como "Veio de Ferro exige uma Picareta de Bronze ou melhor.") saíram do jogo, junto com o histórico delas. O que importa continua nas janelas do jogo, nos anúncios no meio da tela e na página Avisos do Portfólio.
+- As janelinhas de aviso que apareciam no canto da tela (como "Veio de Ferro exige uma Picareta de Bronze ou melhor.") saíram do jogo, junto com o histórico delas. O que importa continua nas janelas do jogo e nos anúncios no meio da tela.
 
 ## Novidades: Portfólio em menos páginas
 

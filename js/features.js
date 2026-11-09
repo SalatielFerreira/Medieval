@@ -147,7 +147,7 @@ function drawHorse(ctx, x, y, dir, anim, moving, col, cart) {
     ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-40 + Math.cos(r) * 7, -8 + Math.sin(r) * 7); ctx.lineTo(-40 - Math.cos(r) * 7, -8 - Math.sin(r) * 7); ctx.stroke();
   }
   // cavalo no mesmo estilo dos outros animais: patas com joelho e casco, peito e garupa, crina, cauda solta, cabeça longa
-  ell(ctx, 0, 0, 19, 4.6, 'rgba(0,0,0,0.28)');
+  groundShadow(ctx, 19, 4.6, 0.28);
   const dark = shd(col, -0.2), mane = shd(col, -0.45), light = shd(col, 0.14), hoof = '#2a2018';
   const leg = 15, by = -leg - 6, top = by - 6, lw = 3.2;
   const sw = k => moving ? Math.sin(anim * 15 + k) * 0.5 : 0;
