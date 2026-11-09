@@ -2244,7 +2244,9 @@ const Game = {
       const p = e.npc, rel = People.relation(p);
       name = `${p.name} · ${p.age} ${p.age === 1 ? 'ano' : 'anos'}`;
       const foe = Court.enemyPerson(p);
-      sub = People.title(p) + (p.hostile ? ' · HOSTIL' : foe ? ' · INIMIGO' : rel.text !== 'Estranho' && rel.text !== 'Estranha' ? ' · ' + rel.text : '');
+      // por que ataca: assassino pago, caçador de recompensa, bandido do bando ou rancor pessoal
+      const why = p.hit ? (p.hit.kind === 'hunter' ? 'CAÇADOR DE RECOMPENSA' : 'ASSASSINO') : p.band ? 'BANDIDO' : 'RANCOR';
+      sub = People.title(p) + (p.hostile ? ' · ' + why : foe ? ' · INIMIGO' : rel.text !== 'Estranho' && rel.text !== 'Estranha' ? ' · ' + rel.text : '');
       col = p.hostile || foe ? '#ff5d5d' : rel.col;
     } else {
       if (!e.tmp) e.tmp = { name: U.pick(Math.random() < 0.8 ? NAMES_M : NAMES_F), age: U.rint(19, 45) };

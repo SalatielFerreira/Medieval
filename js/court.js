@@ -229,7 +229,7 @@ const Court = {
       UI.msg(`${People.full(p)} vendeu segredos e provocou uma guerra contra ${CIV_DEFS[pl.civ].short}!`, 'bad');
     } else {
       UI.banner('🗡️ Atentado!'); UI.msg(`${People.full(p)} contratou assassinos para matar você!`, 'bad');
-      G.assassins = (G.assassins || 0) + 3;
+      G.assassins = (G.assassins || 0) + 3; G.courtHitUntil = G.day + 6; // a conspiração paga por 6 meses
     }
     Diplo.chronicle(`🗡️ Intriga na corte de ${CIV_DEFS[pl.civ].short}: ${People.full(p)} traiu o soberano.`, true);
   },

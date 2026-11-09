@@ -212,6 +212,8 @@ const Sieges = {
     if (this.t > 0 || G.dungeon) return;
     this.t = 1;
     // assassinos contratados por conspiradores
+    // ninguém pagando (a guerra das casas acabou, a conspiração passou): a fila acaba
+    if (G.assassins > 0 && typeof Hitmen !== 'undefined' && Hitmen.paid && !Hitmen.paid()) Hitmen.callOff();
     if (G.assassins > 0 && !G.dungeon && !G.place && !G.siege && !G.duel && !G.honor && Math.random() < 0.15) { // só no mundo aberto: dentro dos imóveis a fila espera você sair
       G.assassins--;
       const a = Math.random() * Math.PI * 2, sp = freeSpotNear(P.x + Math.cos(a) * 300, P.y + Math.sin(a) * 220, 2 * TILE);

@@ -65,8 +65,21 @@ const Hitmen = {
     UI.msg(`${k === 'hunter' ? '🎯' : '🗡️'} ${People.full(p)}, ${People.title(p).toLowerCase()} de ${People.homeName(p)} (${(TRAITS[p.trait] || {}).name || ''}), vem atrás de você: ${p.hit.why}.`, 'bad', true);
     if (typeof Rumors !== 'undefined') Rumors.atP(`Viram ${People.full(p)} afiando a lâmina: dizem que ${art === 'a' ? 'ela' : 'ele'} aceitou matar ${G.name} por dinheiro.`);
   },
+  // alguém está pagando agora? uma casa em guerra com a sua ou uma conspiração da corte recente (6 meses)
+  paid() { return !!this.payer() || (G.courtHitUntil || -1) > G.day; },
+  // sem ninguém pagando, a fila de assassinos acaba e quem estava atrás de você desiste
+  callOff(famId) {
+    if (!this.paid()) G.assassins = 0;
+    for (const p of G.people) {
+      if (!p.hit || p.hit.kind !== 'assassin') continue;
+      if (famId !== undefined && p.hit.fam !== famId && this.paid()) continue;
+      delete p.hit; if (p.aff > -60) p.hostile = false;
+      const e = G.spawned.get(p.id); if (e && !e.dead) { e.angry = false; e.target = null; e.hitman = null; e.aggroOv = 0; }
+    }
+  },
   // o serviço acabou: quem não está mais sendo pago volta para a vida dele
   monthTick() {
+    if (!this.paid() && (G.assassins > 0 || G.people.some(p => p.hit && p.hit.kind === 'assassin'))) this.callOff();
     const pf = Families.ensurePlayer(), tb = typeof OutLaw !== 'undefined' ? OutLaw.totalBounty() : 0;
     for (const p of G.people) {
       if (!p.hit || !p.alive) continue;
@@ -117,6 +130,9 @@ const Hitmen = {
     if (G.place) for (const e of G.ents) if (!e.dead && e.tag === 'assassin' && !e.placeNpc) { e.dead = true; G.assassins = (G.assassins || 0) + 1; if (e.npc && G.spawned.get(e.npc.id) === e) G.spawned.delete(e.npc.id); }
     return r;
   };
+  // a paz com uma casa cancela na hora os assassinos que ela pagou
+  const ef0 = Court.endFeud.bind(Court);
+  Court.endFeud = function (f) { const r = ef0(f); if (r && f) { try { Hitmen.callOff(f.id); } catch (e) { console.error(e); } } return r; };
   const mt0 = Lifesim.monthTick.bind(Lifesim);
   Lifesim.monthTick = function (...a) { const r = mt0(...a); try { Hitmen.monthTick(); } catch (e) { console.error(e); } return r; };
   const die0 = People.die.bind(People);

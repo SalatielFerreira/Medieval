@@ -11,7 +11,7 @@ module.exports = async () => {
       const s = World.structs.find(x => x && !x.removed && x.type === 'tavern' && Places.def(x));
       P.x = (s.x + s.w / 2) * TILE; P.y = (s.y + s.h + 1) * TILE;
       Game.spawn('bandit', P.x + 200, P.y, { leash: 40, tag: 'assassin' }); // um já vinha atrás
-      Places.enterRoom(s); G.assassins = 5;
+      Places.enterRoom(s); G.assassins = 5; G.courtHitUntil = G.day + 6; // uma conspiração da corte paga por eles
     });
     await wait(12000);
     const inside = await page.evaluate(() => ({ place: !!G.place, n: G.ents.filter(e => !e.dead && e.tag === 'assassin').length, queue: G.assassins }));
