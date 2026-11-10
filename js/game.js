@@ -1113,7 +1113,6 @@ const Game = {
       if (!World.inb(x, y)) return 'Fora do mapa';
       const i = World.idx(x, y), t = World.tiles[i];
       if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido';
-      if (t === T.ROAD) return 'Não construa sobre a estrada';
       if (World.obj[i]) return 'Remova árvores/rochas primeiro';
       if (World.blocker(i)) return 'Já há uma construção aqui';
     }

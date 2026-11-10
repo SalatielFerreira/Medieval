@@ -114,7 +114,6 @@ const Graves = {
       if (!World.inb(x, y)) return 'Fora do mapa';
       const i = World.idx(x, y), t = World.tiles[i];
       if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido (água ou montanha)';
-      if (t === T.ROAD) return 'Não ponha sobre a estrada';
       const b = World.blocker(i); if (b && (!s || b.id !== s.id)) return 'Já há uma construção aqui';
       if (!loading && World.obj[i] && !(s && World.sgrid[i] === s.id)) return 'Há vegetação aqui: corte as árvores e tire as pedras antes';
     }

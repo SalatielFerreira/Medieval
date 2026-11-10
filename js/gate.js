@@ -618,3 +618,64 @@ Gate.wallAuthErr = function (tx, ty, what) {
   const gp0 = Gate.placeErr.bind(Gate);
   Gate.placeErr = function (tx, ty) { return Gate.wallAuthErr(tx, ty, 'pôr portão') || gp0(tx, ty); };
 }
+
+// ------------------------------------------------------------------ portão no seu próprio muro
+// Sem governar vila nem reino, você também põe portão nos seus muros de pedra ou de madeira (a sua base murada). É um
+// portão só seu: fecha diante de inimigos e à noite, mas não cobra pedágio nem tem caixa de vila.
+{
+  const OWN = ['wall_stone', 'wall_wood'];
+  Gate.ownWallNear = function (tx, ty) {
+    for (let d = -4; d <= 4; d++) for (const [x, y] of [[tx + d, ty], [tx, ty + d]]) { const b = World.inb(x, y) && World.blocker(World.idx(x, y)); if (b && OWN.includes(b.type) && b.owner === 'player') return true; }
+    return false;
+  };
+  Gate.ownsWalls = () => World.structs.some(s => s && !s.removed && OWN.includes(s.type) && s.owner === 'player');
+  Gate.anyVillage = function (tx, ty) { let best = -1, bd = 1e9; World.villages.forEach((v, vi) => { if (!v || v.ruin) return; const d = U.dist(tx, ty, v.x, v.y); if (d < bd) { bd = d; best = vi; } }); return best; };
+  const mine0 = Gate.mine.bind(Gate);
+  Gate.mine = function (s) { return !!(s && s.pgate) || mine0(s); };
+  const pe0 = Gate.placeErr.bind(Gate);
+  Gate.placeErr = function (tx, ty) {
+    const e = pe0(tx, ty);
+    if (e && /governar/.test(e) && this.ownWallNear(tx, ty)) return this.axis(tx, ty) ? null : 'Ponha o portão entre muros (com muro dos lados, a até 4 blocos) ou em cima de um trecho de muro';
+    if (e && /governar/.test(e)) return 'Sem governar vila ou reino, o portão só vai nos seus próprios muros (de pedra ou de madeira)';
+    return e;
+  };
+  // pôr o portão seu (o resto continua como era)
+  const ck1 = Urban.click.bind(Urban);
+  Urban.click = function () {
+    if (this.mode !== 'c:vgate') return ck1();
+    const t = this.mouseTile(); if (Gate.ownVillage(t.x, t.y) >= 0) return ck1();
+    const err = Gate.placeErr(t.x, t.y), d = CIVIC.vgate;
+    if (err) { this.warn(err); return; }
+    if (!Inv.has(d.cost)) { this.warn('Faltam materiais para o Portão.'); return; }
+    Inv.pay(d.cost); Gate.clearFor(t.x, t.y);
+    const s = this.addCivic('vgate', t.x, t.y, Gate.anyVillage(t.x, t.y)); s.pgate = true;
+    const E = this.E(), a = E.added[E.added.length - 1]; if (a) a.pgate = true;
+    Gate.apply(s);
+    Game.burst((t.x + 0.5) * TILE, (t.y + 0.5) * TILE, '#c9a978', 14); Sound.play('build');
+    UI.msg('🚪 Portão instalado no seu muro. Clique nele para abrir, fechar e a defesa.', 'gold');
+    Progress.add('built'); this.stop();
+  };
+  // ao carregar: o portão continua seu
+  const rs0 = Urban.restore.bind(Urban);
+  Urban.restore = function (...a) {
+    const r = rs0(...a);
+    for (const x of this.E().added) if (x.pgate && x.type === 'vgate') { const s = World.structs.find(q => q && q.type === 'vgate' && !q.removed && q.x === x.x && q.y === x.y); if (s) s.pgate = true; }
+    return r;
+  };
+  // portão seu não cobra pedágio nem recebe forasteiros da vila
+  const mt1 = Gate.monthTick.bind(Gate);
+  Gate.monthTick = function (...a) { const l0 = this.list; this.list = () => l0.call(this).filter(s => !s.pgate); try { return mt1(...a); } finally { this.list = l0; } };
+  // o botão: liberado com o material e (governando) ou (com muro seu); se faltar outra coisa, diz o quê
+  const in1 = Urban.info.bind(Urban);
+  Urban.info = function (k) {
+    const r = in1(k); if (!r) return r;
+    if (k === 'c:vgate') {
+      const gov = Gate.ownVillage(P.x / TILE, P.y / TILE) >= 0, walls = Gate.ownsWalls();
+      r.can = Inv.has(CIVIC.vgate.cost) && (gov || walls);
+      r.sub = '1×1 · entre muros · nos seus muros ou nos da vila que você governa';
+      if (!r.can && Inv.has(CIVIC.vgate.cost)) r.lock = 'Precisa de muro';
+      if (!gov) r.desc = CIVIC.vgate.desc + ' Sem governar vila ou reino, ponha o portão nos seus próprios muros (Muro de Pedra ou Paliçada): ele fica só seu, sem pedágio.';
+    } else if (k.startsWith('c:') && !r.can && r.cost && Inv.has(r.cost)) r.lock = 'Só governador ou rei';
+    return r;
+  };
+}

@@ -90,8 +90,7 @@ const Urban = {
     if (!World.inb(tx, ty)) return 'Fora do mapa';
     const i = World.idx(tx, ty), t = World.tiles[i];
     if (t === T.ROAD || t === T.BRIDGE) return 'Já tem estrada aqui';
-    if (World.blocker(i)) return 'Há uma construção aqui';
-    const k = this.roadKind(t);
+    const k = this.roadKind(t); // embaixo de uma construção também pode (a estrada passa por baixo)
     if (k === null) return 'Não dá para abrir estrada aqui';
     if (World.obj[i]) return 'Remova a árvore ou a rocha primeiro';
     if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
@@ -126,7 +125,6 @@ const Urban = {
     if (t !== T.ROAD) return 'Primeiro abra a estrada (de terra, grátis)';
     if (cur >= lv) return `Já é ${ROAD_LV[cur].name.toLowerCase()}`;
     if (lv > cur + 1) return `Primeiro faça ${ROAD_LV[cur + 1].name.toLowerCase()} (é ${ROAD_LV[cur].name.toLowerCase()})`;
-    if (World.blocker(i)) return 'Há uma construção aqui';
     if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
     // evoluir pode em todo lugar (até perto de castelos alheios), menos dentro de uma vila que não é sua
     const vi = this.authority(tx, ty) ? -1 : this.villageNear(tx, ty);
@@ -151,7 +149,6 @@ const Urban = {
     if (G.dungeon || !World.inb(tx, ty)) return 'Fora do mapa';
     const i = World.idx(tx, ty), t = World.tiles[i];
     if (t !== T.ROAD && t !== T.BRIDGE) return 'Não há estrada aqui';
-    if (World.blocker(i)) return 'Há uma construção em cima';
     if (U.dist(tx + 0.5, ty + 0.5, P.x / TILE, P.y / TILE) > 10) return 'Longe demais';
     // fora das vilas e castelos dos outros, qualquer estrada (até as do mapa) pode ser removida
     const town = this.E().mine[i] === undefined ? this.foreignTown(tx, ty) : null;
@@ -229,7 +226,6 @@ const Urban = {
       if (!World.inb(x, y)) return 'Fora do mapa';
       const i = World.idx(x, y), t = World.tiles[i];
       if (!TINFO[t].walk || t === T.WATER || t === T.BRIDGE) return 'Terreno inválido';
-      if (t === T.ROAD) return 'Não construa sobre a estrada';
       if (World.obj[i]) return 'Remova árvores/rochas primeiro';
       { const b = World.blocker(i); if (b && (!s || b.id !== s.id)) return 'Já há uma construção aqui'; }
     }

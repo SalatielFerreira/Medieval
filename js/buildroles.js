@@ -359,7 +359,7 @@ BuildRoles.renderBuild = function (first) {
     const b = UI.binfo(k), tool = !b.cost;
     const sub = tool ? b.sub : `${b.owned !== undefined ? (b.owned ? `você tem ${b.owned} · ` : '') : ''}<span class="bcost">${costMini(b.cost)}</span>`;
     return `<button class="rrow ${S.build === k ? 'on' : ''}" data-act="bsel" data-k="${k}"><span class="ri">${b.icon}</span>
-      <span><b>${b.name}</b><small>${sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : 'Falta material'}</span></button>`;
+      <span><b>${b.name}</b><small>${sub}</small></span><span class="rs ${tool || b.can ? 'ok' : 'mat'}">${tool ? 'Grátis' : b.can ? 'Disponível' : (b.cost && Inv.has(b.cost) ? (b.lock || 'Bloqueado') : 'Falta material')}</span></button>`;
   })()).join('');
   UI.buildCatKey = S.bcat;
   const b = UI.binfo(S.build);
