@@ -6,7 +6,7 @@
 //  • 🏛️ Fundo das Guildas: dinheiro espalhado pelas oficinas dos reinos — rende em média 1% ao mês, quase sem risco de
 //    perder, e sai quando quiser (2% de taxa).
 //  • 👑 Renda vitalícia: você entrega uma quantia ao Tesouro e recebe 2,2% dela todo mês, para sempre (o dinheiro não
-//    volta; se o reino quebrar, a renda acaba).
+//    volta sozinho, mas dá para resgatar com 10% de taxa, pago pelo Tesouro; se o reino quebrar, a renda acaba).
 //  • 🛡️ Seguro das expedições: com o seguro (8% do valor, pago na saída), a expedição que se perder devolve 70%.
 //  • 📜 Títulos novos: de 1 mês (rende pouco) e de 24 meses (o que mais rende).
 const BOLSA = [
@@ -16,7 +16,7 @@ const BOLSA = [
   { id: 'frota', icon: '⛵', name: 'Frota Mercante das Ilhas',  base: 50, vol: 0.13, div: 0.011, up: 'Os navios voltaram carregados de especiarias.', down: 'Dois navios afundaram num temporal.' },
   { id: 'prata', icon: '⛏️', name: 'Minas de Prata Real',       base: 80, vol: 0.19, div: 0.013, up: 'Um veio novo de prata foi achado.', down: 'Uma galeria da mina desabou.' },
 ];
-const BOLSA_FEE = 0.01, FUND_FEE = 0.02, RENDA_RATE = 0.022, INSURE = { cost: 0.08, back: 0.7 };
+const BOLSA_FEE = 0.01, FUND_FEE = 0.02, RENDA_RATE = 0.022, RENDA_OUT = 0.10, INSURE = { cost: 0.08, back: 0.7 };
 BANK_TERMS.unshift([1, 0.008, 'Título de 1 mês']);
 BANK_TERMS.push([24, 0.026, 'Título de 24 meses']);
 BANK_TABS.splice(BANK_TABS.findIndex(t => t[0] === 'expedicoes'), 0, ['bolsa', '📊 Bolsa'], ['renda', '🏛️ Fundos e renda']);
@@ -46,6 +46,22 @@ const Bolsa = {
     if (G.civs[ci].anarchy) { UI.msg('Um reino em anarquia não vende renda.', 'bad'); return; }
     P.gold -= n; G.civs[ci].treasury += n; this.X().rendas.push({ ci, n, m: Math.round(n * RENDA_RATE), day: G.day });
     Sound.play('coin'); UI.msg(`👑 ${CIV_DEFS[ci].short} vai pagar a você ${Math.round(n * RENDA_RATE)} 🪙 todo mês, para sempre.`, 'gold');
+  },
+  // resgate: o Tesouro devolve o que você entregou, menos 10% (se não tiver tudo agora, devolve o que tem e a renda
+  // continua com o resto)
+  rendaOut(ci, idx) {
+    const X = this.X(), mine = X.rendas.filter(r => r.ci === ci), r = idx === 'all' ? null : mine[+idx];
+    const list = r ? [r] : mine; if (!list.length) return;
+    const c = G.civs[ci]; let got = 0, left = 0;
+    for (const x of list) {
+      const due = Math.round(x.n * (1 - RENDA_OUT)), can = Math.max(0, Math.floor(c.treasury));
+      if (can <= 0) { left++; continue; }
+      if (can >= due) { c.treasury -= due; got += due; X.rendas = X.rendas.filter(y => y !== x); }
+      else { c.treasury -= can; got += can; const rest = x.n - Math.ceil(can / (1 - RENDA_OUT)); x.n = Math.max(0, rest); x.m = Math.round(x.n * RENDA_RATE); left++; if (x.n < 1) X.rendas = X.rendas.filter(y => y !== x); }
+    }
+    if (!got) { UI.msg(`👑 O Tesouro de ${CIV_DEFS[ci].short} está vazio: não dá para resgatar agora.`, 'bad'); return; }
+    P.gold += got; Sound.play('coin');
+    UI.msg(`👑 Você resgatou ${got} 🪙 da renda vitalícia (taxa de ${RENDA_OUT * 100}%).${left ? ' O Tesouro não tinha tudo: o resto continua rendendo.' : ''}`, 'gold');
   },
   // o mês da bolsa: preços, dividendos, fundo e rendas
   monthTick() {
@@ -92,8 +108,10 @@ const Bolsa = {
         <div class="act-row">${Q.map(n => b('fin', n, `+${n}`, P.gold >= n)).join('')}${b('fin', 'all', 'Tudo', P.gold > 0)}</div>
         <div class="act-row">${Q.map(n => b('fout', n, `−${n}`, X.fund >= n)).join('')}${b('fout', 'all', 'Tudo', X.fund >= 1)}</div></div>
       <div class="card"><div class="sec">👑 Renda vitalícia de ${CIV_DEFS[ci].short} <span>${(RENDA_RATE * 100).toFixed(1)}% ao mês</span></div>
-        <p class="dt-desc">Você entrega a quantia ao Tesouro do reino e recebe ${(RENDA_RATE * 100).toFixed(1)}% dela todo mês, para sempre. O dinheiro não volta: em 4 anos de jogo a renda já pagou tudo. Se o reino quebrar, ela acaba.</p>
+        <p class="dt-desc">Você entrega a quantia ao Tesouro do reino e recebe ${(RENDA_RATE * 100).toFixed(1)}% dela todo mês, para sempre. Em 4 anos de jogo a renda já pagou tudo. Quer o dinheiro de volta? Resgate: o Tesouro devolve o que você entregou, menos ${RENDA_OUT * 100}%. Se o reino quebrar, ela acaba.</p>
         <div class="act-row">${[100, 500, 1000, 5000, 10000].map(n => b('renda', n, `${n}`, P.gold >= n && !G.civs[ci].anarchy)).join('')}</div>
+        ${mineR.map((r, i) => `<div class="crow"><span>💰 ${r.n} 🪙 → ${r.m} 🪙/mês <small class="muted">desde ${Calendar.short(r.day)}</small></span><span class="act-row">${b('rout', i, `Resgatar ${Math.round(r.n * (1 - RENDA_OUT))} 🪙`, true)}</span></div>`).join('')}
+        ${mineR.length > 1 ? `<div class="act-row">${b('rout', 'all', `Resgatar tudo (${Math.round(mineR.reduce((a, r) => a + r.n, 0) * (1 - RENDA_OUT))} 🪙)`, true)}</div>` : ''}
         <small class="muted">${mineR.length ? `Aqui você recebe ${mineR.reduce((a, r) => a + r.m, 0)} 🪙 por mês` : 'Nenhuma renda deste reino'}${allR ? ` · no total, ${allR} 🪙 por mês` : ''}.</small></div>
       <div class="card"><div class="sec">🛡️ Seguro das expedições <span>${X.insure ? 'ligado' : 'desligado'}</span></div>
         <p class="dt-desc">Com o seguro, cada expedição nova paga ${INSURE.cost * 100}% do valor na saída; se ela se perder, você recebe ${INSURE.back * 100}% de volta.</p>
@@ -139,6 +157,7 @@ const Bolsa = {
       case 'fin': Bolsa.fundIn(n === Infinity ? P.gold : n); break;
       case 'fout': Bolsa.fundOut(n === Infinity ? X.fund : n); break;
       case 'renda': Bolsa.renda(ci, n); break;
+      case 'rout': Bolsa.rendaOut(ci, d.n); break;
       case 'insure': X.insure = !!n; UI.msg(X.insure ? '🛡️ Seguro das expedições ligado.' : 'Seguro das expedições desligado.'); break;
     }
     if (UI.cur && UI.cur.fn === 'showBank') UI.showBank(ci, UI.cur.args[1]);

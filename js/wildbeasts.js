@@ -104,6 +104,12 @@ const Beasts = {
     UI.msg(`${D.icon} Você abateu ${D.name}! Recompensa dos reinos: ${pay} 🪙, +25 de fama e ${n} ${ITEMS[it] ? ITEMS[it].name : ''}.`, 'gold', true);
     Diplo.chronicle(`${D.icon} ${G.name} ${G.surname || ''} abateu ${D.name} e livrou as vilas.`, true);
   },
+  // a barra de vida sobre a fera (o desenho próprio dela pulava a barra comum: dava a impressão de que nada acertava)
+  drawBar(ctx, e, x, y) {
+    const bw = 60, top = e.kind === 'river_serpent' ? 50 : 66, f = Math.max(0, e.hp / e.maxHp);
+    ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(x - bw / 2 - 1, y - top - 1, bw + 2, 7);
+    ctx.fillStyle = '#e04848'; ctx.fillRect(x - bw / 2, y - top, bw * f, 5);
+  },
   // desenho do grifo e da serpente (o dragão errante usa o desenho do dragão)
   drawGriffin(ctx, x, y, dir, anim, hurt) {
     ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(dir * 1.4, 1.4);
@@ -139,10 +145,26 @@ const Beasts = {
   Creature.prototype.draw = function (ctx, cx, cy) {
     if (this.dead || this.sleeping) return cd0.call(this, ctx, cx, cy);
     const x = this.x - cx, y = this.y - cy, hurt = this.hurt > 0;
-    if (this.kind === 'wild_dragon') { drawDragon(ctx, x, y, this.dir, this.anim, hurt); return; }
-    if (this.kind === 'griffin') { Beasts.drawGriffin(ctx, x, y, this.dir, this.anim, hurt); return; }
-    if (this.kind === 'river_serpent') { Beasts.drawSerpent(ctx, x, y, this.dir, this.anim, hurt); return; }
-    return cd0.call(this, ctx, cx, cy);
+    if (this.kind === 'wild_dragon') drawDragon(ctx, x, y, this.dir, this.anim, hurt);
+    else if (this.kind === 'griffin') Beasts.drawGriffin(ctx, x, y, this.dir, this.anim, hurt);
+    else if (this.kind === 'river_serpent') Beasts.drawSerpent(ctx, x, y, this.dir, this.anim, hurt);
+    else return cd0.call(this, ctx, cx, cy);
+    Beasts.drawBar(ctx, this, x, y);
+  };
+  // a barra grande no alto da tela, como a dos chefes das cavernas, com a vida em números
+  const bb0 = Game.drawBossBar.bind(Game);
+  Game.drawBossBar = function (ctx, cw) {
+    if (G.ents.some(e => e.def.boss && !e.dead && U.dist(e.x, e.y, P.x, P.y) < 14 * TILE)) return bb0(ctx, cw);
+    const b = G.ents.find(e => e.beast && !e.dead && U.dist(e.x, e.y, P.x, P.y) < 18 * TILE); if (!b) return;
+    const w = Math.max(180, Math.min(520, cw - 420)), x = (cw - w) / 2, y = 22, D = BEAST_KINDS[b.kind];
+    ctx.save();
+    ctx.fillStyle = 'rgba(14,8,6,0.85)'; ctx.beginPath(); ctx.roundRect(x - 10, y - 8, w + 20, 40, 8); ctx.fill();
+    ctx.strokeStyle = 'rgba(214,120,96,0.7)'; ctx.stroke();
+    ctx.font = '700 13px Cinzel, Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffb8a8';
+    ctx.fillText(`${D ? D.icon + ' ' : ''}${b.def.name} · ${Math.max(0, Math.ceil(b.hp))}/${b.maxHp}`, cw / 2, y + 6);
+    ctx.fillStyle = '#2a0e0a'; ctx.fillRect(x, y + 14, w, 9);
+    ctx.fillStyle = '#c0392b'; ctx.fillRect(x, y + 14, w * Math.max(0, b.hp / b.maxHp), 9);
+    ctx.restore();
   };
   // abatida
   const k0 = Game.kill.bind(Game);
