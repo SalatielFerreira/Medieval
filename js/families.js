@@ -46,7 +46,7 @@ const Families = {
     return a.sort((x, y) => (NOBLE_RANKS.indexOf(x.rank) < 0) - (NOBLE_RANKS.indexOf(y.rank) < 0) || (x.rank === 'ruler' ? -1 : 0) || y.age - x.age)[0];
   },
   influence(f) {
-    if (f.player) return Math.round(P.gold / 20 + this.members(f).length * 4 + World.structs.filter(s => s.owner === 'player' && BIZ_TYPES[s.type]).length * 15 +
+    if (f.player) return Math.round(P.gold / 20 + this.members(f).length * 4 + World.structs.filter(s => s.owner === 'player' && !s.removed && BIZ_TYPES[s.type]).length * 15 +
       G.civs.filter(c => c.ruler === 'player').length * 80 + World.villages.filter(v => v.lord === 'player').length * 40 + 20);
     return Math.round(f.wealth / 20 + this.members(f).length * 4 + f.biz.length * 15 + (f.noble ? 60 : 0) + (f.founded !== null ? 40 : 0) +
       World.villages.filter(v => v.chief !== undefined && this.of(G.people[v.chief]) === f).length * 20);
@@ -559,7 +559,7 @@ const BIZ_TYPES = {
 // o que cada empreendimento vende e compra no balcão (a mesma lista da loja de vila parecida)
 const BIZ_TRADE = { biz_shop: 'store', biz_smithy: 'smith', biz_lumber: 'lumber', biz_quarry: 'quarry', biz_mine: 'quarry', biz_mill: 'store', biz_farm: 'store', ptavern: 'store' };
 const Biz = {
-  list() { return World.structs.filter(s => s.owner === 'player' && BIZ_TYPES[s.type]); },
+  list() { return World.structs.filter(s => s.owner === 'player' && !s.removed && BIZ_TYPES[s.type]); },
   workers(s) { return (s.workers || []).map(id => G.people[id]).filter(p => p && p.alive && p.job === s.id); },
   workerCount(s) { return this.workers(s).length; },
   skilled(p, s) { return p.rank === BIZ_TYPES[s.type].skill; },

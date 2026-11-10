@@ -442,3 +442,24 @@ const Commerce = {
     return op0(title, body, fn, args, sub);
   };
 }
+
+// Demolir um negócio que tem sócio: primeiro você compra a parte dele (o prédio não é só seu)
+{
+  const live = s => { const p = s && s.partner && G.people[s.partner.pid]; if (s && s.partner && (!p || !p.alive)) s.partner = null; return s && s.partner ? p : null; };
+  const dm0 = Urban.demolish.bind(Urban);
+  Urban.demolish = function (s) {
+    const p = live(s); if (!p) return dm0(s);
+    const err = this.movable(s); if (err) { UI.msg(err, 'bad'); return false; }
+    const cost = Math.round(Commerce.value(s) * 0.5), nm = BUILDINGS[s.type] ? BUILDINGS[s.type].name : this.nameOf(s);
+    if (P.gold < cost) { UI.msg(`🤝 ${People.full(p)} é sócio do ${nm}: para demolir, compre antes a parte dele (${cost} 🪙). Você não tem o bastante.`, 'bad'); return false; }
+    Dialog.confirm({ icon: '🤝', title: 'Demolir com sócio', text: `${People.full(p)} é sócio do ${nm} e leva 30% do lucro. Para demolir, você precisa comprar a parte dele por ${cost} 🪙. Comprar a parte e demolir? (Você recebe de volta metade do material.)`, ok: `Comprar (${cost} 🪙) e demolir`, danger: true },
+      () => { Commerce.buyOut(s); if (!s.partner) this.doDemolish(s); });
+    return false;
+  };
+  // por qualquer outro caminho também: com sócio, não derruba
+  const dd0 = Urban.doDemolish.bind(Urban);
+  Urban.doDemolish = function (s, ...r) {
+    const p = live(s); if (p) { UI.msg(`🤝 ${People.full(p)} é sócio deste negócio: compre a parte dele antes de demolir.`, 'bad'); return false; }
+    return dd0(s, ...r);
+  };
+}
