@@ -10,7 +10,12 @@ SHOP_KEEPER.prison = 'jailer';
 if (!RANKS.jailer) RANKS.jailer = { m: 'Carcereiro', f: 'Carcereira', order: 6 };
 if (!RANK_LOOK.jailer) RANK_LOOK.jailer = '#4a4a52';
 if (typeof PEOPLE_OUTFIT !== 'undefined' && !PEOPLE_OUTFIT.jailer) PEOPLE_OUTFIT.jailer = 'apron_leather';
-FIXED_STRUCTS.push('prison');
+// a prisão é do reino: quem governa muda de lugar (Construir → Reformas → Mover), como o banco, a catedral e a arena
+MOVE_ANYWHERE.push('prison'); ANY_NAME.prison = 'na prisão';
+{ // guarda o lugar novo da prisão (é montada depois de o jogo salvo ser aplicado: o registro comum da mudança não a acha)
+  const rl0 = Urban.relocate.bind(Urban);
+  Urban.relocate = function (s, nx, ny, ...r) { const res = rl0(s, nx, ny, ...r); if (s && s.type === 'prison' && typeof s.owner === 'number') { const u = G.urban || (G.urban = {}); (u.prisonAt = u.prisonAt || {})[s.owner] = { x: nx, y: ny }; } return res; };
+}
 Object.assign(FURN, { bars: { block: true }, straw: { block: true }, chains: {}, bowl: { block: true } });
 
 // a cela do herói (meio da direita) e as celas dos outros presos
@@ -43,7 +48,16 @@ const Prison = {
   of(ci) { return World.structs.find(s => s && !s.removed && s.type === 'prison' && s.owner === ci) || null; },
   // uma prisão perto de cada castelo (o mesmo lugar sempre que o mundo é montado)
   init() {
-    World.capitals.forEach((cp, c) => { if (cp && !cp.prison && !this.of(c)) cp.prison = Arena.place('prison', cp.x, cp.y, 4, 3, c, 9, 20, c * 1.7 + 3.1); });
+    // o lugar que o rei escolheu (Mover) vale ao carregar: a prisão é montada (ou levada) direto para lá
+    const at = this.S().prisonAt || {};
+    World.capitals.forEach((cp, c) => {
+      if (!cp) return;
+      let pr = this.of(c); const w = at[c];
+      if (w && !pr && World.areaOk(w.x, w.y, 4, 3)) { pr = World.addStruct('prison', w.x, w.y, 4, 3, c); for (let j = w.y; j < w.y + 3; j++) for (let i = w.x; i < w.x + 4; i++) World.obj[World.idx(i, j)] = 0; }
+      else if (w && pr && (pr.x !== w.x || pr.y !== w.y)) Urban.relocate(pr, w.x, w.y, true);
+      if (!pr) pr = Arena.place('prison', cp.x, cp.y, 4, 3, c, 9, 20, c * 1.7 + 3.1);
+      if (pr) cp.prison = pr;
+    });
   },
   // a pena que o rei decide: a multa e o jeito dele
   sentence(ci, bounty) {

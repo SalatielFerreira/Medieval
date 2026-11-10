@@ -167,9 +167,9 @@ const Secret = {
         : f.length ? `<button data-act="sec" data-op="ask" data-k="${k}" ${bl || this.member() ? 'disabled' : ''}>🤝 Pedir a ${esc(f[0].name)}</button>` : '<small class="muted">Faça amizade com um irmão</small>';
       return `<div class="sc-card ${iv ? 'inv' : ''}" style="--c:${s.col};--x:${s.cross}">${this.emblem(s, 56)}<b>${esc(s.name)}</b><i class="sc-motto">"${esc(s.motto)}"</i>
         <small class="sc-trade">🔨 ${esc(Commerce.GUILDS[k] ? Commerce.GUILDS[k].trade : '')}</small>
-        <div class="sc-req"><span class="${best >= 100 ? 'ok' : ''}">🤝 amizade ${f.length ? best : '—'}/100</span><span class="${ch ? 'ok' : ''}">${bl ? '⛔ ' + (/expuls/.test(bl) ? 'expulso' : 'saiu agora') : ch >= 1 ? '🕯️ convite garantido' : ch ? `🕯️ ${Math.round(ch * 100)}% por mês` : '🕯️ sem convite (40+)'}</span></div>
+        ${f.length ? `<div class="sc-req"><span class="${ch ? 'ok' : ''}">🤝 amizade ${best}/100 · ${bl ? '⛔ ' + (/expuls/.test(bl) ? 'expulso' : 'saiu agora') : ch >= 1 ? 'convite garantido' : ch ? `${Math.round(ch * 100)}% por mês` : 'sem convite (40+)'}</span></div>` : ''}
         <div class="sc-pw">${pw.kings.length ? `<span>👑 ${pw.kings.length} ${pw.kings.length === 1 ? 'rei' : 'reis'}</span>` : ''}${pw.nobles.length ? `<span>🎖️ ${pw.nobles.length} ${pw.nobles.length === 1 ? 'nobre' : 'nobres'}</span>` : ''}<span>🤝 ${this.brothers(k).length} ${this.brothers(k).length === 1 ? 'irmão' : 'irmãos'}</span></div>
-        <small class="sc-fr">${f.length ? `Você conhece: ${f.slice(0, 2).map(p => `${esc(p.name)} (${Math.round(p.aff)})`).join(', ')}` : 'Você não conhece nenhum irmão'}</small>
+        ${f.length ? `<small class="sc-fr">Você conhece: ${f.slice(0, 2).map(p => `${esc(p.name)} (${Math.round(p.aff)})`).join(', ')}</small>` : ''}
         <div class="sc-ca">${btn}</div>${iv ? `<small class="sc-ivby">convite de ${esc(People.full(G.people[iv.by]))} · até ${Calendar.short(iv.until)} · <button class="link" data-act="sec" data-op="decline" data-k="${k}">recusar</button></small>` : ''}</div>`;
     }).join('');
     const fe = KOrders.canFound();
