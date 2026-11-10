@@ -819,8 +819,8 @@ const World = {
     const keep = (this.terrainV || 0) >= 11 ? Infinity : hills[Math.floor(hills.length * 0.8)];
     for (let i = 0; i < N; i++) if (this.tiles[i] === T.HILL && this.elev[i] < keep) this.tiles[i] = T.GRASS;
   },
-  // versão 11: os lagos do meio do continente viram campo (as bacias baixas, longe do mar). Ficam os 4 maiores e os
-  // rios; as pontes que sobravam sobre o leito seco viram estrada e a beira do que restou de água vira areia.
+  // versão 11: os lagos do meio do continente viram campo. Agora fica só o lago maior (e o mar; as poças do pântano
+  // nascem depois, em biomes): os rios e os lagos menores secam; as pontes que sobravam sobre o leito seco viram estrada e a beira do que restou de água vira areia.
   fewerLakes() {
     const W = WORLD_W, H = WORLD_H, N = W * H, t = this.tiles;
     const wet = k => k === T.WATER || k === T.DEEP || k === T.BRIDGE;
@@ -829,11 +829,12 @@ const World = {
     const ocean = new Uint8Array(N), q = [];
     for (let i = 0; i < N; i++) { const x = i % W, y = (i / W) | 0; if (t[i] === T.DEEP && (x === 0 || y === 0 || x === W - 1 || y === H - 1)) { ocean[i] = 1; q.push(i); } }
     for (let h = 0; h < q.length; h++) nb(q[h], j => { if (!ocean[j] && t[j] === T.DEEP) { ocean[j] = 1; q.push(j); } });
-    // distância pela água rasa até o mar aberto (lagos ligados ao mar por um rio ficam longe)
-    const dist = new Int32Array(N).fill(-1), q2 = [];
-    for (let i = 0; i < N; i++) if (ocean[i]) { dist[i] = 0; q2.push(i); }
-    for (let h = 0; h < q2.length; h++) { const c = q2[h]; nb(c, j => { if (dist[j] < 0 && wet(t[j])) { dist[j] = dist[c] + 1; q2.push(j); } }); }
-    const inland = i => wet(t[i]) && !ocean[i] && (dist[i] < 0 || dist[i] > 8);
+    // a água rasa do mar: ligada ao mar aberto e baixa como o mar (os rios correm mais alto; a foz baixa fica com o mar)
+    const sea = new Uint8Array(N), q3 = [];
+    for (let i = 0; i < N; i++) if (ocean[i]) { sea[i] = 1; q3.push(i); }
+    for (let h = 0; h < q3.length; h++) nb(q3[h], j => { if (!sea[j] && wet(t[j]) && this.elev[j] < 0.335) { sea[j] = 1; q3.push(j); } });
+    // versão nova: terra firme no continente — só o mar e o lago maior ficam (rios e lagos menores secam)
+    const inland = i => wet(t[i]) && !ocean[i] && !sea[i];
     // lago = parte larga da água do continente (os rios, finos, continuam)
     const lake = new Uint8Array(N);
     for (let i = 0; i < N; i++) {
@@ -852,7 +853,8 @@ const World = {
     }
     lakes.sort((a, b) => b.length - a.length);
     const dry = new Uint8Array(N);
-    for (const L of lakes.slice(3)) for (const i of L) if (this.sgrid[i] < 0) dry[i] = 1;
+    const keep = new Uint8Array(N); if (lakes[0]) for (const i of lakes[0]) keep[i] = 1;
+    for (let i = 0; i < N; i++) if (inland(i) && !keep[i] && this.sgrid[i] < 0) dry[i] = 1;
     let n = 0;
     for (let i = 0; i < N; i++) {
       if (!dry[i]) continue;
@@ -864,7 +866,7 @@ const World = {
     }
     // margem de areia onde o campo novo encosta na água que ficou
     for (let i = 0; i < N; i++) if (dry[i] && (t[i] === T.GRASS || t[i] === T.FOREST)) { const x = i % W, y = (i / W) | 0; if (DIRS4.some(([dx, dy]) => { const k = this.tile(x + dx, y + dy); return k === T.WATER || k === T.DEEP; })) t[i] = T.SAND; }
-    this.lakeStats = { lakes: lakes.length, kept: Math.min(3, lakes.length), dried: n };
+    this.lakeStats = { lakes: lakes.length, kept: Math.min(1, lakes.length), dried: n };
   },
   // troca o terreno de um bloco (estradas) e redesenha o pedaço do mapa
   setTile(i, t) {
