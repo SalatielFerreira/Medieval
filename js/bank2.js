@@ -110,7 +110,7 @@ const Bolsa = {
       <div class="card"><div class="sec">👑 Renda vitalícia de ${CIV_DEFS[ci].short} <span>${(RENDA_RATE * 100).toFixed(1)}% ao mês</span></div>
         <p class="dt-desc">Você entrega a quantia ao Tesouro do reino e recebe ${(RENDA_RATE * 100).toFixed(1)}% dela todo mês, para sempre. Em 4 anos de jogo a renda já pagou tudo. Quer o dinheiro de volta? Resgate: o Tesouro devolve o que você entregou, menos ${RENDA_OUT * 100}%. Se o reino quebrar, ela acaba.</p>
         <div class="act-row">${[100, 500, 1000, 5000, 10000].map(n => b('renda', n, `${n}`, P.gold >= n && !G.civs[ci].anarchy)).join('')}</div>
-        ${mineR.map((r, i) => `<div class="crow"><span>💰 ${r.n} 🪙 → ${r.m} 🪙/mês <small class="muted">desde ${Calendar.short(r.day)}</small></span><span class="act-row">${b('rout', i, `Resgatar ${Math.round(r.n * (1 - RENDA_OUT))} 🪙`, true)}</span></div>`).join('')}
+        ${mineR.map((r, i) => `<div class="crow"><span class="ri">💰</span><span><b>${r.n} 🪙 → ${r.m} 🪙/mês</b><small>desde ${Calendar.short(r.day)}</small></span><span class="act-row">${b('rout', i, `Resgatar ${Math.round(r.n * (1 - RENDA_OUT))} 🪙`, true)}</span></div>`).join('')}
         ${mineR.length > 1 ? `<div class="act-row">${b('rout', 'all', `Resgatar tudo (${Math.round(mineR.reduce((a, r) => a + r.n, 0) * (1 - RENDA_OUT))} 🪙)`, true)}</div>` : ''}
         <small class="muted">${mineR.length ? `Aqui você recebe ${mineR.reduce((a, r) => a + r.m, 0)} 🪙 por mês` : 'Nenhuma renda deste reino'}${allR ? ` · no total, ${allR} 🪙 por mês` : ''}.</small></div>
       <div class="card"><div class="sec">🛡️ Seguro das expedições <span>${X.insure ? 'ligado' : 'desligado'}</span></div>

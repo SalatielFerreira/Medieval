@@ -1,5 +1,5 @@
-// Guarnição espalhada (15 soldados, abaixo do limite de 18): os soldados do reino ficam no castelo, nas vilas do reino (espalhados por elas) e nas estradas;
-// a divisão soma a guarnição inteira; ao recrutar, o aviso diz para onde o soldado foi.
+// Guarnição espalhada (15 soldados): pelo reino circulam no máximo 10 (castelo, vilas do reino e estradas), o resto fica de reserva;
+// a divisão soma 10; ao recrutar, o aviso diz para onde o soldado foi (ou que ficou de reserva).
 'use strict';
 const { open } = require('./harness');
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -18,9 +18,10 @@ module.exports = async () => {
       for (const e of G.ents) if (e.tag && /^(vg|cap|gp)/.test(e.tag)) e.dead = true;
       G.groups = {};
       P.x = (v.x + 0.5) * TILE; P.y = (v.y + 3) * TILE;
-      return { pl, sum, villages: vs.length, recruitMsg: msgs.find(t => t.startsWith('🪖')) || null, vi, want: Garrison.plan(0).v[vi] };
+      return { FIELD: Garrison.FIELD, pl, sum, villages: vs.length, recruitMsg: msgs.find(t => t.startsWith('🪖')) || null, vi, want: Garrison.plan(0).v[vi] };
     });
-    if (a.sum !== 15 && a.pl.cap < 14) fails.push(`a divisão soma ${a.sum} soldados (a guarnição tem 15)`);
+    const Garrison_FIELD = a.FIELD;
+    if (a.sum !== Math.min(15, Garrison_FIELD)) fails.push(`a divisão soma ${a.sum} soldados (a guarnição tem 15; pelo reino circulam no máximo ${Garrison_FIELD})`);
     if (a.villages && !Object.values(a.pl.v).some(n => n > 0)) fails.push('nenhum soldado foi para as vilas do reino');
     if (!a.recruitMsg) fails.push('recrutar não avisou para onde o soldado foi');
     await wait(2500);

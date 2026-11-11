@@ -117,8 +117,11 @@ const Garrison = {
   _memo: new Map(),
   villagesOf(c) { return World.villages.map((v, vi) => ({ v, vi })).filter(x => x.v && !x.v.free && !x.v.ruin && x.v.civ === c).sort((a, b) => (b.v.level || 1) - (a.v.level || 1) || a.vi - b.vi); },
   // quantos soldados em cada lugar: { cap, patrol, v: { vi: n } }
+  // pelo reino circulam no máximo GARRISON_FIELD soldados; o resto fica de reserva no quartel (vai só para o campo de
+  // batalha) e entra em circulação quando um dos que andam pelo reino morre
+  FIELD: 10,
   plan(c) {
-    const civ = G.civs[c], g = civ ? Math.max(0, civ.garrison | 0) : 0, vs = this.villagesOf(c);
+    const civ = G.civs[c], g = civ ? Math.min(this.FIELD, Math.max(0, civ.garrison | 0)) : 0, vs = this.villagesOf(c);
     const key = c + ':' + g + ':' + vs.map(x => x.vi).join(',');
     if (this._memo.has(key)) return this._memo.get(key);
     const out = { cap: 0, patrol: 0, v: {} };
@@ -146,6 +149,7 @@ const Garrison = {
     const now = this.plan(c);
     for (const vi in now.v) if (now.v[vi] > (before.v[vi] || 0)) return `foi guardar ${World.villages[vi].name}`;
     if (now.patrol > before.patrol) return 'vai patrulhar as estradas do reino';
+    if (now.cap <= before.cap) return `fica de reserva no quartel de ${CIV_DEFS[c].short} (pelo reino circulam ${this.FIELD}; a reserva vai para o campo de batalha e repõe quem cair)`;
     return `reforça a guarda do castelo de ${CIV_DEFS[c].short}`;
   },
   // no castelo: em volta dele, não só na porta

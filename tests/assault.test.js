@@ -11,7 +11,7 @@ module.exports = async () => {
       const me = 1, foe = 2; Game.becomeRuler(me, 'teste'); UI.close();
       const c = G.civs[me]; c.garrison = 30; c.treasury = 6000; G.civs[foe].garrison = 22; G.civs[foe].treasury = 2000;
       P.level = 20; P.maxHp = P.hp = 3000;
-      ok(Game.maxGarrison(c) === 30, 'guarnição máxima não é 30');
+      ok(Game.maxGarrison(c) === GARRISON_MAX && GARRISON_MAX === 50, 'guarnição máxima não é 50');
       Diplo.declareWar(foe, me, 'teste'); Assault.manual = true; War.summon(me, foe, true); Assault.manual = false; G.warCall.shown = true;
       ok(War.limits(G.warCall).cats === 10, 'limite de catapultas: ' + War.limits(G.warCall).cats);
       UI.showWarCouncil(); ok(UI.panel.innerHTML.includes('wassault') && UI.panel.innerHTML.includes('wfield'), 'o conselho não oferece as duas estratégias');

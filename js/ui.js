@@ -1449,7 +1449,7 @@ const UI = {
           ${small ? '' : box('aj-scale', '🔍', 'Tamanho da interface', 'Auto se ajusta à tela', opts('uiScale', [['auto', 'Auto'], [0.85, '85%'], [1, '100%'], [1.15, '115%'], [1.3, '130%']], s.uiScale))}
           ${box('aj-map', '🗺️', 'Minimapa', '', tog('minimap', '👁️', 'Mostrar minimapa', 'toque nele para abrir o mapa') + opts('miniSize', [[140, 'P', 'pequeno'], [180, 'M', 'médio'], [230, 'G', 'grande']], s.miniSize))}
           ${box('aj-info', '📋', 'Na tela', '', tog('numbers', '🔢', 'Números nas barras', 'vida, energia e fome') + tog('keysbar', '⌨️', 'Barra de atalhos', 'teclas no rodapé') + tog('ambience', '✨', 'Efeitos de ambiente', 'fumaça, nuvens, reflexos e pássaros'))}
-          ${box('aj-street', '👥', 'Pessoas nas ruas', 'Menos gente deixa o jogo mais leve', opts('streets', [['few', 'Poucas', '~35 por vila'], ['normal', 'Normal', '~60 por vila'], ['all', 'Todas', 'sem limite']], s.streets || 'normal'))}
+          ${box('aj-street', '👥', 'Pessoas nas ruas', 'Menos gente deixa o jogo mais leve', opts('streets', [['few', 'Poucas', '~20 por vila'], ['normal', 'Normal', '~60 por vila'], ['all', 'Todas', 'sem limite']], s.streets || 'normal'))}
           ${box('aj-prev', '👀', 'Prévia', '', `<div class="sp-screen"><div class="sp-hud">${[['hp', 100], ['en', 80], ['fo', 60]].map(([k, v]) => `<div class="sp-bar ${k}"><i style="width:${v}%"></i>${s.numbers ? `<em>${v}</em>` : ''}</div>`).join('')}</div>${s.minimap ? `<div class="sp-mini" style="--m:${s.miniSize / 230}"></div>` : ''}<div class="sp-hero"></div>${s.keysbar ? '<div class="sp-keys"><i></i><i></i><i></i><i></i><i></i></div>' : ''}</div>`)}
         </div></div>`;
     } else if (tab === 'som') {

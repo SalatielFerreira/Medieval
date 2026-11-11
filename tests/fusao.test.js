@@ -69,7 +69,7 @@ module.exports = async () => {
       const fam = Families.ranking(1).find(x => !x.f.player); if (fam) fam.f.loyalty = 10; R.court.ball = -9; Reign.ball();
       ok(R.court.ball === G.day && (!fam || fam.f.loyalty >= 22), 'o baile não ficou com o efeito do banquete nas grandes casas');
       c.garrison = 10; Game.kRecruit(1, 6); ok(c.garrison === 16, 'recrutar com quantidade não funcionou: ' + c.garrison);
-      ok(Game.maxGarrison(c) === 30 && Game.maxGarrison(G.civs[2]) === 30, 'o teto da guarnição não é um número só');
+      ok(Game.maxGarrison(c) === 50 && Game.maxGarrison(G.civs[2]) === 50, 'o teto da guarnição não é um número só');
       ok(typeof TRIALS === 'undefined' && typeof PETITIONS === 'undefined' && !Crown.trial && !Crown.petition, 'o tribunal ou a audiência da coroa ainda existem');
 
       // 7. o saldo do mês: o mesmo em todas as janelas e batendo com o tesouro na virada do mês

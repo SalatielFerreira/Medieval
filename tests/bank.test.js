@@ -24,7 +24,7 @@ module.exports = async () => {
       // empréstimo da coroa sai da reserva
       const r1 = K.reserve; Loans.take('crown', ci, undefined, 200); ok(K.reserve === r1 - 200, 'o empréstimo não saiu da reserva'); Loans.pay(0, true); ok(K.reserve > r1 - 200, 'o pagamento não voltou à reserva');
       // janela em todas as abas e as finanças da casa
-      for (const [t] of BANK_TABS) { UI.showBank(ci, t); ok(UI.cur.fn === 'showBank' && html().includes('bankw'), 'aba do banco: ' + t); }
+      for (const [t] of BANK_TABS) { UI.showBank(ci, t); ok(UI.cur.fn === 'showBank' && (html().includes('bankw') || html().includes('bk3')), 'aba do banco: ' + t); }
       Fin.D().save = 300; Fin.open(); ok(UI.cur.fn === 'showBank' && Fin.D().save === 0, 'a poupança da casa não foi para o banco');
       // interior
       const s = Bank.struct(ci); P.x = (s.x + 2.5) * TILE; P.y = (s.y + s.h + 1) * TILE;

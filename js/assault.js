@@ -5,7 +5,7 @@
 //  • você invade (Conselho de Guerra → "Invadir o castelo"): vencer = o reino inimigo é seu;
 //  • o inimigo invade o seu castelo (às vezes, em vez da batalha em campo): perder = o reino cai nas mãos dele.
 // A batalha em campo aberto continua existindo: serve para enfraquecer a guarnição do adversário.
-// Guarnição máxima de um castelo: GARRISON_MAX (30, em game.js); até 10 catapultas por exército.
+// Guarnição máxima de um castelo: GARRISON_MAX (50, em game.js); até 10 catapultas por exército.
 
 // as catapultas: até 10 por exército (conselho, arsenal e o exército da IA)
 War.limits = function (wc) { const c = G.civs[wc.side]; return { soldiers: wc.own ? Math.min(WAR_MAX, c.garrison) : 0, cats: Math.min(WAR_CATS_MAX, Math.floor((wc.own ? c.treasury : P.gold) / WAR_CAT_COST)) }; };

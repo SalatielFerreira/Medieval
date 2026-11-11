@@ -123,9 +123,9 @@ const Inv = {
 };
 
 // pessoas na rua por vila (o resto está em casa ou no trabalho): Poucas, Normal ou Todas
-const STREET_CAP = { few: 35, normal: 60, all: Infinity };
+const STREET_CAP = { few: 20, normal: 60, all: Infinity };
 // guarnição máxima de um castelo (a mesma no recrutamento, no assalto ao castelo e no texto das janelas)
-const GARRISON_MAX = 30;
+const GARRISON_MAX = 50; // a guarnição inteira vai ao campo de batalha; pelo reino circulam no máximo GARRISON_FIELD
 const Streets = {
   ids: null, t: -1,
   // quem precisa estar na rua: uma lista feita no máximo uma vez por segundo

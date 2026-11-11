@@ -210,7 +210,7 @@ const Reinado = {
     // ---- Exército: a guarnição, a escolta, a tropa, os generais e os guardas do castelo
     exercito(ci, c, main) {
       const have = Reinado.have(c), capOk = Game.allies().length < Game.followerCap(), can = have('gold') >= 40 && have('wheat') >= 5 && c.garrison < Game.maxGarrison(c);
-      const gar = `<div class="card rn-gar"><div class="sec">🛡️ Guarnição <span>defende o castelo e as vilas · até ${Game.maxGarrison(c)} soldados</span></div>
+      const gar = `<div class="card rn-gar"><div class="sec">🛡️ Guarnição <span>${c.garrison}/${Game.maxGarrison(c)} soldados · ${Math.min(c.garrison, Garrison.FIELD)} pelo reino · ${Math.max(0, c.garrison - Garrison.FIELD)} de reserva</span></div>
         ${Reinado.it('🪖', 'Recrutar', `Cada soldado custa ${UI.fmtCost({ gold: 40, wheat: 5 }, have)}`, `<span class="act-row">${[1, 6].map(n => `<button class="primary" data-act="krecruit" data-c="${ci}" data-n="${n}" ${can ? '' : 'disabled'}>${n > 1 ? `Até ${n}` : '+1'}</button>`).join('')}</span>`)}
         ${Reinado.it('⚔️', 'Convocar escolta', `Um soldado passa a seguir você como capanga · seguidores ${Game.allies().length}/${Game.followerCap()}`, `<button class="primary" data-act="kescort" data-c="${ci}" ${c.garrison > 1 && capOk ? '' : 'disabled'}>Convocar</button>`)}</div>`;
       const guards = UI.guardsHtml({ kind: 'castle', civ: ci }) || `<div class="card rn-guards"><div class="sec">🛡️ Guardas no castelo</div><p class="muted">Converse com um capanga e escolha “Mandar fazer guarda”.</p></div>`;
