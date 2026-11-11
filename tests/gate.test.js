@@ -1,4 +1,4 @@
-// Portão da vila: instalar na estrada da muralha, pedágio, alarme que bloqueia, e o saque vindo de fora dos muros.
+// Portão da vila: instalar na estrada entre trechos de muralha (erguidos pelo governador), pedágio, alarme que bloqueia, e o saque vindo de fora dos muros.
 'use strict';
 const { open, wait } = require('./harness');
 module.exports = async () => {
@@ -9,7 +9,12 @@ module.exports = async () => {
       World.villages.forEach(v => v.prosper = 999); Towns.dayTick();
       let pick = null;
       for (let vi = 0; vi < World.villages.length && !pick; vi++) { const v = World.villages[vi];
-        for (let y = v.y - 18; y <= v.y + 18 && !pick; y++) for (let x = v.x - 18; x <= v.x + 18 && !pick; x++) { if (!World.inb(x, y)) continue; const i = World.idx(x, y); if (World.tiles[i] === T.ROAD && Gate.ring(x, y, v) === 16 && !World.blocker(i) && Gate.axis(x, y)) pick = { vi, x, y }; } }
+        for (let y = v.y - 18; y <= v.y + 18 && !pick; y++) for (let x = v.x - 18; x <= v.x + 18 && !pick; x++) { if (!World.inb(x, y)) continue; const i = World.idx(x, y); if (World.tiles[i] !== T.ROAD || Gate.ring(x, y, v) !== 16 || World.blocker(i)) continue;
+          // as vilas não erguem muralha sozinhas: o governador ergue os trechos dos dois lados da estrada
+          const vert = World.tile(x, y - 1) === T.ROAD || World.tile(x, y + 1) === T.ROAD, side = vert ? [[-1, 0], [-2, 0], [1, 0], [2, 0]] : [[0, -1], [0, -2], [0, 1], [0, 2]];
+          if (!side.every(([dx, dy]) => World.areaOk(x + dx, y + dy, 1, 1) && World.areaFree(x + dx, y + dy, 1, 1) && World.tile(x + dx, y + dy) !== T.ROAD)) continue;
+          for (const [dx, dy] of side) World.addStruct('vwall', x + dx, y + dy, 1, 1, v.civ, { village: vi });
+          if (Gate.axis(x, y)) pick = { vi, x, y }; } }
       if (!pick) return { err: 'nenhuma estrada cruzando muralha' };
       const v = World.villages[pick.vi]; v.lord = 'player';
       P.x = (pick.x + 2.5) * TILE; P.y = (pick.y + 2.5) * TILE;

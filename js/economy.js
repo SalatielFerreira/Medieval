@@ -141,7 +141,7 @@ const BIZ_PRICES = [0.6, 0.8, 1, 1.2, 1.5, 2];
 
 // ------------------------------------------------------------------ poder econômico das vilas (o nível sobe com ele)
 // ritmo do crescimento: uma vila leva uns 48 meses para ir do nível 1 ao 3–4
-const VILLAGE_GROWTH = 0.5;
+const VILLAGE_GROWTH = 0.25; // as vilas evoluem devagar (era 0,5: agora levam o dobro do tempo)
 const VillageEcon = {
   // de onde vem a força da economia da vila
   parts(vi) {

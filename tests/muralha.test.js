@@ -1,5 +1,4 @@
-// Muralhas das vilas contínuas (árvore ou pedra no caminho sai; só a estrada, a água e construções abrem vão),
-// trechos emendados sem fresta e o sino e a janela de avisos fora do jogo.
+// As vilas não erguem muralha sozinhas ao crescer (muralha só a da capital); trechos de muralha emendados sem fresta e o sino e a janela de avisos fora do jogo.
 'use strict';
 const { open } = require('./harness');
 module.exports = async () => {
@@ -7,16 +6,14 @@ module.exports = async () => {
   try {
     const r = await page.evaluate(() => {
       const out = [], ok = (c, t) => { if (!c) out.push(t); };
-      World.villages.forEach(v => { v.level = 10; }); Towns.applyAll();
-      World.villages.forEach((v, vi) => {
-        const W = World.structs.filter(s => s && !s.removed && s.type === 'vwall' && s.village === vi && !s.hidden);
-        if (!W.length) return;
-        const at = (x, y) => World.wallAt(x, y);
-        // trecho solto (sem nenhum vizinho) só pode ficar ao lado de estrada, água ou construção
-        const loose = W.filter(s => !(at(s.x - 1, s.y) || at(s.x + 1, s.y) || at(s.x, s.y - 1) || at(s.x, s.y + 1)));
-        ok(loose.length <= 2, `${v.name}: ${loose.length} trechos de muralha soltos`);
-        ok(!W.some(s => { const o = World.obj[World.idx(s.x, s.y)]; return o && OBJ[o].blocks; }), `${v.name}: árvore ou pedra em cima da muralha`);
-      });
+      // as vilas não erguem muralha sozinhas (só a capital tem, em volta do castelo e do que é dele)
+      World.villages.forEach(v => { v.prosper = 130; v.level = 10; }); Towns.applyAll();
+      const auto = World.structs.filter(s => s && !s.removed && !s.hidden && s.type === 'vwall' && s.growth !== undefined);
+      ok(!auto.length, `vilas no nível 10 ergueram ${auto.length} trechos de muralha sozinhas`);
+      // dois trechos de muralha erguidos (pelo governador) lado a lado
+      let sx = null; for (let r = 4; r < 80 && !sx; r += 2) for (let k = 0; k < 24 && !sx; k++) { const x = Math.round(P.x / TILE + Math.cos(k / 24 * 6.28) * r), y = Math.round(P.y / TILE + Math.sin(k / 24 * 6.28) * r); if (World.areaOk(x, y, 2, 1) && World.areaFree(x, y, 2, 1)) sx = { x, y }; }
+      ok(sx, 'sem lugar para os trechos de muralha'); if (!sx) return out;
+      World.addStruct('vwall', sx.x, sx.y, 1, 1, 0, { village: 0 }); World.addStruct('vwall', sx.x + 1, sx.y, 1, 1, 0, { village: 0 });
       // dois trechos lado a lado: o desenho emenda (nenhuma coluna do chão aparece entre eles)
       const W = World.structs.filter(s => s && !s.removed && s.type === 'vwall' && !s.hidden);
       const a = W.find(s => W.some(b => b.x === s.x + 1 && b.y === s.y)), b = W.find(s => s.x === a.x + 1 && s.y === a.y);

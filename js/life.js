@@ -1,9 +1,11 @@
 'use strict';
 // Vida das cidades (crescimento, muralhas e ruínas) e caravanas de comércio entre os reinos.
 
-// prosperidade necessária para cada nível (1 a 10): nível 2 ganha casas e poço, 3 ergue muralhas,
+// prosperidade necessária para cada nível (1 a 10): nível 2 ganha casas e poço, 3 mais casas (as vilas não erguem
+// muralha sozinhas: muralha só a da capital, em volta do castelo e do que é dele; o governador pode erguer a da vila),
 // do 4 ao 10 cada nível traz mais uma casa e uma família nova (e cabe mais gente)
 const VILLAGE_LVLS = [0, 9, 20, 32, 45, 60, 76, 93, 111, 130], VILLAGE_MAX = 10, PROSPER_MAX = 140;
+const VILLAGE_AUTO_WALLS = false; // as vilas não erguem a muralha sozinhas ao crescer
 const REALM_LVL = 5; // nível que a vila livre do herói precisa para virar reino
 const Towns = {
   levelOf(p) { let l = 1; for (let k = 1; k < VILLAGE_LVLS.length; k++) if (p >= VILLAGE_LVLS[k]) l = k + 1; return l; },
@@ -27,7 +29,7 @@ const Towns = {
       v.extra.houses.push(World.addStruct('vhouse', x, y, 2, 2, civ, { growth: lv++, village: vi }));
     }
     if (World.areaOk(v.x + 3, v.y - 1, 1, 1) && World.areaFree(v.x + 3, v.y - 1, 1, 1)) v.extra.well = World.addStruct('well', v.x + 3, v.y - 1, 1, 1, civ, { growth: 2, village: vi });
-    const R = 16;
+    const R = VILLAGE_AUTO_WALLS ? 16 : -1;
     for (let y = v.y - R; y <= v.y + R; y++) for (let x = v.x - R; x <= v.x + R; x++) {
       const ring = Math.max(Math.abs(x - v.x), Math.abs(y - v.y) * 1.25 | 0) === R;
       if (!ring || Math.abs(x - v.x) < 2 || Math.abs(y - v.y) < 2) continue;
@@ -114,7 +116,7 @@ const Towns = {
       const lvl = this.levelOf(v.prosper);
       const known = U.dist(P.x / TILE, P.y / TILE, v.x, v.y) < 60 || c.ruler === 'player';
       if (lvl > v.level) {
-        if (known) Game.note(`🏘️ ${v.name} prosperou e chegou ao nível ${lvl}: ${lvl === 3 ? 'ergueu muralhas!' : lvl === 2 ? 'ganhou novas casas e um poço.' : 'mais uma casa e uma família nova.'}${lvl === REALM_LVL && v.free && v.lord === 'player' ? ' Agora ela pode virar um reino: erga o Castelo.' : ''}`, 'gold');
+        if (known) Game.note(`🏘️ ${v.name} prosperou e chegou ao nível ${lvl}: ${lvl === 3 ? 'ganhou mais casas.' : lvl === 2 ? 'ganhou novas casas e um poço.' : 'mais uma casa e uma família nova.'}${lvl === REALM_LVL && v.free && v.lord === 'player' ? ' Agora ela pode virar um reino: erga o Castelo.' : ''}`, 'gold');
         Diplo.chronicle(`🏘️ ${v.name.startsWith("Vila ") ? "A " + v.name : "A vila de " + v.name} (${v.free ? 'vila livre' : Diplo.name(v.civ)}) cresceu e chegou ao nível ${lvl}.`);
         if (lvl >= 2) { const fam = People.create({ rank: 'peasant', civ: v.civ, home: { type: 'village', idx: vi }, age: U.rint(20, 40) }); fam.met = false; }
       } else if (lvl < v.level && known) UI.msg(`🏚️ ${v.name} está em decadência.`, 'bad');
