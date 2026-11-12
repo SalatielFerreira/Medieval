@@ -49,6 +49,19 @@ const RCache = {
     x0 = Math.max(0, x0 - 6); y0 = Math.max(0, y0 - 6); x1 = Math.min(W - 1, x1 + 6); y1 = Math.min(H - 1, y1 + 6);
     return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
   },
+  // o recorte medido sempre na escala 1 (numa tela pequena, até 16 vezes menos pontos para ler que no zoom maior; o
+  // castelo de perto chegava a 1400×1600 pontos e a leitura travava a tela por 100–250 ms) e só ampliado para o zoom
+  boxes1: new Map(),
+  measure(draw, s, w, h, time, res, key1, full) {
+    let b1 = this.boxes1.get(key1);
+    if (!b1) {
+      if (!this.meas) { this.meas = document.createElement('canvas'); this.meas.getContext('2d', { willReadFrequently: true }); }
+      this.meas = this.render(draw, s, w, h, 1, time, this.meas);
+      b1 = this.box(this.meas); this.boxes1.set(key1, b1);
+    }
+    const W = full.width, H = full.height, x = Math.max(0, Math.floor((b1.x - 1) * res)), y = Math.max(0, Math.floor((b1.y - 1) * res));
+    return { x, y, w: Math.max(1, Math.min(W - x, Math.ceil((b1.w + 2) * res))), h: Math.max(1, Math.min(H - y, Math.ceil((b1.h + 2) * res))) };
+  },
   // copia só o retângulo com desenho para a figura guardada (reaproveita a tela, se já for desse tamanho)
   crop(src, bx, into) {
     const cv = into && into.width === bx.w && into.height === bx.h ? into : document.createElement('canvas');
@@ -86,7 +99,7 @@ const RCache = {
           // estação nova: medir o recorte de cada tipo de prédio lendo os pixels travava a troca de estação. A neve e as
           // folhas mudam pouco o contorno: vale o recorte de outra estação com mais folga (os de antes nunca são cortados)
           if (!bx) { const o = this.boxes.get(this.anySeason.get(bk0)); if (o) { const W = this.scratch.width, H = this.scratch.height, x = Math.max(0, o.x - 10), y = Math.max(0, o.y - 10); bx = { x, y, w: Math.min(W - x, o.w + 20), h: Math.min(H - y, o.h + 20), wide: true }; this.boxes.set(bk, bx); } }
-          if (!bx) { bx = this.box(this.scratch); if (this.boxes.size > 3000) { this.boxes.clear(); this.anySeason.clear(); } this.boxes.set(bk, bx); this.anySeason.set(bk0, bk); }
+          if (!bx) { bx = this.measure(draw, s, w, h, time, res, bk.replace(/^[^|]*\|/, ''), this.scratch); if (this.boxes.size > 3000) { this.boxes.clear(); this.anySeason.clear(); this.boxes1.clear(); } this.boxes.set(bk, bx); this.anySeason.set(bk0, bk); }
           c = { key, cv: this.crop(this.scratch, bx, c && c.cv), bx, res, born: now, live: false, ttl: RCACHE_TTL + Math.random() * 2 }; this.map.set(s, c); this.stats.draw++;
         } else {
           // refaz numa tela de rascunho do tamanho inteiro e copia só o retângulo com desenho
@@ -148,4 +161,30 @@ World.drawStruct = RCache.wrap(World.drawStruct.bind(World));
     }
     return r;
   };
+}
+
+// ---------------------------------------------------------------- recortes medidos antes de jogar
+// Medir o contorno de um prédio é ler os pixels dele. No meio do jogo, com as figuras de gente já guardadas na placa de
+// vídeo, a leitura de um prédio cheio delas (a arena com a plateia) chegava a 230 ms de uma vez. Logo depois de carregar
+// o mundo, a medida é rápida: o jogo mede uma vez cada aparência de prédio e, jogando, só reaproveita.
+RCache.prewarm = function () {
+  if (!this.on || !World.structs) return 0;
+  const B = this.budget, ms0 = B.ms, cv = document.createElement('canvas'); cv.width = cv.height = 4;
+  const g = cv.getContext('2d'), seen = new Set(); let n = 0;
+  B.ms = Infinity;
+  try {
+    for (const s of World.structs) {
+      if (!s || s.removed || s.hidden) continue;
+      const k = [s.type, s.w, s.h, s.level, s.lv, s.progress, s.ruined, s.ruin, s.gateClosed, s.gateBroken, s.blocks].join('|');
+      if (seen.has(k)) continue; seen.add(k);
+      try { World.drawStruct(g, s, 0, 0, 0); n++; } catch (e) { /* um prédio que não desenha fora da tela */ }
+    }
+  } finally { B.ms = ms0; B.used = 0; }
+  return n;
+};
+{
+  const ng0 = Game.newGame.bind(Game);
+  Game.newGame = async function (...a) { const r = await ng0(...a); try { if (G.state === 'play') RCache.prewarm(); } catch (e) { console.error(e); } return r; };
+  const ld0 = Game.load.bind(Game);
+  Game.load = async function (...a) { const r = await ld0(...a); try { if (G.state === 'play') RCache.prewarm(); } catch (e) { console.error(e); } return r; };
 }
