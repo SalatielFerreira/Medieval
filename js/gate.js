@@ -228,9 +228,7 @@ function drawVillageGate(ctx, s, X, Y, time) {
     else { R(4, -4, 4, 34, wood); R(24, -4, 4, 34, wood); R(4, 4, 4, 2, iron); R(24, 4, 4, 2, iron); }
     R(15, -26, 2, 16, '#5a3a1e'); R(17, -26, 9, 6, col);
   }
-  // a torre de vigia fica no trecho de muro colado ao portão (à esquerda ou em cima); sem muro ali, vai junto do portão
-  const side = vert ? Gate.towerWall(s, true) : Gate.towerWall(s, false);
-  if (!side) drawGateTower(ctx, s, vert ? X : X - 2 * TILE, vert ? Y - 2 * TILE : Y, time);
+  // (a torre de vigia ao lado do portão saiu: fica só o portão)
 }
 // torre de vigia com o porteiro lá em cima (X, Y = canto do bloco da torre)
 function drawGateTower(ctx, s, X, Y, time) {
@@ -279,7 +277,6 @@ function drawGateTower(ctx, s, X, Y, time) {
   World.drawStruct = function (ctx, s, X, Y, time) {
     if (s.type === 'vgate') { drawVillageGate(ctx, s, X, Y, time); return; }
     const r = ds0(ctx, s, X, Y, time);
-    if (Gate.wallPiece(s) && !s.hidden && !s.removed) { const g = Gate.towerGate(s); if (g) drawGateTower(ctx, g, X, Y, time); }
     return r;
   };
   const il0 = Game.interactLabel.bind(Game);

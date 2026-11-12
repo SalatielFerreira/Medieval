@@ -41,7 +41,13 @@ module.exports = async () => {
       Urban.mode = 'c:vgate'; G.mouse.wx = (c.x + 0.5) * TILE; G.mouse.wy = (c.y + 1.5) * TILE; Urban.click();
       const g = World.blocker(World.idx(c.x, c.y + 1));
       ok(g && g.type === 'vgate' && g.pgate, 'o portão não foi posto no muro: ' + (g && g.type));
-      ok(Inv.count('wood') === nWood - CIVIC.vgate.cost.wood, 'o portão não cobrou o material');
+      ok(Inv.count('wood') === nWood, 'o portão cobrou material (devia ser de graça)');
+      // muro e portão: na Infraestrutura e de graça
+      UI.sel.bcat = 'infra'; UI.showBuild(); const infra = (UI.buildCats.find(c => c[0] === 'infra') || [0, 0, 0, []])[3];
+      ok(['wall_stone', 'wall_wood', 'c:vgate'].every(k => infra.includes(k)), 'muro e portão não estão na Infraestrutura: ' + infra.join(','));
+      ok(!UI.buildCats.some(c => c[0] !== 'infra' && c[3].some(k => ['wall_stone', 'wall_wood', 'c:vgate'].includes(k))), 'muro ou portão aparece repetido em outra janela');
+      UI.close();
+      ok(!Object.keys(BUILDINGS.wall_stone.cost).length && !Object.keys(BUILDINGS.wall_wood.cost).length && !Object.keys(CIVIC.vgate.cost).length, 'muro ou portão ainda custa material');
       ok(g && Gate.mine(g) && !Urban.movable(g), 'o portão não ficou seu');
       Game.save(null);
       return { out, slot: G.slot, at: { x: c.x, y: c.y + 1 } };

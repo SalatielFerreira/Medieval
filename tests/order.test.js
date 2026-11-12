@@ -15,8 +15,11 @@ module.exports = async () => {
           const vs = part.map(k => Order.buildValue(k)).filter(v => v !== null);
           for (let i = 1; i < vs.length; i++) if (vs[i] < vs[i - 1]) { bad.push(`${name}: fora de ordem em ${part[i]}`); break; }
         }
-        const tools = list.map(k => Order.buildValue(k) === null);
-        ok(tools.indexOf(true) < 0 || tools.slice(tools.indexOf(true)).every(Boolean), `${name}: as ferramentas grátis não estão no fim`);
+        // as ferramentas grátis ficam no fim (na Infraestrutura, no fim de cada grupo: Estradas, Muros e portão, Ferramentas)
+        for (const part of key === 'infra' && BuildRoles.classesOf(key) ? [...new Set(list.map(k => UI.buildClass[k]))].map(c => list.filter(k => UI.buildClass[k] === c)) : [list]) {
+          const tools = part.map(k => Order.buildValue(k) === null);
+          ok(tools.indexOf(true) < 0 || tools.slice(tools.indexOf(true)).every(Boolean), `${name}: as ferramentas grátis não estão no fim`);
+        }
         void key;
       }
       const mor = UI.buildCats.find(c => c[0] === 'moradia')[3];
