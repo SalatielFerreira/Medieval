@@ -5445,8 +5445,8 @@ body.small .bk3-chip { font-size: 11px; padding: 2px 8px; }
 body.small .bk3-body { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 6px; }
 body.small .bk3-body .card { padding: 7px 9px; }
 /* banco: num cartão estreito (marcado pelo BankView.fit), os botões de cada linha descem para baixo do nome */
-.bk3-body > .card.narrow .crow:has(> .act-row) { grid-template-columns: 30px 1fr; row-gap: 4px; }
-.bk3-body > .card.narrow .crow > .act-row { grid-column: 2 / -1; justify-content: flex-start; }
+.bk3-body > .card.narrow .crow:has(> .act-row > :nth-child(3)) { grid-template-columns: 30px 1fr; row-gap: 4px; }
+.bk3-body > .card.narrow .crow:has(> .act-row > :nth-child(3)) > .act-row { grid-column: 2 / -1; justify-content: flex-start; }
 .crow b.bx-own, .crow small b, .crow small em { display: inline; }
 body.small .bk3-top { display: none; }
 body.small .bk3-body .bank-big { padding: 6px; }
@@ -5496,3 +5496,31 @@ body.small .bk3-body .card.bk3-wide { grid-column: 1 / -1; }
 .card.narrow .bp-act { grid-column: 2 / -1; align-items: flex-start; }
 .card.narrow .bp-row { grid-template-columns: 30px 1fr; }
 .bk3-body > .card.bk3-capped { overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(214, 174, 96, .5) transparent; }
+/* banco: o valor da página (um botão por linha usa esse valor) */
+.bk3-amtsel { display: flex; align-items: center; gap: 3px; padding: 3px; border-radius: 999px; background: rgba(0, 0, 0, .4); border: 1px solid rgba(214, 174, 96, .45); flex: none; }
+.bk3-amtsel small { padding: 0 6px 0 8px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: #d8c49a; font-weight: 700; }
+.bk3-amtsel button { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: transparent; border: 1px solid transparent; color: #f0dfb6; min-height: 0; }
+.bk3-amtsel button:hover { background: rgba(214, 174, 96, .18); }
+.bk3-amtsel button.on { background: linear-gradient(180deg, #f2cf7d, #c0913c); color: #2a1a08; border-color: #ffe9b0; box-shadow: 0 0 10px rgba(242, 207, 125, .35); }
+.bk3 button.bk3-amt { min-width: 92px; font-weight: 600; }
+.bk3 button.bk3-amt b { color: #ffe9b0; font-weight: 800; }
+.bk3 button.bk3-amt:disabled b { color: inherit; }
+/* cartões e linhas do banco: acabamento */
+.bk3-body > .card { border-radius: 14px; background: linear-gradient(180deg, rgba(48, 36, 20, .72), rgba(22, 16, 9, .82)); border: 1px solid rgba(214, 174, 96, .28); box-shadow: 0 6px 18px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 233, 176, .06); }
+.bk3-body > .card > .sec:first-child { padding-bottom: 7px; margin-bottom: 8px; border-bottom: 1px solid rgba(214, 174, 96, .22); }
+.bk3-body .crow { border: 1px solid rgba(214, 174, 96, .1); transition: border-color .15s, background .15s; }
+.bk3-body .crow:hover { border-color: rgba(214, 174, 96, .35); background: rgba(214, 174, 96, .07); }
+.bk3-body .crow .ri { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255, 233, 176, .18), rgba(0, 0, 0, .25)); font-size: 17px; }
+.bp-sec { font-style: normal; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 999px; margin-right: 3px; }
+.bp-sec.s-comida { background: rgba(120, 180, 90, .25); color: #c8f0a8; }
+.bp-sec.s-ofcios { background: rgba(200, 150, 80, .25); color: #ffd9a0; }
+.bp-sec.s-mar { background: rgba(80, 140, 210, .25); color: #b8dcff; }
+.bp-sec.s-riquezas { background: rgba(200, 120, 220, .22); color: #f0c8ff; }
+body.small .bk3-amtsel button { padding: 3px 7px; font-size: 11px; }
+body.small .bk3-amtsel small { display: none; }
+
+.bk3 .crow button b, .bk3 button.bk3-amt b { display: inline; font-size: inherit; }
+.bk3-top:has(.bk3-amtsel) .bk3-chip:nth-child(n+3) { display: none; }
+.bk-proj { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 10px; }
+.bk-proj > div { text-align: center; padding: 10px 6px; border-radius: 10px; background: rgba(0, 0, 0, .28); border: 1px solid rgba(214, 174, 96, .22); }
+.bk-proj small { display: block; color: #c9b48a; font-size: 11px; } .bk-proj b { color: var(--gold-hi); font-size: 16px; } .bk-proj em { display: block; font-style: normal; color: #9fdc7c; font-size: 11.5px; }

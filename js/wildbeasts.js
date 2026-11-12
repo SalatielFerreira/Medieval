@@ -61,7 +61,7 @@ const Beasts = {
     const v = World.villages[vi], D = this.def(b); if (!v) return;
     b.attacks++;
     v.beastHit = G.day; v.prosper = Math.max(0, (v.prosper || 0) - 8);
-    const res = People.residents(vi).filter(p => !p.capanga && !p.kin && p.age >= 14), dead = [];
+    const res = People.residents(vi).filter(p => !p.capanga && !p.kin && p.age >= 18), dead = [];
     for (let k = U.rint(0, 2); k > 0 && res.length; k--) { const p = res.splice(U.rint(0, res.length - 1), 1)[0]; People.die(p, `atacado pelo ${D.name}`); dead.push(p.name); }
     const c = !v.free ? G.civs[v.civ] : null;
     if (c && !c.dead) {

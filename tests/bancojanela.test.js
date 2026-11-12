@@ -24,8 +24,14 @@ module.exports = async () => {
           if (pg) { const lab = pg.parentElement.querySelector('span').textContent; pg.click(); ok(pg.parentElement.querySelector('span').textContent !== lab, `${t}: a seta de página não muda a página`); }
         }
         // um botão da janela continua funcionando (depositar)
-        UI.showBank(1, 'conta'); const a0 = Bank.acc(1); const b = UI.panel.querySelector('button[data-op="dep"][data-n="100"]'); ok(b, 'sem botão de depositar');
-        if (b) { b.click(); ok(Bank.acc(1) === a0 + 100, 'depositar pela janela nova não funcionou'); ok(UI.panel.querySelector('.bk3-body'), 'depois de depositar a janela voltou para a antiga'); }
+        // um valor só para a página: escolhe 1.000 e o botão da linha deposita 1.000
+        UI.showBank(1, 'conta'); const a0 = Bank.acc(1);
+        const v = UI.panel.querySelector('.bk3-amtsel button[data-amt="1000"]'); ok(v, 'sem o seletor de valor'); if (v) v.click();
+        const b = UI.panel.querySelector('button.bk3-amt[data-op="dep"]'); ok(b && b.dataset.n === '1000', 'o botão de depositar não usa o valor escolhido');
+        if (b) { b.click(); ok(Bank.acc(1) === a0 + 1000, 'depositar pela janela nova não funcionou: ' + (Bank.acc(1) - a0)); ok(UI.panel.querySelector('.bk3-body'), 'depois de depositar a janela voltou para a antiga'); }
+        ok(!UI.panel.querySelector('.bk3-body button[data-op="dep"][data-n="5000"]:not(.bk3-amt)'), 'a fileira de botões de valor continua lá');
+        UI.showBank(1, 'expedicoes'); ok(BANK_EXPEDITIONS.length >= 15 && UI.panel.querySelectorAll('.ex-row').length === BANK_EXPEDITIONS.length, 'poucas rotas de expedição');
+        UI.showBank(1, 'bolsa'); ok(BOLSA.length >= 13 && UI.panel.querySelector('[data-op="basket"]'), 'poucas opções na bolsa (companhias ou cesta)');
         UI.close();
         if (nm === 'computador') {
           // guarnição

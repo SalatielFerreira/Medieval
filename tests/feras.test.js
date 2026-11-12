@@ -15,7 +15,7 @@ module.exports = async () => {
       const R = () => X.rendas.filter(r => r.ci === ci);
       ok(R().length === 1 && R()[0].n === 6000 && R()[0].m === Math.round(6000 * RENDA_RATE), 'a renda não virou um total só: ' + JSON.stringify(R()));
       UI.showBank(ci, 'renda');
-      ok(UI.panel.querySelector('[data-op="rout"][data-k="1000"]') && UI.panel.querySelector('[data-op="rin"][data-k="all"]'), 'a janela não tem pôr e tirar da renda');
+      ok(UI.panel.querySelector('.bk3-amt[data-op="rout"]') && UI.panel.querySelector('[data-op="rin"][data-k="all"]'), 'a janela não tem pôr e tirar da renda');
       ok(!/Resgatar 900/.test(UI.panel.innerHTML), 'ainda aparece um resgate para cada aplicação');
       const g0 = P.gold; c.treasury = 100000; UI.act('bk3', { op: 'rout', c: ci, k: '1000' });
       ok(P.gold - g0 === 900 && R()[0].n === 5000, 'tirar 1000 devolveu ' + (P.gold - g0) + ' e sobrou ' + (R()[0] && R()[0].n));

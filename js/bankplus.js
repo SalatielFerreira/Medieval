@@ -12,13 +12,23 @@ BOLSA.push(
   { id: 'madeira', icon: '🪵', name: 'Serrarias do Reino',      base: 24,  vol: 0.05, div: 0.008, up: 'As obras nas vilas compraram toda a madeira.', down: 'Um incêndio destruiu um depósito de toras.' },
   { id: 'espec',   icon: '🌶️', name: 'Casa das Especiarias',    base: 60,  vol: 0.15, div: 0.012, up: 'Pimenta e canela esgotaram nas feiras.', down: 'Um carregamento estragou no porão do navio.' },
   { id: 'merc',    icon: '🏦', name: 'Banco dos Mercadores',    base: 110, vol: 0.09, div: 0.010, up: 'Os empréstimos às guildas deram lucro recorde.', down: 'Um grande devedor deu calote no banco.' },
+  { id: 'cerveja', icon: '🍺', name: 'Cervejarias Unidas',      base: 22,  vol: 0.05, div: 0.009, up: 'Festas da colheita: os barris acabaram.', down: 'Um lote de cerveja azedou nas adegas.' },
+  { id: 'vidro',   icon: '🪟', name: 'Vidraria do Lago',        base: 30,  vol: 0.07, div: 0.009, up: 'As catedrais encomendaram vitrais novos.', down: 'O forno grande da vidraria rachou.' },
+  { id: 'naval',   icon: '⚓', name: 'Estaleiros Reais',        base: 70,  vol: 0.12, div: 0.011, up: 'Os reis encomendaram uma frota inteira.', down: 'Um navio novo afundou na primeira viagem.' },
+  { id: 'joias',   icon: '💎', name: 'Joalheiros da Coroa',     base: 150, vol: 0.16, div: 0.012, up: 'Casamento real: as joias esgotaram.', down: 'Ladrões assaltaram a oficina dos joalheiros.' },
 );
+const BOLSA_SECTORS = { sal: 'comida', vinho: 'comida', cerveja: 'comida', ferro: 'ofícios', madeira: 'ofícios', vidro: 'ofícios', la: 'ofícios', frota: 'mar', naval: 'mar', espec: 'mar', prata: 'riquezas', joias: 'riquezas', merc: 'riquezas' };
 BANK_EXPEDITIONS.push(
   { id: 'feira',  icon: '🎪', name: 'Grande feira das capitais',   m: 1, risk: 0.05, lo: 1.02, hi: 1.12, good: 'As barracas venderam tudo na feira.', bad: 'Choveu a feira inteira e ninguém comprou nada.' },
   { id: 'peles',  icon: '🦊', name: 'Peles do norte gelado',       m: 3, risk: 0.15, lo: 1.1, hi: 1.45, good: 'As peles chegaram antes do inverno e valeram muito.', bad: 'Uma nevasca prendeu a caravana nas montanhas.' },
   { id: 'ambar',  icon: '🟠', name: 'Âmbar das praias do leste',   m: 4, risk: 0.22, lo: 1.2, hi: 1.7, good: 'O âmbar fez sucesso com os joalheiros.', bad: 'Piratas tomaram o barco do âmbar.' },
   { id: 'marfim', icon: '🐘', name: 'Marfim das terras quentes',   m: 5, risk: 0.33, lo: 1.35, hi: 2.1, good: 'O marfim foi disputado no leilão.', bad: 'A febre do pântano derrubou os carregadores.' },
   { id: 'ouro',   icon: '🏜️', name: 'Ouro do deserto',             m: 7, risk: 0.55, lo: 2.0, hi: 3.6, good: 'Acharam as minas de ouro perdidas do deserto!', bad: 'A caravana nunca voltou das dunas.' },
+  { id: 'gelo',    icon: '🧊', name: 'Blocos de gelo para o sul',    m: 2, risk: 0.12, lo: 1.06, hi: 1.35, good: 'O gelo chegou inteiro e os nobres do sul pagaram caro.', bad: 'O calor derreteu a carga no caminho.' },
+  { id: 'cavalos', icon: '🐎', name: 'Manada de cavalos das estepes', m: 3, risk: 0.2, lo: 1.15, hi: 1.6, good: 'Os cavalos foram vendidos aos cavaleiros do reino.', bad: 'Lobos espantaram a manada nas estepes.' },
+  { id: 'livros',  icon: '📚', name: 'Manuscritos para os mosteiros', m: 4, risk: 0.18, lo: 1.18, hi: 1.55, good: 'Os monges pagaram bem pelos manuscritos raros.', bad: 'A chuva estragou os pergaminhos.' },
+  { id: 'perolas', icon: '🦪', name: 'Pérolas dos mares do sul',      m: 6, risk: 0.42, lo: 1.6, hi: 2.6, good: 'Os mergulhadores voltaram com pérolas enormes.', bad: 'Os tubarões afastaram os mergulhadores.' },
+  { id: 'escamas', icon: '🐉', name: 'Caça às escamas de dragão',     m: 8, risk: 0.62, lo: 2.4, hi: 4.5, good: 'Acharam um ninho abandonado cheio de escamas!', bad: 'O dragão estava em casa.' },
 );
 BANK_EXPEDITIONS.sort((a, b) => a.m - b.m || a.risk - b.risk);
 const BANK_EXP_MAX = 6, BANK_ESCORT = { cost: 0.12, risk: 0.6 }, RENDA_FEE = 0.10;
@@ -36,6 +46,9 @@ const BankPlus = {
   // ---------------------------------------------------------------- 📊 bolsa
   cost() { const X = Bolsa.X(); return BOLSA.reduce((a, c) => a + (X.paid[c.id] || 0), 0); },
   buyValue(id, g) { const p = Bolsa.price(id), n = Math.floor(Math.min(g, P.gold) / (p * (1 + BOLSA_FEE))); if (n <= 0) { UI.msg('Não dá para comprar nem uma ação com esse valor.', 'bad'); return; } Bolsa.buy(id, n); },
+  // a cesta: uma ação (ou dez) de cada companhia, para espalhar o risco
+  basket(q) { const X = Bolsa.X(); let n = 0; for (const c of BOLSA) { const p = Bolsa.price(c.id), cost = Math.round(q * p * (1 + BOLSA_FEE)); if (P.gold < cost) continue; P.gold -= cost; X.own[c.id] = (X.own[c.id] || 0) + q; X.paid[c.id] = (X.paid[c.id] || 0) + cost; n++; } if (n) { Sound.play('coin'); UI.msg(`🧺 Cesta comprada: ${q} ação(ões) de ${n} companhias.`, 'gold'); } else UI.msg('Ouro insuficiente para a cesta.', 'bad'); },
+  basketCost(q) { return BOLSA.reduce((a, c) => a + Math.round(q * Bolsa.price(c.id) * (1 + BOLSA_FEE)), 0); },
   sellAll() { const X = Bolsa.X(); let got = 0; const g0 = P.gold; for (const c of BOLSA) if (X.own[c.id]) Bolsa.sell(c.id, X.own[c.id]); got = P.gold - g0; if (got) UI.msg(`📊 Você vendeu toda a carteira por ${got} 🪙.`, 'gold'); },
   bolsaHtml(ci) {
     const X = this.X(), b = (op, id, n, label, ok, cls) => `<button class="${cls || ''}" data-act="bk2" data-op="${op}" data-c="${ci}" data-k="${id}" data-n="${n}" ${ok ? '' : 'disabled'}>${label}</button>`;
@@ -44,7 +57,7 @@ const BankPlus = {
     const rows = BOLSA.map(c => {
       const p = Bolsa.price(c.id), h = X.mkt[c.id].hist, prev = h.length > 1 ? h[h.length - 2] : p, own = X.own[c.id] || 0, cpl = own ? own * p - (X.paid[c.id] || 0) : 0, up = p >= prev;
       return `<div class="crow bx-row bp-row ${own ? 'mine' : ''}"><span class="ri">${c.icon}</span><span><b>${c.name} <em class="bp-p">${p} 🪙</em> <em class="${up ? 'ok' : 'bad'}">${up ? '▲' : '▼'} ${Math.abs(Math.round((p / prev - 1) * 100))}%</em></b>
-        <small>dividendo ${(c.div * 100).toFixed(1)}%/mês · risco ${'●'.repeat(Math.ceil(c.vol * 20))}${own ? ` · <b class="bx-own">${own}</b> ações (${own * p} 🪙, <span class="${cpl >= 0 ? 'ok' : 'bad'}">${cpl >= 0 ? '+' : ''}${cpl}</span>)` : ''}</small>${Bolsa.spark(h)}</span>
+        <small>${BOLSA_SECTORS[c.id] ? `<i class="bp-sec s-${BOLSA_SECTORS[c.id].replace(/\W/g, '')}">${BOLSA_SECTORS[c.id]}</i> ` : ''}dividendo ${(c.div * 100).toFixed(1)}%/mês · risco ${'●'.repeat(Math.ceil(c.vol * 20))}${own ? ` · <b class="bx-own">${own}</b> ações (${own * p} 🪙, <span class="${cpl >= 0 ? 'ok' : 'bad'}">${cpl >= 0 ? '+' : ''}${cpl}</span>)` : ''}</small>${Bolsa.spark(h)}</span>
         <span class="bp-act"><span class="act-row">${[1, 10, 100].map(q => b('buy', c.id, q, `+${q}`, P.gold >= q * p * (1 + BOLSA_FEE))).join('')}${[100, 1000].map(g => B3('buyv', c.id + ':' + g, `🪙${g}`, P.gold >= p * (1 + BOLSA_FEE) && g >= p, 'bp-v')).join('')}</span>
         <span class="act-row">${[1, 10].map(q => b('sell', c.id, q, `−${q}`, own >= q)).join('')}${b('sell', c.id, 'all', 'Vender tudo', own > 0)}</span></span></div>`;
     }).join('');
@@ -55,9 +68,10 @@ const BankPlus = {
         <div class="bp-kv"><span>Dividendos do último mês</span><b>${X.lastDiv} 🪙</b></div>
         <div class="bp-kv"><span>Corretagem</span><b>${BOLSA_FEE * 100}% na compra e na venda</b></div>
         <div class="act-row bp-opts">${B3('reinv', 0, X.reinvest ? '🔁 Reinvestindo dividendos' : '🔁 Reinvestir dividendos', true, X.reinvest ? 'on' : '')}${B3('sellall', 0, '💰 Vender tudo', n > 0)}</div>
+        <div class="act-row bp-opts">${B3('basket', 1, `🧺 Cesta: 1 de cada (${this.basketCost(1)} 🪙)`, P.gold >= this.basketCost(1))}${B3('basket', 10, `🧺 10 de cada (${this.basketCost(10)} 🪙)`, P.gold >= this.basketCost(10))}</div>
         <small class="muted">Reinvestir: o dividendo de cada companhia compra mais ações dela no fim do mês.</small>
         <div class="sec" style="margin-top:10px">📰 Notícias da Bolsa</div>${X.news.length ? X.news.map(q => `<div class="bank-log"><small>${Calendar.short(q.day)}</small> ${UI.esc(q.t)}</div>`).join('') : '<p class="muted">Nada de novo nas companhias ainda.</p>'}</div>
-      <div class="card bp-list bk3-wide"><div class="sec">📊 Bolsa dos Reinos <span>${BOLSA.length} companhias</span></div>${rows}</div>`;
+      <div class="card bp-list bk3-wide"><div class="sec">📊 Bolsa dos Reinos <span>${BOLSA.length} companhias · ${new Set(Object.values(BOLSA_SECTORS)).size} setores</span></div>${rows}</div>`;
   },
   // ---------------------------------------------------------------- 🏛️ fundos e renda
   rendaIn(ci, n) {
@@ -80,7 +94,7 @@ const BankPlus = {
   rendaHtml(ci) {
     const X = this.X(), b = (op, n, label, ok) => `<button data-act="bk2" data-op="${op}" data-c="${ci}" data-n="${n}" ${ok ? '' : 'disabled'}>${label}</button>`;
     const B3 = (op, n, label, ok) => `<button data-act="bk3" data-op="${op}" data-c="${ci}" data-k="${n}" ${ok ? '' : 'disabled'}>${label}</button>`;
-    const Q = [100, 1000, 5000], r = this.renda(ci), here = r ? r.n : 0, an = !!G.civs[ci].anarchy, fund = Math.round(X.fund);
+    const Q = [100, 500, 1000, 5000], r = this.renda(ci), here = r ? r.n : 0, an = !!G.civs[ci].anarchy, fund = Math.round(X.fund);
     const others = X.rendas.filter(x => x.ci !== ci), allM = X.rendas.reduce((a, x) => a + x.m, 0);
     return `<div class="card rd-card"><div class="sec">🏛️ Fundo das Guildas <span>~1% ao mês</span></div>
         <div class="bp-big"><b>${fund.toLocaleString('pt-BR')} 🪙</b><small>aplicados nas oficinas dos sete reinos</small></div>
@@ -154,8 +168,28 @@ const BankPlus = {
   Bolsa.renda = (ci, n) => BankPlus.rendaIn(ci, n);
   Bolsa.rendaOut = (ci, n) => { const r = BankPlus.renda(ci); BankPlus.rendaOut(ci, n === 'all' || n === undefined ? (r ? r.n : 0) : +n); };
   Bank.expedite = (id, n) => BankPlus.expedite(id, n);
+  // a conta: quanto o dinheiro vai render (1, 6 e 12 meses) e o total em todos os bancos
+  BankPlus.contaExtra = function (ci) {
+    const a = Bank.acc(ci), all = Object.values(Bank.B().acc).reduce((s, n) => s + Math.max(0, n), 0), r = BANK_PERSONAL_RATE;
+    const f = m => Math.round(a * Math.pow(1 + r, m));
+    return `<div class="card bk-conta2"><div class="sec">📈 Quanto rende <span>0,5% ao mês, juros sobre juros</span></div>
+      <div class="bk-proj">${[1, 6, 12].map(m => `<div><small>em ${m} ${m === 1 ? 'mês' : 'meses'}</small><b>${f(m).toLocaleString('pt-BR')} 🪙</b><em>+${(f(m) - a).toLocaleString('pt-BR')}</em></div>`).join('')}</div>
+      <div class="bp-kv"><span>💰 Nesta conta</span><b>${a.toLocaleString('pt-BR')} 🪙</b></div>
+      <div class="bp-kv"><span>🏦 Em todos os bancos</span><b>${all.toLocaleString('pt-BR')} 🪙</b></div>
+      <div class="bp-kv"><span>🪙 No bolso (corre risco na estrada)</span><b>${P.gold.toLocaleString('pt-BR')} 🪙</b></div>
+      <div class="bp-kv"><span>🛡️ Se o reino quebrar</span><b class="bad">perde 60%</b></div>
+      <small class="muted">A conta é o seu dinheiro pessoal; o dinheiro do reino fica na aba Tesouro.</small></div>`;
+  };
   const sb0 = UI.showBank.bind(UI);
   UI.showBank = function (ci, tab, robbing) {
+    if (tab === 'conta' && G.civs[ci] && !G.civs[ci].anarchy) {
+      const op = this.open; let got = null;
+      this.open = (title, body, fn, args, sub) => { got = { title, body, fn, args, sub }; };
+      try { sb0(ci, tab, robbing); } finally { this.open = op; }
+      if (!got) return;
+      const i = got.body.lastIndexOf('</div>'); // a página da conta ganha o cartão do rendimento
+      return this.open(got.title, got.body.slice(0, i) + BankPlus.contaExtra(ci) + got.body.slice(i), got.fn, got.args, got.sub);
+    }
     if (tab !== 'expedicoes' || !G.civs[ci] || G.civs[ci].anarchy) return sb0(ci, tab, robbing);
     const op = this.open; let got = null;
     this.open = (title, body, fn, args, sub) => { got = { title, body, fn, args, sub }; };
@@ -182,6 +216,7 @@ const BankPlus = {
     switch (d.op) {
       case 'buyv': { const [id, g] = String(d.k).split(':'); BankPlus.buyValue(id, +g); break; }
       case 'sellall': BankPlus.sellAll(); break;
+      case 'basket': BankPlus.basket(Math.max(1, +d.k || 1)); break;
       case 'reinv': X.reinvest = !X.reinvest; UI.msg(X.reinvest ? '🔁 Os dividendos vão comprar mais ações sozinhos.' : 'Os dividendos voltam para o seu bolso.'); break;
       case 'rin': BankPlus.rendaIn(ci, d.k === 'all' ? P.gold : +d.k); break;
       case 'rout': { const r = BankPlus.renda(ci); BankPlus.rendaOut(ci, d.k === 'all' ? (r ? r.n : 0) : +d.k); break; }
