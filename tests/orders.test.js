@@ -19,12 +19,12 @@ module.exports = async () => {
       // o convite: um irmão amigo
       const bro = Secret.brothers('smiths').find(p => p.age >= 16); bro.met = true; bro.aff = 100; // amizade 100: convite garantido
       Secret.ask('smiths'); ok(Secret.S().invites.smiths, 'o irmão amigo não convidou');
-      Secret.accept('smiths'); ok(KOrders.S().key === 'smiths' && KOrders.S().mission && KOrders.rankName() === 'Aprendiz', 'não entrou como Aprendiz');
+      Secret.accept('smiths'); ok(KOrders.S().key === 'smiths' && KOrders.S().mission && KOrders.rankName() === 'Escudeiro', 'não entrou como Escudeiro (o primeiro grau dos Templários): ' + KOrders.rankName());
       ok(Commerce.st().member === 'smiths', 'a guilda do ofício não virou a sociedade');
-      UI.showKingdom(); ok(html().includes('Você é Aprendiz') && html().includes('O que a sociedade faz por você'), 'a página do irmão');
-      // missões até Companheiro: o manto e o cavaleiro
+      UI.showKingdom(); ok(/Você é (<b>)?Escudeiro/.test(html()) && html().includes('O que a sociedade faz por você'), 'a página do irmão');
+      // missões até o 2º grau (Cavaleiro, nos Templários): o manto e o cavaleiro
       for (let k = 0; k < 2; k++) { KOrders.S().mission = { k: 'bandits', until: G.day + 3, base: Progress.S().kill_bandit || 0 }; Progress.add('kill_bandit', 8); KOrders.monthTick(); }
-      ok(KOrders.rank() === 1 && KOrders.rankName() === 'Companheiro', 'não subiu a Companheiro: ' + KOrders.rankName());
+      ok(KOrders.rank() === 1 && KOrders.rankName() === 'Cavaleiro', 'não subiu a Cavaleiro (o segundo grau dos Templários): ' + KOrders.rankName());
       ok(Inv.count('ko_tabard_smiths') && Inv.count('ko_helm_smiths'), 'não ganhou o manto');
       ok(KOrders.knights().length === 1, 'nenhum cavaleiro da sociedade');
       // investimentos: os empreendimentos rendem mais

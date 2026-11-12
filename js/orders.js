@@ -132,8 +132,8 @@ const KOrders = {
     const e = this.canFound(); if (e) { UI.msg(e, 'bad'); return; }
     name = String(name || '').trim().slice(0, 40) || `Ordem de ${G.surname || G.name}`;
     P.gold -= 4000;
-    const S = this.S(); Object.assign(S, { key: 'own', pts: 0, viol: 0, mission: null, own: { name, icon: '⚜️', col: KO_COLORS.includes(col) ? col : KO_COLORS[0], cross: '#f0e0b0', mat: 'gold', knights: 1, since: G.day, oath: 'A palavra do Grão-Mestre é a lei.' } });
-    UI.banner(`⚜️ ${name}`); UI.msg(`⚜️ Você fundou a ${name} e é o Grão-Mestre. Todo mês ela arma um cavaleiro novo (até 6), com soldo de 20 🪙 cada.`, 'gold', true);
+    const S = this.S(); Object.assign(S, { key: 'own', pts: 0, viol: 0, mission: null, own: { name, icon: '⚜️', col: KO_COLORS.includes(col) ? col : KO_COLORS[0], cross: '#f0e0b0', mat: 'gold', knights: 1, since: G.day, oath: 'A palavra do líder é a lei.' } });
+    UI.banner(`⚜️ ${name}`); UI.msg(`⚜️ Você fundou a ${name} e é o líder dela. Todo mês ela arma um cavaleiro novo (até 6), com soldo de 20 🪙 cada.`, 'gold', true);
     Progress.diary(`⚜️ Fundou a ${name}.`); Diplo.chronicle(`⚜️ ${G.name} ${G.surname || ''} fundou a ${name}.`, true);
     this.armor(); this.muster();
   },
@@ -211,5 +211,5 @@ const KOrders = {
     }
     UI.refresh();
   };
-  ACHIEVEMENTS.push({ id: 'knight_o', icon: '⚜️', name: 'Cavaleiro de uma Ordem', desc: 'Chegue a Cavaleiro numa ordem.', t: () => KOrders.S().key && KOrders.rank() >= 1 }, { id: 'grandmaster', icon: '👑', name: 'Grão-Mestre', desc: 'Seja Grão-Mestre de uma ordem.', t: () => KOrders.S().key && KOrders.rank() >= 3 });
+  ACHIEVEMENTS.push({ id: 'knight_o', icon: '⚜️', name: 'Cavaleiro de uma Ordem', desc: 'Chegue a Cavaleiro numa ordem.', t: () => KOrders.S().key && KOrders.rank() >= 1 }, { id: 'grandmaster', icon: '👑', name: 'Líder de uma sociedade', desc: 'Chegue ao grau mais alto de uma sociedade (na Maçonaria, Grão-Mestre).', t: () => KOrders.S().key && KOrders.rank() >= 3 });
 }

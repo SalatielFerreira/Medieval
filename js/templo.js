@@ -72,8 +72,8 @@ const Soc2 = {
   fearBar() { if (!Secret.member()) return 0; const r = Math.max(0, this.rank()), S = this.S(); return Math.round(this.power(this.key()).power * (0.35 + 0.15 * r) * (1 + Math.max(0, -S.karma) / 200)); },
   // ---------------------------------------------------------------- cofre e investimentos
   vaultIn(n) { n = Math.min(Math.floor(n), P.gold); if (n < 1) return; P.gold -= n; this.S().vault += n; Progress.add('soc_vault', n); Sound.play('coin'); this.log(`💰 Você pôs ${n} 🪙 no cofre da loja.`); this.check(); },
-  vaultOut(n) { if (!this.admin()) { UI.msg('Só o Mestre da Loja mexe no cofre.', 'bad'); return; } const S = this.S(); n = Math.min(Math.floor(n), S.vault); if (n < 1) return; S.vault -= n; P.gold += n; Sound.play('coin'); this.log(`💰 Você tirou ${n} 🪙 do cofre da loja.`); },
-  invest(k, n) { if (!this.admin()) { UI.msg('Só o Mestre da Loja decide os investimentos.', 'bad'); return; } const S = this.S(); n = Math.min(Math.floor(n), S.vault); if (n < 1) { UI.msg('O cofre da loja não tem esse dinheiro.', 'bad'); return; } S.vault -= n; S.inv[k] = (S.inv[k] || 0) + n; this.log(`${SOC2_FUNDS[k].icon} ${n} 🪙 do cofre foram para ${SOC2_FUNDS[k].name}.`); },
+  vaultOut(n) { if (!this.admin()) { UI.msg(`Só a partir de ${SOC2_TITLES[2]} se mexe no cofre.`, 'bad'); return; } const S = this.S(); n = Math.min(Math.floor(n), S.vault); if (n < 1) return; S.vault -= n; P.gold += n; Sound.play('coin'); this.log(`💰 Você tirou ${n} 🪙 do cofre da loja.`); },
+  invest(k, n) { if (!this.admin()) { UI.msg(`Só a partir de ${SOC2_TITLES[2]} se decidem os investimentos.`, 'bad'); return; } const S = this.S(); n = Math.min(Math.floor(n), S.vault); if (n < 1) { UI.msg('O cofre da loja não tem esse dinheiro.', 'bad'); return; } S.vault -= n; S.inv[k] = (S.inv[k] || 0) + n; this.log(`${SOC2_FUNDS[k].icon} ${n} 🪙 do cofre foram para ${SOC2_FUNDS[k].name}.`); },
   divest(k, n) { if (!this.admin()) return; const S = this.S(); n = Math.min(Math.floor(n), Math.floor(S.inv[k] || 0)); if (n < 1) return; S.inv[k] -= n; S.vault += n; this.log(`${SOC2_FUNDS[k].icon} ${n} 🪙 voltaram de ${SOC2_FUNDS[k].name} para o cofre.`); },
   spend(n) { const S = this.S(); if (S.vault >= n) { S.vault -= n; return true; } UI.msg(`O cofre da loja precisa de ${n} 🪙.`, 'bad'); return false; },
   // ---------------------------------------------------------------- rede: networking, recrutar, cargos
@@ -110,7 +110,7 @@ const Soc2 = {
   },
   postable() { const k = this.key(); if (!k || k === 'own') return []; return Secret.brothers(k).filter(p => p.met && p.age >= 18 && (p.aff || 0) >= 20); },
   appoint(post) {
-    if (!this.admin()) { UI.msg('Só o Mestre da Loja nomeia os cargos.', 'bad'); return; }
+    if (!this.admin()) { UI.msg(`Só a partir de ${SOC2_TITLES[2]} se nomeiam os cargos.`, 'bad'); return; }
     const S = this.S(), L = this.postable(); if (!L.length) { UI.msg('Nenhum irmão que você conhece e confia em você (amizade 20+).', 'bad'); return; }
     const cur = L.findIndex(p => p.id === S.posts[post]), nx = L[(cur + 1) % L.length];
     for (const k in S.posts) if (S.posts[k] === nx.id) delete S.posts[k];
@@ -125,7 +125,7 @@ const Soc2 = {
       .sort((a, b) => U.dist(a.v.x, a.v.y, P.x / TILE, P.y / TILE) - U.dist(b.v.x, b.v.y, P.x / TILE, P.y / TILE)).slice(0, 8);
   },
   topGov(vi) {
-    if (!this.admin()) { UI.msg('Só um Mestre da Loja (ou mais) move a sociedade contra um governador.', 'bad'); return; }
+    if (!this.admin()) { UI.msg(`Só a partir de ${SOC2_TITLES[2]} se move a sociedade contra um governador.`, 'bad'); return; }
     const v = World.villages[vi], old = v && People.get(v.chief); if (!old) return;
     if (!this.spend(800)) return;
     const k = this.key(), pw = this.power(k).power, ch = U.clamp(0.3 + pw / 400, 0.2, 0.9);
@@ -140,7 +140,7 @@ const Soc2 = {
   kingTargets() { return G.civs.filter(c => c && !c.dead && !c.anarchy && c.ruler !== 'player' && c.rulerId != null && !Secret.kingBro(c.id)); },
   KING_COST: 3000, KING_POWER: 120,
   topKing(ci) {
-    if (!this.admin()) { UI.msg('Só um Mestre da Loja (ou mais) pode mover a sociedade contra um rei.', 'bad'); return; }
+    if (!this.admin()) { UI.msg(`Só a partir de ${SOC2_TITLES[2]} se move a sociedade contra um rei.`, 'bad'); return; }
     const k = this.key(), pw = this.power(k).power, c = G.civs[ci];
     if (!c || c.ruler === 'player') return;
     if (pw < this.KING_POWER) { UI.msg(`A sociedade ainda não tem poder para derrubar um rei (precisa de ${this.KING_POWER}, tem ${pw}).`, 'bad'); return; }
@@ -178,18 +178,87 @@ const Soc2 = {
   // ---------------------------------------------------------------- o mês da loja
   monthTick() {
     if (!Secret.member()) return;
-    const S = this.S(), k = this.key(), B = k === 'own' ? 0 : Secret.brothers(k).length;
-    const dues = Math.min(250, B * 2 + Math.max(0, this.rank()) * 10); S.vault += dues;
+    const S = this.S(), k = this.key();
+    // mensalidades: todo irmão paga o valor que o líder definiu (do próprio bolso); alguns ainda fazem doações
+    const due = this.duesValue(); let paid = 0, n = 0, don = 0, dn = 0, me = 0;
+    if (k !== 'own') for (const p of Secret.brothers(k)) {
+      if (!p.alive || p.age < 18 || p.capanga) continue;
+      const pu = People.purse(p);
+      if (due > 0 && pu >= due) { p.purse = pu - due; paid += due; n++; }
+      if (Math.random() < 0.12) { const left = People.purse(p), g = Math.max(5, Math.round(left * U.rnd(0.02, 0.08))); if (left >= g + 10) { p.purse = left - g; don += g; dn++; } }
+    }
+    if (!this.leader() && due > 0) {
+      if (P.gold >= due) { P.gold -= due; me = due; paid += due; S.miss = 0; }
+      else { S.miss = (S.miss || 0) + 1; UI.msg(`🕯️ Você não pagou a mensalidade da sociedade (${due} 🪙). Atrasos: ${S.miss}/3.`, 'bad', true); if (S.miss >= 3) { S.miss = 0; KOrders.violate('deixou de pagar as mensalidades'); } }
+    }
+    S.vault += paid + don; S.lastDues = { day: G.day, due, n, paid, don, dn, me };
+    const dues = paid + don;
     if (this.temple()) { const up = Math.min(S.vault, 20); S.vault -= up; }
     let gain = 0; const tes = this.holder('tesoureiro') ? 0.005 : 0;
     for (const f in SOC2_FUNDS) { const n = S.inv[f] || 0; if (n < 1) continue; const g = Math.round(n * (U.rnd(SOC2_FUNDS[f].lo, SOC2_FUNDS[f].hi) + tes)); S.inv[f] = Math.max(0, n + g); gain += g; }
     if (this.holder('orador')) S.infl += 3;
     if (this.holder('guarda') && (G.assassins || 0) > 0 && Math.random() < 0.5) G.assassins--;
     if (this.holder('secretario') && Math.random() < 0.5) { const t = Secret.secret(); if (t) { const s2 = Secret.S(); s2.secrets.unshift({ day: G.day, t }); if (s2.secrets.length > 8) s2.secrets.length = 8; } }
-    if (dues || gain) Game.note(`🏛️ Loja: +${dues} 🪙 de contribuições dos irmãos${gain ? `, investimentos ${gain >= 0 ? '+' : ''}${gain} 🪙` : ''}.`);
+    if (dues || gain) Game.note(`🏛️ Loja: mensalidades ${paid} 🪙 (${n + (me ? 1 : 0)} irmãos)${don ? `, doações ${don} 🪙 (${dn})` : ''}${gain ? `, investimentos ${gain >= 0 ? '+' : ''}${gain} 🪙` : ''}.`);
+  },
+  // ---------------------------------------------------------------- mensalidade (o líder define)
+  DUES: { crafts: 15, smiths: 10, merchants: 30, weavers: 20, victuals: 5, hunters: 10, healers: 15, own: 10 },
+  DUES_OPTS: [0, 5, 10, 20, 50, 100],
+  duesValue() { const S = this.S(), k = this.key(); return S.dues !== undefined && S.duesKey === k ? S.dues : (this.DUES[k] !== undefined ? this.DUES[k] : 10); },
+  leader() { const k = this.key(); return k === 'own' || (!!k && this.rank() >= 3); },
+  leaderName() {
+    const k = this.key(); if (!k) return '';
+    const head = typeof SocLore !== 'undefined' ? SocLore.of(k).head : 'líder';
+    if (this.leader()) return `você (${head})`;
+    if (typeof Lodges !== 'undefined') { const near = World.capitals.map((cp, i) => ({ i, d: cp ? U.dist(cp.x, cp.y, P.x / TILE, P.y / TILE) : 1e9 })).sort((a, b) => a.d - b.d)[0]; const h = near && Lodges.L().list.some(x => x.k === k && x.ci === near.i) ? Lodges.head(k, near.i) : null; if (h && h !== 'player') return `${People.full(h)} (${head})`; }
+    return `o ${head}`;
+  },
+  setDues(n) {
+    if (!this.leader()) { UI.msg('Só o líder da sociedade define a mensalidade.', 'bad'); return; }
+    const S = this.S(); S.dues = Math.max(0, Math.round(n)); S.duesKey = this.key();
+    this.log(`📅 A mensalidade passou a ${S.dues} 🪙 por mês.`);
   },
   // missão cumprida na hora (sem esperar o fim do mês)
   check() { const K = KOrders.S(), m = K.mission; if (!m || m.k === 'donate') return; const M = KO_MISSIONS[m.k]; if (M && M.stat && KOrders.progress() >= M.need) KOrders.done(); },
+  // ---------------------------------------------------------------- a página da sociedade (Portfólio → Sociedades secretas)
+  memberPage() {
+    Secret.seed();
+    const K = KOrders.S(), d = KOrders.def(), k = Secret.key(), r = KOrders.rank(), esc = UI.esc.bind(UI), own = K.key === 'own';
+    const m = K.mission, M = m && KO_MISSIONS[m.k], prog = m && M.stat ? Math.min(KOrders.progress(), M.need) : 0;
+    const pw = this.power(K.key), rank = this.ranking(), pos = rank.findIndex(x => x.k === K.key) + 1, S2 = Secret.S(), S = this.S();
+    const next = KO_RANKS[r + 1], need = next ? next[1] : 0, pts = K.pts || 0;
+    const steps = SECRET_RANKS.map((n, i) => `<div class="scx-step ${i < r ? 'done' : ''} ${i === r ? 'cur' : ''}"><i>${i < r ? '✔' : i + 1}</i><b>${n}</b>${own ? '' : `<small>${KO_RANKS[i][1]} missões${i === 3 ? ' · 120 fama' : ''}</small>`}</div>`).join('');
+    const nextBar = own || !next ? '' : `<div class="scx-next"><span>Para ${SECRET_RANKS[r + 1]}: ${Math.min(pts, need)}/${need} missões</span><i><i style="width:${Math.round(Math.min(1, pts / Math.max(1, need)) * 100)}%"></i></i></div>`;
+    const top = `<div class="scx-top" style="--c:${d.col};--x:${d.cross}">${Secret.emblem(d, 54)}
+        <div class="scx-id"><small>Você é <b>${SECRET_RANKS[r]}</b>${pos ? ` · a ${pos}ª sociedade mais poderosa` : ''}</small><h3>${esc(d.name)}</h3><i>"${esc(d.motto || d.oath)}"</i></div>
+        <div class="scx-path"><div class="scx-steps">${steps}</div>${nextBar}</div>
+        <div class="scx-acts"><button class="primary" data-act="tp" data-op="tab" data-k="loja">🏛️ Abrir o templo</button><button class="scx-quit" data-act="ko" data-op="leave">🏳️ Deixar</button></div></div>`;
+    // quadro 1: a missão, o juramento e as cartas
+    const viol = own ? 0 : K.viol || 0;
+    const mis = own ? `<div class="scx-mis"><span>⚜️</span><div><b>Você é ${typeof SocLore !== 'undefined' ? esc(SocLore.of('own').head) : 'o líder'} da sua sociedade</b><small>A sua palavra é a lei: não há missões a cumprir.</small></div></div>`
+      : m ? `<div class="scx-mis"><span>${M.icon}</span><div><b>${M.text}</b><small>até ${Calendar.short(m.until)} · vale +5 de fama e 1 missão para o grau</small>${M.stat ? `<i class="scx-bar"><i style="width:${Math.round(prog / M.need * 100)}%"></i></i><em>${prog}/${M.need}</em>` : ''}
+          ${m.k === 'donate' ? `<button class="primary" data-act="ko" data-op="donate" ${P.gold >= 250 ? '' : 'disabled'}>💰 Doar 250 🪙</button>` : ''}</div></div>`
+      : '<p class="muted">A próxima missão chega no mês que vem.</p>';
+    const oath = `<div class="scx-oath"><span>⚖️</span><div><b>Juramento</b><small>${esc(d.oath)}</small></div>${own ? '' : `<span class="scx-pips" title="quebras do juramento">${[0, 1, 2].map(i => `<i class="${i < viol ? 'on' : ''}"></i>`).join('')}</span>`}</div>`;
+    const letters = S2.secrets.length ? S2.secrets.slice(0, 8).map(x => `<div class="scx-letter"><em>${Calendar.short(x.day)}</em><span>${esc(x.t)}</span></div>`).join('') : `<p class="muted">${r >= 1 ? 'Nenhuma carta neste mês.' : 'Os irmãos contam segredos a partir de Companheiro.'}</p>`;
+    const cardA = `<section class="card scx-card scx-a"><div class="sec">📜 Missão secreta ${own ? '' : 'do mês'}</div>${mis}${oath}
+        <div class="sec scx-sub">🕯️ Cartas lacradas <span>segredos</span></div><div class="scx-list">${letters}</div></section>`;
+    // quadro 2: o que a sociedade faz por você e o poder dela
+    const ben = Secret.benefits(r, k).map(b => `<div class="scx-ben"><span>${b[0]}</span><b>${b[1]}</b><small>${esc(b[2])}</small></div>`).join('');
+    const cardB = `<section class="card scx-card scx-b"><div class="sec">✨ O que a sociedade faz por você</div><div class="scx-bens">${ben}</div>
+        <div class="scx-stats"><div><small>⚔️ Poder</small><b>${pw.power}</b></div><div><small>🕯️ Influência</small><b>${pw.infl}</b></div><div><small>💰 Cofre da loja</small><b>${Math.round(S.vault).toLocaleString('pt-BR')}</b></div><div><small>📅 Mensalidade</small><b>${this.duesValue()} 🪙</b></div></div></section>`;
+    // quadro 3: irmãos poderosos e cavaleiros que seguem você
+    const p2 = k ? Secret.powerful(k) : null, cname = p => { const c = G.civs.find(x => x.rulerId === p.id); return c && CIV_DEFS[c.id] ? CIV_DEFS[c.id].short : '?'; };
+    const bros = p2 ? [...p2.kings.map(p => ['👑', p, `Rei de ${cname(p)}`]), ...p2.nobles.map(p => ['🎖️', p, People.title(p)]), ...p2.knights.map(p => ['🛡️', p, People.title(p)])] : [];
+    const kn = KOrders.knights();
+    const cardC = `<section class="card scx-card scx-c"><div class="sec">🤝 Irmãos poderosos <span>${k ? `${Secret.brothers(k).length} irmãos` : 'a sua sociedade'}</span></div>
+        <div class="scx-list">${bros.length ? bros.map(([ic, p, t]) => `<div class="scx-bro"><span>${ic}</span><b>${esc(People.full(p))}</b><small>${esc(t)}${p.met ? ` · amizade ${Math.round(p.aff || 0)}` : ''}</small></div>`).join('') : '<p class="muted">Nenhum rei, nobre ou cavaleiro entre os irmãos ainda.</p>'}
+          ${p2 && p2.crafts ? `<small class="muted scx-crafts">🔨 e ${p2.crafts} mestres de ofício${Commerce.GUILDS[k] ? ` (${esc(Commerce.GUILDS[k].trade)})` : ''}</small>` : ''}</div>
+        <div class="sec scx-sub">🛡️ Cavaleiros que seguem você <span>${kn.length}</span></div>
+        <div class="scx-kn">${kn.length ? kn.map(p => `<span class="scx-chip">${d.icon} ${esc(People.full(p))}${p.korderWait ? ' · esperando vaga' : ''}</span>`).join('') : `<small class="muted">${r >= 1 ? 'Nenhum cavaleiro agora.' : 'A partir de Companheiro a sociedade manda cavaleiros.'}</small>`}
+          ${r >= 1 ? '<button data-act="ko" data-op="armor">🛡️ Pegar o manto</button>' : ''}</div></section>`;
+    return top + cardA + cardB + cardC;
+  },
   // ---------------------------------------------------------------- a janela do templo
   TABS: [['loja', '🏛️ A loja'], ['tesouro', '💰 Tesouro'], ['rede', '🤝 Rede e cargos'], ['poder', '⚔️ Poder'], ['missoes', '📜 Missões e graus']],
   show(tab) {
@@ -205,23 +274,29 @@ const Soc2 = {
     if (tab === 'loja') {
       const rank = this.ranking(), pos = rank.findIndex(x => x.k === k) + 1;
       body = `<div class="card tp-me" style="--c:${d.col};--x:${d.cross}"><div class="sec">${d.icon} ${esc(d.name)} <span>${pos}º poder do mundo</span></div>
-          <div class="bp-big"><b>${esc(this.title())}</b><small>o seu cargo na loja${adm ? ' · você administra o cofre, os cargos e o poder' : ' · a partir de Mestre você administra a loja'}</small></div>
+          <div class="bp-big"><b>${esc(this.title())}</b><small>o seu grau${adm ? ' · você administra o cofre, os cargos e o poder' : ` · a partir de ${SOC2_TITLES[2]} você administra`}</small></div>
           ${kv('⚔️ Poder da sociedade', pw.power)}${kv('💰 Riqueza (famílias dos irmãos + loja)', pw.wealth.toLocaleString('pt-BR') + ' 🪙')}${kv('🕯️ Influência', pw.infl)}
           ${kv('👑 Reis irmãos', pw.kings)}${kv('🎖️ Nobres e cavaleiros', pw.nobles + pw.knights)}${kv('🔨 Mestres de ofício', pw.crafts)}
           ${kv('⚖️ Fama da irmandade', this.karmaName(), S.karma >= 10 ? 'ok' : S.karma <= -10 ? 'bad' : '')}${kv('😨 Só declara guerra à sua família quem tem influência', this.fearBar() + '+')}</div>
-        <div class="card"><div class="sec">🏛️ O templo</div>${this.temple() ? `<p class="dt-desc">O templo da ${esc(d.name)} está de pé. Os irmãos se reúnem aqui: networking, recrutamento, o cofre e os cargos.</p>${kv('🏛️ Manutenção', '20 🪙 por mês (do cofre)')}` : `<p class="dt-desc">Construa o <b>Templo da Sociedade</b> (Construir → Baús e estábulo) para reunir os irmãos: sem ele não há networking.</p>`}
-          <div class="sec" style="margin-top:10px">📒 Livro da loja</div>${S.log.length ? S.log.map(l => `<div class="bank-log"><small>${Calendar.short(l.day)}</small> ${esc(l.t)}</div>`).join('') : '<p class="muted">Nada anotado ainda.</p>'}</div>
+        <div class="card"><div class="sec">🏛️ Os templos</div>${this.temple() ? `<p class="dt-desc">O templo da ${esc(d.name)} está de pé. Os irmãos se reúnem aqui: networking, recrutamento, o cofre e os cargos.</p>${kv('🏛️ Manutenção', '20 🪙 por mês (do cofre)')}` : `<p class="dt-desc">Os irmãos se reúnem nos templos da sociedade em cada reino (perto das capitais). Construa também o seu <b>Templo da Sociedade</b> (Construir → Baús e estábulo) para receber os irmãos em casa.</p>`}
+          ${k !== 'own' && typeof Lodges !== 'undefined' ? `<div class="sec" style="margin-top:10px">🏛️ ${esc(SocLore.of(k).temple)}s nos reinos</div>${Lodges.listHtml(k)}` : ''}</div>
         <div class="card"><div class="sec">🌍 As sociedades no mundo</div>${rank.map((x, i) => `<div class="crow ${x.k === k ? 'tp-mine' : ''}"><span class="ri">${x.d ? x.d.icon : '🕯️'}</span><span><b>${i + 1}. ${esc(x.d ? x.d.name : x.k)}</b><small>👑 ${x.kings} · 🎖️ ${x.nobles + x.knights} · ${x.brothers} irmãos · ${x.wealth.toLocaleString('pt-BR')} 🪙</small><i class="ex-risk tp-pw"><i style="width:${Math.round(x.power / Math.max(1, rank[0].power) * 100)}%"></i></i></span><b>${x.power}</b></div>`).join('')}</div>`;
     } else if (tab === 'tesouro') {
       const tot = Object.values(S.inv).reduce((a, n) => a + n, 0);
-      body = `<div class="card"><div class="sec">💰 Cofre da loja <span>${adm ? 'você administra' : 'só o Mestre tira'}</span></div>
+      body = `<div class="card"><div class="sec">💰 Cofre da loja <span>${adm ? 'você administra' : `só a partir de ${SOC2_TITLES[2]}`}</span></div>
           <div class="bp-big"><b>${Math.round(S.vault).toLocaleString('pt-BR')} 🪙</b><small>dinheiro dos irmãos, guardado na loja</small></div>
           <div class="rd-ops"><span>Pôr</span><div class="act-row">${Q.map(n => Bn('vin', 0, n, `+${n}`, P.gold >= n)).join('')}</div><span>Tirar</span><div class="act-row">${Q.map(n => Bn('vout', 0, n, `−${n}`, adm && S.vault >= n)).join('')}</div></div>
-          ${kv('📥 Contribuições dos irmãos', `~${Math.min(250, (k === 'own' ? 0 : Secret.brothers(k).length) * 2 + Math.max(0, r) * 10)} 🪙/mês`)}${kv('🏛️ Manutenção do templo', this.temple() ? '20 🪙/mês' : '—')}</div>
+          ${(() => { const due = this.duesValue(), ld = S.lastDues, lead = this.leader();
+            return `<div class="sec" style="margin-top:10px">📅 Mensalidade <span>${due} 🪙 por mês</span></div>
+            ${kv('Quem define', esc(this.leaderName()))}
+            ${lead ? `<div class="act-row tp-dues">${this.DUES_OPTS.map(v => `<button class="${v === due ? 'on' : ''}" data-act="tp" data-op="dues" data-k="${v}">${v ? v + ' 🪙' : 'Grátis'}</button>`).join('')}</div>` : kv('Você paga', `${due} 🪙 por mês${S.miss ? ` · ${S.miss}/3 atrasos` : ''}`, S.miss ? 'bad' : '')}
+            ${ld ? kv('📥 Último mês', `${ld.n + (ld.me ? 1 : 0)} pagaram ${ld.paid} 🪙 · ${ld.dn} doaram ${ld.don} 🪙`) : kv('📥 Último mês', 'ainda não houve cobrança')}
+            ${kv('🏛️ Manutenção do templo', this.temple() ? '20 🪙/mês' : '—')}`; })()}
+          <div class="sec" style="margin-top:10px">📒 Livro da loja</div>${S.log.length ? S.log.map(l => `<div class="bank-log"><small>${Calendar.short(l.day)}</small> ${esc(l.t)}</div>`).join('') : '<p class="muted">Nada anotado ainda.</p>'}</div>
         <div class="card bk3-wide"><div class="sec">📈 Investimentos da sociedade <span>${tot.toLocaleString('pt-BR')} 🪙 aplicados</span></div>
           ${Object.entries(SOC2_FUNDS).map(([f, F]) => `<div class="crow"><span class="ri">${F.icon}</span><span><b>${F.name} · ${Math.round(S.inv[f] || 0).toLocaleString('pt-BR')} 🪙</b><small>${F.desc}${this.holder('tesoureiro') ? ' · +0,5% do Tesoureiro' : ''}</small></span>
             <span class="act-row">${Q.map(n => Bn('inv', f, n, `+${n}`, adm && S.vault >= n)).join('')}${Q.map(n => Bn('div', f, n, `−${n}`, adm && (S.inv[f] || 0) >= n)).join('')}</span></div>`).join('')}
-          <small class="muted">O dinheiro sai do cofre da loja e volta para ele. ${adm ? '' : 'Só o Mestre da Loja decide.'}</small></div>`;
+          <small class="muted">O dinheiro sai do cofre da loja e volta para ele. ${adm ? '' : `Só a partir de ${SOC2_TITLES[2]} se decide.`}</small></div>`;
     } else if (tab === 'rede') {
       const C = this.candidates(), tr = S.tried || {};
       body = `<div class="card"><div class="sec">🤝 Networking <span>uma vez por mês</span></div><p class="dt-desc">Um banquete no templo (50 🪙, do cofre ou do seu bolso): você conhece irmãos, a amizade com eles sobe e a influência da loja cresce.</p>
@@ -316,7 +391,8 @@ if (!WIDE_PANELS.includes('showTemple')) WIDE_PANELS.push('showTemple');
   Lifesim.monthTick = function () { mt0(); try { Soc2.monthTick(); } catch (e) { console.error(e); } };
   // a página das sociedades ganha a porta do templo
   const pg0 = Secret.page.bind(Secret);
-  Secret.page = function () { const h = pg0(); if (!Secret.member()) return h; return `<div class="act-row tp-door"><button class="primary" data-act="tp" data-op="tab" data-k="loja">🏛️ Abrir o templo: cofre, cargos, rede e poder</button></div>` + h; };
+  // a página de quem é da sociedade: uma faixa com o grau e três quadros (missão, benefícios, irmãos) que cabem na janela
+  Secret.page = function () { if (!Secret.member()) return pg0(); try { return Soc2.memberPage(); } catch (e) { console.error(e); return pg0(); } };
   const a0 = UI.act.bind(UI);
   UI.act = function (a, d) {
     if (a !== 'tp') return a0(a, d);
@@ -333,6 +409,7 @@ if (!WIDE_PANELS.includes('showTemple')) WIDE_PANELS.push('showTemple');
       case 'gov': Soc2.topGov(+d.k); break;
       case 'king': { const ci = +d.k; Dialog.confirm({ icon: '👑', title: 'Derrubar um rei', danger: true, ok: 'Mover a sociedade', text: `Gastar ${Soc2.KING_COST} 🪙 do cofre para derrubar ${G.civs[ci].rulerName}? Se falhar, ${CIV_DEFS[ci].short} vai odiar você.` }, () => { Soc2.topKing(ci); Soc2.show('poder'); }); return; }
       case 'charity': Soc2.charity(); break;
+      case 'dues': Soc2.setDues(+d.k); break;
       case 'fear': Soc2.intimidate(); break;
     }
     Soc2.show(cur);
