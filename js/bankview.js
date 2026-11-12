@@ -8,16 +8,16 @@ const BankView = {
   scene: WIN_SCENES.showBank,
   pg: {},  // página de cada lista (por aba)
   DESC: {
-    conta: 'Guarde e saque: rende todo mês e fica a salvo de ladrões e cobradores.',
+    conta: 'O seu dinheiro pessoal: rende 0,5% ao mês, pago pelo banco, sem mexer no tesouro do reino.',
     prazo: 'Títulos do Tesouro: o reino devolve com juros no vencimento.',
     credito: 'Dinheiro hoje, parcelas todo mês. Atrasar custa caro.',
     emprestar: 'Empreste às famílias e aos vizinhos e receba com juros.',
     investir: 'Ponha dinheiro nos negócios das famílias e nas vilas.',
-    bolsa: 'Ações das cinco companhias: preço que sobe e desce, e dividendos.',
+    bolsa: 'Ações das companhias: preço que sobe e desce, dividendos todo mês e a sua carteira.',
     renda: 'Fundo das Guildas, renda vitalícia e o seguro das expedições.',
     expedicoes: 'Caravanas e navios: quanto mais longe, mais rende e mais arrisca.',
     cofre: 'O seu cofre particular: o que vale muito, guardado em segurança.',
-    tesouro: 'As contas do reino: reserva, dívida, juros e o livro do banco.',
+    tesouro: 'O dinheiro do reino (não o seu): tesouro, reserva do banco, dívida, juros do povo e o livro do banco.',
   },
   sub(k, ci) {
     try {
@@ -30,7 +30,7 @@ const BankView = {
         case 'investir': return 'negócios e vilas';
         case 'bolsa': return X ? `${Bolsa.value().toLocaleString('pt-BR')} 🪙 em ações` : '';
         case 'renda': return X ? (X.rendas.length ? `${X.rendas.reduce((a, r) => a + r.m, 0)} 🪙/mês` : `fundo ${Math.round(X.fund)} 🪙`) : '';
-        case 'expedicoes': return `${B.exp.length}/4 na estrada`;
+        case 'expedicoes': return `${B.exp.length}/${typeof BANK_EXP_MAX !== 'undefined' ? BANK_EXP_MAX : 4} na estrada`;
         case 'cofre': { const b = Bank.box(ci), q = Object.values(b).reduce((a, x) => a + x, 0); return q ? n(q, 'item guardado', 'itens guardados') : 'vazio'; }
         case 'tesouro': return Bank.health(ci).level;
       }
@@ -59,42 +59,48 @@ const BankView = {
       <section class="bk3-main"><header class="bk3-top"><span class="bk3-pi">${cm[1]}</span><span class="bk3-pt"><b>${cm[2]}</b><small>${this.DESC[tab] || ''}</small></span><span class="bk3-chips">${chips}</span></header>
         <div class="bk3-body" data-tab="${tab}">${w.innerHTML}</div></section></div>`;
   },
-  // cada página cabe na janela: listas compridas viram páginas dentro do cartão
+  scr: {}, // rolagem de cada lista (volta ao lugar depois de comprar, depositar...)
+  // cada página cabe na janela sem rolar: as listas compridas rolam dentro do próprio cartão
   fit(tab) {
     const el = UI.panel.querySelector('.bk3-body'); if (!el) return;
-    el.classList.remove('tight', 'scroll');
-    if (document.body.classList.contains('small')) el.classList.add('tight'); // no celular já começa compacto (mais linhas por página)
-    for (const b of el.querySelectorAll('.bk3-pager')) b.remove();
+    el.classList.remove('tight', 'scroll', 'stretch');
+    if (document.body.classList.contains('small')) el.classList.add('tight'); // no celular já começa compacto
     const over = () => el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2;
     const ROW = '.crow, .bank-log, .bank-it, .bx-row, .nb-card';
-    for (const c of el.children) if (c.classList.contains('card')) c.classList.toggle('narrow', c.clientWidth < 560);
+    for (const c of el.children) if (c.classList.contains('card')) { c.classList.toggle('narrow', c.clientWidth < 560); c.style.maxHeight = el.clientHeight + 'px'; c.classList.add('bk3-capped'); } // nenhum cartão passa da altura da página (rola por dentro)
+    // as linhas de cada cartão ficam numa caixa que pode rolar
     const lists = [];
-    for (const card of el.querySelectorAll('.card')) {
+    for (const card of el.querySelectorAll(':scope > .card')) {
       const groups = new Map();
-      for (const r of card.querySelectorAll(ROW)) { r.hidden = false; if (r.parentElement.closest(ROW)) continue; const p = r.parentElement; if (!groups.has(p)) groups.set(p, []); groups.get(p).push(r); }
-      for (const [p, rows] of groups) if (rows.length > 2) lists.push({ p, rows, per: rows.length, key: tab + ':' + lists.length });
-    }
-    const show = L => {
-      const pages = Math.ceil(L.rows.length / L.per), pg = Math.min(this.pg[L.key] || 0, pages - 1); this.pg[L.key] = pg;
-      L.rows.forEach((r, i) => { r.hidden = Math.floor(i / L.per) !== pg; });
-      let bar = L.bar;
-      if (pages > 1 && !bar) {
-        bar = L.bar = document.createElement('div'); bar.className = 'bk3-pager';
-        bar.innerHTML = '<button data-d="-1" aria-label="Página anterior">‹</button><span></span><button data-d="1" aria-label="Próxima página">›</button>';
-        bar.addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; ev.stopPropagation(); const n = Math.ceil(L.rows.length / L.per); this.pg[L.key] = ((this.pg[L.key] || 0) + +b.dataset.d + n) % n; show(L); });
-        const last = L.rows[L.rows.length - 1];
-        last.insertAdjacentElement('afterend', bar);
+      for (const r of card.querySelectorAll(ROW)) { if (r.parentElement.closest(ROW)) continue; const p = r.parentElement; if (!groups.has(p)) groups.set(p, []); groups.get(p).push(r); }
+      for (const [p, rows] of groups) {
+        if (rows.length < 3) continue;
+        let box = p;
+        if (p === card || [...p.children].some(k => !rows.includes(k))) { box = document.createElement('div'); rows[0].before(box); for (const r of rows) box.appendChild(r); }
+        box.classList.add('bk3-list'); const key = tab + ':' + lists.length; box.dataset.lkey = key; lists.push(box);
+        box.addEventListener('scroll', () => { this.scr[key] = box.scrollTop; }, { passive: true });
       }
-      if (bar) { bar.hidden = pages <= 1; bar.querySelector('span').textContent = `${pg + 1} / ${pages}`; }
-    };
-    lists.forEach(show);
-    for (let guard = 0; over() && guard < 300; guard++) {
-      // só encolhe as listas dos cartões que passam do fim da página (os outros ficam inteiros)
-      const bottom = el.getBoundingClientRect().bottom + 1, cand = lists.filter(x => x.per > 1), out = cand.filter(x => x.p.closest('.card').getBoundingClientRect().bottom > bottom);
-      const L = (out.length ? out : cand).sort((a, b) => b.per * (b.rows[0].offsetHeight || 30) - a.per * (a.rows[0].offsetHeight || 30))[0];
-      if (!L) break;
-      L.per--; show(L);
     }
+    // poucos cartões (cabem numa fileira): viram colunas da altura da página
+    const cols = getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length;
+    const span = c => { const cs = getComputedStyle(c); if (cs.gridColumnEnd === '-1') return cols; return /span 2/.test(cs.gridColumnStart + cs.gridColumnEnd) ? Math.min(2, cols) : 1; };
+    const used = [...el.children].reduce((a, c) => a + span(c), 0);
+    if (used <= cols) el.classList.add('stretch');
+    else {
+      // vários cartões: a lista do cartão que passa do fim da página encolhe e rola
+      for (let guard = 0; over() && guard < 12; guard++) {
+        const bottom = el.getBoundingClientRect().bottom;
+        let changed = false;
+        for (const L of lists) {
+          const card = L.closest('.card'), extra = card.getBoundingClientRect().bottom - bottom;
+          if (extra <= 1) continue;
+          const h = Math.max(70, L.clientHeight - extra - 4); if (h >= L.clientHeight) continue;
+          L.style.maxHeight = h + 'px'; changed = true;
+        }
+        if (!changed) break;
+      }
+    }
+    for (const L of lists) if (this.scr[L.dataset.lkey]) L.scrollTop = this.scr[L.dataset.lkey];
     if (over()) el.classList.add('tight');
     // ainda não cabe: os cartões se dividem em telas (‹ 1/2 › no canto de baixo)
     const main = el.parentElement, old = main.querySelector('.bk3-cpager'); if (old) old.remove();

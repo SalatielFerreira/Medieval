@@ -471,9 +471,16 @@ const Crime = {
 // ====================================================================== aluguel de casas
 const RENT = { hut: 6, house: 15, lodge: 18, manor: 30, villa: 50 };
 const Rent = {
+  // casa alugada de cada família (guardada; refeita a cada meio segundo ou quando muda a lista de construções)
+  _m: null, _t: -9, _n: -1,
   houseFor(p) {
     if (!p || p.fam === undefined) return null;
-    return World.structs.find(s => s.owner === 'player' && !s.removed && s.tenant === p.fam) || null;
+    if (!this._m || G.realTime - this._t > 0.5 || G.realTime < this._t || World.structs.length !== this._n) {
+      this._m = new Map(); this._t = G.realTime; this._n = World.structs.length;
+      for (const s of World.structs) if (s && s.owner === 'player' && !s.removed && s.tenant !== undefined && s.tenant !== null && !this._m.has(s.tenant)) this._m.set(s.tenant, s);
+    }
+    const s = this._m.get(p.fam);
+    return s && !s.removed && s.tenant === p.fam ? s : null;
   },
   candidates(s) {
     let vi = -1, bd = 32;
@@ -485,13 +492,13 @@ const Rent = {
   },
   rentTo(sid, fid) {
     const s = World.structs[sid], f = Families.get(fid); if (!s || !f) return;
-    s.tenant = fid; s.rentMiss = 0;
+    s.tenant = fid; s.rentMiss = 0; this._m = null;
     for (const q of Families.members(f)) { Mind.remember(q, 'rent'); const e = G.spawned.get(q.id); if (e) { e.dead = true; G.spawned.delete(q.id); } }
     UI.msg(`🏠 A família ${f.surname} alugou a sua ${BUILDINGS[s.type].name.toLowerCase()} por ${RENT[s.type]} 🪙 por mês.`, 'gold');
   },
   evict(sid) {
     const s = World.structs[sid], f = s && Families.get(s.tenant); if (!s) return;
-    s.tenant = undefined;
+    s.tenant = undefined; this._m = null;
     if (f) for (const q of Families.members(f)) { Mind.remember(q, 'evicted'); Mind.feel(q, 'anger', 60); People.addAff(q, -15); }
     UI.msg(`🏚️ Você despejou ${f ? 'a família ' + f.surname : 'os inquilinos'}.`, 'bad');
   },

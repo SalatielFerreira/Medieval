@@ -5463,3 +5463,36 @@ body.small .bk3-body .card:has(.bx-row), body.small .bk3-body .card:has(.bank-k-
   background: rgba(20, 14, 8, .92); border: 1px solid rgba(214, 174, 96, .6); box-shadow: 0 4px 14px rgba(0, 0, 0, .55); }
 .bk3-cpager span { font-size: 12px; font-weight: 700; color: var(--gold-hi); min-width: 40px; text-align: center; }
 .bk3-cpager button { width: 32px; height: 28px; padding: 0; border-radius: 999px; font-size: 17px; line-height: 1; }
+/* banco: listas que rolam dentro do cartão; poucos cartões viram colunas da altura da página */
+.bk3-body .bk3-list { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(214, 174, 96, .5) transparent; padding-right: 3px; }
+.bk3-body .card.bk3-wide { grid-column: span 2; }
+.bk3-body.stretch { grid-auto-rows: auto; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+.bk3-body.stretch > .card { display: flex; flex-direction: column; min-height: 0; max-height: 100%; overflow: hidden; }
+.bk3-body.stretch > .card > * { flex: none; }
+.bk3-body.stretch > .card > .bk3-list, .bk3-body.stretch > .card > .bank-box.bk3-list { flex: 1 1 auto; min-height: 60px; }
+.bk3-body.stretch > .card:not(:has(.bk3-list)) { overflow-y: auto; scrollbar-width: thin; }
+@media (max-width: 1150px) { .bk3-body .card.bk3-wide { grid-column: 1 / -1; } }
+body.small .bk3-body .card.bk3-wide { grid-column: 1 / -1; }
+/* números grandes e linhas "rótulo · valor" dos cartões novos */
+.bp-big { display: flex; flex-direction: column; align-items: center; padding: 12px 8px; margin: 2px 0 8px; border-radius: 10px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(214, 174, 96, .22), rgba(0, 0, 0, .25) 70%); border: 1px solid rgba(214, 174, 96, .3); }
+.bp-big b { font-family: Cinzel, Georgia, serif; font-size: 26px; color: var(--gold-hi); line-height: 1.1; }
+.bp-big small { color: #c9b48a; font-size: 11.5px; text-align: center; }
+.bp-kv { display: flex; justify-content: space-between; gap: 8px; padding: 5px 4px; border-bottom: 1px dashed rgba(214, 174, 96, .18); font-size: 12.5px; }
+.bp-kv span { color: #cdb98f; } .bp-kv b { color: #fff3d6; text-align: right; }
+.bp-opts { margin-top: 10px; }
+.bk3 button.on { background: linear-gradient(180deg, #e8c070, #b98a35); color: #2a1a08; border-color: #ffe9b0; font-weight: 700; }
+.rd-ops { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 6px 8px; margin-top: 4px; }
+.rd-ops > span { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #c9b48a; font-weight: 700; }
+.bp-row.mine { background: linear-gradient(90deg, rgba(214, 174, 96, .16), rgba(0, 0, 0, .25)); }
+.bp-row .bp-p { font-style: normal; color: var(--gold-hi); }
+.bp-row em { font-style: normal; font-size: 11.5px; }
+.bp-act { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.bp-act .act-row { justify-content: flex-end; }
+.bp-v { color: #ffe9b0; }
+.ex-risk, .ex-prog { display: block; height: 4px; margin-top: 4px; border-radius: 3px; background: rgba(0, 0, 0, .4); overflow: hidden; max-width: 220px; }
+.ex-risk > i { display: block; height: 100%; background: linear-gradient(90deg, #d8b04a, #d0503a); }
+.ex-prog > i { display: block; height: 100%; background: linear-gradient(90deg, #6aa0d8, #9fdc7c); }
+.card.narrow .bp-act { grid-column: 2 / -1; align-items: flex-start; }
+.card.narrow .bp-row { grid-template-columns: 30px 1fr; }
+.bk3-body > .card.bk3-capped { overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(214, 174, 96, .5) transparent; }

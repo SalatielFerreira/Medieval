@@ -24,6 +24,7 @@ const BANK_EXPEDITIONS = [
   { id: 'ilhas', icon: '⛵', name: 'Navio às ilhas das especiarias', m: 5, risk: 0.38, lo: 1.45, hi: 2.3, good: 'O navio voltou carregado de especiarias.', bad: 'O navio afundou num temporal.' },
   { id: 'prata', icon: '⛏️', name: 'Mina de prata nas montanhas', m: 6, risk: 0.48, lo: 1.7, hi: 3.0, good: 'Os mineiros acharam um veio de prata!', bad: 'A mina desabou e não sobrou nada.' },
 ];
+const BANK_PERSONAL_RATE = 0.005; // a sua conta pessoal rende 0,5% ao mês, pago pelo banco (não sai da reserva nem do tesouro do reino)
 const BANK_TABS = [['conta', '💰 Conta'], ['prazo', '📜 Aplicações'], ['credito', '🧾 Empréstimos'], ['emprestar', '🤝 Emprestar'], ['investir', '📈 Investir'], ['expedicoes', '🐫 Expedições'], ['cofre', '🔐 Cofre'], ['tesouro', '👑 Tesouro']];
 
 // o banco é uma obra do reino (só quem governa ergue), em qualquer lugar do mapa; fica fora da lista de obras das vilas
@@ -235,7 +236,7 @@ const Bank = {
     const B = this.B();
     // juros das contas (o reino em anarquia não paga)
     let j = 0;
-    for (const ci in B.acc) { const c = G.civs[ci], K = this.K(ci); if (!c || c.anarchy || B.acc[ci] <= 0) continue; const g = Math.min(Math.max(0, K.reserve), Math.round(B.acc[ci] * K.rate)); K.reserve -= g; B.acc[ci] += g; j += g; }
+    for (const ci in B.acc) { const c = G.civs[ci], K = this.K(ci); if (!c || c.anarchy || B.acc[ci] <= 0) continue; const g = Math.round(B.acc[ci] * BANK_PERSONAL_RATE); B.acc[ci] += g; j += g; void K; }
     for (const ci in B.k) { const c = G.civs[ci], K = B.k[ci]; if (c && !c.anarchy && K.rate > 0.01) c.treasury = Math.max(0, c.treasury - Math.round(K.reserve * (K.rate - 0.01) * 0.25)); }
     if (j) Game.note(`🏦 Suas contas no banco renderam ${j} 🪙.`);
     // cofres particulares: 5 🪙 por mês de cada um
@@ -542,7 +543,7 @@ Object.assign(FURN, { vaultdoor: { block: true, light: 1, lr: 90, lcol: '#ffd36b
 WIN_SCENES.showBank = ci => {
   const K = Bank.K(ci), H = Bank.health(ci);
   return { ic: '🏦', theme: 'gold', kicker: `Banco de ${CIV_DEFS[ci].short}`, title: K.name, line: H.level === 'anarquia' ? 'O reino quebrou: o banco está de portas fechadas.' : 'Guarde, aplique, peça emprestado, invista e arrisque em expedições. Aqui também fica o tesouro do reino.',
-    chips: [['🪙', `${P.gold} no bolso`], ['🏦', `${Bank.acc(ci)} na conta`], ['📊', `${(K.rate * 100).toFixed(1)}% ao mês`], [H.level === 'saudável' ? '✔' : '⚠️', H.level]] };
+    chips: [['🪙', `${P.gold} no bolso`], ['🏦', `${Bank.acc(ci)} na conta`], ['📊', `conta rende ${(BANK_PERSONAL_RATE * 100).toFixed(1)}%`], [H.level === 'saudável' ? '✔' : '⚠️', H.level]] };
 };
 UI.showBank = function (ci, tab, robbing) {
   if (!G.civs[ci]) return;
@@ -555,9 +556,9 @@ UI.showBank = function (ci, tab, robbing) {
   if (closed && tab !== 'tesouro') body = `<div class="card bank-closed"><div class="sec">💥 Portas fechadas</div><p class="dt-desc">${CIV_DEFS[ci].name} quebrou e virou anarquia. O banco não abre até uma nova dinastia (ou alguém tomar o castelo do ${UI.esc(c.rulerName)}).</p></div>`;
   else if (tab === 'conta') {
     const a = Bank.acc(ci), all = Object.entries(B.acc).filter(([, n]) => n > 0);
-    body = `<div class="card"><div class="sec">💰 Sua conta <span>rende ${(K.rate * 100).toFixed(1)}% ao mês</span></div>
+    body = `<div class="card"><div class="sec">💰 Sua conta pessoal <span>rende ${(BANK_PERSONAL_RATE * 100).toFixed(1)}% ao mês</span></div>
       <div class="bank-big"><b>${a} 🪙</b><small>no ${UI.esc(K.name)}</small></div>
-      <p class="dt-desc">O dinheiro na conta rende todo mês e fica a salvo de ladrões e cobradores. Mas cuidado: se o reino quebrar, a conta perde 60%. Espalhe o dinheiro por bancos de reinos saudáveis.</p>
+      <p class="dt-desc">O seu dinheiro pessoal: rende 0,5% todo mês (pago pelo banco, sem tirar nada do reino) e fica a salvo de ladrões e cobradores. Mas cuidado: se o reino quebrar, a conta perde 60%. Espalhe o dinheiro por bancos de reinos saudáveis.</p>
       <div class="sec">Depositar</div><div class="act-row">${[1, 100, 500, 1000, 5000].map(n => btn('dep', n, `+${n}`, P.gold >= n)).join('')}${btn('dep', 'all', 'Tudo', P.gold > 0)}</div>
       <div class="sec" style="margin-top:8px">Sacar <span>no caixa: ${K.reserve} 🪙</span></div><div class="act-row">${[1, 100, 500, 1000, 5000].map(n => btn('wd', n, `−${n}`, a >= n)).join('')}${btn('wd', 'all', 'Tudo', a > 0)}</div></div>
       ${all.length > 1 || (all.length === 1 && +all[0][0] !== ci) ? `<div class="card"><div class="sec">🗺️ Suas contas nos outros bancos</div>${all.filter(([k]) => +k !== ci).map(([k, n]) => `<div class="crow"><span class="ri">🏦</span><span><b>${UI.esc(Bank.name(+k))}</b><small>${CIV_DEFS[k].short} · ${n} 🪙 · ${Bank.health(+k).level}</small></span><span class="act-row"><button data-act="bank" data-c="${k}" data-t="conta">Ver</button></span></div>`).join('')}</div>` : ''}`;

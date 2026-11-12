@@ -49,7 +49,7 @@ module.exports = async () => {
       for (let k = 0; k < 3; k++) { G.day++; Bank.monthTick(); }
       ok(Bolsa.X().mkt.prata.hist.length >= 4, 'o preço das ações não mudou com os meses');
       UI.showBank(0, 'bolsa'); ok(!!document.querySelector('[data-op="buy"]'), 'a aba da Bolsa não abriu');
-      UI.showBank(0, 'renda'); ok(!!document.querySelector('[data-op="renda"]'), 'a aba de fundos e renda não abriu');
+      UI.showBank(0, 'renda'); ok(!!document.querySelector('[data-op="rin"]'), 'a aba de fundos e renda não abriu');
       return out;
     });
     fails.push(...r);

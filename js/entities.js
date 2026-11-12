@@ -9,6 +9,18 @@ function moveEnt(e, dx, dy) {
   return moved;
 }
 
+// grade de quem pode se amontoar (moradores, capangas, vigias e bichos de estimação), refeita uma vez por quadro
+const _crowd = { t: -1, n: -1, map: new Map() };
+function crowdGrid() {
+  if (_crowd.t === G.realTime && _crowd.n === G.ents.length) return _crowd.map;
+  const m = _crowd.map; m.clear(); _crowd.t = G.realTime; _crowd.n = G.ents.length;
+  for (const o of G.ents) {
+    if (o.dead || o.sleeping || !(o.kind === 'villager' || o.faction === 'pet' || o.kind === 'ally' || o.kind === 'sentry')) continue;
+    const k = Math.floor(o.x / 32) * 100003 + Math.floor(o.y / 32), c = m.get(k);
+    if (c) c.push(o); else m.set(k, [o]);
+  }
+  return m;
+}
 function freeSpotNear(px, py, radiusPx) {
   for (let k = 0; k < 40; k++) {
     const a = Math.random() * Math.PI * 2, d = Math.random() * radiusPx;
@@ -194,10 +206,15 @@ class Creature {
     }
     // moradores e animais não ficam amontoados: afastam-se uns dos outros
     if (this.kind === 'villager' || this.faction === 'pet' || this.kind === 'ally' || this.kind === 'sentry') {
-      for (const o of G.ents) {
-        if (o === this || o.dead || o.sleeping || (o.kind !== this.kind && !(this.faction === 'pet' && o.faction === 'pet'))) continue;
-        const dx = this.x - o.x, dy = this.y - o.y, dd = dx * dx + dy * dy;
-        if (dd < 900 && dd > 0.01) { const L = Math.sqrt(dd); moveEnt(this, dx / L * 40 * dt, dy / L * 40 * dt); }
+      // só olha quem está nas casas vizinhas da grade (antes comparava com todo mundo: lento numa vila cheia)
+      const H = crowdGrid(), gx = Math.floor(this.x / 32), gy = Math.floor(this.y / 32);
+      for (let j = gy - 1; j <= gy + 1; j++) for (let i = gx - 1; i <= gx + 1; i++) {
+        const cell = H.get(i * 100003 + j); if (!cell) continue;
+        for (const o of cell) {
+          if (o === this || o.dead || o.sleeping || (o.kind !== this.kind && !(this.faction === 'pet' && o.faction === 'pet'))) continue;
+          const dx = this.x - o.x, dy = this.y - o.y, dd = dx * dx + dy * dy;
+          if (dd < 900 && dd > 0.01) { const L = Math.sqrt(dd); moveEnt(this, dx / L * 40 * dt, dy / L * 40 * dt); }
+        }
       }
     }
     this.atkCd -= dt; this.hurt -= dt; this.scanT -= dt; this.anim += dt; this.swing = Math.max(0, this.swing - dt);
