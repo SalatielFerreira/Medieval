@@ -13,7 +13,7 @@ module.exports = async () => {
       const kid = (age, extra) => { const p = People.create(Object.assign({ age, rank: 'child', civ: -1, home: { type: 'player' }, surname: G.surname, kin: 'child' }, extra || {})); p.kin = 'child'; return p; };
       const vOf = ci => World.villages.findIndex(v => v && !v.free && v.civ === ci && !v.ruin);
 
-      // 1. virar rei: sai o título no próprio reino (os outros ficam), o procurado, a corte de outro rei e o governo da vila
+      // 1. virar rei: sai o título no próprio reino (e os de outros reinos: a cidadania é o reino), o procurado, a corte de outro rei e o governo da vila
       const A = 1, B = 2, vi = vOf(A);
       Court.holdings()[A] = 4; Court.holdings()[B] = 1; Court.syncPrincipal();
       Crime.W()[A] = { bounty: 300, crimes: ['teste'], resist: true };
@@ -21,7 +21,7 @@ module.exports = async () => {
       World.villages[vi].lord = 'player';
       Game.becomeRuler(A, 'teste.');
       ok(Court.levelIn(A) < 0, 'o rei continuou com título de nobreza no próprio reino');
-      ok(Court.levelIn(B) === 1 && Court.T().civ === B, 'o título principal não passou para o título de outro reino');
+      ok(Court.levelIn(B) < 0 && Court.T().civ === -1 && Cid.get() === A, 'virando rei, o título de outro reino continuou (regra da cidadania: só o seu reino)');
       ok(Court.discount(A) === 0 && !Nobility.power(A), 'o rei ainda tem desconto ou poderes de nobre no próprio reino');
       ok(!Crime.wanted(A) && !Crime.hunting(A), 'o rei continuou procurado pela própria guarda');
       ok(!G.courtier, 'o rei continuou servindo na corte de outro rei');

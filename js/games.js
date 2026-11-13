@@ -31,6 +31,8 @@ const GAMES_STAR = { gold: 3000, fame: 30 }, GAMES_ALL = { gold: 500, fame: 5 },
 
 const Games = {
   S() { const u = G.urban || (G.urban = {}); return u.games || (u.games = { year: 0, host: -1, on: false, day: -1, me: {}, champs: {}, medals: {}, history: [] }); },
+  // o reino que você representa: o da sua cidadania (sem cidadania, você compete sem reino)
+  myCi() { return typeof Cid !== 'undefined' ? Cid.get() : G.mainRealm !== undefined && G.mainRealm !== null ? G.mainRealm : -1; },
   hostName() { const S = this.S(); return S.host >= 0 && CIV_DEFS[S.host] ? CIV_DEFS[S.host].short : '?'; },
   nextHost() { const S = this.S(); for (let k = 1; k <= G.civs.length; k++) { const ci = (S.host + k + G.civs.length) % G.civs.length; if (G.civs[ci] && !G.civs[ci].anarchy) return ci; } return 0; },
   // o campeão de cada reino em cada prova (heróis primeiro; sem herói, um cavaleiro)
@@ -83,7 +85,7 @@ const Games = {
     let mine = 0;
     for (const ev of GAMES_ORDER) {
       const list = this.champs(ev).map(x => ({ who: x.p.id, name: People.full(x.p), ci: x.ci, score: Math.round(x.power * U.rnd(0.6, 1.25)) }));
-      if (S.me[ev] !== undefined) list.push({ who: 'player', name: `${G.name} ${G.surname || ''}`.trim(), ci: G.mainRealm !== undefined && G.mainRealm !== null ? G.mainRealm : -1, score: S.me[ev] });
+      if (S.me[ev] !== undefined) list.push({ who: 'player', name: `${G.name} ${G.surname || ''}`.trim(), ci: Games.myCi(), score: S.me[ev] });
       list.sort((a, b) => b.score - a.score);
       rec.ev[ev] = list.slice(0, 3).map(x => ({ name: x.name, ci: x.ci, who: x.who, score: x.score }));
       list.slice(0, 3).forEach((x, k) => {

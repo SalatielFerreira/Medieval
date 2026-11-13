@@ -44,7 +44,7 @@ const Olympics = {
     const S = Games.S(), L = this.live(); if (!L) return { list: [], total: 0 };
     const f = this.frac(), all = (L[ev] || []).filter(x => G.people[x.who] && G.people[x.who].alive);
     const list = all.filter(x => x.t <= f).map(x => ({ ...x }));
-    if (S.me[ev] !== undefined) list.push({ who: 'player', ci: G.mainRealm !== undefined && G.mainRealm !== null ? G.mainRealm : -1, name: `${G.name} ${G.surname || ''}`.trim(), score: S.me[ev] });
+    if (S.me[ev] !== undefined) list.push({ who: 'player', ci: Games.myCi(), name: `${G.name} ${G.surname || ''}`.trim(), score: S.me[ev] });
     list.sort((a, b) => b.score - a.score);
     return { list, total: all.length + 1 };
   },
