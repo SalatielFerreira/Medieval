@@ -136,10 +136,9 @@ const Gab = {
 };
 
 // ====================================================================== você no círculo do rei
-// O General e o Secretário do Tesouro ocupam o lugar do general e do tesoureiro no círculo do rei (quem estava ali sai
-// do círculo enquanto você tiver o cargo: não aparece no castelo nem pode ser comprado); o Conselheiro e o Embaixador
-// aparecem no círculo como mais uma cadeira.
-const GAB_SEAT = { general: 'general', treasurer: 'treasurer' };
+// O círculo do rei são os quatro cargos da corte: com um cargo, você ocupa a cadeira dele (quem estava ali sai do círculo
+// enquanto você tiver o cargo: não aparece no castelo nem pode ser comprado, e volta quando você deixar o cargo).
+const GAB_SEAT = { advisor: 'advisor', treasurer: 'treasurer', general: 'general', diplomat: 'diplomat' };
 Object.assign(Gab, {
   mySeat(ci) { const c = this.cur(); return c && c.civ === ci ? GAB_SEAT[c.office] || null : null; },
   circleMe(ci) {
@@ -207,9 +206,11 @@ Object.assign(Gab, {
     const F = Cid.forces(ci), mine = Cid.mySoc(), notes = Cid.mods(ci).notes;
     const forces = `<div class="card cd-forces"><div class="sec">🕯️ Sociedades na corte</div>${F.length ? F.map(f => `<div class="cd-fr ${f.k === mine ? 'mine' : ''}">${this.emb(f.k, 18)}<div><b>${esc(f.d.name)}${f.k === mine ? ' · a sua' : ''}</b><small>${f.who.map(w => `${esc(w.role)}: ${esc(w.p.name)}`).join(' · ')}</small></div></div>`).join('') : '<small class="muted">Ninguém da corte é de uma sociedade secreta.</small>'}
       ${notes.map(([cl, t]) => `<div class="cd-note ${cl}">${t}</div>`).join('')}${mine ? '' : '<small class="muted cd-hint">Entrar para uma sociedade secreta (a do rei, de preferência) abre as portas da corte.</small>'}</div>`;
+    const cc = typeof Politics !== 'undefined' ? Politics.circle(ci) : {};
     const offices = Object.entries(COURT_OFFICES).map(([k, o]) => {
-      const ch = Cid.checks(ci, k).slice(0, 3), ok = Cid.canHold(ci, k), on = member && cur.office === k;
+      const ch = Cid.checks(ci, k).slice(0, 3), ok = Cid.canHold(ci, k), on = member && cur.office === k, hp = cc[k] !== undefined ? G.people[cc[k]] : null;
       return `<div class="cd-of ${on ? 'on' : ''} ${ok ? 'can' : ''}"><div class="cd-ofh"><span>${o.icon}</span><div><b>${esc(RoyalCourt.officeName(k))}</b><small>${o.task}</small></div></div>
+        <small class="cd-hold ${on ? 'me' : ''}">${on ? '👤 Este cargo é seu' : hp && hp.alive ? `👤 Hoje: ${esc(People.full(hp))}${ok && member ? ' · você pode tomar o lugar' : ''}` : '👤 Vago'}</small>
         <small class="cd-ofd">${esc(o.desc)}</small>
         ${ch.map(([lab, good, v, need]) => `<div class="cd-req ${good ? 'ok' : 'bad'}"><span>${good ? '✔' : '✖'} ${lab}</span><b>${v}/${need}</b></div>`).join('')}
         ${on ? `<button class="primary" data-act="svsub" data-g="cd" data-t="cargo">${o.icon} Abrir a tarefa</button>` : member ? `<button data-act="coffice" data-k="${k}" ${ok ? '' : 'disabled'}>Assumir o cargo</button>` : '<small class="muted cd-wait">entre para a corte primeiro</small>'}</div>`;

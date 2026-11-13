@@ -8,7 +8,10 @@
 //    o proteja. Famílias descontentes tramam golpes nos reinos da IA e também contra você.
 
 const POL_TERM = 5;
-const KING_CIRCLE = { general: ['General', 'Generala', '⚔️'], treasurer: ['Tesoureiro', 'Tesoureira', '💰'], chamberlain: ['Camareiro', 'Camareira', '🗝️'], captain: ['Capitão da guarda', 'Capitã da guarda', '🛡️'] };
+// o círculo do rei são os quatro cargos da corte (os mesmos que você pode assumir: cidadania.js e gabinete.js); quando
+// você tem um cargo, fica com a cadeira dele no lugar de quem estava ali
+const KING_CIRCLE = { advisor: ['Conselheiro do Rei', 'Conselheira do Rei', '📜'], treasurer: ['Secretário do Tesouro', 'Secretária do Tesouro', '💰'], general: ['General do Rei', 'Generala do Rei', '⚔️'], diplomat: ['Embaixador', 'Embaixadora', '🤝'] };
+const KING_CIRCLE_OLD = { chamberlain: 'advisor', captain: 'diplomat' }; // as cadeiras de antes (camareiro e capitão da guarda)
 
 const Politics = {
   S() { const u = G.urban || (G.urban = {}); const s = u.pol || (u.pol = { deeds: {}, circle: {}, bribes: {}, plots: [], log: [] }); return s; },
@@ -98,10 +101,12 @@ const Politics = {
     this.throneTick();
   },
 
-  // ---------------------------------------------------------------- o círculo do rei (reinos da IA): conselho e general
+  // ---------------------------------------------------------------- o círculo do rei (reinos da IA): os quatro cargos da corte
   circle(ci) {
     const C = this.S().circle, c = G.civs[ci]; if (!c || c.ruler === 'player') return {};
     const cc = C[ci] || (C[ci] = {});
+    for (const [o, n] of Object.entries(KING_CIRCLE_OLD)) if (o in cc) { if (cc[n] === undefined) cc[n] = cc[o]; delete cc[o]; } // jogos salvos de antes
+    for (const k of Object.keys(cc)) if (!KING_CIRCLE[k]) delete cc[k];
     for (const seat in KING_CIRCLE) {
       const p = cc[seat] !== undefined ? G.people[cc[seat]] : null;
       if (p && p.alive && p.civ === ci) continue;
@@ -112,7 +117,7 @@ const Politics = {
     return cc;
   },
   circlePeople(ci) { return Object.entries(this.circle(ci)).map(([seat, id]) => ({ seat, p: G.people[id] })).filter(x => x.p && x.p.alive); },
-  seatOf(p) { if (!p || p.civ < 0) return null; const cc = this.S().circle[p.civ]; if (!cc) return null; const e = Object.entries(cc).find(([, id]) => id === p.id); return e ? e[0] : null; },
+  seatOf(p) { if (!p || p.civ < 0) return null; const cc = this.S().circle[p.civ]; if (!cc) return null; const e = Object.entries(cc).find(([, id]) => id === p.id); return e ? (KING_CIRCLE[e[0]] ? e[0] : KING_CIRCLE_OLD[e[0]] || null) : null; },
   bought(ci) { return this.circlePeople(ci).filter(x => x.p.bribed === 'player').length; },
   // todos comprados: ninguém protege o rei na sala do trono
   ready(ci) { const L = this.circlePeople(ci); return L.length > 0 && L.every(x => x.p.bribed === 'player'); },

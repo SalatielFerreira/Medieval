@@ -53,7 +53,9 @@ const check = async (W, H, fails, tag) => {
       Cid.king(A).aff = 70; ok(Cid.canHold(A, 'advisor') && !Cid.canHold(B, 'advisor'), 'as exigências da corte (cidadania) não valem');
       ok(Cid.ask(A) && RoyalCourt.isMember(A), 'não entrou para a corte');
       RoyalCourt.setOffice('general'); ok(RoyalCourt.C().office === 'general', 'não virou general');
-      Politics.circle(A); ok(!Politics.circlePeople(A).some(x => x.seat === 'general'), 'o general antigo continua no círculo do rei');
+      ok(Object.keys(Politics.circle(A)).sort().join() === Object.keys(COURT_OFFICES).sort().join(), 'o círculo do rei não são os cargos da corte');
+      ok(!Politics.circlePeople(A).some(x => x.seat === 'general'), 'o general antigo continua no círculo do rei');
+      { const B0 = B, cc = Politics.S().circle; cc[B0] = { general: cc[B0] && cc[B0].general, chamberlain: G.people.find(p => p.alive && p.civ === B0 && p.rank === 'knight').id }; Politics.circle(B0); ok(cc[B0].advisor !== undefined && cc[B0].chamberlain === undefined, 'o círculo de um jogo salvo antigo não virou os cargos'); }
       UI.showCastle(A); ok(UI.panel.querySelector('.pc-me') && /General/.test(UI.panel.querySelector('.pc-me').textContent), 'você não aparece no círculo do rei no castelo'); UI.close();
       UI.showCorte('corte'); ok(UI.panel.querySelectorAll('.cd-of').length === 4, 'a corte não mostra os 4 cargos'); fits('corte');
       // 4. o general comanda a guerra do rei
