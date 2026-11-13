@@ -94,7 +94,7 @@ const BankPlus = {
   rendaHtml(ci) {
     const X = this.X(), b = (op, n, label, ok) => `<button data-act="bk2" data-op="${op}" data-c="${ci}" data-n="${n}" ${ok ? '' : 'disabled'}>${label}</button>`;
     const B3 = (op, n, label, ok) => `<button data-act="bk3" data-op="${op}" data-c="${ci}" data-k="${n}" ${ok ? '' : 'disabled'}>${label}</button>`;
-    const Q = [100, 500, 1000, 5000], r = this.renda(ci), here = r ? r.n : 0, an = !!G.civs[ci].anarchy, fund = Math.round(X.fund);
+    const Q = [100, 500, 1000, 5000, 10000, 100000], r = this.renda(ci), here = r ? r.n : 0, an = !!G.civs[ci].anarchy, fund = Math.round(X.fund);
     const others = X.rendas.filter(x => x.ci !== ci), allM = X.rendas.reduce((a, x) => a + x.m, 0);
     return `<div class="card rd-card"><div class="sec">🏛️ Fundo das Guildas <span>~1% ao mês</span></div>
         <div class="bp-big"><b>${fund.toLocaleString('pt-BR')} 🪙</b><small>aplicados nas oficinas dos sete reinos</small></div>
@@ -146,7 +146,7 @@ const BankPlus = {
     const bk = (id, n) => `<button data-act="bk" data-op="exp" data-c="${ci}" data-i="${id}" data-n="${n}" ${!full && P.gold >= Math.ceil(n * (1 + f)) ? '' : 'disabled'}>${n}</button>`;
     const routes = BANK_EXPEDITIONS.map(x => { const r = x.risk * (X.escort ? BANK_ESCORT.risk : 1);
       return `<div class="crow ex-row"><span class="ri">${x.icon}</span><span><b>${x.name}</b><small>${x.m} ${x.m === 1 ? 'mês' : 'meses'} · ganho de ${Math.round((x.lo - 1) * 100)}% a ${Math.round((x.hi - 1) * 100)}% · risco ${Math.round(r * 100)}%</small><i class="ex-risk"><i style="width:${Math.round(r * 100)}%"></i></i></span>
-        <span class="act-row">${[100, 500, 1000, 5000].map(n => bk(x.id, n)).join('')}</span></div>`; }).join('');
+        <span class="act-row">${[100, 500, 1000, 5000, 10000, 100000].map(n => bk(x.id, n)).join('')}</span></div>`; }).join('');
     const going = B.exp.map(e => { const x = BANK_EXPEDITIONS.find(q => q.id === e.id) || { icon: '🐫', name: e.id, m: 1 }, tot = Math.max(1, e.due - (e.day || e.due - x.m)), done = U.clamp((G.day - (e.day || e.due - x.m)) / tot, 0, 1);
       return `<div class="crow"><span class="ri">${x.icon}</span><span><b>${x.name}</b><small>${e.n} 🪙 · volta em ${Calendar.short(e.due)}${e.esc ? ' · 🛡️ escolta' : ''}${e.ins ? ' · 📜 seguro' : ''}</small><i class="ex-prog"><i style="width:${Math.round(done * 100)}%"></i></i></span><span></span></div>`; }).join('');
     const log = X.expLog.map(l => { const x = BANK_EXPEDITIONS.find(q => q.id === l.id) || { icon: '🐫', name: l.id };

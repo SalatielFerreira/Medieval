@@ -6,7 +6,7 @@ const ARENA_TIERS = [
   { name: 'Veterano', hp: 150, dmg: 12, prize: 110, odds: 2.2, fame: 6,  lvl: 4 },
   { name: 'Campeão',  hp: 240, dmg: 17, prize: 260, odds: 3.5, fame: 12, lvl: 8 },
 ];
-const ARENA_MAX_BET = 100000; // aposta máxima em Salin
+const ARENA_MAX_BET = Infinity; // a aposta vai até tudo o que você tem na carteira
 const EPITHETS = ['o Touro', 'a Raposa', 'Mão de Ferro', 'o Lobo', 'Coração Bravo', 'o Gigante', 'a Víbora', 'o Martelo', 'Olho de Falcão', 'o Implacável'];
 
 const Arena = {

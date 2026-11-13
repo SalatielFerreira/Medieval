@@ -61,7 +61,7 @@ const BankView = {
         <div class="bk3-body" data-tab="${tab}">${w.innerHTML}</div></section></div>`;
   },
   // ---- um valor só para a página: as fileiras de botões (+1 +100 +500 +1000 +5000) viram um botão por linha
-  AMTS: [100, 500, 1000, 5000], amt: 500,
+  AMTS: [100, 500, 1000, 5000, 10000, 100000], amt: 500,
   VERB: { dep: 'Depositar', wd: 'Sacar', apply: 'Aplicar', inv: 'Investir', fin: 'Pôr', fout: 'Tirar', rin: 'Pôr', rout: 'Tirar', exp: 'Enviar', borrow: 'Pegar', repay: 'Pagar' },
   SKIP: new Set(['rate', 'buy', 'sell', 'buyv', 'loan', 'lend']),
   compact(root) {

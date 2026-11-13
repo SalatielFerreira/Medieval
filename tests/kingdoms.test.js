@@ -24,9 +24,12 @@ module.exports = async () => {
       ok(FOUND_COST.gold === 100000, 'o preço de fundar vila não é 100.000');
       const f = Object.values(Families.F()).find(x => !x.player && !x.noble && x.seat !== null && x.seat !== 'castle');
       if (f) { f.founded = null; f.wealth = 5000; ok(!Families.canFound(f), 'família com 5.000 conseguiria fundar uma vila'); }
-      // 3. aposta até 100.000
-      ok(ARENA_MAX_BET === 100000, 'a aposta máxima não é 100.000');
-      UI.showArena(0); ok(!!document.querySelector('.ar-chip[data-n="100000"]'), 'falta a ficha de 100.000 na arena');
+      // 3. aposta de 0 até tudo o que você tem na carteira (na sua luta e na aposta no lutador)
+      P.gold = 345678; UI.sel.atab = 'lutar'; UI.showArena(0); const rg = document.querySelector('#betAmt');
+      ok(!!document.querySelector('.ar-chip[data-n="100000"]') && rg && +rg.max === 345678, 'a barra de aposta não vai até tudo o que você tem');
+      UI.act('abetset', { c: 0, n: 345678 }); ok(UI.sel.abet === 345678 && document.querySelector('.ar-chip.on') && document.querySelector('.ar-chip.on').textContent === 'Tudo', 'a ficha Tudo não apostou a carteira inteira');
+      UI.sel.atab = 'apostar'; UI.showArena(0); ok(+document.querySelector('#betAmt').max === 345678, 'a aposta no lutador não vai até tudo o que você tem');
+      UI.sel.abet = 0; UI.sel.atab = 'lutar';
       // 4. peças de leilão: a coroa de cristal é coroa (não elmo) e brilha
       Inv.add('crystal_crown', 1); P.equip.head = 'crystal_crown';
       const lk = playerLook(); ok(lk.regalia === 'crystal_crown' && !lk.helmet, 'a coroa de cristal não aparece como coroa');

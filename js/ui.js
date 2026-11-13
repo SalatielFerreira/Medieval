@@ -2220,15 +2220,18 @@ const UI = {
   },
 
   // ------------------------------------------------------------ arena e torneios
-  // arena: menu de ícones (Lutar, Apostar, Torneio); a aposta vai até 50000 Salin e vale para tudo
+  // arena: menu de ícones (Lutar, Apostar, Torneio); a aposta vai de 0 até tudo o que você tem e vale para tudo
   showArena(ci) {
     const S = this.sel, tr = Arena.tourney(), card = Arena.fightCard(ci), horse = !!P.horse;
     const tab = ['lutar', 'apostar', 'torneio'].includes(S.atab) ? S.atab : 'lutar';
     const max = Math.min(ARENA_MAX_BET, P.gold), bet = S.abet = U.clamp(Math.round(S.abet || 0), 0, max);
     const sal = n => `${n.toLocaleString('pt-BR')} <i class="ar-coin">🪙</i>`;
-    const betBox = `<div class="card ar-bet"><div class="sec">💰 Sua aposta <span>até ${ARENA_MAX_BET.toLocaleString('pt-BR')} Salin · você tem ${P.gold.toLocaleString('pt-BR')}</span></div>
-      <div class="ar-betrow"><b class="ar-betv">${sal(bet)}</b><input type="range" id="betAmt" min="0" max="${max}" step="${max > 10000 ? 100 : max > 500 ? 25 : 1}" value="${bet}" data-act-input="abet"></div>
-      <div class="ar-chips">${[0, 1, 50, 250, 1000, 5000, 10000, 50000, 100000].map(n => `<button class="ar-chip ${bet === Math.min(n, max) && (n <= max || n === ARENA_MAX_BET) ? 'on' : ''}" data-act="abetset" data-c="${ci}" data-n="${n}" ${n > P.gold && n !== 0 ? 'disabled' : ''}>${n ? n.toLocaleString('pt-BR') : 'Sem aposta'}</button>`).join('')}</div></div>`;
+    // a barra vai de 0 até tudo o que você tem na carteira (vale para a sua luta, a justa e a aposta no lutador)
+    const chips = [[0, 'Sem aposta'], [100, '100'], [1000, '1.000'], [10000, '10.000'], [100000, '100.000'], [Math.floor(P.gold / 4), '¼'], [Math.floor(P.gold / 2), '½'], [P.gold, 'Tudo']];
+    const onIdx = chips.length - 1 - [...chips].reverse().findIndex(([n], j) => n === bet && (chips.length - 1 - j < 5 || n > 0)); // (Tudo vence quando o valor bate com ele)
+    const betBox = `<div class="card ar-bet"><div class="sec">💰 Sua aposta <span>de 0 até tudo o que você tem · na carteira: ${P.gold.toLocaleString('pt-BR')} Salin</span></div>
+      <div class="ar-betrow"><b class="ar-betv">${sal(bet)}</b><input type="range" id="betAmt" min="0" max="${max}" step="1" value="${bet}" data-act-input="abet"></div>
+      <div class="ar-chips">${chips.map(([n, l], i) => `<button class="ar-chip ${i === onIdx ? 'on' : ''} ${i >= 5 ? 'ar-frac' : ''}" data-act="abetset" data-c="${ci}" data-n="${n}" ${n > P.gold || (i >= 5 && n <= 0) ? 'disabled' : ''}>${l}</button>`).join('')}</div></div>`;
     let page = '';
     if (tab === 'lutar') {
       page = this.pageHead('⚔️', 'Lutar na arena', 'Ninguém morre: quem cai primeiro perde')
