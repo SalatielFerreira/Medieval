@@ -8,7 +8,7 @@ module.exports = async () => {
     const r = await page.evaluate(() => {
       const bad = [], ok = (c, m) => { if (!c) bad.push(m); }, html = () => UI.panel ? UI.panel.innerHTML : '';
       UI.msg = () => {}; UI.banner = () => {}; Dialog.autoYes = true; P.god = true;
-      ok(Object.keys(KORDERS).length === 7 && KORDERS.smiths && KORDERS.merchants, 'as sete sociedades não existem');
+      ok(Object.keys(KORDERS).length === 8 && KORDERS.smiths && KORDERS.merchants, 'as oito sociedades não existem');
       ok(KOrders.why('smiths'), 'entrou sem ter os requisitos');
       P.level = 10; G.fame = 200; G.piety = 50; P.gold = 20000;
       ok(/convidado/.test(KOrders.why('smiths') || ''), 'entrou sem convite');

@@ -2393,7 +2393,7 @@ const Game = {
     // telas de toque: a barra do rodapé não encolhe (os botões ficam do tamanho confortável para o dedo)
     if (small || matchMedia('(pointer: coarse)').matches) document.getElementById('toolbar').style.zoom = 1;
     const rc = document.getElementById('rightcol');
-    rc.style.top = ((14 + miniH) / z) + 'px';
+    rc.style.top = ((G.place ? 18 : 14 + miniH) / z) + 'px'; // sem o minimapa (dentro de um imóvel), o calendário sobe para o lugar dele
     rc.style.right = (14 / z) + 'px';
     // em telas pequenas a coluna da direita (tempo e algibeira) tem exatamente a largura do minimapa
     rc.style.width = ((small && s.minimap ? miniW : Math.max(186, miniW)) / z) + 'px';

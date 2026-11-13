@@ -10,6 +10,8 @@ const Lugares = {
   _tb: null,
   // o botão do mapa na barra aparece e some conforme o lugar
   syncBar() {
+    // sem o minimapa (dentro de um imóvel ou no campo de batalha), o calendário sobe para o lugar dele
+    const nm = !!G.place || !G.settings.minimap; if (nm !== this._nm) { this._nm = nm; document.body.classList.toggle('no-mini', nm); try { Game.applySettings(); } catch (e) { console.error(e); } }
     const can = this.canMap(); if (can === this._tb) return; this._tb = can;
     for (const fn of ['showMap', 'showBuild']) { const b = document.querySelector(`#toolbar [data-tb="${fn}"]`); if (b) b.hidden = !can; } // (o Construir também some)
   },

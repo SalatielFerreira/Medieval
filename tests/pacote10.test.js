@@ -60,7 +60,7 @@ module.exports = async () => {
       ok(UI.panel.querySelector('.cs3-hero') && UI.panel.querySelectorAll('.cs3-act').length >= 3, 'o Castelo não foi redesenhado');
       UI.showLineage(); ok(UI.panel.querySelector('.dn-gen.now'), 'a Árvore da dinastia não foi redesenhada');
       UI.showLegacy(); ok(UI.panel.querySelector('.dn-pods') && UI.panel.querySelector('.dn-row.now'), 'o Placar da dinastia não foi redesenhado');
-      KOrders.leave('teste'); UI.sel.knav = 'x:ordens'; UI.showKingdom(); ok(UI.panel.querySelectorAll('.sco-card').length === 7 && !/object Object/.test(html()), 'a página das sociedades (para quem não é membro) não foi redesenhada');
+      KOrders.leave('teste'); UI.sel.knav = 'x:ordens'; UI.showKingdom(); ok(UI.panel.querySelectorAll('.sco-card').length === Object.keys(SECRET_SOC).length && !/object Object/.test(html()), 'a página das sociedades (para quem não é membro) não foi redesenhada');
       const np = G.people.find(q => q.alive && q.age > 20 && q.rank === 'merchant'); if (np) { np.met = true; UI.showTalk(np.id); const pb = UI.panel.querySelector('.pb'); ok(pb.scrollHeight <= pb.clientHeight + 2, 'a conversa com o NPC precisa rolar');
         const ft = [...UI.panel.querySelectorAll('.pf-tabs .tab')].find(b => /Ficha/.test(b.textContent)); if (ft) { ft.click(); const ac = UI.panel.querySelector('.tk2-acts'); ok(UI.panel.querySelector('.tk2-r .pf') && (!ac || getComputedStyle(ac).display === 'none'), 'a Ficha do NPC aparece junto com as ações da conversa'); } }
       UI.close();

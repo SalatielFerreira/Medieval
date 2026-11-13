@@ -6033,3 +6033,6 @@ body.small #panel .tk2-r .pf .pf-r { grid-template-columns: 62px minmax(0, 1fr);
 body.small #panel .tk2-r .pf .sec { margin-bottom: 2px; font-size: 10px; }
 body.small #panel .tk2-r .pf .pf-p { font-size: 10px !important; padding: 0 5px !important; }
 body.small #panel .tk2-r .pf .muted, body.small #panel .tk2-r .pf small { font-size: 9.5px; }
+body.small .kpages > .kpage[data-nav="x:ordens"] > .sco-found, body.small .kpages > .kpage[data-nav="x:ordens"] .sco-found { flex: 1; min-height: 0; }
+body.small .kpages > .kpage[data-nav="x:ordens"] { display: flex; flex-direction: column; }
+
