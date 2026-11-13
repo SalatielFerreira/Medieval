@@ -187,3 +187,37 @@ const Cid = {
   const ng0 = Game.newGame && Game.newGame.bind(Game);
   if (ng0) Game.newGame = function (...a) { const r = ng0(...a); try { Cid.S().ok = true; } catch (e) { /* ainda sem mundo */ } return r; };
 }
+
+// ---------------------------------------------------------------- a cidadania à vista e o que o cidadão pode construir
+//  • No alto da tela, embaixo do nome: "🪪 Dorne" (ou "🏳️ sem reino"); tocar ali abre Corte e cidadania → Cidadania.
+//  • Cidadão de um reino constrói ali as casas (da choupana ao palacete) e os baús, e abre estradas também dentro das
+//    vilas e em volta do castelo desse reino (os outros prédios continuam sendo só do rei).
+const CID_BUILD = k => k === 'chest' || k === 'big_chest' || (typeof TAX_HOUSE !== 'undefined' && TAX_HOUSE[k] !== undefined) || (BUILDINGS[k] && BUILDINGS[k].home === true);
+{
+  const pt0 = Game.playerTitle.bind(Game);
+  Game.playerTitle = function () {
+    const r = pt0(); if (!r || r.king || Court.title()) return r; // (o título de nobreza já diz o reino)
+    const me = Cid.get(); return Object.assign({}, r, { text: `${r.text} · ${me >= 0 ? '🪪 ' + Cid.name(me) : '🏳️ sem reino'}` });
+  };
+  document.addEventListener('click', e => { const t = e.target; if (t && t.closest && t.closest('#hudTitle') && G.state === 'play') UI.showCorte('cid'); });
+  // construir no reino da cidadania
+  const fr0 = Urban.foreignRealm.bind(Urban);
+  Urban.foreignRealm = function (...a) { const r = fr0(...a); return r >= 0 && r === Urban._cit ? -1 : r; };
+  const cb0 = Game.canBuild.bind(Game);
+  Game.canBuild = function (k, tx, ty) {
+    const me = Cid.get();
+    if (me < 0 || Cid.ruled().length || !CID_BUILD(k)) return cb0(k, tx, ty);
+    Urban._cit = me; try { return cb0(k, tx, ty); } finally { Urban._cit = undefined; }
+  };
+  // estradas dentro das vilas e do castelo do seu reino
+  const ft0 = Urban.foreignTown.bind(Urban);
+  Urban.foreignTown = function (tx, ty) {
+    const r = ft0(tx, ty); if (!r || !Urban._citRoad) return r;
+    const me = Cid.get(); if (me < 0) return r;
+    const vi = this.villageNear(tx, ty);
+    if (vi >= 0) return World.villages[vi].civ === me ? null : r;
+    return World.capitals[me] && U.dist(tx, ty, World.capitals[me].x, World.capitals[me].y) <= 12 ? null : r;
+  };
+  const re0 = Urban.roadErr.bind(Urban);
+  Urban.roadErr = function (...a) { Urban._citRoad = true; try { return re0(...a); } finally { Urban._citRoad = false; } };
+}

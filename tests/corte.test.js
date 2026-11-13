@@ -20,6 +20,14 @@ const check = async (W, H, fails, tag) => {
       ok(Cid.get() === -1, 'o jogo não começa sem cidadania');
       UI.showCorte('cid'); ok(UI.panel.querySelectorAll('.cd-k').length === G.civs.filter(c => c && !c.dead).length, 'a cidadania não mostra todos os reinos'); fits('cidadania');
       Cid.choose(A); ok(Cid.get() === A, 'não virou cidadão');
+      // 1b. a cidadania à vista (no alto da tela) e o que o cidadão constrói no reino dele
+      UI.updateHud && UI.updateHud(); ok(Game.playerTitle().text.includes(CIV_DEFS[A].short), 'a cidadania não aparece embaixo do nome');
+      { const vi = World.villages.findIndex(v => v && !v.free && v.civ === A && !v.ruin), v = World.villages[vi]; let spot = null;
+        for (let r = 4; r < 14 && !spot; r++) for (let a = 0; a < 16 && !spot; a++) { const x = Math.round(v.x + Math.cos(a / 16 * 6.28) * r), y = Math.round(v.y + Math.sin(a / 16 * 6.28) * r); P.x = (x + 0.5) * TILE; P.y = (y + 3.5) * TILE;
+          if (!Game.canBuild('chest', x, y) && !Game.canBuild('cabin', x, y)) spot = [x, y]; }
+        ok(!!spot, 'o cidadão não consegue pôr casa nem baú no reino dele');
+        if (spot) { ok(!Urban.foreignTown(spot[0], spot[1]) || !Urban.roadErr(spot[0], spot[1]) || Urban.roadErr(spot[0], spot[1]) !== `Só o governador da vila ou o rei pode mexer nas estradas de ${v.name}`, 'o cidadão não abre estrada na vila do reino dele');
+          const ob = World.villages.find(x => x && !x.free && x.civ === B && !x.ruin); if (ob) { P.x = (ob.x + 6.5) * TILE; P.y = (ob.y + 3.5) * TILE; ok(Game.canBuild('cabin', ob.x + 6, ob.y) !== null, 'construiu casa num reino que não é o da cidadania'); } } }
       // 2. título só no reino da cidadania
       prep(A); prep(B);
       ok(!Court.requestTitle(B) && Court.levelIn(B) < 0, 'ganhou título em outro reino');
