@@ -28,6 +28,22 @@ const check = async (W, H, fails, tag) => {
         ok(!!spot, 'o cidadão não consegue pôr casa nem baú no reino dele');
         if (spot) { ok(!Urban.foreignTown(spot[0], spot[1]) || !Urban.roadErr(spot[0], spot[1]) || Urban.roadErr(spot[0], spot[1]) !== `Só o governador da vila ou o rei pode mexer nas estradas de ${v.name}`, 'o cidadão não abre estrada na vila do reino dele');
           const ob = World.villages.find(x => x && !x.free && x.civ === B && !x.ruin); if (ob) { P.x = (ob.x + 6.5) * TILE; P.y = (ob.y + 3.5) * TILE; ok(Game.canBuild('cabin', ob.x + 6, ob.y) !== null, 'construiu casa num reino que não é o da cidadania'); } } }
+      // 1c. onde construir: casa e empreendimento em qualquer reino; produção, fazenda e baús na terra livre e no reino da
+      //     cidadania; cada imóvel num reino alheio paga taxa por mês; estradas dos outros, só governador e rei
+      { const spot = (ci, k) => { for (let n = 0; n < 4000; n++) { const x = 8 + Math.floor(Math.random() * (WORLD_W - 16)), y = 8 + Math.floor(Math.random() * (WORLD_H - 16)); if (World.terr[World.idx(x, y)] !== ci || Urban.authority(x, y)) continue; P.x = (x + 0.5) * TILE; P.y = (y + 4.5) * TILE; if (!Game.canBuild(k, x, y)) return [x, y]; } return null; };
+        UI.showBuild(); UI.close();
+        const biz = Object.keys(BIZ_TYPES).find(k => BUILDINGS[k] && BUILDINGS[k].w <= 2 && BUILDINGS[k].h <= 2) || Object.keys(BIZ_TYPES)[0];
+        const sB = spot(B, 'cabin'); ok(sB, 'não dá para pôr casa num reino que não é o da cidadania');
+        if (sB) { P.x = (sB[0] + 0.5) * TILE; P.y = (sB[1] + 4.5) * TILE; ok(Game.canBuild('workbench', sB[0], sB[1]), 'pôs oficina de produção num reino que não é o da cidadania'); }
+        ok(spot(B, biz), 'não dá para abrir empreendimento num reino que não é o da cidadania (sem licença)');
+        ok(spot(A, 'workbench'), 'não dá para pôr oficina de produção no reino da cidadania');
+        ok(spot(-1, 'workbench'), 'não dá para pôr oficina de produção na terra livre');
+        if (sB) { const st = World.addStruct('cabin', sB[0], sB[1], BUILDINGS.cabin.w, BUILDINGS.cabin.h, 'player'); const bl = Taxes.mine().find(b => b.ci === B); ok(bl && bl.houses >= 1 && bl.n >= 1, 'a casa num reino alheio não paga taxa');
+          const g0 = P.gold, t0 = G.civs[B].treasury; Taxes.monthTick(); ok(P.gold < g0 && G.civs[B].treasury > t0, 'a taxa do mês não foi paga ao reino'); st.removed = true; }
+        // estradas: só as suas (sem ser governador nem rei)
+        let rd = null; for (let i = 0; i < World.tiles.length && !rd; i += 7) { if (World.tiles[i] !== T.ROAD) continue; const x = i % WORLD_W, y = (i / WORLD_W) | 0; if (Urban.authority(x, y) || Urban.foreignTown(x, y) || Urban.E().mine[i] !== undefined) continue; rd = [x, y]; }
+        if (rd) { P.x = (rd[0] + 0.5) * TILE; P.y = (rd[1] + 0.5) * TILE; ok(Urban.unroadErr(rd[0], rd[1]), 'tirou uma estrada que não é sua sem ser governador nem rei'); }
+      }
       // 2. título só no reino da cidadania
       prep(A); prep(B);
       ok(!Court.requestTitle(B) && Court.levelIn(B) < 0, 'ganhou título em outro reino');

@@ -145,8 +145,9 @@ Object.assign(Gab, {
     const hero = `<div class="cd-hero" style="--c:${me >= 0 ? Game.civColor(me) : '#8a7a5a'}"><div class="cd-harms">${this.arms(me, 52)}</div>
       <div class="cd-htx"><small>Sua cidadania</small><h3>${king ? `Rei de ${esc(Cid.name(me))}` : me >= 0 ? `Cidadão de ${esc(CIV_DEFS[me].name)}` : 'Livre, sem reino'}</h3>
         <p>${king ? 'Você é rei: a sua cidadania é o seu reino e, nele, quem manda em tudo é você.' : me >= 0 ? `Desde ${Calendar.short(Math.max(0, Cid.S().since))}. Cargo na corte e título de nobreza, só aqui.` : 'Escolha um reino para ser seu (sem cargo) ou ganhe a cidadania ao assumir um cargo ou um título.'}</p></div>
-      <div class="cd-rules"><span>🪪 Cargo e título só no reino da cidadania</span><span>⚜️ Um título e uma corte por vez</span><span>🔁 Trocar de cidadania = perder cargo e título</span>
+      <div class="cd-rules"><span>🪪 Cargo e título só no reino da cidadania</span><span>🔁 Trocar de cidadania = perder cargo e título</span><span>🏠 Casa e empreendimento: em qualquer reino (taxa por mês)</span><span>🔨 Oficina, criação e baú: terra livre e o seu reino</span>
         ${me >= 0 && !king ? '<button class="mini danger" data-act="cidSet" data-c="-1">🏳️ Renunciar</button>' : ''}</div></div>`;
+    const bill = typeof Taxes !== 'undefined' ? Object.fromEntries(Taxes.mine().map(b => [b.ci, b])) : {};
     const cards = G.civs.filter(c => c && !c.dead).map(c => {
       const ci = c.id, mine = ci === me, own = c.ruler === 'player', aff = Cid.kingAff(ci), rel = Math.round(c.relation || 0), lv = Court.levelIn(ci);
       const btn = own ? '<span class="cd-tag ok">👑 Seu reino</span>' : mine ? '<span class="cd-tag ok">✔ Sua cidadania</span>' : king ? '' : c.atWar ? '<span class="cd-tag bad">⚔️ Em guerra com você</span>'
@@ -154,7 +155,7 @@ Object.assign(Gab, {
       return `<div class="cd-k ${mine ? 'on' : ''}" style="--c:${Game.civColor(ci)}"><div class="cd-kh">${this.arms(ci, 30)}<div><b>${esc(CIV_DEFS[ci].short)}</b><small>${own ? 'você' : esc(c.rulerName)}</small></div></div>
         ${own ? '<div class="cd-kr"><span>👑 o rei é você</span></div>' : `<div class="cd-kr"><span>🤝 Reino</span>${this.bar(rel + 100, 200, rel >= COURT_REL ? 'ok' : '')}<b>${rel}</b></div>
         <div class="cd-kr"><span>👑 Rei</span>${this.bar(aff + 100, 200, aff >= COURT_NEED.advisor.aff ? 'ok' : '')}<b>${aff}</b></div>`}
-        <div class="cd-kx">${lv >= 0 ? `<em>${NOBLE_TITLES[lv].icon} ${esc(P.sex === 'f' ? NOBLE_TITLES[lv].f : NOBLE_TITLES[lv].m)}</em>` : ''}${cur && cur.civ === ci ? `<em>${COURT_OFFICES[cur.office].icon} ${esc(RoyalCourt.officeName(cur.office))}</em>` : ''}</div>${btn}</div>`;
+        <div class="cd-kx">${bill[ci] ? `<em title="Taxa mensal dos seus imóveis neste reino">🏛️ ${bill[ci].houses} ${bill[ci].houses === 1 ? 'imóvel' : 'imóveis'} · ${bill[ci].n} 🪙/mês</em>` : ''}${lv >= 0 ? `<em>${NOBLE_TITLES[lv].icon} ${esc(P.sex === 'f' ? NOBLE_TITLES[lv].f : NOBLE_TITLES[lv].m)}</em>` : ''}${cur && cur.civ === ci ? `<em>${COURT_OFFICES[cur.office].icon} ${esc(RoyalCourt.officeName(cur.office))}</em>` : ''}</div>${btn}</div>`;
     }).join('');
     return `<div class="cd-pg">${hero}<div class="cd-kgrid">${cards}</div></div>`;
   },

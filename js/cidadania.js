@@ -190,9 +190,31 @@ const Cid = {
 
 // ---------------------------------------------------------------- a cidadania à vista e o que o cidadão pode construir
 //  • No alto da tela, embaixo do nome: "🪪 Dorne" (ou "🏳️ sem reino"); tocar ali abre Corte e cidadania → Cidadania.
-//  • Cidadão de um reino constrói ali as casas (da choupana ao palacete) e os baús, e abre estradas também dentro das
-//    vilas e em volta do castelo desse reino (os outros prédios continuam sendo só do rei).
-const CID_BUILD = k => k === 'chest' || k === 'big_chest' || (typeof TAX_HOUSE !== 'undefined' && TAX_HOUSE[k] !== undefined) || (BUILDINGS[k] && BUILDINGS[k].home === true);
+//  • Onde você constrói, sem ser governador nem rei dali:
+//    🏠 Moradia e 💼 Empreendimentos: em qualquer reino (e nas terras livres);
+//    🔨 Produção, 🐄 Fazenda e animais e 📦 Baús e estábulo: nas terras livres e no reino da sua cidadania;
+//    o resto (praça, cultura, defesa, castelo) continua sendo do governador e do rei.
+//    Cada imóvel seu num reino que você não governa paga uma taxa por mês a esse reino (impostos.js).
+//  • Cidadão abre estradas também dentro das vilas e em volta do castelo do reino dele.
+//  • Infraestrutura sem ser governador nem rei: só nos seus imóveis e nas estradas que você abriu (mudar de lugar,
+//    demolir, melhorar e tirar estradas); governador e rei mexem em tudo, como antes.
+Object.assign(Cid, {
+  // a categoria do menu Construir de um tipo de construção
+  buildCat(k) {
+    const C = UI.buildCats; if (C) { const c = C.find(x => x[3].includes(k)); if (c) return c[0]; }
+    if (typeof BIZ_TYPES !== 'undefined' && BIZ_TYPES[k]) return 'negocios';
+    if (TAX_HOUSE[k] !== undefined || (BUILDINGS[k] && BUILDINGS[k].home === true)) return 'moradia';
+    if (['chest', 'big_chest', 'cellar', 'stable', 'kennel'].includes(k)) return 'guarda';
+    return null;
+  },
+  // pode construir (ou trazer) este tipo no reino t, que não é seu?
+  buildOk(k, t) {
+    if (k === 'pcastle' || t < 0) return false;
+    const cat = this.buildCat(k);
+    if (cat === 'moradia' || cat === 'negocios') return true;
+    return ['producao', 'fazenda', 'guarda'].includes(cat) && t === this.get() && !this.ruled().length;
+  },
+});
 {
   const pt0 = Game.playerTitle.bind(Game);
   Game.playerTitle = function () {
@@ -203,12 +225,30 @@ const CID_BUILD = k => k === 'chest' || k === 'big_chest' || (typeof TAX_HOUSE !
   // construir no reino da cidadania
   const fr0 = Urban.foreignRealm.bind(Urban);
   Urban.foreignRealm = function (...a) { const r = fr0(...a); return r >= 0 && r === Urban._cit ? -1 : r; };
+  const LICENSE_MSG = 'Para abrir um empreendimento em ';
   const cb0 = Game.canBuild.bind(Game);
   Game.canBuild = function (k, tx, ty) {
-    const me = Cid.get();
-    if (me < 0 || Cid.ruled().length || !CID_BUILD(k)) return cb0(k, tx, ty);
-    Urban._cit = me; try { return cb0(k, tx, ty); } finally { Urban._cit = undefined; }
+    const b = BUILDINGS[k]; if (!b) return cb0(k, tx, ty);
+    const t = fr0(tx, ty, b.w, b.h);
+    if (t < 0 || !Cid.buildOk(k, t)) return cb0(k, tx, ty);
+    Urban._cit = t;
+    try { const e = cb0(k, tx, ty); return e && e.startsWith(LICENSE_MSG) ? null : e; } // (a licença de comércio deixou de ser obrigatória: agora é desconto na taxa)
+    finally { Urban._cit = undefined; }
   };
+  // mudar um imóvel seu de lugar segue as mesmas regras
+  const pe0 = Urban.placeErr.bind(Urban);
+  Urban.placeErr = function (def, tx, ty, s, civic) {
+    if (!s || s.owner !== 'player' || !BUILDINGS[s.type]) return pe0(def, tx, ty, s, civic);
+    const t = fr0(tx, ty, s.w, s.h);
+    if (t < 0 || !Cid.buildOk(s.type, t)) return pe0(def, tx, ty, s, civic);
+    Urban._cit = t; try { return pe0(def, tx, ty, s, civic); } finally { Urban._cit = undefined; }
+  };
+  // estradas: sem ser governador nem rei dali, melhorar ou tirar só as que você abriu
+  const mineRoad = (tx, ty) => Urban.authority(tx, ty) || (World.inb(tx, ty) && Urban.E().mine[World.idx(tx, ty)] !== undefined);
+  const ue0 = Urban.upgradeErr.bind(Urban);
+  Urban.upgradeErr = function (tx, ty, ...a) { const e = ue0(tx, ty, ...a); if (e) return e; return mineRoad(tx, ty) ? null : 'Só as estradas que você abriu (o governador e o rei mexem em todas).'; };
+  const un0 = Urban.unroadErr.bind(Urban);
+  Urban.unroadErr = function (tx, ty, ...a) { const e = un0(tx, ty, ...a); if (e) return e; return mineRoad(tx, ty) ? null : 'Só as estradas que você abriu (o governador e o rei mexem em todas).'; };
   // estradas dentro das vilas e do castelo do seu reino
   const ft0 = Urban.foreignTown.bind(Urban);
   Urban.foreignTown = function (tx, ty) {
