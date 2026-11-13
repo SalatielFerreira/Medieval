@@ -753,7 +753,7 @@ const UI = {
     // Quadro maior que o espaço: ele "escorre" para as páginas seguintes. O quadro é desmontado em peças (os filhos dele;
     // um filho grande — uma lista, uma grade — é desmontado nas linhas dele) e remontado página a página numa cópia vazia
     // do quadro, com o título (.sec) repetido na continuação. Um subtítulo nunca fica sozinho no pé da página.
-    const keep = '.fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour';
+    const keep = '.og-apage, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour';
     const solid = 'select, svg, canvas, button, .ju-cells, .seg, .chips, .swatches, .tabs, .act-row, .titles, .rn-it, .rn-row, .rn-dip, .law, .rn-seat';
     // (desmonta-se uma lista — filhos parecidos — ou o que não cabe numa página inteira; um quadro dentro de uma grade vai inteiro)
     const homog = c => { const k = [...c.children], m = {}; if (k.length < 3) return false; for (const x of k) { const t = x.tagName + '.' + String(x.className).split(' ')[0]; m[t] = (m[t] || 0) + 1; } return Math.max(...Object.values(m)) >= k.length * 0.6; };

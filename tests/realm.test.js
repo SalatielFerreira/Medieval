@@ -35,7 +35,12 @@ module.exports = async () => {
       S.me.archery = 99; G.day++; Games.resolve(); ok(!S.on && S.history.length && S.history[0].ev.archery[0].who === 'player', 'o jogador com 99 pontos não ganhou o ouro no arco');
       // a página 🏅 Jogos dentro da Arena (abaixo de Torneio), cabendo na janela
       { Games.start(); const h = S.host; Places.enterRoom(Arena.arenaOf(h)); UI.sel.atab = 'jogos'; UI.showArena(h); const b = UI.panel.querySelector('.snav-body'), ks = [...UI.panel.querySelectorAll('[data-act="anav"]')].map(x => x.dataset.k);
-        ok(ks.indexOf('jogos') === ks.indexOf('torneio') + 1 && UI.panel.querySelectorAll('.og-ev').length === 7 && UI.panel.querySelector('[data-act="gPlay"]:not([disabled])') && b.scrollHeight <= b.clientHeight + 1, 'a página Jogos da Arena');
+        ok(ks.indexOf('jogos') === ks.indexOf('torneio') + 1 && UI.panel.querySelectorAll('.og-tk').length === 10 && UI.panel.querySelectorAll('.og-tk.lock').length === 9 && UI.panel.querySelector('[data-act="gPlay"][data-k="archery"]:not([disabled])') && b.scrollHeight <= b.clientHeight + 1, 'a página Jogos da Arena (trilha das 10 provas, só a 1ª liberada)');
+        ok(!Games.canPlay('javelin') && !Games.unlocked('masters'), 'a 2ª prova já estava liberada antes da 1ª');
+        UI.msg = () => {}; Games.play('race'); ok(!G.race, 'a 3ª prova começou sem as anteriores');
+        S.me.archery = 50; UI.act('ogFocus', { k: 'javelin' }); ok(Games.canPlay('javelin') && UI.panel.querySelector('[data-act="gPlay"][data-k="javelin"]:not([disabled])'), 'feita a 1ª, a 2ª não foi liberada');
+        Games.play('javelin'); ok(G.jav, 'o lançamento de dardo não começou'); for (let k = 0; k < 3; k++) Games.throwJav(); Games.javEnd(); ok(S.me.javelin >= 20 && !G.jav, 'o dardo não deu nota');
+        Games.play('race'); G.race = null; S.me.race = 40; Games.play('tug'); ok(G.tug, 'o cabo de força não começou'); for (let k = 0; k < 25; k++) Games.pull(); G.tug.end = true; Games.tugEnd(); ok(S.me.tug === 60, 'o cabo de força não deu a nota dos puxões');
         UI.sel.atab = 'lutar'; UI.close(); Places.exit(true); G.day++; Games.resolve(); }
       Games.archery(); for (let k = 0; k < 3; k++) Games.shoot(); ok(G.arch.shots.length === 3, 'o arco não atirou 3 flechas'); Games.archEnd();
       (UI.sel.svSub = UI.sel.svSub || {}).og = 'medalhas'; UI.showGames(); ok(html().includes('Quadro de medalhas'), 'janela dos Jogos');

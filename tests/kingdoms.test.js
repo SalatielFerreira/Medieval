@@ -53,19 +53,23 @@ module.exports = async () => {
       return out;
     });
     fails.push(...r);
-    // 7. Jogos dos Sete Reinos: sete provas; terminando todas, a cerimônia dos pódios
+    // 7. Jogos dos Sete Reinos: dez provas em ordem; terminando todas, a cerimônia dos pódios (o dos reinos e o de cada prova)
     await page.evaluate(() => {
       const S = Games.S(); S.year = 0; Games.start(); Places.enterRoom(Arena.arenaOf(S.host));
       window._n = Object.keys(GAMES_EVENTS).length;
-      for (const ev of Object.keys(GAMES_EVENTS)) if (!['brawl'].includes(ev)) S.me[ev] = 80;
+      for (const ev of GAMES_ORDER) if (!['brawl', 'duel'].includes(ev)) S.me[ev] = 80;
+      UI.msg = () => {}; Games.play('duel'); window._lock = !G.duel; G.duel = null; S.me.duel = 70;
       Games.play('brawl'); window._brawl = !!(G.duel && G.duel.brawl); G.duel.ent.dead = true; Arena.update();
     });
     await new Promise(res => setTimeout(res, 2600));
-    const g = await page.evaluate(() => ({ n: _n, brawl: _brawl, on: Games.S().on, hist: Games.S().history.length, pod: !!document.querySelector('.podium'), steps: document.querySelectorAll('.pod-s').length }));
-    if (g.n !== 7) fails.push(`os Jogos têm ${g.n} provas (eram para ser 7)`);
+    const g = await page.evaluate(() => { const h = Games.S().history[0], kp = document.querySelectorAll('.kp-s').length; UI.act('svsub', { g: 'ogp', t: 'provas' });
+      return { n: _n, lock: _lock, brawl: _brawl, on: Games.S().on, hist: Games.S().history.length, kp, kpod: h && h.kpod && h.kpod.length, champ: h && h.champion === (h.kpod || [])[0], pod: !!document.querySelector('.podium'), steps: document.querySelectorAll('.pod-s').length }; });
+    if (g.n !== 10) fails.push(`os Jogos têm ${g.n} provas (eram para ser 10)`);
+    if (!g.lock) fails.push('o duelo de espadas (6ª prova) começou sem a 5ª');
+    if (g.kp !== 3 || g.kpod !== 3 || !g.champ) fails.push(`a cerimônia não mostrou o pódio dos reinos (${g.kp} lugares, ${g.kpod} no registro)`);
     if (!g.brawl) fails.push('a luta sem armas não começou');
     if (g.on || !g.hist) fails.push('terminadas todas as provas, os Jogos não se encerraram');
-    if (!g.pod || g.steps < 21) fails.push('a janela dos pódios não mostrou os pódios das 7 provas');
+    if (!g.pod || g.steps < 30) fails.push(`a janela dos pódios não mostrou os pódios das 10 provas (${g.steps})`);
   } finally { await close(); }
   return fails.concat(errors.map(e => 'erro no jogo: ' + e));
 };

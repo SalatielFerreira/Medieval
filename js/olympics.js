@@ -2,7 +2,7 @@
 // Jogos dos Sete Reinos (Portfólio → Jogos) redesenhado em páginas que cabem na janela (Services.subs/paginate):
 //  🏟️ O evento: onde os Jogos estão acontecendo (ou o próximo anfitrião e quantos meses faltam), o seu progresso, os
 //     prêmios no pódio e como funciona;
-//  ⚔️ As provas: as sete provas com os favoritos de cada reino e o botão de competir;
+//  ⚔️ As provas: as dez provas, em ordem (cada uma liberada depois da anterior), com a classificação e o botão de competir;
 //  📜 Registros: cada edição já disputada (ano, anfitrião, grande campeão) com o pódio de cada prova;
 //  🏆 Medalhas e lendas: o quadro de medalhas de todos os tempos, os atletas com mais medalhas e as suas medalhas.
 // As provas, os prêmios e o histórico são os de games.js.
@@ -24,8 +24,20 @@ const Olympics = {
   // Quando os Jogos acabam, a classificação é limpa (o resultado fica nos Registros).
   live() {
     const S = Games.S(); if (!S.on) return null;
-    if (!S.live) { S.live = {}; for (const ev of Object.keys(GAMES_EVENTS)) S.live[ev] = Games.champs(ev).map(x => ({ who: x.p.id, ci: x.ci, name: People.full(x.p), score: Math.round(x.power * U.rnd(0.6, 1.25)), t: U.rnd(0.05, 0.95) })); }
+    if (!S.live) S.live = {};
+    for (const ev of GAMES_ORDER) if (!S.live[ev]) { S.live[ev] = Games.champs(ev).map(x => ({ who: x.p.id, ci: x.ci, name: People.full(x.p), score: Math.round(x.power * U.rnd(0.6, 1.25)), t: U.rnd(0.05, 0.95) })); }
     return S.live;
+  },
+  // o quadro de medalhas do ano ao vivo: os três primeiros de cada prova até agora, somados por reino
+  liveKingdoms() {
+    const S = Games.S(); if (!S.on) return [];
+    const rec = { ev: {} }; for (const ev of GAMES_ORDER) rec.ev[ev] = this.standings(ev).list.slice(0, 3);
+    return Games.kingdoms(rec);
+  },
+  liveTable(n) {
+    const L = this.liveKingdoms(), K = L.filter(x => x.ci >= 0).slice(0, n || 7).concat(L.filter(x => x.ci < 0)), mx = Math.max(1, ...K.map(x => x.t));
+    return K.length ? K.map((x, i) => `<div class="kt-r ${i < 3 && x.ci >= 0 ? 'top' : ''} ${x.ci < 0 ? 'nr' : ''}"><em>${x.ci < 0 ? '—' : i < 3 ? GAMES_MEDAL[i] : `${i + 1}º`}</em>${this.arms(x.ci, 16)}<span>${this.civName(x.ci)}</span>${x.m.map(m => `<b>${m}</b>`).join('')}<i class="og-b"><i style="width:${x.t / mx * 100}%"></i></i><strong>${x.t}</strong></div>`).join('')
+      : '<small class="muted">Ninguém subiu ao pódio ainda.</small>';
   },
   frac() { const S = Games.S(); return G.day > S.day ? 1 : U.clamp((G.time || 0) / DAY_LEN, 0, 1); },
   standings(ev) {
@@ -37,17 +49,19 @@ const Olympics = {
     return { list, total: all.length + 1 };
   },
   card(ev, canHere) {
-    const S = Games.S(), esc = this.esc.bind(this), [ic, nm, desc] = GAMES_EVENTS[ev], me = S.me[ev];
-    if (!S.on) return `<div class="og-ev off"><div class="og-eh"><span>${ic}</span><b>${nm}</b></div><small class="og-desc">${desc}</small><div class="og-empty">⏳ Sem competição agora.<br><small>Os atletas aparecem aqui quando os Jogos começarem, em agosto.</small></div></div>`;
+    const S = Games.S(), esc = this.esc.bind(this), [ic, nm, desc] = GAMES_EVENTS[ev], me = S.me[ev], n = GAMES_ORDER.indexOf(ev) + 1;
+    const lock = S.on && me === undefined && !Games.unlocked(ev), pv = Games.prevEv(ev);
+    if (!S.on) return `<div class="og-ev off"><div class="og-eh"><i class="og-n">${n}</i><span>${ic}</span><b>${nm}</b></div><small class="og-desc">${desc}</small><div class="og-empty">⏳ Sem competição agora.<br><small>Os atletas aparecem aqui quando os Jogos começarem, em agosto.</small></div></div>`;
     const st = this.standings(ev), mx = Math.max(1, ...st.list.map(x => x.score)), pos = st.list.findIndex(x => x.who === 'player');
     const top = st.list.slice(0, 3); if (pos >= 3) top.push(st.list[pos]);
-    return `<div class="og-ev ${me !== undefined ? 'done' : ''}"><div class="og-eh"><span>${ic}</span><b>${nm}</b>${me !== undefined ? `<em>${pos + 1}º · ${me} pts</em>` : ''}</div><small class="og-desc">${desc}</small>
+    return `<div class="og-ev ${me !== undefined ? 'done' : ''} ${lock ? 'lock' : ''}"><div class="og-eh"><i class="og-n">${lock ? '🔒' : n}</i><span>${ic}</span><b>${nm}</b>${me !== undefined ? `<em>${pos + 1}º · ${me} pts</em>` : ''}</div><small class="og-desc">${desc}</small>
       <div class="og-live2"><small>🔴 Classificação ao vivo · ${st.list.length} de ${st.total} competiram</small>${top.length ? top.map(x => { const k = st.list.indexOf(x);
         return `<div class="${x.who === 'player' ? 'me' : ''}"><em>${k < 3 ? GAMES_MEDAL[k] : `${k + 1}º`}</em>${this.arms(x.ci, 14)}<span>${esc(x.name)}</span><i class="og-b"><i style="width:${x.score / mx * 100}%"></i></i><b>${x.score}</b></div>`; }).join('') : '<div class="og-wait2">Ninguém competiu ainda.</div>'}</div>
-      ${canHere ? `<button class="${me === undefined ? 'primary' : ''}" data-act="gPlay" data-k="${ev}" ${Games.canPlay(ev) ? '' : 'disabled'}>${me !== undefined ? '✔ Você já competiu' : `${ic} Competir`}</button>` : `<small class="muted og-wait">${me !== undefined ? '✔ Você já competiu' : `Compita na arena de ${esc(Games.hostName())}`}</small>`}</div>`;
+      ${lock ? `<small class="og-wait og-lk">🔒 Liberada quando você fizer a ${n - 1}ª prova (${GAMES_EVENTS[pv][0]} ${GAMES_EVENTS[pv][1]})</small>`
+        : canHere ? `<button class="${me === undefined ? 'primary' : ''}" data-act="gPlay" data-k="${ev}" ${Games.canPlay(ev) ? '' : 'disabled'}>${me !== undefined ? '✔ Você já competiu' : `${ic} Competir na ${n}ª prova`}</button>` : `<small class="muted og-wait">${me !== undefined ? '✔ Você já competiu' : `Compita na arena de ${esc(Games.hostName())}`}</small>`}</div>`;
   },
   html() {
-    const S = Games.S(), esc = this.esc.bind(this), cd = Calendar.of(G.day), evKeys = Object.keys(GAMES_EVENTS);
+    const S = Games.S(), esc = this.esc.bind(this), cd = Calendar.of(G.day), evKeys = GAMES_ORDER;
     const host = S.on ? S.host : Games.nextHost(), done = evKeys.filter(ev => S.me[ev] !== undefined).length;
     const inArena = S.on && Arena.inColiseum(S.host);
     // 🏟️ o evento
@@ -58,16 +72,17 @@ const Olympics = {
     const hosts = (() => { const L = []; let h = S.on ? S.host : (S.host >= 0 ? S.host : -1); for (let k = 0; k < 4; k++) { h = (h + 1 + G.civs.length) % G.civs.length; while (G.civs[h] && G.civs[h].anarchy) h = (h + 1) % G.civs.length; L.push(h); } return L; })();
     const evento = `<div class="og-hero" style="--c:${Game.civColor(host)}"><div class="og-arms">${this.arms(host, 72)}</div><div class="og-htx">${status}</div>${S.on ? ring : `<div class="og-count"><b>${this.monthsLeft()}</b><small>${this.monthsLeft() === 1 ? 'mês' : 'meses'}</small></div>`}</div>
       <div class="og-row">
-        <div class="card og-prize"><div class="sec">🏅 Prêmios de cada prova</div><div class="og-pod">${[1, 0, 2].map(k => `<div class="p${k + 1}"><b>${GAMES_MEDAL[k]}</b><span>${GAMES_PRIZE[k].toLocaleString('pt-BR')} 🪙</span><small>+${GAMES_FAME[k]} de fama</small><i></i></div>`).join('')}</div><small class="muted">O reino com mais ouros é o grande campeão e faz festa. Cinco medalhas nos mesmos Jogos: +15 de fama.</small></div>
+        <div class="card og-prize"><div class="sec">🏅 Prêmios de cada prova</div><div class="og-pod">${[1, 0, 2].map(k => `<div class="p${k + 1}"><b>${GAMES_MEDAL[k]}</b><span>${GAMES_PRIZE[k].toLocaleString('pt-BR')} 🪙</span><small>+${GAMES_FAME[k]} de fama</small><i></i></div>`).join('')}</div><div class="og-kpr"><b>🏆 Pódio dos reinos</b><span>o reino com mais medalhas no ano: ${GAMES_KPRIZE.map((v, k) => `${GAMES_MEDAL[k]} +${v.toLocaleString('pt-BR')} 🪙`).join(' · ')} no tesouro e festa do povo</span></div>
+          <div class="og-kpr"><b>🌟 Prêmios especiais</b><span>Atleta dos Jogos (mais medalhas): +${GAMES_STAR.gold.toLocaleString('pt-BR')} 🪙 · Ouro nas dez: +${GAMES_SWEEP.gold.toLocaleString('pt-BR')} 🪙 · Fez as dez provas: +${GAMES_ALL.gold} 🪙 · Cinco medalhas: +15 de fama</span></div></div>
         <div class="card og-how"><div class="sec">📜 Como funciona</div>
           <div class="og-step"><span>📅</span><b>Todo agosto</b><small>cada ano num reino diferente</small></div><div class="og-step"><span>🏟️</span><b>Na arena do anfitrião</b><small>vá até lá para competir</small></div>
-          <div class="og-step"><span>⚔️</span><b>Sete provas</b><small>quatro de luta, justa, arco e corrida</small></div><div class="og-step"><span>🎖️</span><b>Pódio em cada prova</b><small>ouro, prata e bronze, com prêmio e fama</small></div>
+          <div class="og-step"><span>🔓</span><b>Dez provas em ordem</b><small>cada prova feita libera a seguinte; a última é o Duelo dos Campeões</small></div><div class="og-step"><span>🎖️</span><b>Pódio em cada prova</b><small>ouro, prata e bronze, com prêmio e fama</small></div><div class="og-step"><span>🏆</span><b>Pódio dos reinos</b><small>o reino com mais medalhas do ano ganha prêmio no tesouro</small></div>
           <div class="og-next"><small>Próximos anfitriões:</small>${hosts.map(h => `<span>${this.arms(h, 14)} ${this.civName(h)}</span>`).join('')}</div></div></div>`;
     // ⚔️ as provas
     const provas = `<div class="og-evs sv-pl">${evKeys.map(ev => this.card(ev, inArena)).join('')}</div>`;
     // 📜 registros: uma edição por quadro
-    const regs = S.history.length ? `<div class="og-hist sv-pl">${S.history.map((h, i) => `<div class="og-ed" style="--c:${Game.civColor(h.host)}"><div class="og-edh">${this.arms(h.host, 34)}<div><b>Jogos do ano ${h.year}</b><small>em ${esc(CIV_DEFS[h.host] ? CIV_DEFS[h.host].name : '?')}</small></div>${h.champion !== undefined ? `<span class="og-champ">🏆 Grande campeão: ${this.arms(h.champion, 16)} <b>${this.civName(h.champion)}</b></span>` : ''}</div>
-        <div class="og-edg">${Object.entries(h.ev).filter(([ev]) => GAMES_EVENTS[ev]).map(([ev, L]) => `<div class="og-er"><span class="og-ei">${GAMES_EVENTS[ev][0]} ${GAMES_EVENTS[ev][1]}</span>${[0, 1, 2].map(k => { const x = L[k]; return `<span class="og-m m${k} ${x && x.who === 'player' ? 'me' : ''}">${GAMES_MEDAL[k]} ${x ? `${this.arms(x.ci, 12)} ${esc(x.name)}` : '—'}</span>`; }).join('')}</div>`).join('')}</div></div>`).join('')}</div>`
+    const regs = S.history.length ? `<div class="og-hist sv-pl">${S.history.map((h, i) => `<div class="og-ed" style="--c:${Game.civColor(h.host)}"><div class="og-edh">${this.arms(h.host, 34)}<div><b>Jogos do ano ${h.year}</b><small>em ${esc(CIV_DEFS[h.host] ? CIV_DEFS[h.host].name : '?')}</small></div><span class="og-kmini">${Games.kingdoms(h).filter(x => x.ci >= 0).slice(0, 3).map((x, k) => `<span>${k ? GAMES_MEDAL[k] : '🏆'} ${this.arms(x.ci, 14)} <b>${this.civName(x.ci)}</b> <small>${x.t}</small></span>`).join('')}</span><button class="mini" data-act="gPodium" data-i="${i}">🏅 Pódios</button></div>
+        <div class="og-edg">${GAMES_ORDER.concat(Object.keys(h.ev).filter(ev => !GAMES_ORDER.includes(ev))).filter(ev => h.ev[ev] && GAMES_EVENTS[ev]).map(ev => [ev, h.ev[ev]]).map(([ev, L]) => `<div class="og-er"><span class="og-ei">${GAMES_EVENTS[ev][0]} ${GAMES_EVENTS[ev][1]}</span>${[0, 1, 2].map(k => { const x = L[k]; return `<span class="og-m m${k} ${x && x.who === 'player' ? 'me' : ''}">${GAMES_MEDAL[k]} ${x ? `${this.arms(x.ci, 12)} ${esc(x.name)}` : '—'}</span>`; }).join('')}</div>`).join('')}</div></div>`).join('')}</div>`
       : '<div class="sv-none">📜<small>Nenhuma edição disputada ainda. Os primeiros Jogos são em agosto.</small></div>';
     // 🏆 medalhas e lendas
     const noRealm = [0, 0, 0]; for (const h of S.history) for (const L of Object.values(h.ev)) L.forEach((x, k) => { if (x && !(x.ci >= 0)) noRealm[k]++; }); // quem competiu sem reino (como você, sem trono)
@@ -84,13 +99,21 @@ const Olympics = {
 
 // a página 🏅 Jogos dentro da Arena (abaixo de Torneio): o evento e as provas, com o botão de competir
 Olympics.arena = function (ci) {
-  const S = Games.S(), esc = this.esc.bind(this), keys = Object.keys(GAMES_EVENTS), here = S.on && S.host === ci, done = keys.filter(ev => S.me[ev] !== undefined).length;
+  const S = Games.S(), esc = this.esc.bind(this), keys = GAMES_ORDER, here = S.on && S.host === ci, done = keys.filter(ev => S.me[ev] !== undefined).length;
   const host = S.on ? S.host : Games.nextHost();
   const head = UI.pageHead('🏅', 'Jogos dos Sete Reinos', here ? `Acontecendo nesta arena até ${Calendar.short(S.day + 1)}` : S.on ? `Este ano os Jogos são na arena de ${esc(Games.hostName())}` : `Próximos: agosto, na arena de ${esc(CIV_DEFS[host].short)}`);
   const bar = `<div class="og-abar" style="--c:${Game.civColor(host)}">${this.arms(host, 40)}<div><b>${here ? '● Acontecendo agora, aqui' : S.on ? `Acontecendo em ${esc(CIV_DEFS[S.host].name)}` : `Próximos Jogos em ${esc(CIV_DEFS[host].name)}`}</b><small>${here ? `Você fez ${done} de ${keys.length} provas. Ao terminar todas, os Jogos se encerram com os pódios.` : S.on ? `Viaje até a arena de ${esc(Games.hostName())} para competir.` : `Faltam ${this.monthsLeft()} ${this.monthsLeft() === 1 ? 'mês' : 'meses'} (todo agosto, cada ano num reino).`}</small></div>
     <span class="og-aprize">${[0, 1, 2].map(k => `<em>${GAMES_MEDAL[k]} ${GAMES_PRIZE[k].toLocaleString('pt-BR')} 🪙</em>`).join('')}</span><button data-act="games">📋 Registros e medalhas</button></div>`;
-  const cards = keys.map(ev => this.card(ev, here)).join('');
-  return head + `<div class="og-apage">${bar}<div class="og-evs og-arena">${cards}</div></div>`;
+  const nx = Games.nextEv(), sel = GAMES_EVENTS[UI.sel.ogEv] ? UI.sel.ogEv : (S.on && nx) || GAMES_ORDER[0];
+  const track = `<div class="og-track">${GAMES_ORDER.map((ev, i) => {
+    const me = S.me[ev], lock = S.on && me === undefined && !Games.unlocked(ev), st = me !== undefined ? 'done' : !S.on ? 'off' : lock ? 'lock' : 'cur';
+    const pos = me !== undefined ? this.standings(ev).list.findIndex(x => x.who === 'player') + 1 : 0;
+    return `<button class="og-tk ${st} ${ev === sel ? 'sel' : ''}" data-act="ogFocus" data-k="${ev}"><em>${i + 1}</em><span>${GAMES_EVENTS[ev][0]}</span><small>${me !== undefined ? (pos && pos <= 3 ? GAMES_MEDAL[pos - 1] : `${pos}º`) : lock ? '🔒' : S.on ? '▶' : ''}</small></button>`;
+  }).join('<i class="og-tl"></i>')}</div>`;
+  const side = `<div class="card og-side"><div class="sec">📊 Medalhas do ano <span>${S.on ? 'ao vivo' : 'na última edição'}</span></div><div class="kt-h"><span></span><span></span><span>Reino</span><span>🥇</span><span>🥈</span><span>🥉</span><span></span><span>total</span></div>
+      ${S.on ? this.liveTable(document.body.classList.contains('small') ? 6 : 8) : S.history[0] ? Games.ktableHtml(S.history[0]) : '<small class="muted">Os primeiros Jogos são em agosto.</small>'}
+      <small class="muted og-kpz">🏆 O reino com mais medalhas ganha ${GAMES_KPRIZE[0].toLocaleString('pt-BR')} 🪙 no tesouro. Você fez <b>${done} de ${keys.length}</b> provas.</small></div>`;
+  return head + `<div class="og-apage">${bar}${track}<div class="og-focus">${this.card(sel, here)}${side}</div></div>`;
 };
 Games.page = function () { return Olympics.html(); };
 {
@@ -131,6 +154,8 @@ Games.page = function () { return Olympics.html(); };
     this.fitReino('a:' + (want ? 'jogos' : this.sel.atab || 'lutar'), 'ar/' + (want ? 'jogos' : this.sel.atab || 'lutar'));
     return r;
   };
+  const ac0 = UI.act.bind(UI);
+  UI.act = function (a, d) { if (a === 'ogFocus') { this.sel.ogEv = d.k; this.refresh(); return; } return ac0(a, d); };
   const kp0 = UI.kPage.bind(UI);
   UI.kPage = function (nav) { if (nav === 'x:games') return this.pageHead('🏅', 'Jogos dos Sete Reinos', 'O evento, as provas, os registros de cada edição e as medalhas') + Games.page(); return kp0(nav); };
 }
