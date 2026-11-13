@@ -53,6 +53,8 @@ const check = async (W, H, fails, tag) => {
       Cid.king(A).aff = 70; ok(Cid.canHold(A, 'advisor') && !Cid.canHold(B, 'advisor'), 'as exigências da corte (cidadania) não valem');
       ok(Cid.ask(A) && RoyalCourt.isMember(A), 'não entrou para a corte');
       RoyalCourt.setOffice('general'); ok(RoyalCourt.C().office === 'general', 'não virou general');
+      Politics.circle(A); ok(!Politics.circlePeople(A).some(x => x.seat === 'general'), 'o general antigo continua no círculo do rei');
+      UI.showCastle(A); ok(UI.panel.querySelector('.pc-me') && /General/.test(UI.panel.querySelector('.pc-me').textContent), 'você não aparece no círculo do rei no castelo'); UI.close();
       UI.showCorte('corte'); ok(UI.panel.querySelectorAll('.cd-of').length === 4, 'a corte não mostra os 4 cargos'); fits('corte');
       // 4. o general comanda a guerra do rei
       Diplo.declareWar(A, C, 'teste'); const w = Diplo.D().wars.find(x => (x.a === A && x.b === C) || (x.a === C && x.b === A));

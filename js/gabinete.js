@@ -135,6 +135,26 @@ const Gab = {
   },
 };
 
+// ====================================================================== você no círculo do rei
+// O General e o Secretário do Tesouro ocupam o lugar do general e do tesoureiro no círculo do rei (quem estava ali sai
+// do círculo enquanto você tiver o cargo: não aparece no castelo nem pode ser comprado); o Conselheiro e o Embaixador
+// aparecem no círculo como mais uma cadeira.
+const GAB_SEAT = { general: 'general', treasurer: 'treasurer' };
+Object.assign(Gab, {
+  mySeat(ci) { const c = this.cur(); return c && c.civ === ci ? GAB_SEAT[c.office] || null : null; },
+  circleMe(ci) {
+    const c = this.cur(); if (!c || c.civ !== ci) return null;
+    const seat = GAB_SEAT[c.office] || null, cc = seat && typeof Politics !== 'undefined' ? Politics.S().circle[ci] : null, was = cc && cc[seat] !== undefined && G.people[cc[seat]] ? People.full(G.people[cc[seat]]) : null;
+    return { seat, was, icon: COURT_OFFICES[c.office].icon, name: RoyalCourt.officeName(c.office) };
+  },
+});
+if (typeof Politics !== 'undefined') {
+  const cp0 = Politics.circlePeople.bind(Politics);
+  Politics.circlePeople = function (ci) { const L = cp0(ci), seat = Gab.mySeat(ci); return seat ? L.filter(x => x.seat !== seat) : L; };
+  const so0 = Politics.seatOf.bind(Politics);
+  Politics.seatOf = function (p) { const seat = so0(p); return seat && p && Gab.mySeat(p.civ) === seat ? null : seat; };
+}
+
 // ====================================================================== a janela 🏛️ Corte e cidadania
 Object.assign(Gab, {
   bar(v, max, cls) { return `<i class="cd-bar ${cls || ''}"><i style="width:${U.clamp(v / Math.max(1, max) * 100, 0, 100)}%"></i></i>`; },
