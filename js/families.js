@@ -209,7 +209,7 @@ const Families = {
 
   // ------------------------------------------------------------ vilas novas com o nome da família
   canFound(f) {
-    if (f.founded !== null || f.noble || f.wealth < FOUND_COST.gold || this.adults(f).length < 3 || G.founded.length >= MAX_FOUNDED) return false;
+    if (f.founded !== null || f.noble || f.wealth < FOUND_COST.gold || this.adults(f).length < 3 || G.founded.filter(x => !x.capital).length >= MAX_FOUNDED) return false; // (as vilas das capitais não contam)
     if (f.seat === null || f.seat === 'castle') return false;
     const res = People.residents(f.seat).length;
     return res >= this.vcap(World.villages[f.seat]) - 4 || f.wealth >= FOUND_COST.gold * 1.5;

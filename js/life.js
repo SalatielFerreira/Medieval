@@ -59,7 +59,7 @@ const Towns = {
       s.blocks = !s.hidden;
       s.owner = v.civ;
     }
-    const houses = World.structs.filter(s => s.type === 'vhouse' && !s.hidden && (s.village === World.villages.indexOf(v) || U.dist(s.x, s.y, v.x, v.y) < 9));
+    const vi0 = World.villages.indexOf(v), houses = World.structs.filter(s => s.type === 'vhouse' && !s.hidden && (s.village === vi0 || U.dist(s.x, s.y, v.x, v.y) < 9)); // (o número da vila calculado uma vez só)
     houses.forEach((s, k) => { s.ruined = k < v.ruin; });
   },
   applyAll() { World.villages.forEach((v, i) => { this.build(v, i); this.show(v); }); this.syncOwners(); },

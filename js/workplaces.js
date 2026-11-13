@@ -103,7 +103,7 @@ Shops.isShop = function (s) {
 Shops.list = function (vi) { return World.structs.filter(s => this.isShop(s) && Work.vi(s) === vi); };
 Shops.ensure = function () {
   const owners = new Set(), used = new Set();
-  for (const p of G.people) if (p.alive && p.shop) { const s = this.byKey(p.shop); if (s && this.isShop(s) && SHOP_KEEPER[s.type] === p.rank && !owners.has(s.okey)) owners.add(s.okey); else p.shop = null; }
+  for (const p of G.people) if (p.alive && p.shop) { const s = this.byKey(p.shop); if (s && this.isShop(s) && SHOP_KEEPER[s.type] === p.rank && !owners.has(s.okey)) owners.add(s.okey); else if (s || !/^(prison|cemetery|arena|bank|cathedral)@/.test(p.shop)) p.shop = null; } // (os prédios do castelo são montados no fim do carregamento: o responsável espera por eles)
   const free = q => q && q.alive && !q.shop && !q.capanga && (q.job === undefined || q.job === null) && !used.has(q.id) && q.age >= 16 && !q.kin && q.spouse !== 'player' && !People.isCourt(q) && !q.trip && !q.port;
   const hired = [];
   for (const s of World.structs) {

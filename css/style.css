@@ -6040,3 +6040,5 @@ body.small .kpages > .kpage[data-nav="x:ordens"] { display: flex; flex-direction
 #panel .tk2-r > .pf-tabs { order: 0; } #panel .tk2-r > .tk2-acts { order: 1; } #panel .tk2-r > .tk2-chat { order: 2; flex: none; }
 #panel .tk2-r > .tk2-chat .tk2-say:not(:nth-last-child(-n+2)) { display: none; }
 body.small .sco-top { display: none; }
+button.rg-chip.rn-capchip { cursor: pointer; font: inherit; color: inherit; border: 1px solid rgba(255, 213, 74, .55); } button.rg-chip.rn-capchip:hover { background: rgba(255, 213, 74, .15); }
+.rn-caplink { background: none !important; border: none !important; padding: 0 !important; min-height: 0 !important; color: #ffd54a !important; font: inherit; font-size: inherit; text-decoration: underline dotted; cursor: pointer; }
