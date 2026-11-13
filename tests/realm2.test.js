@@ -28,7 +28,6 @@ module.exports = async () => {
       // ---------------- árvore da dinastia (sem reino ainda)
       Game.birth('Aurora', 'f'); const kid = G.people[G.people.length - 1]; ok(kid.heroGen === 0, 'o filho não ganhou a geração');
       kid.age = 18; const T0 = Lineage.tree(); ok(T0.length === 1 && T0[0].kids.some(k => k.p === kid), 'o filho não está na árvore');
-      ok(Book.pages()[1].includes('A árvore da Casa'), 'o livro não tem a página da árvore');
       UI.showLineage(); ok(html().includes('Aurora') && html().includes('1ª geração'), 'janela da árvore');
       // ---------------- casamento entre dinastias
       const heir = People.create({ rank: 'heir', civ: 5, sex: 'm', age: 20, home: { type: 'castle', civ: 5 } });

@@ -937,8 +937,7 @@ const UI = {
       const res = (label, val, ic, hue, sub) => `<div class="stile ov" style="--hue:${hue}"><span class="ov-ic">${ic}</span><small>${label}</small><b>${val}</b>${sub ? `<em class="ov-sub">${sub}</em>` : ''}</div>`;
       const alerts = this.kAlerts();
       return this.pageHead(t.king ? '👑' : '🛡️', `${this.esc(G.name)} ${this.esc(G.surname || '')}`, `${this.esc(t.text)} · nível ${P.level} · ${P.age} anos · ${Calendar.full(G.day)}`)
-        // (os três primeiros; o resto fica em Avisos, para a página caber na janela)
-        + (alerts.length ? `<div class="card"><div class="sec">⚠️ Atenção${alerts.length > 3 ? ` <span>${alerts.length} avisos</span>` : ''}</div>${alerts.slice(0, 3).map(([txt, k]) => `<div class="alert row">${this.esc(txt)}<button data-act="knav" data-k="${k}">Ver</button></div>`).join('')}${alerts.length > 3 ? `<div class="alert row more">e mais ${alerts.length - 3} ${alerts.length - 3 === 1 ? 'aviso' : 'avisos'}<button data-act="knav" data-k="x:alerts">Ver todos</button></div>` : ''}</div>` : '')
+        // (o quadro de Atenção saiu da Visão geral)
         + `<div class="card ov-card"><div class="sec">Seus domínios <span>clique para abrir</span></div><div class="tiles big">
           ${link(ruled.length ? 'k:' + ruled[0].id : 'crown', 'Reinos governados', ruled.length, '👑', 45)}${link(mine.length ? 'v:' + mine[0].i : 'villages', 'Vilas que você governa', mine.length, '🏘️', 120)}
           ${link('biz', 'Empreendimentos', Biz.list().length, '💼', 28)}${link(ruled.length ? 'k:' + ruled[0].id + '/exercito' : mine.length ? 'v:' + mine[0].i : 'villages', 'Guardas', Guards.all().length, '🛡️', 210)}

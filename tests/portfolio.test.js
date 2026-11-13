@@ -41,7 +41,7 @@ module.exports = async () => {
       Society.show(); ok(UI.sel.knav === 'x:reign' && UI.sel.rnRole === 't' && UI.sel.crTab === 'sociedade', 'o atalho da Sociedade não abriu Reinado → Títulos e corte');
       UI.sel.knav = 'family'; UI.showKingdom(); ok(UI.sel.knav === 'tree', 'o atalho da Família não abriu Linhagens');
       // Mercenários é uma página de Fora da lei
-      UI.act('knav', { k: 'x:merc' }); ok(UI.sel.knav === 'x:outlaw' && UI.sel.olTab === 'merc' && /Companhias livres/i.test(txt()), 'Mercenários não abriu dentro de Fora da lei');
+      UI.act('knav', { k: 'x:merc' }); ok(UI.sel.knav === 'x:outlaw' && UI.sel.olTab === 'merc' && /Companhias livres|Contratar soldados/i.test(txt()), 'Mercenários não abriu dentro de Fora da lei');
       // Serviços cabe na janela: cada página sem rolagem (o que não cabe vira partes)
       for (const [tab, g, ts] of [['bando', 'ol0', ['vida', 'procurado', 'bandos']], ['merc', 'mc', ['companhias', 'regras', 'noticias']]]) for (const t of ts) {
         UI.sel.olTab = tab; (UI.sel.svSub = UI.sel.svSub || {})[g] = t; UI.sel.knav = 'x:outlaw'; UI.showKingdom();
@@ -52,7 +52,7 @@ module.exports = async () => {
       for (const t of ['podio', 'ranking', 'reinos', 'inquietas']) { (UI.sel.svSub = UI.sel.svSub || {}).gc = t; UI.sel.knav = 'families'; UI.showKingdom(); const b = UI.panel.querySelector('.snav-body'); ok(UI.panel.querySelector('.hs2-pods, .hs2-rows, .hs2-civs, .hs2-un, .hs2-calm') && b.scrollHeight <= b.clientHeight + 1, `Grandes Casas → ${t} não cabe na janela`); }
       // Jogos em páginas, cabendo na janela
       for (const t of ['evento', 'provas', 'registros', 'medalhas']) { (UI.sel.svSub = UI.sel.svSub || {}).og = t; UI.sel.knav = 'x:games'; UI.showKingdom(); const b = UI.panel.querySelector('.snav-body'); ok(UI.panel.querySelector('.og-hero, .og-evs, .og-hist, .sv-none, .og-table') && b.scrollHeight <= b.clientHeight + 1, `Jogos → ${t} não cabe na janela`); }
-      UI.act('oltab', { t: 'bando' }); ok(/vida de fora da lei|O bando de/i.test(txt()) && /Serviços/.test(UI.panel.textContent), 'a página Fora da lei não abriu');
+      UI.act('oltab', { t: 'bando' }); ok(/vida de fora da lei|O bando de|Virar bandido|Acampamentos por perto|Sua cabeça a prêmio/i.test(txt()) && /Serviços/.test(UI.panel.textContent), 'a página Fora da lei não abriu');
       UI.sel.knav = 'x:clima'; UI.showKingdom(); ok(UI.sel.knav === 'overview', 'Estações e clima ainda abre');
       UI.act('atlasciv', { c: 1 }); ok(UI.sel.knav === 'overview', 'o atlas dos reinos ainda abre');
       UI.sel.knav = 'x:pacts'; UI.showKingdom(); ok(UI.sel.knav === 'x:reign' && UI.sel.rnRole === 't', 'Tratados, para quem não é rei, não caiu em Títulos e corte');

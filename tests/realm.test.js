@@ -45,10 +45,8 @@ module.exports = async () => {
       const tr = G.people.filter(p => p.alive && p.trip && p.trip.why); went = tr.length; ok(went > 0, 'ninguém viajou');
       if (tr[0]) { const p = tr[0]; p.fameAt = { [p.trip.vi]: 20 }; Travel.back(p); ok(p.famousAt !== undefined, 'a fama no lugar visitado não contou'); Trips.end(p); ok(!p.trip, 'a viagem não terminou'); }
       const tp = G.people.find(p => p.alive && p.trip && p.trip.from !== undefined); if (tp) { const a = World.villages[tp.trip.from]; P.x = a.x * TILE; P.y = (a.y + 3) * TILE; tp.trip.since = G.day; Travel.routeBusy = 0; for (let k = 0; k < 6; k++) { Travel.t = 0; Travel.update(0.7); } }
-      // livro
-      Progress.diary('⚔️ Venceu a guerra contra Winterfel.'); Progress.diary('💍 Casou-se com Ana.');
-      UI.showBook(0); ok(UI.cur.fn === 'showBook' && html().includes('Crônica da Casa'), 'o livro não abriu'); UI.act('book', { p: 2 }); ok(html().includes('bk-page'), 'virar a página');
-      Progress.endHero('teste'); ok(G.bookPending, 'o livro não ficou pendente no fim da geração'); G.bookPending = false;
+      // a Crônica da dinastia saiu do jogo
+      ok(typeof UI.showBook !== 'function' && typeof Book === 'undefined', 'a Crônica da dinastia ainda está no jogo');
       // mapa e Portfólio
       UI.close(); MapView.show(); const L = UIP.layers(); ok(L.bank && L.elec && L.crisis && L.barb, 'camadas novas'); MapView.draw(); MapView.hide();
       for (const [k, to] of [['x:merc', 'x:outlaw'], ['x:games', 'x:games']]) { UI.act('knav', { k }); ok(UI.sel.knav === to && html().length > 500, 'página do Portfólio: ' + k); } // Mercenários fica dentro de Fora da lei

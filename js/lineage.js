@@ -1,4 +1,5 @@
 'use strict';
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
 // Árvore da dinastia: as gerações da sua casa, de cima para baixo. Em cada geração, o herói (ou heroína) da vez com o
 // cônjuge, e embaixo os filhos — o herdeiro que continuou a história desce para a geração seguinte; os outros filhos
 // aparecem com os netos. Abre pelo livro da crônica (uma página com o resumo e o botão da árvore) e pelo Portfólio.
@@ -80,8 +81,6 @@ UI.showLineage = function () { this.open('🌳 Árvore da dinastia', Lineage.htm
   const ca0 = Game.continueAs.bind(Game);
   Game.continueAs = function (id) { if (G.family && G.family.spouse !== null) Lineage.L().spouse[(G.dynasty || []).length] = G.family.spouse; return ca0(id); };
   // no livro: a página da árvore logo depois da capa
-  const pg0 = Book.pages.bind(Book);
-  Book.pages = function () { const p = pg0(); p.splice(1, 0, Lineage.bookPage()); return p; };
   // no Portfólio, a página Linhagens ganha o botão
   const kp0 = UI.kPage.bind(UI);
   UI.kPage = function (nav) { const h = kp0(nav); return nav === 'tree' ? `<div class="act-row lg-open"><button class="primary" data-act="lineage">🌳 Árvore da dinastia</button></div>` + h : h; };

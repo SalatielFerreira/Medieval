@@ -249,11 +249,15 @@ const Soc2 = {
         <div class="scx-stats"><div><small>⚔️ Poder</small><b>${pw.power}</b></div><div><small>🕯️ Influência</small><b>${pw.infl}</b></div><div><small>💰 Cofre da loja</small><b>${Math.round(S.vault).toLocaleString('pt-BR')}</b></div><div><small>📅 Mensalidade</small><b>${this.duesValue()} 🪙</b></div></div></section>`;
     // quadro 3: irmãos poderosos e cavaleiros que seguem você
     const p2 = k ? Secret.powerful(k) : null, cname = p => { const c = G.civs.find(x => x.rulerId === p.id); return c && CIV_DEFS[c.id] ? CIV_DEFS[c.id].short : '?'; };
-    const bros = p2 ? [...p2.kings.map(p => ['👑', p, `Rei de ${cname(p)}`]), ...p2.nobles.map(p => ['🎖️', p, People.title(p)]), ...p2.knights.map(p => ['🛡️', p, People.title(p)])] : [];
+    // todos os irmãos, dos mais importantes aos mestres de ofício: clique para conversar
+    const wt = p => G.civs.some(c => c.rulerId === p.id && c.ruler !== 'player') ? 4 : ['consort', 'heir'].includes(p.rank) || NOBLE_RANKS.includes(p.rank) ? 3 : p.rank === 'knight' ? 2 : 1;
+    const icon = p => ['', '🔨', '🛡️', '🎖️', '👑'][wt(p)];
+    const bros = k ? Secret.brothers(k).filter(p => p.alive).sort((a, b) => wt(b) - wt(a) || (b.met ? 1 : 0) - (a.met ? 1 : 0) || (b.aff || 0) - (a.aff || 0))
+      .map(p => [icon(p), p, wt(p) === 4 ? `Rei de ${cname(p)}` : People.title(p)]) : [];
     const kn = KOrders.knights();
-    const cardC = `<section class="card scx-card scx-c"><div class="sec">🤝 Irmãos poderosos <span>${k ? `${Secret.brothers(k).length} irmãos` : 'a sua sociedade'}</span></div>
-        <div class="scx-list">${bros.length ? bros.map(([ic, p, t]) => `<div class="scx-bro"><span>${ic}</span><b>${esc(People.full(p))}</b><small>${esc(t)}${p.met ? ` · amizade ${Math.round(p.aff || 0)}` : ''}</small></div>`).join('') : '<p class="muted">Nenhum rei, nobre ou cavaleiro entre os irmãos ainda.</p>'}
-          ${p2 && p2.crafts ? `<small class="muted scx-crafts">🔨 e ${p2.crafts} mestres de ofício${Commerce.GUILDS[k] ? ` (${esc(Commerce.GUILDS[k].trade)})` : ''}</small>` : ''}</div>
+    const cardC = `<section class="card scx-card scx-c"><div class="sec">🤝 Os irmãos <span>${k ? `${Secret.brothers(k).length} membros · clique para conversar` : 'a sua sociedade'}</span></div>
+        <div class="scx-list">${bros.length ? bros.map(([ic, p, t]) => `<button class="scx-bro scx-click" data-act="tk" data-op="open" data-id="${p.id}" title="Conversar com ${esc(People.full(p))}"><span>${ic}</span><b>${esc(People.full(p))}</b><small>${esc(t)} · ${esc(People.homeName ? People.homeName(p) : '')}${p.met ? ` · amizade ${Math.round(p.aff || 0)}` : ' · ainda não se conhecem'}</small><em>💬</em></button>`).join('') : '<p class="muted">Nenhum rei, nobre ou cavaleiro entre os irmãos ainda.</p>'}
+</div>
         <div class="sec scx-sub">🛡️ Cavaleiros que seguem você <span>${kn.length}</span></div>
         <div class="scx-kn">${kn.length ? kn.map(p => `<span class="scx-chip">${d.icon} ${esc(People.full(p))}${p.korderWait ? ' · esperando vaga' : ''}</span>`).join('') : `<small class="muted">${r >= 1 ? 'Nenhum cavaleiro agora.' : 'A partir de Companheiro a sociedade manda cavaleiros.'}</small>`}
           ${r >= 1 ? '<button data-act="ko" data-op="armor">🛡️ Pegar o manto</button>' : ''}</div></section>`;

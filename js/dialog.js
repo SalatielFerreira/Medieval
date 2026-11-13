@@ -51,7 +51,7 @@ const Dialog = {
     el.innerHTML = `<div class="dlg-box ${d.danger ? 'danger' : ''}" role="dialog" aria-modal="true">
       <div class="dlg-ic">${esc(d.icon)}</div>
       <h3>${esc(d.title)}</h3>
-      <p>${esc(d.text)}</p>
+      ${d.html ? `<div class="dlg-html">${d.html}</div>` : `<p>${esc(d.text)}</p>`}
       ${d.kind === 'prompt' ? `<input class="dlg-in" id="dlgIn" maxlength="${d.max}" value="${esc(d.value)}" placeholder="${esc(d.placeholder || '')}" autocomplete="off">
         ${d.suggestions && d.suggestions.length ? `<div class="dlg-sug">${d.suggestions.map(x => `<button data-dsug="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}
         <small class="dlg-err" id="dlgErr"></small>` : ''}

@@ -81,15 +81,7 @@ UI.showLegacy = function () { this.open('🏆 Placar da dinastia', Legacy.html()
   // capangas que casam contam para a conquista
   const mr0 = People.marry.bind(People);
   People.marry = function (a, b) { const r = mr0(a, b); if (a && b && a.capanga && b.capanga) Progress.add('compWed'); return r; };
-  // no livro: o placar depois da árvore; na página Linhagens, o botão
-  const pg0 = Book.pages.bind(Book);
-  Book.pages = function () {
-    const p = pg0(), rows = Legacy.rows(), sc = rows.map(x => x.r ? Legacy.score(x.r) : 0), mx = Math.max(1, ...sc);
-    const page = `<div class="bk-tree"><div class="bk-illu">🏆</div><h2>O placar das gerações</h2>${rows.map((x, i) => `<div class="bk-tg"><b>${ROMAN[x.g] || x.g + 1}. ${UI.esc(x.name)}${x.now ? ' (agora)' : ''}</b><small>${x.r ? `${sc[i].toLocaleString('pt-BR')} pontos` : 'sem registro'}</small><span class="bk-bar"><i style="width:${Math.round(sc[i] / mx * 100)}%"></i></span></div>`).join('')}
-      <div class="act-row"><button class="primary" data-act="legacy">🏆 Ver o placar completo</button></div></div>`;
-    p.splice(2, 0, page);
-    return p;
-  };
+  // na página Linhagens, o botão
   const kp0 = UI.kPage.bind(UI);
   UI.kPage = function (nav) { const h = kp0(nav); return nav === 'tree' ? h.replace('<button class="primary" data-act="lineage">🌳 Árvore da dinastia</button>', '<button class="primary" data-act="lineage">🌳 Árvore da dinastia</button><button data-act="legacy">🏆 Placar da dinastia</button>') : h; };
   const a0 = UI.act.bind(UI);

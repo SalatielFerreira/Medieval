@@ -67,13 +67,18 @@ const DiaryView = {
   // ⚔️ heróis
   heroes() {
     Heroes.ensure();
-    const esc = this.esc.bind(this), all = Heroes.all(), max = Math.max(150, ...all.map(q => q.hero.fame));
+    const esc = this.esc.bind(this), npc = Heroes.all();
+    // você também entra no ranking da fama (e pode chegar ao primeiro lugar)
+    const PS = Progress.S(), you = { you: true, id: -1, name: `${G.name}${G.surname ? ' ' + G.surname : ''}`, civ: G.civs.findIndex(c => c && c.ruler === 'player'), age: P.age,
+      hero: { fame: G.fame || 0, epi: 'você', wins: PS.battles || PS.wars_won || 0, kills: (PS.kill_guard || 0) + (PS.kill_lord || 0) + (PS.kill_knight || 0), deeds: [] } };
+    const all = [...npc, you].sort((a, b) => b.hero.fame - a.hero.fame), yourPos = all.indexOf(you) + 1, max = Math.max(150, ...all.map(q => q.hero.fame));
+    const act = p => p.you ? 'data-you="1"' : `data-act="tk" data-op="open" data-id="${p.id}"`;
     const civN = ci => ci >= 0 && CIV_DEFS[ci] ? CIV_DEFS[ci].short : '';
-    const row = (p, i) => { const h = p.hero; return `<div class="dv-hr" data-act="tk" data-op="open" data-id="${p.id}"><em>${i + 1}</em>${p.civ >= 0 && CIV_DEFS[p.civ] ? Heraldry.armsSvg(p.civ, 16) : ''}<span><b>${esc(p.name)} <i>${esc(h.epi)}</i></b><small>${civN(p.civ)} · ${h.wins} vitórias · ${h.kills} derrubados</small></span>${this.bar(h.fame / max * 100, 'gold')}<b class="dv-fame">${h.fame}</b></div>`; };
-    const pod = [1, 0, 2].map(i => all[i]).map((p, k) => p ? `<div class="dv-pod p${[2, 1, 3][k]}" data-act="tk" data-op="open" data-id="${p.id}"><span>${['🥈', '🥇', '🥉'][k]}</span>${p.civ >= 0 && CIV_DEFS[p.civ] ? Heraldry.armsSvg(p.civ, [26, 34, 24][k]) : ''}<b>${esc(p.name)}</b><i>${esc(p.hero.epi)}</i><em>${p.hero.fame} de fama</em><u></u></div>` : '<span></span>').join('');
+    const row = (p, i) => { const h = p.hero; return `<div class="dv-hr ${p.you ? 'you' : ''}" ${act(p)}><em>${i + 1}</em>${p.civ >= 0 && CIV_DEFS[p.civ] ? Heraldry.armsSvg(p.civ, 16) : ''}<span><b>${esc(p.name)} <i>${esc(h.epi)}</i></b><small>${civN(p.civ)} · ${h.wins} vitórias · ${h.kills} derrubados</small></span>${this.bar(h.fame / max * 100, 'gold')}<b class="dv-fame">${h.fame}</b></div>`; };
+    const pod = [1, 0, 2].map(i => all[i]).map((p, k) => p ? `<div class="dv-pod p${[2, 1, 3][k]} ${p.you ? 'you' : ''}" ${act(p)}><span>${['🥈', '🥇', '🥉'][k]}</span>${p.civ >= 0 && CIV_DEFS[p.civ] ? Heraldry.armsSvg(p.civ, [26, 34, 24][k]) : ''}<b>${esc(p.name)}</b><i>${esc(p.hero.epi)}</i><em>${p.hero.fame} de fama</em><u></u></div>` : '<span></span>').join('');
     const famosos = `<div class="dv-two wide"><div class="card dv-podc"><div class="sec">🏆 Os mais famosos dos sete reinos</div><div class="dv-pods">${pod}</div>
-        <div class="dv-you"><span>🌟</span><div><b>A sua fama: ${G.fame || 0}</b><small>Vencer batalhas e derrubar heróis inimigos aumenta a sua fama. Os heróis do seu reino lutam ao seu lado.</small></div></div></div>
-      <div class="card"><div class="sec">📜 Top 10</div>${all.slice(0, 10).map(row).join('') || '<small class="muted">Nenhum herói.</small>'}</div></div>`;
+        <div class="dv-you"><span>🌟</span><div><b>A sua fama: ${G.fame || 0} · ${yourPos}º lugar entre ${all.length}</b><small>Vencer batalhas e derrubar heróis inimigos aumenta a sua fama. Os heróis do seu reino lutam ao seu lado.</small></div></div></div>
+      <div class="card"><div class="sec">📜 Top 10${yourPos > 10 ? ` <span>você: ${yourPos}º</span>` : ''}</div>${all.slice(0, 10).map(row).join('')}${yourPos > 10 ? row(you, yourPos - 1) : ''}</div></div>`;
     const reinos = `<div class="dv-civs sv-pl">${G.civs.filter(c => CIV_DEFS[c.id]).map(c => { const L = Heroes.of(c.id), war = Diplo.warsOf(c.id).length;
       return `<div class="dv-civ" style="--c:${Game.civColor(c.id)}"><div class="dv-ch">${Heraldry.armsSvg(c.id, 24)}<b>${esc(CIV_DEFS[c.id].short)}</b><small>${war ? '⚔️ em guerra' : '🕊️ em paz'}</small></div>
         ${L.map(p => `<div class="dv-hc" data-act="tk" data-op="open" data-id="${p.id}"><span>${p.hero.fame >= 150 ? '👑' : p.hero.fame >= 80 ? '🥇' : '🏅'}</span><div><b>${esc(p.name)} <i>${esc(p.hero.epi)}</i></b>${this.bar(p.hero.fame / max * 100, 'gold')}<small>${p.hero.deeds[0] ? esc(p.hero.deeds[0].t.length > 60 ? p.hero.deeds[0].t.slice(0, 59) + '…' : p.hero.deeds[0].t) : `${p.age} anos`}</small></div><em>${p.hero.fame}</em></div>`).join('') || '<small class="muted">Nenhum herói.</small>'}</div>`; }).join('')}</div>`;

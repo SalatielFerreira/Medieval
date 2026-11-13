@@ -71,11 +71,33 @@ const Lodges = {
     }
     return null;
   },
+  // espalhados pelo reino inteiro: longe da capital, das vilas, das estradas e um do outro
+  spread(ci, taken) {
+    const cands = [], W = WORLD_W, H = WORLD_H, cp = World.capitals[ci];
+    for (let y = 4; y < H - 6; y += 3) for (let x = 4; x < W - 6; x += 3) if (World.terr[y * W + x] === ci) cands.push([x, y]);
+    const rnd = U.mulberry32((World.seed ^ (ci * 7919 + 13)) >>> 0);
+    for (let k = cands.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [cands[k], cands[j]] = [cands[j], cands[k]]; }
+    for (const [x, y] of cands) {
+      if (World.terr[World.idx(x + 1, y + 1)] !== ci || World.terr[World.idx(x + 3, y + 3)] !== ci) continue;
+      if (cp && U.dist(cp.x, cp.y, x, y) < 12) continue;
+      if (!World.areaOk(x, y, 3, 3) || !World.areaFree(x - 1, y - 1, 5, 5) || (typeof Towns !== 'undefined' && Towns.onRoad(x, y, 3, 3))) continue;
+      if (World.villages.some(v => v && U.dist(v.x, v.y, x, y) < 10)) continue;
+      if (taken.some(t => U.dist(t.x, t.y, x, y) < 14)) continue;
+      return { x, y };
+    }
+    return null;
+  },
   ensure() {
     const L = this.L(), keys = Object.keys(SECRET_SOC);
+    // versão 2: os templos saem de perto da capital e se espalham pelo reino
+    if (L.placed && L.v !== 2) { for (const x of L.list) { const s = this.struct(x.k, x.ci); if (s) World.removeStruct(s); } L.list = []; L.placed = false; }
     if (!L.placed) {
-      for (const c of G.civs) { if (!c || c.dead || !World.capitals[c.id]) continue; keys.forEach((k, ki) => { if (L.list.some(x => x.k === k && x.ci === c.id)) return; const p = this.spot(c.id, ki); if (p) { World.freeArea(p.x, p.y, 3, 3); L.list.push({ k, ci: c.id, x: p.x, y: p.y }); World.addStruct('soc_lodge', p.x, p.y, 3, 3, c.id, { soc: k }); } }); }
-      L.placed = true;
+      for (const c of G.civs) {
+        if (!c || c.dead || !World.capitals[c.id]) continue;
+        const taken = [];
+        keys.forEach((k, ki) => { if (L.list.some(x => x.k === k && x.ci === c.id)) return; const p = this.spread(c.id, taken) || this.spot(c.id, ki); if (p) { taken.push(p); World.freeArea(p.x, p.y, 3, 3); L.list.push({ k, ci: c.id, x: p.x, y: p.y }); World.addStruct('soc_lodge', p.x, p.y, 3, 3, c.id, { soc: k }); } });
+      }
+      L.placed = true; L.v = 2;
     } else for (const x of L.list) if (!this.struct(x.k, x.ci)) { World.freeArea(x.x, x.y, 3, 3); World.addStruct('soc_lodge', x.x, x.y, 3, 3, x.ci, { soc: x.k }); }
     if (World.chunks) World.chunks.clear();
   },

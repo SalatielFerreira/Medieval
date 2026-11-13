@@ -39,7 +39,7 @@ module.exports = async () => {
       { const T0 = Sound.TUNES.alegre; ok(T0.drum.every(d => !d) && T0.jingle.every(d => !d) && T0.nodrone && T0.mel.reduce((a, m) => a + m[1], 0) % T0.bar === 0, 'a música alegre tem marcação ou compasso quebrado'); }
       for (const m of ['battle', 'cave', 'night', 'menu']) { Sound.music(m); ok(Sound.wantMode === 'alegre', `em ${m} toca outra música: ` + Sound.wantMode); }
       // placar da dinastia
-      UI.showLegacy(); ok(html().includes('Placar') || html().includes('Pontos'), 'janela do placar'); ok(Book.pages().some(p => p.includes('O placar das gerações')), 'o livro não tem o placar');
+      UI.showLegacy(); ok(html().includes('Placar') || html().includes('Pontos'), 'janela do placar');
       const n = Legacy.now(); ok(n.gold === Math.round(P.gold), 'placar da geração de agora');
       ok(ACHIEVEMENTS.filter(a => ['deep', 'legend', 'ship', 'pirates10', 'explorer', 'charges'].includes(a.id)).length === 6, 'conquistas novas faltando');
       Progress.check();
