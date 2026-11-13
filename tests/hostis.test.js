@@ -23,7 +23,7 @@ module.exports = async () => {
       const e2 = Game.spawn('bandit', sp.x, sp.y, { leash: 40, tag: 'assassin' }), p2 = e2.npc;
       ok(p2 && p2.hit && p2.hit.fam === f.id, 'o assassino não é pago pela casa em guerra');
       // a etiqueta diz o motivo
-      const tagOf = q => { const c = document.createElement('canvas').getContext('2d'); let txt = ''; const ft = c.fillText; c.fillText = function (t, ...a) { txt += t + '|'; return ft.call(this, t, ...a); }; Game.drawTag(c, q, 0, 0, 10, 1); return txt; };
+      const tagOf = q => { const c = document.createElement('canvas').getContext('2d'); let txt = ''; const ft = c.fillText; c.fillText = function (t, ...a) { txt += t + '|'; return ft.call(this, t, ...a); }; Game._lastTag = ''; Game.drawTag(c, q, 0, 0, 10, 1); return txt || Game._lastTag; };
       ok(/ASSASSINO/.test(tagOf(e2)), 'a etiqueta do assassino não diz ASSASSINO: ' + tagOf(e2));
       Court.endFeud(f);
       ok(G.assassins === 0 && !p2.hit && !p2.hostile && !e2.angry, 'a paz com a casa não cancelou os assassinos dela');

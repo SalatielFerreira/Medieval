@@ -10,6 +10,9 @@ const Muros = {
   region() {
     if (G.place || G.dungeon || !World.tiles) return null;
     const px = Math.floor(P.x / TILE), py = Math.floor((P.y - 6) / TILE), now = G.realTime || 0;
+    // sem portão por perto não há recinto fechado: nem procura (antes varria a região a cada pessoa que surgia)
+    if (!this._gt || now - this._gt > 2 || now < this._gt) { this._gt = now; this._gates = World.structs.filter(s => s && !s.removed && this.isGate(s)); }
+    if (!this._gates.some(g => Math.abs(g.x - px) <= this.MAX && Math.abs(g.y - py) <= this.MAX)) return null;
     if (this._c && this._c.x === px && this._c.y === py && now - this._c.t < 3 && this._c.v === World.structs.length) return this._c.r;
     const W = WORLD_W, M = this.MAX, seen = new Map(), q = [[px, py]], gates = new Set();
     let open = false;
