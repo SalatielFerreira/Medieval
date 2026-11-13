@@ -144,15 +144,37 @@ const BIZ_PRICES = [0.6, 0.8, 1, 1.2, 1.5, 2];
 const VILLAGE_GROWTH = 0.25; // as vilas evoluem devagar (era 0,5: agora levam o dobro do tempo)
 const VillageEcon = {
   // de onde vem a força da economia da vila
+  // as construções de cada vila separadas numa passada só (refeito a cada meio segundo): a virada do mês pede isto para
+  // cada vila, e antes cada pedido percorria todas as construções do mundo três vezes
+  byVillage() {
+    const now = performance.now(), n = World.structs.length;
+    if (this._by && this._byN === n && now - this._byAt < 500) return this._by;
+    const by = new Map(), DECO = { vmarket: 8, vfountain: 4, vstatue: 3 };
+    for (const s of World.structs) {
+      if (!s || s.removed || s.village === undefined) continue;
+      let b = by.get(s.village); if (!b) by.set(s.village, b = { shops: [], fam: 0, deco: 0 });
+      if (s.fam !== undefined) b.fam++;
+      if (s.hidden) continue;
+      if (s.owner !== 'player' && Shops.isShop(s)) b.shops.push(s);
+      if (DECO[s.type]) b.deco += DECO[s.type];
+    }
+    this._by = by; this._byN = n; this._byAt = now; return by;
+  },
+  // (o meu próprio para as construções do jogador, usado pelas obras do senhor em expbuild.js)
+  playerStructs() {
+    const now = performance.now(), n = World.structs.length;
+    if (this._ps && this._psN === n && now - this._psAt < 500) return this._ps;
+    this._psN = n; this._psAt = now; return (this._ps = World.structs.filter(s => s && !s.removed && s.owner === 'player'));
+  },
   parts(vi) {
     const v = World.villages[vi]; if (!v) return [];
+    const B = this.byVillage().get(vi) || { shops: [], fam: 0, deco: 0 };
     const res = People.residents(vi), adults = res.filter(p => p.age >= 16).length;
-    const shops = World.structs.filter(s => !s.removed && !s.hidden && Shops.isShop(s) && s.village === vi && s.owner !== 'player');
+    const shops = B.shops.filter(s => !s.removed && !s.hidden);
     const staffed = shops.filter(s => Shops.keeper(s)).length;
     const works = typeof VillageWorks !== 'undefined' ? VillageWorks.of(vi) : [];
     const rent = works.reduce((a, s) => a + ((VWORKS[s.type] || {}).rent || 0), 0);
-    const fam = World.structs.filter(s => !s.removed && s.fam !== undefined && s.village === vi).length;
-    const deco = World.structs.filter(s => !s.removed && !s.hidden && s.village === vi && ['vmarket', 'vfountain', 'vstatue'].includes(s.type)).reduce((a, s) => a + ({ vmarket: 8, vfountain: 4, vstatue: 3 })[s.type], 0);
+    const fam = B.fam, deco = B.deco;
     const gates = typeof Gate !== 'undefined' ? Gate.list().filter(s => s.village === vi) : [];
     const cars = gates.reduce((a, s) => a + ((Gate.peek(s) || {}).lastCars || 0), 0);
     const out = [

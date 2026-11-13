@@ -110,3 +110,66 @@ const Fluido = { frame: 0, fresh: 0, MAX: 3 };
   const rd0 = Game.render.bind(Game);
   Game.render = function (...a) { if (typeof MapView !== 'undefined' && MapView.isOpen && this._mapDrawn) return; const r = rd0(...a); this._mapDrawn = typeof MapView !== 'undefined' && MapView.isOpen; return r; };
 }
+
+// janela aberta cobrindo a tela inteira (as principais no computador; todas no celular): o mundo por baixo não é
+// desenhado — o jogo continua andando, só não pinta o que ninguém vê. Assim a troca de janelas fica com o quadro livre.
+{
+  const cover = () => {
+    const pn = UI.panel; if (!UI.cur || !pn || pn.classList.contains('hidden')) { UI._cover = false; return; }
+    const r = pn.getBoundingClientRect(); UI._cover = r.left <= 1 && r.top <= 1 && r.right >= window.innerWidth - 1 && r.bottom >= window.innerHeight - 1;
+  };
+  // (a medida é tirada no quadro seguinte, junto com o desenho: medir logo ao abrir forçava o navegador a montar a
+  // página antes da hora, e as janelas ainda mexem em si mesmas depois de abertas)
+  let dirty = true;
+  const op0 = UI.open.bind(UI);
+  UI.open = function (...a) { dirty = true; return op0(...a); };
+  const cl0 = UI.close.bind(UI);
+  UI.close = function (...a) { UI._cover = false; dirty = true; return cl0(...a); };
+  window.addEventListener('resize', () => { dirty = true; });
+  const rd0 = Game.render.bind(Game);
+  Game.render = function (...a) {
+    if (dirty) { dirty = false; try { cover(); } catch (e) { UI._cover = false; } }
+    const hide = UI._cover && UI.cur && UI.panel && !UI.panel.classList.contains('hidden');
+    if (hide && this._coverDrawn) return;
+    const r = rd0(...a); this._coverDrawn = !!hide; return r;
+  };
+}
+
+// o responsável de cada loja: um índice loja → pessoa (refeito a cada meio segundo) no lugar de percorrer o povo todo
+// a cada pergunta; o índice só é usado se a pessoa ainda for mesmo da loja (senão procura como antes)
+{
+  let idx = null, at = -1, pp = null;
+  const k0 = Shops.keeper.bind(Shops);
+  Shops.keeper = function (s) {
+    if (!s) return null;
+    const now = performance.now();
+    if (!idx || pp !== G.people || now - at > 500) { idx = new Map(); for (const p of G.people) if (p.alive && p.shop && !p.capanga && !idx.has(p.shop)) idx.set(p.shop, p); at = now; pp = G.people; }
+    const c = idx.get(s.okey);
+    if (c && c.alive && c.shop === s.okey && !c.capanga) return c;
+    const r = k0(s); if (r) idx.set(s.okey, r); else idx.delete(s.okey); return r;
+  };
+}
+
+// listas pedidas a cada quadro: guardadas por meio segundo
+{
+  const fl0 = Favorites.list.bind(Favorites);
+  Favorites.list = function () { if (this._L2 && this._pp2 === G.people && G.realTime - this._t2 < 0.5) return this._L2; this._t2 = G.realTime; this._pp2 = G.people; return (this._L2 = fl0()); };
+  if (typeof Gate !== 'undefined') { let L = null, at = -1, n = -1; const gl0 = Gate.list.bind(Gate); Gate.list = function () { if (L && n === World.structs.length && G.realTime - at < 0.5) return L; at = G.realTime; n = World.structs.length; return (L = gl0()); }; }
+  if (typeof Content !== 'undefined' && Content.mine) { const M = new Map(); const cm0 = Content.mine.bind(Content); Content.mine = function (type) { const c = M.get(type); if (c && c.n === World.structs.length && G.realTime - c.t < 0.5) return c.L; const L = cm0(type); M.set(type, { L, n: World.structs.length, t: G.realTime }); return L; }; }
+}
+
+// a fumaça das chaminés: só a que aparece na tela, e cada baforada é um desenho pronto (um círculo macio) copiado com a
+// transparência dela — antes cada uma montava a cor em texto e desenhava um círculo novo, até as fora da tela
+if (typeof Ambience !== 'undefined' && Ambience.drawSmoke) {
+  let puff = null;
+  const sprite = () => { if (puff) return puff; puff = document.createElement('canvas'); puff.width = puff.height = 32; const g = puff.getContext('2d'); g.fillStyle = 'rgb(215,215,220)'; g.beginPath(); g.arc(16, 16, 16, 0, Math.PI * 2); g.fill(); return puff; };
+  Ambience.drawSmoke = function (ctx, cx, cy) {
+    if (!this.smoke || !this.smoke.length) return;
+    const z = Game.zoom || 1, cw = Game.canvas.width / z, ch = Game.canvas.height / z, im = sprite(), a0 = ctx.globalAlpha;
+    for (const p of this.smoke) {
+      const x = p.x - cx, y = p.y - cy, r = p.size; if (x < -r || y < -r || x > cw + r || y > ch + r) continue;
+      ctx.globalAlpha = a0 * 0.28 * p.life; ctx.drawImage(im, x - r, y - r, r * 2, r * 2);
+    }
+    ctx.globalAlpha = a0;
+  };
+}

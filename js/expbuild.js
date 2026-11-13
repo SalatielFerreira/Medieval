@@ -317,7 +317,7 @@ const ExpBuild = {
     VillageEcon.parts = function (vi) {
       const out = pp0(vi), v = World.villages[vi]; if (!v) return out;
       let pts = 0;
-      for (const s of World.structs) {
+      for (const s of VillageEcon.playerStructs()) {
         if (s.removed || s.owner !== 'player' || U.dist(s.x, s.y, v.x, v.y) > 26) continue;
         const f = expFn(s.type); if (!f) continue;
         pts += (f.deco && f.deco.power) || f.power || (f.biz ? 4 : 0) || (f.home !== undefined ? 2 : 0);
