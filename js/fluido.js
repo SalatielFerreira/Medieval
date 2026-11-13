@@ -63,6 +63,19 @@ const Fluido = { frame: 0, fresh: 0, MAX: 3 };
   Fog.init = function (...a) { const r = ini0(...a); ns++; ver = -1; return r; };
   Fog.drawOver = function (g, x, y, w, h) {
     if (!this.on() || !this.cv) return;
+    // no mapa grande, aproximado: só o pedaço da névoa que aparece na tela (uma cópia do tamanho do mundo em zoom
+    // máximo passaria de 17 mil pixels de lado)
+    if (w > 2048) {
+      const sc = g.getTransform().a || 1, VW = g.canvas.width / sc, VH = g.canvas.height / sc, im = this.cv;
+      const dx0 = Math.max(x, 0), dy0 = Math.max(y, 0), dx1 = Math.min(x + w, VW), dy1 = Math.min(y + h, VH);
+      if (dx1 <= dx0 || dy1 <= dy0) return;
+      const fx = im.width / w, fy = im.height / h;
+      // (a origem vai até a borda da casa de névoa, para o degradê não "andar" ao arrastar)
+      const sx0 = Math.floor((dx0 - x) * fx), sy0 = Math.floor((dy0 - y) * fy), sx1 = Math.min(im.width, Math.ceil((dx1 - x) * fx)), sy1 = Math.min(im.height, Math.ceil((dy1 - y) * fy));
+      g.save(); g.imageSmoothingEnabled = true; g.globalAlpha = 0.97;
+      g.drawImage(im, sx0, sy0, sx1 - sx0, sy1 - sy0, x + sx0 / fx, y + sy0 / fy, (sx1 - sx0) / fx, (sy1 - sy0) / fy);
+      g.restore(); return;
+    }
     const s = Math.round(w), now = performance.now() / 1000;
     if (!cache || cache.width !== s || (ver !== ns && now - at > 1.5)) {
       if (!cache || cache.width !== s) { cache = document.createElement('canvas'); cache.width = cache.height = s; }
@@ -89,4 +102,11 @@ const Fluido = { frame: 0, fresh: 0, MAX: 3 };
 {
   const sv0 = Game.save.bind(Game);
   Game.save = function (...a) { try { if (G.state === 'play') { Shops.ensure(); Ports.ensureKeepers(); } } catch (e) { console.error(e); } return sv0(...a); };
+}
+
+// com o mapa do mundo aberto (ele cobre a tela inteira), o mundo por baixo não é desenhado: era um quadro inteiro do
+// jogo, a cada quadro, por trás do mapa — o que deixava arrastar o mapa pesado
+{
+  const rd0 = Game.render.bind(Game);
+  Game.render = function (...a) { if (typeof MapView !== 'undefined' && MapView.isOpen && this._mapDrawn) return; const r = rd0(...a); this._mapDrawn = typeof MapView !== 'undefined' && MapView.isOpen; return r; };
 }

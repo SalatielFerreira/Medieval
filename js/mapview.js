@@ -105,7 +105,7 @@ const MapView = {
     this.el.classList.remove('hidden');
     this.isOpen = true;
     document.body.classList.add('win-open');
-    this.chunkCache = new Map(); // o mundo pode ter mudado (estação, construções) desde a última vez
+    this.chunkCache = new Map(); this._lay = null; // o mundo pode ter mudado (estação, construções) desde a última vez
     this.resize();
     const fit = this.fitZoom();
     if (!this.z) this.centerOn(P.x / TILE, P.y / TILE, Math.min(MAP_MAX_ZOOM, fit * 2.2));
@@ -375,48 +375,12 @@ const MapView = {
     const X = tx => (tx - ox) * z, Y = ty => (ty - oy) * z;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.imageSmoothingEnabled = false;
-    g.fillStyle = '#16385f'; g.fillRect(0, 0, cw, ch);
-
-    if (z >= 9) {
-      const tx0 = Math.max(0, Math.floor(ox / CH)), tx1 = Math.min(WORLD_W / CH - 1, Math.floor((ox + cw / z) / CH));
-      const ty0 = Math.max(0, Math.floor(oy / CH)), ty1 = Math.min(WORLD_H / CH - 1, Math.floor((oy + ch / z) / CH));
-      // por baixo, a imagem do mundo inteiro; por cima, os pedaços detalhados que já ficaram prontos
-      g.drawImage(World.mini, X(0), Y(0), WORLD_W * z, WORLD_H * z);
-      let budget = 4; // pedaços novos por quadro: monta aos poucos em vez de travar
-      for (let gy = ty0; gy <= ty1; gy++) for (let gx = tx0; gx <= tx1; gx++) {
-        const c = this.mapChunk(gx, gy, budget > 0);
-        if (c === 'new') { budget--; continue; }
-        if (c) g.drawImage(c, Math.floor(X(gx * CH)), Math.floor(Y(gy * CH)), Math.ceil(CH * z) + 1, Math.ceil(CH * z) + 1);
-      }
-      // árvores e rochas como pontos
-      const a0 = Math.max(0, Math.floor(ox)), a1 = Math.min(WORLD_W - 1, Math.ceil(ox + cw / z));
-      const b0 = Math.max(0, Math.floor(oy)), b1 = Math.min(WORLD_H - 1, Math.ceil(oy + ch / z));
-      const s = Math.max(2, z * 0.45);
-      for (let y = b0; y <= b1; y++) for (let x = a0; x <= a1; x++) {
-        const o = World.obj[y * WORLD_W + x];
-        if (!o) continue;
-        g.fillStyle = OBJ[o].tree ? 'rgba(20,60,20,0.85)' : OBJ[o].pc;
-        g.fillRect(X(x + 0.5) - s / 2, Y(y + 0.5) - s / 2, s, s);
-      }
-      // construções das vilas e acampamentos vistos de cima
-      for (const st of World.structs) {
-        // só construções de reinos (santuários e outras sem dono ficam de fora) e visíveis
-        if (st.type === 'castle' || st.type === 'cave_exit' || st.hidden || st.removed) continue;
-        const pwall = st.owner === 'player' && (st.type === 'wall_stone' || st.type === 'wall_wood'); // os seus muros: a cor da muralha da vila
-        const civ = typeof st.owner === 'number' && CIV_DEFS[st.owner] ? st.owner : pwall && CIV_DEFS[World.terr[World.idx(st.x, st.y)]] ? World.terr[World.idx(st.x, st.y)] : -1;
-        const col = st.type === 'field' || st.type === 'farm' ? '#c9a24a' : st.type === 'camp' ? '#6a5034' : st.type === 'cave' ? '#3a3430' : st.type === 'cemetery' ? '#7a8a6a'
-          : st.owner === 'player' && !pwall ? '#d8a840' : civ < 0 ? '#8a7a60' : st.type === 'store' ? Game.civColor(civ) : U.shade(CIV_DEFS[civ].roof, 0.05);
-        g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(X(st.x) + 1, Y(st.y) + 2, st.w * z - 2, st.h * z - 2);
-        g.fillStyle = col; g.fillRect(X(st.x) + 1, Y(st.y) + 1, st.w * z - 2, st.h * z - 2);
-      }
-    } else {
-      g.drawImage(World.mini, X(0), Y(0), WORLD_W * z, WORLD_H * z);
-    }
+    // (no meio de um zoom, desenha só a tela; parado ou arrastando, usa o terreno pronto)
+    if (this.zAnim || this._zPrev !== z) { this._zPrev = z; this.base(g, z, ox, oy, cw, ch); }
+    else { const L = this.layer(z, ox, oy, cw, ch); g.drawImage(L.cv, (L.ox - ox) * z, (L.oy - oy) * z, L.cw, L.ch); }
 
     // vinheta
-    const vg = g.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.35, cw / 2, ch / 2, Math.max(cw, ch) * 0.75);
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.35)');
-    g.fillStyle = vg; g.fillRect(0, 0, cw, ch);
+    this.vignette(g, cw, ch);
     g.imageSmoothingEnabled = true;
     g.textAlign = 'center'; g.textBaseline = 'middle';
 
@@ -523,6 +487,78 @@ const MapView = {
     document.getElementById('mvZoom').textContent = Math.round(this.z / this.fitZoom() * 100) + '%';
   },
 
+  // o terreno do mapa (imagem do mundo, pedaços detalhados, árvores, rochas e construções) desenhado em g, com a
+  // tela começando no bloco (ox, oy); devolve true se algum pedaço ainda não estava pronto
+  base(g, z, ox, oy, cw, ch) {
+    const X = tx => (tx - ox) * z, Y = ty => (ty - oy) * z; let partial = false;
+    g.fillStyle = '#16385f'; g.fillRect(0, 0, cw, ch);
+
+    if (z >= 9) {
+      const tx0 = Math.max(0, Math.floor(ox / CH)), tx1 = Math.min(WORLD_W / CH - 1, Math.floor((ox + cw / z) / CH));
+      const ty0 = Math.max(0, Math.floor(oy / CH)), ty1 = Math.min(WORLD_H / CH - 1, Math.floor((oy + ch / z) / CH));
+      // por baixo, a imagem do mundo inteiro; por cima, os pedaços detalhados que já ficaram prontos
+      this.drawMini(g, z, ox, oy, cw, ch);
+      let budget = 4; // pedaços novos por quadro: monta aos poucos em vez de travar
+      for (let gy = ty0; gy <= ty1; gy++) for (let gx = tx0; gx <= tx1; gx++) {
+        const c = this.mapChunk(gx, gy, budget > 0); if (!c) partial = true;
+        if (c === 'new') { budget--; partial = true; continue; }
+        if (c) g.drawImage(c, Math.floor(X(gx * CH)), Math.floor(Y(gy * CH)), Math.ceil(CH * z) + 1, Math.ceil(CH * z) + 1);
+      }
+      // árvores e rochas como pontos
+      const a0 = Math.max(0, Math.floor(ox)), a1 = Math.min(WORLD_W - 1, Math.ceil(ox + cw / z));
+      const b0 = Math.max(0, Math.floor(oy)), b1 = Math.min(WORLD_H - 1, Math.ceil(oy + ch / z));
+      const s = Math.max(2, z * 0.45);
+      for (let y = b0; y <= b1; y++) for (let x = a0; x <= a1; x++) {
+        const o = World.obj[y * WORLD_W + x];
+        if (!o) continue;
+        g.fillStyle = OBJ[o].tree ? 'rgba(20,60,20,0.85)' : OBJ[o].pc;
+        g.fillRect(X(x + 0.5) - s / 2, Y(y + 0.5) - s / 2, s, s);
+      }
+      // construções das vilas e acampamentos vistos de cima
+      for (const st of World.structs) {
+        // só construções de reinos (santuários e outras sem dono ficam de fora) e visíveis
+        if (st.type === 'castle' || st.type === 'cave_exit' || st.hidden || st.removed) continue;
+        const pwall = st.owner === 'player' && (st.type === 'wall_stone' || st.type === 'wall_wood'); // os seus muros: a cor da muralha da vila
+        const civ = typeof st.owner === 'number' && CIV_DEFS[st.owner] ? st.owner : pwall && CIV_DEFS[World.terr[World.idx(st.x, st.y)]] ? World.terr[World.idx(st.x, st.y)] : -1;
+        const col = st.type === 'field' || st.type === 'farm' ? '#c9a24a' : st.type === 'camp' ? '#6a5034' : st.type === 'cave' ? '#3a3430' : st.type === 'cemetery' ? '#7a8a6a'
+          : st.owner === 'player' && !pwall ? '#d8a840' : civ < 0 ? '#8a7a60' : st.type === 'store' ? Game.civColor(civ) : U.shade(CIV_DEFS[civ].roof, 0.05);
+        g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(X(st.x) + 1, Y(st.y) + 2, st.w * z - 2, st.h * z - 2);
+        g.fillStyle = col; g.fillRect(X(st.x) + 1, Y(st.y) + 1, st.w * z - 2, st.h * z - 2);
+      }
+    } else this.drawMini(g, z, ox, oy, cw, ch);
+    return partial;
+  },
+  // o terreno fica pronto numa imagem com folga em volta da tela: arrastar só desliza a imagem (refeita quando o zoom
+  // muda, quando a tela sai da folga ou quando faltava algum pedaço)
+  layer(z, ox, oy, cw, ch) {
+    const dpr = window.devicePixelRatio || 1, L = this._lay, mx = cw / 2, my = ch / 2;
+    const ok = L && L.z === z && L.dpr === dpr && L.cw === cw + 2 * mx && L.ch === ch + 2 * my && !L.partial && performance.now() - L.t < 4000
+      && ox >= L.ox && oy >= L.oy && ox + cw / z <= L.ox + L.cw / z && oy + ch / z <= L.oy + L.ch / z;
+    if (ok) return L;
+    const W = cw + 2 * mx, H = ch + 2 * my, N = L && L.cv.width === Math.round(W * dpr) && L.cv.height === Math.round(H * dpr) ? L : { cv: document.createElement('canvas') };
+    if (N !== L) { N.cv.width = Math.round(W * dpr); N.cv.height = Math.round(H * dpr); }
+    const g = N.cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
+    Object.assign(N, { z, dpr, cw: W, ch: H, ox: ox - mx / z, oy: oy - my / z, t: performance.now() });
+    N.partial = this.base(g, z, N.ox, N.oy, W, H);
+    this._lay = N; return N;
+  },
+  // a imagem do mundo: só o pedaço que aparece na tela (esticar a imagem inteira para 17 mil pixels no zoom máximo
+  // pesava em cada quadro)
+  drawMini(g, z, ox, oy, cw, ch) {
+    const m = World.mini, k = m.width / WORLD_W;
+    const x0 = Math.max(0, Math.floor(ox)), y0 = Math.max(0, Math.floor(oy));
+    const x1 = Math.min(WORLD_W, Math.ceil(ox + cw / z) + 1), y1 = Math.min(WORLD_H, Math.ceil(oy + ch / z) + 1);
+    if (x1 <= x0 || y1 <= y0) return;
+    g.drawImage(m, x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k, (x0 - ox) * z, (y0 - oy) * z, (x1 - x0) * z, (y1 - y0) * z);
+  },
+  // a vinheta: o degradê é o mesmo enquanto o tamanho da tela não muda
+  vignette(g, cw, ch) {
+    if (!this._vg || this._vgk !== cw + 'x' + ch) {
+      const vg = g.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.35, cw / 2, ch / 2, Math.max(cw, ch) * 0.75);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.35)'); this._vg = vg; this._vgk = cw + 'x' + ch;
+    }
+    g.fillStyle = this._vg; g.fillRect(0, 0, cw, ch);
+  },
   drawPin(g, x, y, s) {
     g.save(); g.translate(x, y); g.scale(s, s);
     g.fillStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.ellipse(0, 0, 7, 3, 0, 0, Math.PI * 2); g.fill();
