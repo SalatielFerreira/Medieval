@@ -1,6 +1,6 @@
 'use strict';
 // Dentro de um imóvel, no campo de batalha ou nas cavernas:
-//  • o mapa não abre (o botão Mapa some da barra e as setas das janelas pulam do Portfólio para o Diário);
+//  • o mapa não abre (os botões Mapa e Construir somem da barra e as setas das janelas pulam do Portfólio para o Diário);
 //  • não se constrói nada (o Construir avisa e não abre o modo de obras).
 const Lugares = {
   inside() { return !!(G.place || G.dungeon); },
@@ -11,7 +11,7 @@ const Lugares = {
   // o botão do mapa na barra aparece e some conforme o lugar
   syncBar() {
     const can = this.canMap(); if (can === this._tb) return; this._tb = can;
-    const b = document.querySelector('#toolbar [data-tb="showMap"]'); if (b) b.hidden = !can;
+    for (const fn of ['showMap', 'showBuild']) { const b = document.querySelector(`#toolbar [data-tb="${fn}"]`); if (b) b.hidden = !can; } // (o Construir também some)
   },
 };
 {

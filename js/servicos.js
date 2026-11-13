@@ -1,7 +1,6 @@
 'use strict';
-// Serviços mais claros: cada aba diz o que se faz nela (nomes novos), cada página tem, na linha das abas, uma frase do
-// que ela serve e o botão "❓ Como usar" (para que serve, como usar e quando usar), e as duas áreas — Fora da lei e
-// Mercenários — explicam a que vieram logo nas abas de cima.
+// Serviços mais claros: as duas áreas (Fora da lei e Mercenários) são dois cartões grandes no alto; cada aba diz o que se
+// faz nela e, logo abaixo, uma faixa conta para que serve a página e quando usar.
 const SVX_GUIDE = {
   vida: { name: 'Virar bandido', tip: 'Assuma um bando e viva de assaltos — mas a sua cabeça vira prêmio.',
     use: 'Tornar-se chefe de um bando de fora da lei: um acampamento vira o seu esconderijo e os bandidos passam a obedecer você.',
@@ -36,13 +35,6 @@ const SVX_GUIDE = {
     how: ['Leia as notícias em ordem, das mais novas para as mais antigas.'],
     when: 'Depois de uma guerra, ou quando uma companhia mudar de lado.' },
 };
-const SvX = {
-  help(k) {
-    const g = SVX_GUIDE[k]; if (!g) return;
-    Dialog.alert({ icon: '❓', title: g.name, ok: 'Entendi', html: `<div class="svx-help"><div><b>🎯 Para que serve</b><p>${UI.esc(g.use)}</p></div>
-      <div><b>🧭 Como usar</b><ol>${g.how.map(t => `<li>${UI.esc(t)}</li>`).join('')}</ol></div><div><b>⏰ Quando usar</b><p>${UI.esc(g.when)}</p></div></div>` });
-  },
-};
 {
   // nomes que dizem o que se faz, e a frase + o botão de ajuda na linha das abas
   const sb0 = Services.subs.bind(Services);
@@ -51,7 +43,7 @@ const SvX = {
     const L = list.map(([k, ic, l, body]) => [k, ic, SVX_GUIDE[k] ? SVX_GUIDE[k].name : l, body]);
     let h = sb0(g, L);
     const cur = (UI.sel.svSub || {})[g], k = (L.find(x => x[0] === cur) || L[0])[0], gd = SVX_GUIDE[k];
-    if (gd) { const i = h.indexOf('class="tabs subtabs sv-sub">'); const j = i >= 0 ? h.indexOf('</div>', i) : -1; if (j > 0) h = h.slice(0, j) + `<span class="svx-tip">💡 ${UI.esc(gd.tip)}<button class="svx-q" data-act="svhelp" data-k="${k}">❓ Como usar</button></span>` + h.slice(j); }
+    if (gd) { const i = h.indexOf('class="tabs subtabs sv-sub">'); const j = i >= 0 ? h.indexOf('</div>', i) : -1; if (j > 0) h = h.slice(0, j + 6) + `<div class="svx-band"><span>💡</span><div><b>${UI.esc(gd.name)}</b><small>${UI.esc(gd.tip)} ${UI.esc(gd.when)}</small></div></div>` + h.slice(j + 6); }
     return h;
   };
   // as duas áreas explicam a que vieram
@@ -59,10 +51,10 @@ const SvX = {
   Portfolio.outlaw = function (kp0) {
     let h = ol0(kp0);
     h = h.replace("O bando, os golpes e a recompensa pela sua cabeça · companhias livres para a guerra e para golpes", 'Viver do crime ou contratar soldados de aluguel: escolha uma das duas áreas abaixo');
-    h = h.replace(/(data-act="oltab" data-t="bando">)([^<]*)Fora da lei/, '$1$2Fora da lei <small>· bandos, golpes e a sua cabeça a prêmio</small>');
-    h = h.replace(/(data-act="oltab" data-t="merc">)([^<]*)Mercenários/, '$1$2Mercenários <small>· soldados de aluguel para guerras e golpes</small>');
+    // as duas áreas viram dois cartões grandes
+    const t = UI.sel.olTab === 'merc' ? 'merc' : 'bando';
+    const area = (k, ic, name, desc) => `<button class="svx-area ${k} ${t === k ? 'on' : ''}" data-act="oltab" data-t="${k}"><span>${ic}</span><div><b>${name}</b><small>${desc}</small></div></button>`;
+    h = h.replace(/<div class="tabs subtabs ol-tabs">[^]*?<\/div>/, `<div class="svx-areas ${t}">${area('bando', '🗡️', 'Fora da lei', 'Viver do crime: bandos, golpes e a sua cabeça a prêmio')}${area('merc', '⚔️', 'Mercenários', 'Contratar soldados de aluguel para guerras e golpes')}</div>`);
     return h;
   };
-  const a0 = UI.act.bind(UI);
-  UI.act = function (a, d) { if (a === 'svhelp') { SvX.help(d.k); return; } return a0(a, d); };
 }

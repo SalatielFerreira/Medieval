@@ -263,6 +263,35 @@ const Soc2 = {
           ${r >= 1 ? '<button data-act="ko" data-op="armor">🛡️ Pegar o manto</button>' : ''}</div></section>`;
     return top + cardA + cardB + cardC;
   },
+  // ---------------------------------------------------------------- a página de quem ainda não é de uma sociedade
+  outsiderPage() {
+    Secret.seed();
+    const S = Secret.S(), esc = UI.esc.bind(UI), inv = Object.keys(S.invites), fe = KOrders.canFound();
+    const cards = Object.entries(SECRET_SOC).map(([k, s]) => {
+      const pw = Secret.powerful(k), f = Secret.friends(k), iv = S.invites[k], best = f.length ? Math.round(f[0].aff) : 0, ch = Secret.chance(best), bl = f.length ? Secret.blocked(k, best) : null;
+      const L = typeof SocLore !== 'undefined' ? SocLore.of(k) : null;
+      const st = iv ? ['inv', '🕯️ Convite recebido!'] : bl ? ['no', /expuls/.test(bl) ? '⛔ expulso' : '⏳ espere o mês que vem'] : !f.length ? ['far', 'conheça um irmão'] : ch >= 1 ? ['ok', 'convite garantido'] : ch ? ['mid', `${Math.round(ch * 100)}% de chance por mês`] : ['far', 'amizade 40+ para ter chance'];
+      const btn = iv ? `<button class="primary" data-act="sec" data-op="accept" data-k="${k}">🕯️ Aceitar</button><button class="sco-dec" data-act="sec" data-op="decline" data-k="${k}">recusar</button>`
+        : f.length ? `<button data-act="sec" data-op="ask" data-k="${k}" ${bl ? 'disabled' : ''}>🤝 Pedir a ${esc(f[0].name)}</button>` : '';
+      return `<div class="sco-card ${st[0]}" style="--c:${s.col};--x:${s.cross}">${Secret.emblem(s, 40)}
+        <div class="sco-tx"><b>${esc(s.name)}</b><i>"${esc(s.motto)}"</i><small>👑 ${pw.kings.length} ${pw.kings.length === 1 ? 'rei' : 'reis'} · 🎖️ ${pw.nobles.length + pw.knights.length} nobres · ${Secret.brothers(k).length} irmãos${L ? ` · líder: ${esc(L.head)}` : ''}</small></div>
+        <div class="sco-st"><div class="sco-aff"><span>🤝 ${f.length ? `${esc(f[0].name)} · ${best}` : 'nenhum amigo'}</span><i><i style="width:${best}%"></i></i></div><em>${st[1]}</em><div class="sco-btn">${btn}</div></div></div>`;
+    }).join('');
+    const steps = [['🤝', 'Faça amizade', 'Converse e dê presentes a um irmão (cada sociedade tem os seus: veja os ofícios e os nobres de cada uma).'],
+      ['📈', 'A amizade abre a porta', 'Com 40 de amizade há chance de convite todo mês; com 80, metade das vezes; com 100, o convite é garantido.'],
+      ['🕯️', 'Aceite o convite', 'Peça o apadrinhamento aqui ou na conversa com o irmão. Dentro, os irmãos protegem, enriquecem e guardam segredos com você.']];
+    const ben = [['🛡️', 'Proteção', 'reis irmãos aliviam multas e prisão'], ['💰', 'Riqueza', 'empreendimentos rendem mais'], ['⚔️', 'Exército', 'cavaleiros e irmãos nas guerras'], ['🕯️', 'Segredos', 'cartas com o que ninguém sabe']];
+    return `<div class="sco">
+      <div class="sco-top"><div class="sco-candle">🕯️</div><div class="sco-intro"><small>Irmandades escondidas nos sete reinos</small><h3>Só entra quem é convidado</h3>
+          <div class="sco-ben">${ben.map(b => `<span>${b[0]} <b>${b[1]}</b> ${b[2]}</span>`).join('')}</div></div>
+        <div class="sco-steps">${steps.map((x, i) => `<div><i>${i + 1}</i><span>${x[0]}</span><b>${x[1]}</b><small>${x[2]}</small></div>`).join('')}</div></div>
+      ${inv.length ? `<div class="sco-invbar">🕯️ Você tem ${inv.length === 1 ? 'um convite' : inv.length + ' convites'} esperando: aceite no cartão da sociedade.</div>` : ''}
+      <div class="sco-main"><div class="sco-grid">${cards}</div>
+        <div class="card sco-found"><div class="sec">✨ Fundar a sua</div><p class="dt-desc">Em vez de entrar numa, crie a sua sociedade: você é o líder desde o primeiro dia e escolhe o nome, a cor, os graus, os cargos e os costumes.</p>
+          <input id="koName" maxlength="40" placeholder="Irmandade de ${esc(G.surname || G.name)}"><div class="sco-cols">${KO_COLORS.map(c => `<button class="ko-col" data-act="ko" data-op="col" data-c="${c}" style="background:${c}" ${UI.sel.koCol === c ? 'data-on="1"' : ''}></button>`).join('')}</div>
+          <div class="sco-req">${['100 de fama', 'governar um reino ou ser Conde', '4.000 🪙'].map(t => `<span>• ${t}</span>`).join('')}</div>
+          <button class="primary" data-act="ko" data-op="found" ${fe ? 'disabled' : ''}>🕯️ Fundar — 4.000 🪙</button>${fe ? `<small class="muted">${esc(fe)}</small>` : ''}</div></div></div>`;
+  },
   // ---------------------------------------------------------------- a janela do templo
   TABS: [['loja', '🏛️ A loja'], ['tesouro', '💰 Tesouro'], ['rede', '🤝 Rede e cargos'], ['poder', '⚔️ Poder'], ['missoes', '📜 Missões e graus']],
   show(tab) {
@@ -396,7 +425,7 @@ if (!WIDE_PANELS.includes('showTemple')) WIDE_PANELS.push('showTemple');
   // a página das sociedades ganha a porta do templo
   const pg0 = Secret.page.bind(Secret);
   // a página de quem é da sociedade: uma faixa com o grau e três quadros (missão, benefícios, irmãos) que cabem na janela
-  Secret.page = function () { if (!Secret.member()) return pg0(); try { return Soc2.memberPage(); } catch (e) { console.error(e); return pg0(); } };
+  Secret.page = function () { try { return Secret.member() ? Soc2.memberPage() : Soc2.outsiderPage(); } catch (e) { console.error(e); return pg0(); } };
   const a0 = UI.act.bind(UI);
   UI.act = function (a, d) {
     if (a !== 'tp') return a0(a, d);

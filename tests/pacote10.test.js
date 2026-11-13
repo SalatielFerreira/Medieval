@@ -37,7 +37,7 @@ module.exports = async () => {
       // 5 e 6. dentro de um imóvel: sem mapa e sem obras
       const st = World.structs.find(s => s && !s.removed && !s.hidden && Places.enterable && Places.enterable(s));
       if (st && Places.enterRoom(st)) {
-        Game.render(); const mb = document.querySelector('#toolbar [data-tb="showMap"]'); ok(mb && mb.hidden, 'o botão do mapa continua na barra dentro do imóvel');
+        Game.render(); const mb = document.querySelector('#toolbar [data-tb="showMap"]'), bb = document.querySelector('#toolbar [data-tb="showBuild"]'); ok(mb && mb.hidden && getComputedStyle(mb).display === 'none' && bb && getComputedStyle(bb).display === 'none', 'o botão do mapa continua na barra dentro do imóvel');
         UI.showMap(); ok(!(UI.cur && UI.cur.fn === 'showMap') && !MapView.isOpen, 'o mapa abriu dentro do imóvel');
         ok(!Lugares.wins().some(w => w[0] === 'showMap'), 'as setas ainda passam pelo mapa');
         ok(Game.canBuild('chest', 0, 0), 'deu para construir dentro do imóvel');
@@ -54,7 +54,14 @@ module.exports = async () => {
       ok(UI.panel.querySelector('.av .av-card.hero') && UI.panel.querySelector('.av-side'), 'a Árvore da casa nova não apareceu');
       // 10. serviços explicados
       UI.sel.knav = 'x:outlaw'; UI.sel.olTab = 'merc'; UI.showKingdom();
-      ok(UI.panel.querySelector('.svx-tip [data-act="svhelp"]') && /Contratar soldados/.test(html()), 'os Serviços não explicam as páginas');
+      ok(UI.panel.querySelector('.svx-band') && UI.panel.querySelector('.svx-area.merc.on') && !UI.panel.querySelector('[data-act="svhelp"]') && /Contratar soldados/.test(html()), 'os Serviços não explicam as páginas (ou ainda têm o botão de ajuda)');
+      // castelo, dinastia, sociedades (quem não é membro) e a conversa numa página
+      UI.close(); UI.showCastle(G.civs.findIndex(c => c && !c.dead && c.ruler !== 'player'));
+      ok(UI.panel.querySelector('.cs3-hero') && UI.panel.querySelectorAll('.cs3-act').length >= 3, 'o Castelo não foi redesenhado');
+      UI.showLineage(); ok(UI.panel.querySelector('.dn-gen.now'), 'a Árvore da dinastia não foi redesenhada');
+      UI.showLegacy(); ok(UI.panel.querySelector('.dn-pods') && UI.panel.querySelector('.dn-row.now'), 'o Placar da dinastia não foi redesenhado');
+      KOrders.leave('teste'); UI.sel.knav = 'x:ordens'; UI.showKingdom(); ok(UI.panel.querySelectorAll('.sco-card').length === 7 && !/object Object/.test(html()), 'a página das sociedades (para quem não é membro) não foi redesenhada');
+      const np = G.people.find(q => q.alive && q.age > 20 && q.rank === 'merchant'); if (np) { np.met = true; UI.showTalk(np.id); const pb = UI.panel.querySelector('.pb'); ok(pb.scrollHeight <= pb.clientHeight + 2, 'a conversa com o NPC precisa rolar'); }
       UI.close();
       return out;
     });
