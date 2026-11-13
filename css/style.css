@@ -6036,3 +6036,7 @@ body.small #panel .tk2-r .pf .muted, body.small #panel .tk2-r .pf small { font-s
 body.small .kpages > .kpage[data-nav="x:ordens"] > .sco-found, body.small .kpages > .kpage[data-nav="x:ordens"] .sco-found { flex: 1; min-height: 0; }
 body.small .kpages > .kpage[data-nav="x:ordens"] { display: flex; flex-direction: column; }
 
+/* conversa: os botões em cima e as falas embaixo */
+#panel .tk2-r > .pf-tabs { order: 0; } #panel .tk2-r > .tk2-acts { order: 1; } #panel .tk2-r > .tk2-chat { order: 2; flex: none; }
+#panel .tk2-r > .tk2-chat .tk2-say:not(:nth-last-child(-n+2)) { display: none; }
+body.small .sco-top { display: none; }
