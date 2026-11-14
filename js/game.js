@@ -2115,7 +2115,7 @@ const Game = {
       else if (d.k === 1) World.drawStruct(ctx, d.s, d.s.x * TILE - cx, d.s.y * TILE - cy, t);
       else if (d.k === 2) d.e.draw(ctx, cx, cy);
       else if (d.k === 5) Places.draw(ctx, d.f, d.f.x * TILE - cx, d.f.y * TILE - cy, t);
-      else if (d.k === 4) drawHorse(ctx, P.hx - cx, P.hy - cy, P.hdir || 1, P.anim, P.hmoving, (P.horse.color || '#7a4a26'), P.cart);
+      else if (d.k === 4) drawHorse(ctx, P.hx - cx, P.hy - cy, P.hdir || 1, P.anim, P.hmoving, Horses.key(P.horse), P.cart);
       else drawPlayer(ctx, cx, cy);
     }
 

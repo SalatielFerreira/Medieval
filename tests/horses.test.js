@@ -20,7 +20,8 @@ module.exports = async () => {
       ok(Places.enterRoom(hs) && G.place.type === 'haras', 'não entrou no Haras');
       const acts = Places.furn.filter(f => f.act).map(f => f.act);
       ok(['hsbreed', 'hsrace', 'hsbook'].every(a => acts.includes(a)), 'faltam a baia de cruzamento, a mesa do Grande Prêmio ou o livro no Haras');
-      Places.use(Places.furn.find(f => f.act === 'hsbreed')); ok(UI.cur.fn === 'showHaras' && /As suas baias/.test(html()) && /Cruzamento/.test(html()), 'a baia de cruzamento não abriu o haras');
+      Places.use(Places.furn.find(f => f.act === 'hsbreed')); ok(UI.cur.fn === 'showHaras' && UI.sel.hsTab === 'cruzar' && /Égua/.test(html()) && /Garanhão/.test(html()), 'a baia de cruzamento não abriu o cruzamento do haras');
+      Places.use(Places.furn.find(f => f.act === 'hsbook')); ok(UI.cur.fn === 'showHaras' && /Os seus cavalos/.test(html()), 'o livro do haras não abriu os cavalos');
       Places.use(Places.furn.find(f => f.act === 'hsrace')); ok(UI.cur.fn === 'showHaras' && /Correr agora|Já correu/.test(html()), 'a mesa do Grande Prêmio não abriu a corrida');
       ok(!/Comprar —/.test(html()), 'ainda dá para comprar cavalo na janela do Haras');
       UI.close(); Places.exit(true, true);

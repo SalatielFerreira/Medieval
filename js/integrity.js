@@ -97,7 +97,8 @@ const RP_DX = [1, -1, 0, 0, 1, 1, -1, -1], RP_DY = [0, 0, 1, -1, 1, -1, 1, -1];
     for (const vi of vis) Integrity.vacate(vi);
     // rei da IA que morre: se ninguém assumiu, o herdeiro (ou um cavaleiro) assume na hora
     // (logo depois de quem chamou terminar: num golpe, o golpista senta no trono logo após a morte do rei)
-    if (was && p.rank === 'ruler') { const c = G.civs[p.civ]; queueMicrotask(() => { if (c && G.civs[c.id] === c && c.ruler === 'npc' && !c.dead && c.rulerId === p.id && !p.alive) Integrity.crown(c); }); }
+    // (o reino é o que tem essa pessoa no trono: o reino anotado nela pode estar desatualizado)
+    if (was) queueMicrotask(() => { for (const c of G.civs) if (c && c.ruler === 'npc' && !c.dead && c.rulerId === p.id && !p.alive) Integrity.crown(c); });
     return r;
   };
   // tesouro conferido depois de cada pedaço do mês e no fim da virada

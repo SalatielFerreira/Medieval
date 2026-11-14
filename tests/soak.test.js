@@ -37,6 +37,7 @@ module.exports = async () => {
           Perf.live = true; let t = performance.now(); Game.onNewDay(); Perf.live = false; let d = performance.now() - t; if (d > worst) { worst = d; worstAt = 'virada'; }
           let g = 0; while (Perf.queue.length && g++ < 2000) { frame = []; t = performance.now(); Perf.update(0.016); d = performance.now() - t; if (d > worst) { worst = d; worstAt = frame.join(', '); } }
           ok(!Perf.queue.length, 'a fila do mês não esvaziou');
+          await Promise.resolve(); // (a coroação depois da morte de um rei acontece logo depois de quem chamou terminar)
           // as regras
           for (const c of G.civs) {
             if (c.dead) continue;
@@ -55,8 +56,10 @@ module.exports = async () => {
       fails.push(...r.bad.map(b => `parte ${part + 1}: ${b}`));
       console.log(`    meses ${part * 40 + 1}-${part * 40 + 40}: pior quadro ${r.worst} ms (${r.worstAt}); ${r.top}`);
       // salvar e carregar: tudo volta igual
+      // (salvar contrata quem falta nos prédios que ficaram prontos no meio do mês: a comparação é feita depois de salvar)
+      await page.evaluate(() => Game.save());
       const a = await sig(), n0 = await page.evaluate(() => G.people.length), keys0 = await page.evaluate(() => Object.fromEntries(G.people.filter(p => p.alive && p.shop).map(p => [p.shop, [p.id, p.rank]])));
-      await page.evaluate(() => Game.save()); await page.evaluate(() => Game.load(3));
+      await page.evaluate(() => Game.load(3));
       await page.waitForFunction(() => G.state === 'play', { timeout: 120000 });
       const b = await sig();
       if (a !== b) {

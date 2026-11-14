@@ -138,9 +138,9 @@ const Content2 = {
         this.dogDue = dogs.length + 1 < Math.min(3, kennels.length); void k;
         UI.msg('🐕 Seu cão de guarda está com você.');
       }
-      for (const d of dogs) if (U.dist(d.x, d.y, P.x, P.y) > 14 * TILE && !G.place) { const s = freeSpotNear(P.x - 30, P.y + 10, 50); d.x = s.x; d.y = s.y; d.target = null; }
+      for (const d of dogs) if (!d.stay && U.dist(d.x, d.y, P.x, P.y) > 14 * TILE && !G.place) { const s = freeSpotNear(P.x - 30, P.y + 10, 50); d.x = s.x; d.y = s.y; d.target = null; }
     }
-    for (const d of this.dogs()) if (!d.target && !G.place && U.dist(d.x, d.y, P.x, P.y) > 70) d.moveToward(P.x - 28, P.y + 12, d.def.speed, dt);
+    for (const d of this.dogs()) if (!d.stay && !d.target && !G.place && U.dist(d.x, d.y, P.x, P.y) > 70) d.moveToward(P.x - 28, P.y + 12, d.def.speed, dt); // (o cão parado fica onde você mandou: caes.js)
   },
 };
 // junta as criações, rótulos e interações novas às do Content

@@ -2263,7 +2263,7 @@ const UI = {
     this.fitReino('a:' + tab, 'ar/' + tab);
   },
   showJoust() {
-    const j = G.joust;
+    const j = G.joust || G.lastJoust; // (a que acabou de terminar: o resultado)
     if (!j) return;
     const t = ARENA_TIERS[j.tier];
     const h = `<p>Justa contra <b>${this.esc(j.foeName)}</b> (${t.name}). Placar: você <b>${j.me}</b> × <b>${j.foe}</b> ${this.esc(j.foeName.split(' ')[0])} · passada ${Math.min(3, j.pass + 1)}/3</p>

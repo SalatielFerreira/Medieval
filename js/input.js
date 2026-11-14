@@ -226,7 +226,7 @@ const KEY_ACTIONS = [
   ['up', 'Andar para cima', 'KeyW'], ['down', 'Andar para baixo', 'KeyS'], ['left', 'Andar para a esquerda', 'KeyA'], ['right', 'Andar para a direita', 'KeyD'],
   ['run', 'Correr', 'ShiftLeft'], ['attack', 'Atacar e coletar', 'Space'], ['heavy', 'Golpe forte (segure e solte)', 'KeyV'], ['block', 'Bloquear com o escudo', 'KeyX'],
   ['dodge', 'Esquivar', 'KeyZ'], ['interact', 'Interagir (portas, baús, prédios)', 'KeyE'], ['eat', 'Comer a melhor comida', 'KeyF'], ['tool', 'Trocar a ferramenta', 'KeyQ'], ['dig', 'Pá: cavar ou aterrar', 'KeyY'],
-  ['ride', 'Montar no cavalo', 'KeyR'], ['orders', 'Ordens aos capangas', 'KeyT'], ['siege', 'Aríete ou catapulta (cerco)', 'KeyG'],
+  ['ride', 'Montar no cavalo', 'KeyR'], ['orders', 'Ordens aos capangas', 'KeyT'], ['dog', 'Cão de guarda: ficar ou seguir', 'KeyH'], ['siege', 'Aríete ou catapulta (cerco)', 'KeyG'],
   ['inventory', 'Mochila', 'KeyI'], ['build', 'Construir', 'KeyB'], ['kingdom', 'Portfólio', 'KeyK'], ['map', 'Mapa', 'KeyM'], ['diary', 'Diário', 'KeyJ'],
 ];
 const Keys = {

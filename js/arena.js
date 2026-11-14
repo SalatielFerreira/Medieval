@@ -253,5 +253,8 @@ const Arena = {
     if (win === null) { P.gold += j.bet; j.result = 'Empate! A aposta foi devolvida.'; }
     else if (win) { const won = Math.round(j.bet * t.odds); P.gold += t.prize + won; Court.addFame(t.fame + 2); Court.addService(j.ci, 2); Progress.add('joustsWon'); j.result = `🏆 Vitória! Prêmio ${t.prize} 🪙${won ? ' + aposta ' + won + ' 🪙' : ''}.`; Sound.play('levelup'); }
     else j.result = `😵 ${j.foeName} venceu a justa.${j.bet ? ' Você perdeu a aposta.' : ''}`;
+    // a justa acabou: sai de cena (o resultado continua na janela). Antes ela ficava "em andamento" para sempre e
+    // travava o que espera não haver justa — nos Jogos, as provas depois da justa e a cerimônia dos pódios
+    G.lastJoust = j; G.joust = null;
   },
 };

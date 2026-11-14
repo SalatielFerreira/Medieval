@@ -260,7 +260,8 @@ UI.showHaras = function (tab) {
   const us0 = Places.use.bind(Places);
   Places.use = function (f) {
     if (f && f.act === 'hsrace') { UI.showHaras('premio'); return; }
-    if (f && (f.act === 'hsbreed' || f.act === 'hsbook')) { UI.showHaras('estrebaria'); return; }
+    if (f && f.act === 'hsbreed') { UI.showHaras('cruzar'); return; } // (abas do haras: haras.js)
+    if (f && f.act === 'hsbook') { UI.showHaras('cavalos'); return; }
     return us0(f);
   };
   const fl0 = Places.furnLabel.bind(Places);

@@ -1170,7 +1170,7 @@ function drawPlayer(ctx, cx, cy) {
   const x = P.x - cx, y = P.y - cy;
   if (P.sailing) drawBoat(ctx, x, y, P.dir, P.anim, P.moving, false);
   if (P.mounted && P.horse) {
-    drawHorse(ctx, x, y, P.dir, P.anim, P.moving, (P.horse.color || '#7a4a26'), P.cart);
+    drawHorse(ctx, x, y, P.dir, P.anim, P.moving, Horses.key(P.horse), P.cart);
     drawHuman(ctx, x - P.dir * 2, y - 17, Object.assign(playerLook(), { seated: true, moving: false, skirt: false }));
   } else
   drawHuman(ctx, x, y - (P.sailing ? 5 : 0), playerLook());

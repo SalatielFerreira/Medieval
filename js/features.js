@@ -136,6 +136,9 @@ const Ride = {
   },
 };
 function drawHorse(ctx, x, y, dir, anim, moving, col, cart) {
+  // a aparência personalizada vem junto da cor: "pelagem|crina|manta|marcas" (marcas: s = meias brancas, b = estrela na testa)
+  let maneC = '', blanketC = '', socks = false, blaze = false;
+  if (typeof col === 'string' && col.indexOf('|') >= 0) { const q = col.split('|'); col = q[0]; maneC = q[1] || ''; blanketC = q[2] || ''; socks = (q[3] || '').includes('s'); blaze = (q[3] || '').includes('b'); }
   ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(dir, 1);
   if (cart) {
     ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(-40, 0, 16, 4, 0, 0, Math.PI * 2); ctx.fill();
@@ -148,7 +151,7 @@ function drawHorse(ctx, x, y, dir, anim, moving, col, cart) {
   }
   // cavalo no mesmo estilo dos outros animais: patas com joelho e casco, peito e garupa, crina, cauda solta, cabeça longa
   groundShadow(ctx, 19, 4.6, 0.28);
-  const dark = shd(col, -0.2), mane = shd(col, -0.45), light = shd(col, 0.14), hoof = '#2a2018';
+  const dark = shd(col, -0.2), mane = maneC || shd(col, -0.45), light = shd(col, 0.14), hoof = '#2a2018';
   const leg = 15, by = -leg - 6, top = by - 6, lw = 3.2;
   const sw = k => moving ? Math.sin(anim * 15 + k) * 0.5 : 0;
   const pata = (lx, ph, far) => {
@@ -159,6 +162,7 @@ function drawHorse(ctx, x, y, dir, anim, moving, col, cart) {
     if (!far) ell(ctx, kx, ky, lw * 0.6, lw * 0.5, shd(c, -0.06));
     rr(ctx, fx - lw * 0.6, fy - 2.4, lw * 1.25, 2.4, 0.5, hoof);
     ell(ctx, fx, fy - 3.2, lw * 0.55, 0.9, shd(c, 0.25)); // meia clara acima do casco
+    if (socks) rr(ctx, fx - lw * 0.62, fy - 7.2, lw * 1.24, 4.6, 0.6, far ? '#d8d2c6' : '#f4f0e6'); // meias brancas
   };
   pata(-10, Math.PI, true); pata(9, 0, true);
   // cauda comprida (balança andando)
@@ -187,9 +191,10 @@ function drawHorse(ctx, x, y, dir, anim, moving, col, cart) {
   // crina descendo pelo pescoço e topete
   for (let k = 0; k <= 5; k++) { const t = k / 5, mx = hx - 2.6 + (nx - 1 - (hx - 2.6)) * t, my = hy - 2 + (ny - 1 - (hy - 2)) * t; ell(ctx, mx - 1, my + 0.6, 2.2, 2.6, mane, -0.6); }
   ell(ctx, hx + 0.8, hy - 3.2, 1.6, 1.1, mane, 0.3);
+  if (blaze) { ell(ctx, hx + 2.4, hy - 0.4, 1.1, 1.4, '#f4f0e6', 0.4); ell(ctx, hx + 4.6, hy + 1.8, 0.9, 1.4, '#f4f0e6', 0.6); } // estrela e listra na testa
   // rédea, sela e manta
   ctx.strokeStyle = '#3a2410'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(hx + 4.6, hy + 3.4); ctx.lineTo(hx - 1.4, hy + 1.2); ctx.lineTo(4, top + 1); ctx.stroke();
-  rr(ctx, -6, top - 0.6, 12, 5.4, 1.4, '#7a1f2a'); rr(ctx, -6, top + 3.6, 12, 1.2, 0.4, '#d8b860');
+  rr(ctx, -6, top - 0.6, 12, 5.4, 1.4, blanketC || '#7a1f2a'); rr(ctx, -6, top + 3.6, 12, 1.2, 0.4, '#d8b860');
   rr(ctx, -4, top - 2.4, 8, 3, 1.4, '#5a3a1e'); rr(ctx, -4.6, top - 3.2, 2.2, 2, 0.8, '#6b4423');
   ctx.restore();
 }

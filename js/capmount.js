@@ -25,7 +25,7 @@ const CapMount = {
     UI.msg(`🐎 Você comprou ${h.name} (${B.name}) para ${p.name}.`, 'gold');
   },
   mount(p, h) {
-    p.horse = h.color || '#7a4a26'; p.horseData = h;
+    p.horse = Horses.key(h); p.horseData = h;
     const e = G.spawned.get(p.id); if (e) e._hs = 0;
     Game.refreshCapanga(p);
   },
