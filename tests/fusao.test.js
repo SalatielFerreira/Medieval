@@ -28,7 +28,10 @@ module.exports = async () => {
       ok(s10 > Reign.spySkill(1), 'a força da espionagem não depende do espião-mor do conselho');
       // o conselheiro desleal trama: o complô vai para a lista única, é julgado no Reinado e a cadeira fica vaga
       const t = Reign.member('treasurer'); t.aff = -80; t.amb = 100; R.plots = [];
-      for (let k = 0; k < 80 && !R.plots.length; k++) { Court.dayTick(); t.aff = -80; }
+      // (só o tesoureiro trama: os outros conselheiros ficam leais, senão o sorteio podia trazer o complô de outro)
+      const loyal = () => { for (const seat of Object.keys(COUNCIL)) { const m = Reign.member(seat); if (m && m !== t) { m.aff = 100; m.amb = 0; } } };
+      for (let k = 0; k < 80 && !R.plots.some(x => x.pid === t.id); k++) { loyal(); Court.dayTick(); t.aff = -80; }
+      R.plots = R.plots.filter(x => x.pid === t.id);
       const pl = R.plots.find(x => x.pid === t.id);
       ok(pl && pl.seat === 'treasurer' && pl.ci === 1 && pl.kind === 'embezzle', 'o complô do conselheiro não foi para a lista única do Reinado');
       ok(G.plotsC === undefined, 'ainda existe a lista de complôs do Court (G.plotsC)');

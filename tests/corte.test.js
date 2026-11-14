@@ -26,6 +26,7 @@ const check = async (W, H, fails, tag) => {
           UI.showRest && UI.showRest(home.id); Cid.set(A, 'teste'); ok(Bank.home() === A || !Bank.has(A), 'cidadão, a casa não abriu o banco do seu reino'); Cid.S().civ = -1; UI.close(); Places.exit(true); }
         else ok(false, 'não deu para montar a casa do teste do banco'); }
       Cid.choose(A); ok(Cid.get() === A, 'não virou cidadão');
+      { const me = Families.ranking().find(x => x.f.player); ok(me && me.f.civ === A, 'a sua família continua sem reino'); const g = Object.keys(UI.sel.svSub || {}).length; void g; }
       // 1b. a cidadania à vista (no alto da tela) e o que o cidadão constrói no reino dele
       UI.updateHud && UI.updateHud(); ok(Game.playerTitle().text.includes(CIV_DEFS[A].short), 'a cidadania não aparece embaixo do nome');
       { const vi = World.villages.findIndex(v => v && !v.free && v.civ === A && !v.ruin), v = World.villages[vi]; let spot = null;

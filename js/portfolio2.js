@@ -96,7 +96,8 @@ const Houses = {
     const civs = G.civs.filter(c => !c.dead);
     list.push(['reinos', '🗺️', 'Por reino', `<div class="hs2-civs sv-pl">${civs.map(c => { const fs = all.filter(x => x.f.civ === c.id);
       return `<div class="hs2-civ" style="--c:${Game.civColor(c.id)}"><div class="hs2-ch">${Heraldry.armsSvg(c.id, 26)}<b>${CIV_DEFS[c.id].short}</b><small>${fs.length} ${fs.length === 1 ? 'casa' : 'casas'}</small></div>
-        ${fs.slice(0, 4).map((x, i) => `<button class="hs2-cr" ${this.open(x.f)}><em>${i + 1}</em>${this.crest(x.f, 20)}<b>${esc(Families.name(x.f))}${x.f.noble ? ' 👑' : ''}</b><small>⭐ ${x.inf}</small></button>`).join('') || '<small class="muted">Nenhuma casa.</small>'}</div>`; }).join('')}
+        ${(() => { const pi = fs.findIndex(x => x.f.player), show = fs.slice(0, pi >= 4 ? 3 : 4).map((x, i) => [x, i]); if (pi >= 4) show.push([fs[pi], pi]); // (a sua casa sempre aparece no seu reino)
+          return show.map(([x, i]) => `<button class="hs2-cr ${x.f.player ? 'you' : ''}" ${this.open(x.f)}><em>${i + 1}</em>${this.crest(x.f, 20)}<b>${esc(Families.name(x.f))}${x.f.noble ? ' 👑' : ''}</b><small>⭐ ${x.inf}</small></button>`).join(''); })() || '<small class="muted">Nenhuma casa.</small>'}</div>`; }).join('')}
       ${all.some(x => x.f.civ < 0) ? `<div class="hs2-civ" style="--c:#6a5a44"><div class="hs2-ch"><span>🏕️</span><b>Sem reino</b><small>${all.filter(x => x.f.civ < 0).length} casas</small></div>${all.filter(x => x.f.civ < 0).slice(0, 4).map((x, i) => `<button class="hs2-cr" ${this.open(x.f)}><em>${i + 1}</em>${this.crest(x.f, 20)}<b>${esc(Families.name(x.f))}</b><small>⭐ ${x.inf}</small></button>`).join('')}</div>` : ''}</div>`]);
     // ⚠️ inquietas
     const uneasy = all.filter(x => !x.f.player && !x.f.noble && (Families.activeRevoltOf(x.f) || (x.f.loyalty || 0) < 35)).sort((a, b) => (!!Families.activeRevoltOf(b.f) - !!Families.activeRevoltOf(a.f)) || a.f.loyalty - b.f.loyalty);

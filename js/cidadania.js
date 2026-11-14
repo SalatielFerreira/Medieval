@@ -261,3 +261,15 @@ Object.assign(Cid, {
   const re0 = Urban.roadErr.bind(Urban);
   Urban.roadErr = function (...a) { Urban._citRoad = true; try { return re0(...a); } finally { Urban._citRoad = false; } };
 }
+
+// a sua família é do reino da sua cidadania (rei: o seu reino; livre: sem reino) — nas Grandes Casas, no ranking por
+// reino e no cartão da família. As regras das famílias da IA (lealdade, revoltas, rivais) continuam deixando a sua de fora.
+{
+  const sync = f => { if (f && f.player) { const ci = Cid.get(); if (f.civ !== ci) f.civ = ci; } return f; };
+  const ep0 = Families.ensurePlayer.bind(Families);
+  Families.ensurePlayer = function (...a) { return sync(ep0(...a)); };
+  const rk0 = Families.ranking.bind(Families);
+  Families.ranking = function (...a) { if (G.playerFam !== undefined) sync(this.get(G.playerFam)); return rk0(...a); };
+  const cs0 = Cid.set.bind(Cid);
+  Cid.set = function (...a) { const r = cs0(...a); try { Families.ensurePlayer(); } catch (e) { /* ainda sem família */ } return r; };
+}

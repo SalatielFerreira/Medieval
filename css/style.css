@@ -6283,3 +6283,4 @@ body.small .kpg[data-nav="x:reign"] .ju-pr b { flex: 1; min-width: 0; font-size:
 body.small .kpg[data-nav="x:reign"] .ju-pr small, body.small .kpg[data-nav="x:reign"] .ju-pr .jl { display: none; }
 body.small .kpg[data-nav="x:reign"] .ju-pr span { flex-wrap: nowrap; gap: 2px; } body.small .kpg[data-nav="x:reign"] .ju-pr button { padding: 1px 3px !important; min-height: 0 !important; font-size: 10px; line-height: 1.2; }
 body.small .kpg[data-nav="x:reign"] .ju-ch { font-size: 10.5px; }
+.hs2-cr.you { background: rgba(232, 192, 106, .18); box-shadow: inset 0 0 0 1px rgba(255, 213, 74, .45); } .hs2-cr.you b { color: #ffd54a; }
