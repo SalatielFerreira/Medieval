@@ -45,11 +45,14 @@ const Bank = {
   mine(ci) { return !!G.civs[ci] && G.civs[ci].ruler === 'player'; },
   log(ci, t) { const L = this.K(ci).log; L.unshift({ day: G.day, t }); if (L.length > 12) L.length = 12; },
   // o banco mais perto de você (o do reino onde você está, se houver)
+  // o banco mais perto de você (dentro de uma casa ou loja, mais perto da porta dela: o cômodo fica noutro canto do mapa)
   nearest() {
-    let best = null, bd = 1e9;
-    for (const s of World.structs) if (s && s.type === 'bank' && !s.removed) { const d = U.dist(P.x / TILE, P.y / TILE, s.x, s.y); if (d < bd) { bd = d; best = s; } }
+    let best = null, bd = 1e9; const at = G.place && G.place.back ? G.place.back : P, px = at.x / TILE, py = at.y / TILE;
+    for (const s of World.structs) if (s && s.type === 'bank' && !s.removed) { const d = U.dist(px, py, s.x, s.y); if (d < bd) { bd = d; best = s; } }
     return best ? best.owner : G.civs.findIndex(c => c.ruler === 'player') >= 0 ? G.civs.findIndex(c => c.ruler === 'player') : 0;
   },
+  // o banco da sua casa: o do reino da sua cidadania (rei: o seu reino); livre (ou se o seu reino ficou sem banco), o mais perto
+  home() { const ci = typeof Cid !== 'undefined' ? Cid.get() : -1; return ci >= 0 && G.civs[ci] && !G.civs[ci].dead && this.has(ci) ? ci : this.nearest(); },
   creditCap(c) { return 600 + c.pop * 4; },
   acc(ci) { return this.B().acc[ci] || 0; },
   totalAcc() { return Object.values(this.B().acc).reduce((a, n) => a + n, 0); },
@@ -478,10 +481,10 @@ Object.assign(FURN, { vaultdoor: { block: true, light: 1, lr: 90, lcol: '#ffd36b
   Loans.monthTick = function () { const b = owed(); lm0(); back(b); };
   const lp0 = Loans.pay.bind(Loans);
   Loans.pay = function (i, all) { const b = owed(); lp0(i, all); back(b); };
-  // as finanças da casa agora ficam no banco: a poupança antiga vira conta no banco do reino mais perto
+  // as finanças da casa agora ficam no banco: o do reino da sua cidadania (livre: o mais perto da casa); a poupança antiga vira conta nele
   Fin._open = Fin.open.bind(Fin);
   Fin.open = function () {
-    const D = Fin.D(), ci = Bank.nearest();
+    const D = Fin.D(), ci = Bank.home();
     if (D.save > 0) { Bank.B().acc[ci] = Bank.acc(ci) + D.save; Bank.K(ci).reserve += D.save; UI.msg(`🏦 Sua poupança de ${D.save} 🪙 foi para uma conta no ${Bank.name(ci)}.`, 'gold'); D.save = 0; }
     const map = { poupanca: 'conta', emprestar: 'emprestar', investir: 'investir', vilas: 'investir' };
     const cur = UI.cur && UI.cur.fn === 'showBank' ? UI.cur.args : null;
@@ -491,7 +494,7 @@ Object.assign(FURN, { vaultdoor: { block: true, light: 1, lr: 90, lcol: '#ffd36b
   UI.showRest = function (sid) {
     sr0(sid);
     const b = this.panel && this.panel.querySelector('.rest-acts [data-act="finance"] .ra-t');
-    if (b) { const ci = Bank.nearest(); b.innerHTML = `<b>Banco</b><small>${UI.esc(Bank.name(ci))}: conta (${Bank.acc(ci)} 🪙), empréstimos e investimentos</small>`; }
+    if (b) { const ci = Bank.home(); b.innerHTML = `<b>Banco</b><small>${UI.esc(Bank.name(ci))}: conta (${Bank.acc(ci)} 🪙), empréstimos e investimentos</small>`; }
   };
   // no castelo dos outros, o empréstimo da coroa vira o banco do reino
   const op0 = UI.open.bind(UI);

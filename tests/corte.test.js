@@ -19,6 +19,12 @@ const check = async (W, H, fails, tag) => {
       // 1. cidadania livre
       ok(Cid.get() === -1, 'o jogo não começa sem cidadania');
       UI.showCorte('cid'); ok(UI.panel.querySelectorAll('.cd-k').length === G.civs.filter(c => c && !c.dead).length, 'a cidadania não mostra todos os reinos'); fits('cidadania');
+      // 1a. o banco da casa: livre, o do reino mais perto da casa (mesmo com você lá dentro); cidadão, o do seu reino
+      { const far = npc.find(c => c.id !== A && Bank.has(c.id)) || npc[1], bs = Bank.struct(far.id); let home = null;
+        for (let r = 6; r < 30 && !home; r += 2) for (let k = 0; k < 16 && !home; k++) { const x = Math.round(bs.x + Math.cos(k / 16 * 6.28) * r), y = Math.round(bs.y + Math.sin(k / 16 * 6.28) * r); P.x = (x + 0.5) * TILE; P.y = (y + 4.5) * TILE; if (!Game.canBuild('cabin', x, y)) home = World.addStruct('cabin', x, y, BUILDINGS.cabin.w, BUILDINGS.cabin.h, 'player'); }
+        if (home && Places.enterRoom(home)) { ok(Bank.home() === far.id, `livre, a casa não abriu o banco mais perto dela (${Bank.home()} em vez de ${far.id})`);
+          UI.showRest && UI.showRest(home.id); Cid.set(A, 'teste'); ok(Bank.home() === A || !Bank.has(A), 'cidadão, a casa não abriu o banco do seu reino'); Cid.S().civ = -1; UI.close(); Places.exit(true); }
+        else ok(false, 'não deu para montar a casa do teste do banco'); }
       Cid.choose(A); ok(Cid.get() === A, 'não virou cidadão');
       // 1b. a cidadania à vista (no alto da tela) e o que o cidadão constrói no reino dele
       UI.updateHud && UI.updateHud(); ok(Game.playerTitle().text.includes(CIV_DEFS[A].short), 'a cidadania não aparece embaixo do nome');
