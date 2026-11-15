@@ -37,10 +37,12 @@ module.exports = async () => {
           // guarnição
           ok(Game.maxGarrison(G.civs[2]) === 50, 'a guarnição máxima não é 50');
           const c = G.civs[2], tot = pl => pl.cap + pl.patrol + Object.values(pl.v).reduce((a, n) => a + n, 0);
-          c.garrison = 13; ok(tot(Garrison.plan(2)) === 10, '13 soldados: pelo reino deviam circular 10, circulam ' + tot(Garrison.plan(2)));
-          c.garrison = 11; ok(tot(Garrison.plan(2)) === 10, '11 soldados: deviam circular 10');
-          c.garrison = 9; ok(tot(Garrison.plan(2)) === 9, '9 soldados: deviam circular 9, circulam ' + tot(Garrison.plan(2)));
-          c.garrison = 50; ok(tot(Garrison.plan(2)) === 10, '50 soldados: deviam circular 10');
+          // os cavaleiros que andam pelo reino ocupam parte dos 10 lugares (a guarnição completa o resto)
+          const room = Math.max(2, Garrison.FIELD - Garrison.knightsOut(2));
+          c.garrison = 13; ok(tot(Garrison.plan(2)) === Math.min(13, room), `13 soldados: pelo reino deviam circular ${Math.min(13, room)}, circulam ` + tot(Garrison.plan(2)));
+          c.garrison = 11; ok(tot(Garrison.plan(2)) === Math.min(11, room), `11 soldados: deviam circular ${Math.min(11, room)}`);
+          c.garrison = 1; ok(tot(Garrison.plan(2)) === 1, '1 soldado: devia circular 1, circulam ' + tot(Garrison.plan(2)));
+          c.garrison = 50; ok(tot(Garrison.plan(2)) === room && room + Garrison.knightsOut(2) <= Math.max(Garrison.FIELD, Garrison.knightsOut(2) + 2), `50 soldados: deviam circular ${room}`);
           // um soldado que circula morre: a guarnição cai 1 e a reserva repõe (o plano continua com 10)
           c.garrison = 13; const cp = World.capitals[2]; P.x = (cp.x + 0.5) * TILE; P.y = (cp.y + 9) * TILE;
           for (let k = 0; k < 60; k++) Game.update(0.05);

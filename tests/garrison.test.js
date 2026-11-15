@@ -18,7 +18,7 @@ module.exports = async () => {
       for (const e of G.ents) if (e.tag && /^(vg|cap|gp)/.test(e.tag)) e.dead = true;
       G.groups = {};
       P.x = (v.x + 0.5) * TILE; P.y = (v.y + 3) * TILE;
-      return { FIELD: Garrison.FIELD, pl, sum, villages: vs.length, recruitMsg: msgs.find(t => t.startsWith('🪖')) || null, vi, want: Garrison.plan(0).v[vi] };
+      return { FIELD: Math.max(2, Garrison.FIELD - Garrison.knightsOut(0)), pl, sum, villages: vs.length, recruitMsg: msgs.find(t => t.startsWith('🪖')) || null, vi, want: Garrison.plan(0).v[vi] };
     });
     const Garrison_FIELD = a.FIELD;
     if (a.sum !== Math.min(15, Garrison_FIELD)) fails.push(`a divisão soma ${a.sum} soldados (a guarnição tem 15; pelo reino circulam no máximo ${Garrison_FIELD})`);

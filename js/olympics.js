@@ -4,7 +4,8 @@
 //     prêmios no pódio e como funciona;
 //  ⚔️ As provas: as dez provas, em ordem (cada uma liberada depois da anterior), com a classificação e o botão de competir;
 //  📜 Registros: cada edição já disputada (ano, anfitrião, grande campeão) com o pódio de cada prova;
-//  🏆 Medalhas e lendas: o quadro de medalhas de todos os tempos, os atletas com mais medalhas e as suas medalhas.
+//  🏆 Medalhas e lendas: o quadro de medalhas de todos os tempos, os atletas com mais medalhas e as suas medalhas (todas
+//     as edições, mesmo as que já saíram dos Registros, que guardam só as 12 mais recentes).
 // As provas, os prêmios e o histórico são os de games.js.
 const Olympics = {
   esc(s) { return UI.esc(s); },
@@ -14,9 +15,7 @@ const Olympics = {
   monthsLeft() { const m = Calendar.of(G.day).month; return m < GAMES_MONTH ? GAMES_MONTH - m : 12 - m + GAMES_MONTH; },
   // os atletas com mais medalhas, juntando todas as edições
   legends() {
-    const by = {};
-    for (const h of Games.S().history) for (const [ev, L] of Object.entries(h.ev)) L.forEach((x, k) => { if (!x) return; const key = x.who === 'player' ? 'player' : x.name; const r = by[key] || (by[key] = { name: x.name, ci: x.ci, who: x.who, m: [0, 0, 0], evs: {} }); r.m[k]++; r.evs[ev] = (r.evs[ev] || 0) + 1; });
-    return Object.values(by).sort((a, b) => b.m[0] - a.m[0] || b.m[1] - a.m[1] || b.m[2] - a.m[2]);
+    return Object.values(Games.allTime().by).sort((a, b) => b.m[0] - a.m[0] || b.m[1] - a.m[1] || b.m[2] - a.m[2]);
   },
   // ---------------------------------------------------------------- a competição ao vivo
   // Quando os Jogos começam, cada atleta da IA ganha a nota que vai fazer e o momento do mês em que compete; a página
@@ -85,7 +84,7 @@ const Olympics = {
         <div class="og-edg">${GAMES_ORDER.concat(Object.keys(h.ev).filter(ev => !GAMES_ORDER.includes(ev))).filter(ev => h.ev[ev] && GAMES_EVENTS[ev]).map(ev => [ev, h.ev[ev]]).map(([ev, L]) => `<div class="og-er"><span class="og-ei">${GAMES_EVENTS[ev][0]} ${GAMES_EVENTS[ev][1]}</span>${[0, 1, 2].map(k => { const x = L[k]; return `<span class="og-m m${k} ${x && x.who === 'player' ? 'me' : ''}">${GAMES_MEDAL[k]} ${x ? `${this.arms(x.ci, 12)} ${esc(x.name)}` : '—'}</span>`; }).join('')}</div>`).join('')}</div></div>`).join('')}</div>`
       : '<div class="sv-none">📜<small>Nenhuma edição disputada ainda. Os primeiros Jogos são em agosto.</small></div>';
     // 🏆 medalhas e lendas
-    const noRealm = [0, 0, 0]; for (const h of S.history) for (const L of Object.values(h.ev)) L.forEach((x, k) => { if (x && !(x.ci >= 0)) noRealm[k]++; }); // quem competiu sem reino (como você, sem trono)
+    const noRealm = Games.allTime().nr; // as medalhas de quem competiu sem reino (como você, sem trono), de todos os tempos
     const tab = Object.entries(S.medals).map(([ci, m]) => ({ ci: +ci, m })).concat(noRealm.some(n => n) ? [{ ci: -1, m: noRealm }] : []).sort((a, b) => b.m[0] - a.m[0] || b.m[1] - a.m[1] || b.m[2] - a.m[2]);
     const mxT = Math.max(1, ...tab.map(x => x.m[0] + x.m[1] + x.m[2]));
     const leg = this.legends(), me = leg.find(x => x.who === 'player');

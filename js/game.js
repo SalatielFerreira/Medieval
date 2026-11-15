@@ -1444,7 +1444,7 @@ const Game = {
     }
     // cavaleiros do reino: cada um guarda um lugar — o castelo ou uma das vilas do reino (Garrison.knightSlot), e aparece
     // quando você passa por lá (antes todos ficavam amontoados na frente do portão)
-    for (const p of G.people) if (p.alive && p.rank === 'knight' && p.home.type === 'castle' && p.home.civ >= 0 && !p.capanga && !G.spawned.has(p.id)) {
+    for (const p of G.people) if (p.alive && p.rank === 'knight' && p.home.type === 'castle' && p.home.civ >= 0 && !p.capanga && !G.spawned.has(p.id) && Garrison.walks(p)) {
       const s = Garrison.knightSlot(p); if (s && U.dist(ptx, pty, s.x, s.y) < 30) spawnNpc(p, s.x * TILE, s.y * TILE, 6, p.home.civ);
     }
     if (U.dist(A.x, A.y, G.spawn.x, G.spawn.y) < 26 * TILE) for (const p of G.people) {
@@ -1465,7 +1465,8 @@ const Game = {
       let out = 0;
       if (cap < Infinity) { for (const e of G.spawned.values()) if (e && !e.dead && e.vi === vi) out++; res.sort((a, b) => Streets.keep(b, v) - Streets.keep(a, v)); }
       for (const p of res) {
-        if (G.spawned.has(p.id) || p.port || p.trip || p.jail > G.day) continue; // presos não andam pela vila // o marinheiro aparece no porto; quem está viajando, na vila que visita
+        if (G.spawned.has(p.id) || p.port || p.trip || p.jail > G.day) continue;
+        if (p.rank === 'knight' && !Garrison.walks(p)) continue; // cavaleiros além do limite do reino ficam no quartel (vão só para o campo de batalha) // presos não andam pela vila // o marinheiro aparece no porto; quem está viajando, na vila que visita
         if (out >= cap && !Streets.keep(p, v)) continue;
         out++;
         const h = Homes.houseOf(p); // a casa da família (pode ainda não ter: aí fica pela praça)
@@ -1482,7 +1483,7 @@ const Game = {
       }
       // visitantes de outros reinos passeando pela vila
       for (const p of Trips.visitors(vi)) {
-        if (G.spawned.has(p.id)) continue;
+        if (G.spawned.has(p.id) || (p.rank === 'knight' && !Garrison.walks(p))) continue;
         const spot = v.tavern && !v.tavern.removed ? v.tavern : null;
         const e = spot ? spawnNpc(p, (spot.x + spot.w / 2) * TILE, (spot.y + spot.h + 1.2) * TILE, 8, v.civ) : spawnNpc(p, (v.x + 0.5) * TILE, (v.y + 0.5) * TILE, 9, v.civ);
         e.visitor = true;

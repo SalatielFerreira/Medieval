@@ -31,6 +31,21 @@ const GAMES_STAR = { gold: 3000, fame: 30 }, GAMES_ALL = { gold: 500, fame: 5 },
 
 const Games = {
   S() { const u = G.urban || (G.urban = {}); return u.games || (u.games = { year: 0, host: -1, on: false, day: -1, me: {}, champs: {}, medals: {}, history: [] }); },
+  // as medalhas de todos os tempos de cada atleta (as Lendas dos Jogos): ficam guardadas à parte, porque os Registros só
+  // guardam as 12 edições mais recentes. Jogos salvos antigos começam somando as edições que ainda estão nos Registros.
+  allTime() {
+    const S = this.S();
+    if (!S.alltime) { S.alltime = { by: {}, nr: [0, 0, 0] }; for (let i = S.history.length - 1; i >= 0; i--) this.tally(S.history[i], S.alltime); }
+    return S.alltime;
+  },
+  tally(rec, A) {
+    for (const [ev, L] of Object.entries(rec.ev || {})) (L || []).forEach((x, k) => {
+      if (!x || k > 2) return; const key = x.who === 'player' ? 'player' : x.name;
+      const r = A.by[key] || (A.by[key] = { name: x.name, ci: x.ci, who: x.who, m: [0, 0, 0], evs: {} });
+      r.name = x.name; r.ci = x.ci; r.m[k]++; r.evs[ev] = (r.evs[ev] || 0) + 1;
+      if (!(x.ci >= 0)) A.nr[k]++;
+    });
+  },
   // o reino que você representa: o da sua cidadania (sem cidadania, você compete sem reino)
   myCi() { return typeof Cid !== 'undefined' ? Cid.get() : G.mainRealm !== undefined && G.mainRealm !== null ? G.mainRealm : -1; },
   hostName() { const S = this.S(); return S.host >= 0 && CIV_DEFS[S.host] ? CIV_DEFS[S.host].short : '?'; },
@@ -119,7 +134,7 @@ const Games = {
     if (my[0] === GAMES_ORDER.length) bonus('👑 Lenda dos Sete Reinos', GAMES_SWEEP, 'ouro nas dez provas! Os bardos vão cantar isso por gerações.');
     if (GAMES_ORDER.every(ev => S.me[ev] !== undefined)) bonus('🎖️ Atleta completo', GAMES_ALL, 'você disputou as dez provas.');
     if (mine >= 5) { Court.addFame(15); UI.msg(`🌟 ${mine} medalhas nos mesmos Jogos: o povo dos sete reinos fala do seu nome (+15 de fama).`, 'gold', true); }
-    S.history.unshift(rec); if (S.history.length > 12) S.history.length = 12;
+    this.tally(rec, this.allTime()); S.history.unshift(rec); if (S.history.length > 12) S.history.length = 12;
     UI.msg(`🏅 Fim dos Jogos dos Sete Reinos: ${Object.entries(rec.ev).map(([ev, L]) => `${GAMES_EVENTS[ev][0]} ${L[0] ? L[0].name : '—'}`).join(' · ')}.`, 'gold', true);
     return rec;
   },

@@ -119,9 +119,36 @@ const Garrison = {
   // quantos soldados em cada lugar: { cap, patrol, v: { vi: n } }
   // pelo reino circulam no máximo GARRISON_FIELD soldados; o resto fica de reserva no quartel (vai só para o campo de
   // batalha) e entra em circulação quando um dos que andam pelo reino morre
-  FIELD: 10,
+  // o limite vale para todos os homens armados do reino: os cavaleiros (do castelo e os que moram nas vilas) entram
+  // primeiro, até KNIGHTS; os soldados da guarnição completam o resto (pelo menos 2 guardam o castelo). Os outros
+  // cavaleiros ficam no quartel e aparecem só no campo de batalha.
+  FIELD: 10, KNIGHTS: 8,
+  // o reino de um cavaleiro: o do castelo onde serve ou o da vila onde mora (vila livre: conta à parte)
+  realmOf(p) {
+    if (!p.home) return null;
+    if (p.home.type === 'castle') return p.home.civ >= 0 ? p.home.civ : null;
+    if (p.home.type === 'village') { const v = World.villages[p.home.idx]; return v ? (v.free || !(v.civ >= 0) ? 'v' + p.home.idx : v.civ) : null; }
+    return null;
+  },
+  // os cavaleiros que andam pelo reino (no máximo KNIGHTS por reino): quem você conhece primeiro, depois os mais antigos
+  fieldKnights() {
+    if (this._fk && this._fk.t > G.realTime - 1) return this._fk.m;
+    const by = new Map();
+    for (const p of G.people) {
+      if (!p.alive || p.rank !== 'knight' || p.capanga) continue;
+      const r = this.realmOf(p); if (r === null) continue;
+      (by.get(r) || by.set(r, []).get(r)).push(p);
+    }
+    const imp = p => (p.kin || p.spouse === 'player' ? 4 : 0) + (p.dating ? 2 : 0) + (p.met || (p.aff || 0) >= 10 ? 1 : 0);
+    const m = new Map();
+    for (const [r, L] of by) { L.sort((a, b) => imp(b) - imp(a) || a.id - b.id); m.set(r, new Set(L.slice(0, this.KNIGHTS).map(p => p.id))); }
+    this._fk = { t: G.realTime, m };
+    return m;
+  },
+  walks(p) { const r = this.realmOf(p), s = r === null ? null : this.fieldKnights().get(r); return !s || s.has(p.id); },
+  knightsOut(c) { const s = this.fieldKnights().get(c); return s ? s.size : 0; },
   plan(c) {
-    const civ = G.civs[c], g = civ ? Math.min(this.FIELD, Math.max(0, civ.garrison | 0)) : 0, vs = this.villagesOf(c);
+    const civ = G.civs[c], room = Math.max(2, this.FIELD - this.knightsOut(c)), g = civ ? Math.min(room, Math.max(0, civ.garrison | 0)) : 0, vs = this.villagesOf(c);
     const key = c + ':' + g + ':' + vs.map(x => x.vi).join(',');
     if (this._memo.has(key)) return this._memo.get(key);
     const out = { cap: 0, patrol: 0, v: {} };
@@ -140,7 +167,7 @@ const Garrison = {
   // o lugar de cada cavaleiro do reino: o castelo e as vilas do reino, em rodízio (cada um num canto do lugar dele)
   knightSlot(p) {
     const c = p.home.civ, cp = World.capitals[c]; if (!cp) return null;
-    const ks = G.people.filter(q => q.alive && q.rank === 'knight' && q.home.type === 'castle' && q.home.civ === c && !q.capanga).sort((a, b) => a.id - b.id);
+    const ks = G.people.filter(q => q.alive && q.rank === 'knight' && q.home.type === 'castle' && q.home.civ === c && !q.capanga && this.walks(q)).sort((a, b) => a.id - b.id);
     const spots = [null, ...this.villagesOf(c)], k = Math.max(0, ks.indexOf(p)), t = spots[k % spots.length], m = Math.floor(k / spots.length), per = Math.ceil(ks.length / spots.length);
     return t ? spreadPoint(t.v.x + 0.5, t.v.y + 0.5, 2, VILLAGE_R * 0.8, m, per, t.vi + 21) : spreadPoint(cp.x + 0.5, cp.y + 0.5, 6, 16, m, per, c + 9);
   },
@@ -149,7 +176,7 @@ const Garrison = {
     const now = this.plan(c);
     for (const vi in now.v) if (now.v[vi] > (before.v[vi] || 0)) return `foi guardar ${World.villages[vi].name}`;
     if (now.patrol > before.patrol) return 'vai patrulhar as estradas do reino';
-    if (now.cap <= before.cap) return `fica de reserva no quartel de ${CIV_DEFS[c].short} (pelo reino circulam ${this.FIELD}; a reserva vai para o campo de batalha e repõe quem cair)`;
+    if (now.cap <= before.cap) return `fica de reserva no quartel de ${CIV_DEFS[c].short} (pelo reino andam no máximo ${this.FIELD} homens armados, contando os cavaleiros; a reserva vai para o campo de batalha e repõe quem cair)`;
     return `reforça a guarda do castelo de ${CIV_DEFS[c].short}`;
   },
   // no castelo: em volta dele, não só na porta
