@@ -25,10 +25,10 @@ const SOC2_FUNDS = {
 };
 const SOC2_TITLES = ['Aprendiz', 'Companheiro', 'Mestre da Loja', 'Grão-Mestre'];
 Object.assign(KO_MISSIONS, {
-  wolves:      { icon: '🐺', text: 'Cace 5 lobos que ameaçam os irmãos.', stat: 'kill_wolf', need: 5 },
-  crypt:       { icon: '💀', text: 'Derrote 6 esqueletos nas criptas das cavernas.', stat: 'kill_skeleton', need: 6 },
-  camps2:      { icon: '🔥', text: 'Destrua 2 acampamentos de bandidos.', stat: 'camps', need: 2 },
-  build:       { icon: '🏗️', text: 'Erga 2 construções em nome da sociedade.', stat: 'built', need: 2 },
+  wolves:      { icon: '🐺', text: 'Cace 5 lobos que ameaçam os irmãos.', how: 'Os lobos andam pelas florestas, longe das vilas (mais à noite e no inverno).', stat: 'kill_wolf', need: 5 },
+  crypt:       { icon: '💀', text: 'Derrote 6 esqueletos nas criptas das cavernas.', how: 'Entre numa caverna: os esqueletos ficam nas partes mais fundas.', stat: 'kill_skeleton', need: 6 },
+  camps2:      { icon: '🔥', text: 'Destrua 2 acampamentos de bandidos.', how: 'No mapa, os acampamentos aparecem com um X vermelho: derrote os bandidos de cada um.', stat: 'camps', need: 2 },
+  build:       { icon: '🏗️', text: 'Construa 2 coisas pelo menu Construir.', how: 'Vale qualquer construção feita depois que a missão chegou: um baú, uma fogueira, uma cerca, uma casa... Cada uma conta 1.', go: 'showBuild', goTxt: '🏗️ Abrir o Construir', stat: 'built', need: 2 },
   soc_net:     { icon: '🤝', text: 'Faça networking no templo 2 vezes.', stat: 'soc_net', need: 2 },
   soc_recruit: { icon: '🎖️', text: 'Recrute uma pessoa importante para a sociedade.', stat: 'soc_recruit', need: 1 },
   soc_vault:   { icon: '💰', text: 'Ponha 500 🪙 no cofre da loja.', stat: 'soc_vault', need: 500 },
@@ -236,7 +236,7 @@ const Soc2 = {
     // quadro 1: a missão, o juramento e as cartas
     const viol = own ? 0 : K.viol || 0;
     const mis = own ? `<div class="scx-mis"><span>⚜️</span><div><b>Você é ${typeof SocLore !== 'undefined' ? esc(SocLore.of('own').head) : 'o líder'} da sua sociedade</b><small>A sua palavra é a lei: não há missões a cumprir.</small></div></div>`
-      : m ? `<div class="scx-mis"><span>${M.icon}</span><div><b>${M.text}</b><small>até ${Calendar.short(m.until)} · vale +5 de fama e 1 missão para o grau</small>${M.stat ? `<i class="scx-bar"><i style="width:${Math.round(prog / M.need * 100)}%"></i></i><em>${prog}/${M.need}</em>` : ''}
+      : m ? `<div class="scx-mis"><span>${M.icon}</span><div><b>${M.text}</b>${M.how ? `<small class="scx-how">💡 ${M.how}</small>` : ''}<small>até ${Calendar.short(m.until)} · vale +5 de fama e 1 missão para o grau</small>${M.go ? `<button data-act="kogo" data-k="${M.go}">${M.goTxt || 'Ir'}</button>` : ''}${M.stat ? `<i class="scx-bar"><i style="width:${Math.round(prog / M.need * 100)}%"></i></i><em>${prog}/${M.need}</em>` : ''}
           ${m.k === 'donate' ? `<button class="primary" data-act="ko" data-op="donate" ${P.gold >= 250 ? '' : 'disabled'}>💰 Doar 250 🪙</button>` : ''}</div></div>`
       : '<p class="muted">A próxima missão chega no mês que vem.</p>';
     const oath = `<div class="scx-oath"><span>⚖️</span><div><b>Juramento</b><small>${esc(d.oath)}</small></div>${own ? '' : `<span class="scx-pips" title="quebras do juramento">${[0, 1, 2].map(i => `<i class="${i < viol ? 'on' : ''}"></i>`).join('')}</span>`}</div>`;
@@ -349,7 +349,7 @@ const Soc2 = {
           ${kt.map(c => { const ch = U.clamp(0.25 + pw.power / 600 - (c.garrison || 0) / 120 + r * 0.05, 0.1, 0.85); return `<div class="crow"><span class="ri">👑</span><span><b>${esc(c.rulerName)}</b><small>${CIV_DEFS[c.id].short} · guarnição ${c.garrison || 0} · chance ${Math.round(ch * 100)}%</small></span><span class="act-row">${B('king', c.id, 'Derrubar', adm && ok && S.vault >= this.KING_COST)}</span></div>`; }).join('') || '<p class="muted">Todos os reis já são irmãos.</p>'}</div>`;
     } else {
       const K = KOrders.S(), m = K.mission, M = m && KO_MISSIONS[m.k], best = S.best[k] || 0;
-      body = `<div class="card"><div class="sec">📜 Missão do mês</div>${m ? `<div class="sc-mis"><span>${M.icon}</span><div><b>${M.text}</b><small>${M.stat ? `progresso ${Math.min(KOrders.progress(), M.need)}/${M.need} · ` : ''}até ${Calendar.short(m.until)}</small></div></div>` : '<p class="muted">A próxima missão chega no mês que vem.</p>'}
+      body = `<div class="card"><div class="sec">📜 Missão do mês</div>${m ? `<div class="sc-mis"><span>${M.icon}</span><div><b>${M.text}</b>${M.how ? `<small class="scx-how">💡 ${M.how}</small>` : ''}<small>${M.stat ? `progresso ${Math.min(KOrders.progress(), M.need)}/${M.need} · ` : ''}até ${Calendar.short(m.until)}</small>${M.go ? `<button data-act="kogo" data-k="${M.go}">${M.goTxt || 'Ir'}</button>` : ''}</div></div>` : '<p class="muted">A próxima missão chega no mês que vem.</p>'}
           <div class="sec" style="margin-top:10px">🪜 Graus</div>${SOC2_TITLES.map((n, i) => `<div class="crow ${i <= r ? 'tp-mine' : ''}"><span class="ri">${i < r ? '✔' : i === r ? '★' : '·'}</span><span><b>${n}</b><small>${KO_RANKS[i] ? `${KO_RANKS[i][1]} missões cumpridas` : ''}${i === 3 ? ' e 120 de fama' : ''}</small></span><span></span></div>`).join('')}
           <small class="muted">Grau conquistado não se perde: perder o prazo tira pontos, mas o seu grau mais alto (${SOC2_TITLES[Math.max(r, best)]}) fica.</small></div>
         <div class="card bk3-wide"><div class="sec">🗺️ Missões que a sociedade dá <span>${Object.keys(KO_MISSIONS).length}</span></div>${Object.entries(KO_MISSIONS).map(([q, X]) => `<div class="crow ${d.likes && d.likes.includes(q) ? 'tp-mine' : ''}"><span class="ri">${X.icon}</span><span><b>${X.text}</b><small>${d.likes && d.likes.includes(q) ? 'a sua sociedade gosta desta' : 'pode aparecer'}</small></span><span></span></div>`).join('')}</div>`;
@@ -446,5 +446,18 @@ if (!WIDE_PANELS.includes('showTemple')) WIDE_PANELS.push('showTemple');
       case 'fear': Soc2.intimidate(); break;
     }
     Soc2.show(cur);
+  };
+}
+
+// o botão da missão (ex.: abrir o menu Construir)
+{ const a0 = UI.act.bind(UI); UI.act = function (a, d) { if (a === 'kogo') { if (typeof this[d.k] === 'function') { this.close(); this[d.k](); } return; } return a0(a, d); }; }
+// a missão é conferida assim que o que ela conta anda (ex.: a 2ª construção cumpre "construir 2 coisas" na hora,
+// sem esperar a virada do mês)
+{
+  const pa0 = Progress.add.bind(Progress);
+  Progress.add = function (k, ...a) {
+    const r = pa0(k, ...a);
+    try { const m = KOrders.S().mission, M = m && KO_MISSIONS[m.k]; if (M && M.stat === k) Soc2.check(); } catch (e) { /* sem sociedade */ }
+    return r;
   };
 }
