@@ -86,7 +86,7 @@ const Progress = {
   // uma vez por mês: o trabalho dos filhos com profissão
   econTick() {
     for (const p of G.people) {
-      if (!p.alive || p.kin !== 'child' || !p.prof) continue;
+      if (!p.alive || p.kin !== 'child' || !p.prof || p.grown) continue;
       if (p.prof === 'smith' && World.structs.some(s => s.owner === 'player' && s.type === 'forge')) { Inv.add('iron_bar', 1); Game.note(`⚒️ ${p.name} forjou 1 Barra de Ferro.`); }
       if (p.prof === 'farmer') {
         let n = 0;

@@ -47,7 +47,7 @@ const News = {
   },
   // subir (e cair) na vida — no máximo um caso de cada tipo por mês, para cada notícia valer
   rise() {
-    const ppl = G.people.filter(p => p.alive && !p.kin && !p.capanga && p.spouse !== 'player' && p.age >= 18);
+    const ppl = G.people.filter(p => p.alive && (!p.kin || p.grown) && !p.capanga && p.spouse !== 'player' && p.age >= 18);
     // 1) mestre de ofício junta dinheiro e abre um negócio com a família
     const masters = ppl.filter(p => p.career && p.career.lvl >= 1 && !p.shop && People.purse(p) >= 200 && !p._opened);
     const m = U.pick(masters);

@@ -508,7 +508,7 @@ const Families = {
   // ------------------------------------------------------------ o passar dos anos: casamentos e mudanças
   yearTick() {
     // solteiros se casam (de preferência na mesma vila)
-    const singles = G.people.filter(p => p.alive && p.age >= 17 && p.age <= 50 && p.spouse === null && !p.kin && !p.capanga && !p.dating && p.home.type === 'village');
+    const singles = G.people.filter(p => p.alive && p.age >= 17 && p.age <= 50 && p.spouse === null && (!p.kin || p.grown) && !p.capanga && !p.dating && p.home.type === 'village');
     const women = singles.filter(p => p.sex === 'f');
     for (const m of singles.filter(p => p.sex === 'm')) {
       if (Math.random() > 0.55) continue;
@@ -527,7 +527,7 @@ const Families = {
       if (res.length <= this.vcap(v)) return;
       const dest = World.villages.map((o, i) => ({ o, i, n: People.residents(i).length })).filter(x => x.i !== vi && x.o.civ === v.civ && x.n < this.vcap(x.o) - 3).sort((a, b) => a.n - b.n)[0];
       if (!dest) return;
-      const mover = res.find(p => p.age >= 18 && p.age < 35 && !SHOP_RANKS.includes(p.rank) && !p.kin && !p.job && !this.isChief(p) && p.spouse !== null);
+      const mover = res.find(p => p.age >= 18 && p.age < 35 && !SHOP_RANKS.includes(p.rank) && (!p.kin || p.grown) && !p.job && !this.isChief(p) && p.spouse !== null);
       if (!mover) return;
       for (const p of res.filter(q => q === mover || q.id === mover.spouse || (q.parents.includes(mover.id) && q.age < 16))) p.home = { type: 'village', idx: dest.i };
       if (typeof Perf !== 'undefined') Perf.resDirty();

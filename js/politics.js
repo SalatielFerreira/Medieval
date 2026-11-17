@@ -68,7 +68,7 @@ const Politics = {
     Society.finishElection(vi, who, E.tie.res, `você, ${E.tie.by === 'rei' ? 'como rei' : 'como governador anterior'}, desempatou a favor de ${who === 'player' ? 'si mesmo' : this.whoName(who)}`);
   },
   // inscrições nos 3 meses antes da eleição: o governador tenta a reeleição e quem tem feitos e fama se candidata
-  pool(vi) { return People.residents(vi).filter(p => p.age >= 25 && !p.kin && !p.capanga && p.spouse !== 'player' && p.rank !== 'child'); },
+  pool(vi) { return People.residents(vi).filter(p => p.age >= 25 && (!p.kin || p.grown) && !p.capanga && p.spouse !== 'player' && p.rank !== 'child'); },
   val(vi, p) { const s = this.score(vi, p.id); return s.d * 1.2 + s.f + s.r * 0.3; },
   registerTick(vi, force) {
     const v = World.villages[vi], E = Society.E(vi); if (!v || E.tie) return;
@@ -91,7 +91,7 @@ const Politics = {
     for (const vi in D) for (const k in D[vi]) { D[vi][k] *= 0.97; if (D[vi][k] < 0.5) delete D[vi][k]; }
     World.villages.forEach((v, vi) => {
       for (const p of People.residents(vi)) {
-        if (!People.isAdult(p) || p.capanga || p.kin) continue;
+        if (!People.isAdult(p) || p.capanga || (p.kin && !p.grown)) continue;
         let n = 0;
         if (p.shop) n += 1; if (['priest', 'knight'].includes(p.rank)) n += 1; if (v.chief === p.id) n += 1.5;
         if (People.purse(p) > 300 && Math.random() < 0.12) { const g = U.rint(30, 90); p.purse -= g; v.prosper = (v.prosper || 0) + g / 300; n += 4; if (Math.random() < 0.4) Rumors.atV(vi, `${p.name} ${U.pick(['pagou a reforma do poço', 'deu um banquete para a vila', 'consertou a ponte com o próprio dinheiro', 'doou trigo aos pobres'])}.`); }

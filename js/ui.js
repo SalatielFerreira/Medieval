@@ -951,7 +951,7 @@ const UI = {
     if (nav === 'family') {
       const f = Families.ensurePlayer(), mem = Families.members(f).filter(p => p.alive);
       const kids = mem.filter(p => p.kin === 'child' && p.age >= 16 && p.spouse === null);
-      const role = p => p.spouse === 'player' ? 'cônjuge' : p.kin === 'child' ? (p.prof ? PROFESSIONS[p.prof].icon + ' ' + (p.sex === 'f' ? PROFESSIONS[p.prof].f : PROFESSIONS[p.prof].name) : 'filh' + (p.sex === 'f' ? 'a' : 'o')) : p.kin || '';
+      const role = p => p.spouse === 'player' ? 'cônjuge' : p.grown && typeof Grown !== 'undefined' ? Grown.role(p) : typeof Grown !== 'undefined' && Grown.grand(p) ? (p.sex === 'f' ? 'neta' : 'neto') : p.kin === 'child' ? (p.prof ? PROFESSIONS[p.prof].icon + ' ' + (p.sex === 'f' ? PROFESSIONS[p.prof].f : PROFESSIONS[p.prof].name) : 'filh' + (p.sex === 'f' ? 'a' : 'o')) : p.kin || '';
       // telas pequenas: brasão da casa, membros em cartões e casamentos arranjados, cada um na sua página
       const rank = Families.ranking().findIndex(x => x.f === f) + 1, gens = (G.dynasty || []).length + 1;
       const spouse = mem.find(p => p.spouse === 'player'), children = mem.filter(p => p.kin === 'child');
@@ -1661,7 +1661,7 @@ const UI = {
     if (p.rank === 'priest') acts.push(['church', '⛪ Assuntos da igreja']);
     if (p.port && Ports.portOf(p)) acts.push(['portnpc', '⚓ Negócios do porto']);
     { const vi = Chiefdom.vilOf(p); if (vi >= 0 && G.civs[World.villages[vi].civ].ruler !== 'player') acts.push(['vchallenge', '⚔️ Desafiar pelo governo da vila']); }
-    if (p.kin === 'child' && p.age >= 12) acts.push(['profmenu', p.prof ? `${PROFESSIONS[p.prof].icon} Mudar profissão` : '🎓 Escolher profissão']);
+    if (p.kin === 'child' && p.age >= 12 && !p.grown) acts.push(['profmenu', p.prof ? `${PROFESSIONS[p.prof].icon} Mudar profissão` : '🎓 Escolher profissão']);
     Lifesim.acts(p, acts);
     const st = p.capanga ? People.capangaStats(p) : null;
     // a conversa recente com esta pessoa (o que você fez e o que ela respondeu)

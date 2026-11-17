@@ -121,7 +121,7 @@ const Pacts = {
   },
   release(h, why) {
     const S = this.S(), p = G.people[h.pid]; S.host = S.host.filter(x => x !== h);
-    if (p && p.alive) { p.home = h.home && h.home.type !== 'wild' ? h.home : (h.from >= 0 ? { type: 'castle', civ: h.from } : { type: 'player' }); if (p.kin === 'child') p.home = { type: 'player' }; }
+    if (p && p.alive) { p.home = h.home && h.home.type !== 'wild' ? h.home : (h.from >= 0 ? { type: 'castle', civ: h.from } : { type: 'player' }); if (p.kin === 'child' && !p.grown) p.home = { type: 'player' }; }
     if (why) Diplo.chronicle(`🕊️ ${p ? p.name : 'O refém'} voltou para ${h.from >= 0 && !this.mine(h.from) ? Diplo.name(h.from) : 'casa'} — ${why}.`, this.mine(h.from) || this.mine(h.to));
   },
   // em guerra e mais forte: a paz se o inimigo entregar um refém

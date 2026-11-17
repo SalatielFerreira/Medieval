@@ -36,7 +36,7 @@ const Heroes = {
   },
   // escolhe alguém do reino para virar herói (cavaleiros e soldados primeiro); sem ninguém, chega um soldado novo
   promote(ci, why) {
-    const ok = p => p.alive && !p.hero && !p.capanga && !p.kin && p.spouse !== 'player' && p.age >= 18 && p.age <= 45 && !(p.jail > G.day);
+    const ok = p => p.alive && !p.hero && !p.capanga && (!p.kin || p.grown) && p.spouse !== 'player' && p.age >= 18 && p.age <= 45 && !(p.jail > G.day);
     const cand = G.people.filter(p => ok(p) && ((p.rank === 'knight' && p.home.type === 'castle' && p.home.civ === ci) || (p.rank === 'soldier' && p.soldierOf === ci) || (p.rank === 'mercenary' && p.civ === ci)));
     let p = cand.length ? cand.sort((a, b) => (b.kills || 0) - (a.kills || 0) + (Math.random() - 0.5) * 20)[0] : null;
     if (!p) { p = People.create({ rank: 'soldier', civ: ci, home: { type: 'castle', civ: ci }, age: U.rint(20, 34), sex: Math.random() < 0.8 ? 'm' : 'f' }); p.soldierOf = ci; p.met = false; }
