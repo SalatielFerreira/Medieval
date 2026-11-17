@@ -84,14 +84,29 @@ const KOrders = {
     if (r >= 1) this.armor();
     this.muster();
   },
-  // a armadura da ordem (gibão e elmo, com as cores dela)
-  armorKeys() { const S = this.S(); return S.key ? ['ko_tabard_' + S.key, 'ko_helm_' + S.key] : []; },
+  // o kit da sociedade: elmo, gibão, grevas e botas, tudo na cor da sociedade (a cor principal), com o símbolo dela
+  // (a cor da cruz) no peito e na crista do elmo; os ícones também saem nas cores da sociedade
+  KIT: [['tabard', 'torso', 'Gibão', 400, 10, 'cuirass', 0], ['helm', 'head', 'Elmo', 260, 6, 'helm', 0], ['greaves', 'legs', 'Grevas', 220, 5, 'greaves', 0.16], ['boots', 'feet', 'Botas', 160, 3, 'iboots', 0.28]],
+  kitKeys(k) { return k ? this.KIT.map(x => `ko_${x[0]}_${k}`) : []; },
+  armorKeys() { return this.kitKeys(this.S().key); },
+  mixCol(c, t, f) { const h = x => { x = String(x || '#777').replace('#', ''); if (x.length === 3) x = x.split('').map(q => q + q).join(''); return [0, 2, 4].map(i => parseInt(x.slice(i, i + 2), 16) || 0); }; const A = h(c), B = h(t); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * f).toString(16).padStart(2, '0')).join(''); },
   makeItems(k, d) {
-    if (!ITEMS['ko_tabard_' + k]) ITEMS['ko_tabard_' + k] = { name: `Gibão da ${d.name}`, icon: d.icon, cat: 'Armaduras', price: 400, slot: 'torso', def: 10, color: d.col, korder: k };
-    if (!ITEMS['ko_helm_' + k]) ITEMS['ko_helm_' + k] = { name: `Elmo da ${d.name}`, icon: '⛑️', cat: 'Armaduras', price: 260, slot: 'head', def: 6, color: d.col === '#1a1a20' ? '#5a5a62' : '#c4cad0', korder: k };
-    ART_ITEMS['ko_tabard_' + k] = ['cuirass', d.mat || 'iron']; ART_ITEMS['ko_helm_' + k] = ['helm', 'steel'];
+    if (!d) return;
+    const col = d.col || '#5a4a8a', cr = d.cross || '#e8d8a0', icons = { tabard: d.icon || '🛡️', helm: '⛑️', greaves: '👖', boots: '👢' };
+    if (typeof MAT !== 'undefined') MAT['soc_' + k] = [col, this.mixCol(col, '#000000', 0.45), this.mixCol(col, '#ffffff', 0.4)];
+    for (const [part, slot, nm, price, def, shape, dark] of this.KIT) {
+      const id = `ko_${part}_${k}`, c = dark ? this.mixCol(col, '#000000', dark) : col;
+      if (!ITEMS[id] || ITEMS[id].color !== c) ITEMS[id] = { name: `${nm} da ${d.name}`, icon: icons[part], cat: 'Armaduras', price, slot, def, color: c, korder: k, key: id, ...(part === 'tabard' || part === 'helm' ? { crest: cr } : {}) };
+      ART_ITEMS[id] = [shape, 'soc_' + k]; if (typeof ART_CACHE !== 'undefined') delete ART_CACHE[id];
+    }
   },
-  armor() { const S = this.S(); if (!S.key) return; this.makeItems(S.key, this.def()); for (const k of this.armorKeys()) if (!Inv.count(k)) Inv.add(k, 1); },
+  // pega o kit que faltar (e, com wear, veste tudo)
+  armor(wear) {
+    const S = this.S(); if (!S.key) return; this.makeItems(S.key, this.def());
+    for (const id of this.armorKeys()) { if (!Inv.count(id)) Inv.add(id, 1); if (wear && Inv.count(id) > 0) P.equip[ITEMS[id].slot] = id; }
+  },
+  // os cavaleiros da sociedade com o kit inteiro
+  dress(p) { const k = p && p.korder; if (!k) return; this.makeItems(k, k === 'own' ? this.S().own : KORDERS[k]); for (const id of this.kitKeys(k)) if (ITEMS[id]) p.equip[ITEMS[id].slot] = id; },
   // cavaleiros da ordem que seguem você
   knights() { return G.people.filter(p => p.alive && p.korder); },
   muster() {
@@ -101,7 +116,7 @@ const KOrders = {
     while (n < want) {
       const p = People.create({ rank: 'knight', age: U.rint(22, 40), sex: Math.random() < 0.8 ? 'm' : 'f', trait: U.pick(['leal', 'corajoso', 'orgulhoso']), civ: -1, home: { type: 'wild' } });
       p.korder = S.key; p.loyal = 80; p.met = true;
-      this.makeItems(S.key, d); p.equip.torso = 'ko_tabard_' + S.key; p.equip.head = 'ko_helm_' + S.key; p.equip.weapon = 'iron_sword';
+      this.dress(p); p.equip.weapon = 'iron_sword';
       n++;
       this.call(p);
     }
@@ -204,7 +219,7 @@ const KOrders = {
     switch (d.op) {
       case 'join': KOrders.join(d.k); break;
       case 'donate': KOrders.donate(); break;
-      case 'armor': KOrders.armor(); UI.msg('🛡️ A armadura da ordem está na sua mochila.', 'gold'); break;
+      case 'armor': KOrders.armor(true); UI.msg('🛡️ Você vestiu o kit da sociedade: elmo, gibão, grevas e botas nas cores dela.', 'gold'); break;
       case 'leave': Dialog.confirm({ icon: '🏳️', title: 'Deixar a ordem', danger: true, ok: 'Deixar', text: 'Os cavaleiros dela voltam para o comando e você perde a patente.' }, () => { KOrders.leave(); UI.refresh(); }); return;
       case 'col': UI.sel.koCol = d.c; break;
       case 'found': { const el = document.getElementById('koName'); KOrders.found(el ? el.value : '', UI.sel.koCol); break; }

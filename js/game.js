@@ -1701,7 +1701,7 @@ const Game = {
       // os complôs daquele reino (do conselho dele e os outros) acabam com ele
       R.plots = R.plots.filter(pl => pl.ci !== ci);
       // sem nenhum reino, o reinado acaba: complôs, generais, espiões e moeda ficam para trás (a dívida é do banco do reino)
-      if (!G.civs.some(x => x.ruler === 'player')) Object.assign(R, { plots: [], generals: [], spies: {}, dilemma: null, aud: [], debase: 0, inflUntil: 0 });
+      if (!G.civs.some(x => x.ruler === 'player')) Object.assign(R, { plots: [], spies: {}, dilemma: null, aud: [], debase: 0, inflUntil: 0 });
     }
   },
   // vila de um reino seu não tem você como governador: passa à coroa e o morador mais respeitado cuida dela até a

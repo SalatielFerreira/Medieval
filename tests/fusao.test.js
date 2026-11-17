@@ -45,8 +45,8 @@ module.exports = async () => {
       const gen = Reign.member('general'); c.garrison = 30; R.plots = []; Reign.newPlot(gen.id, 'coup', { ci: 1, seat: 'general', ripe: G.day });
       const sk = Reign.spySkill; Reign.spySkill = () => 0; try { Reign.monthTick(); } finally { Reign.spySkill = sk; }
       ok(c.garrison <= 15 && !Court.member(1, 'general'), 'o complô do general não aconteceu com o golpe da cadeira');
-      // generais de batalha são os do Exército (R.generals); o do conselho é quem recruta e defende
-      ok(Array.isArray(R.generals), 'os generais de batalha sumiram');
+      // o general é só o da Corte: a antiga lista de três generais do Exército saiu, com as funções dela
+      ok(!R.generals && typeof Reign.generals === 'undefined' && typeof Reign.generalsHtml === 'undefined', 'a lista de três generais do Exército voltou');
 
       // 2. diplomacia e tratados: relação entre reinos (Diplo.rel); sem comércio, casamento e refém repetidos
       G.civs[3].relation = -90; G.diplo.rel[1][3] = G.diplo.rel[3][1] = 37;

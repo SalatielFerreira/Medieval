@@ -45,13 +45,13 @@ module.exports = async () => {
       Game.becomeRuler(A, 'teste.');
       const c = G.civs[A], cons = People.create({ age: 40, rank: 'merchant', civ: A, home: { type: 'castle', civ: A } });
       c.decrees = { feira: true }; c.inflation = 3; c.tradeBonus = 2; Court.appoint(A, 'treasurer', cons);
-      Reign.R().generals = [cons.id]; Reign.newPlot(cons.id, 'coup', { ci: A });
+      Reign.newPlot(cons.id, 'coup', { ci: A });
       Game.rebellion(c);
       ok(!Object.keys(c.decrees || {}).length && !c.inflation && !c.tradeBonus, 'decretos, inflação ou bônus do comércio ficaram no reino perdido');
       ok(!c.council && !cons.council, 'o conselho continuou no reino perdido');
       ok(G.mainRealm !== A, 'o reino perdido continuou como reino principal');
       // (a dívida do reino é a do banco do reino: fica com o reino)
-      ok(!Reign.R().generals.length && !Reign.R().plots.length, 'sem reino, o reinado manteve generais ou complôs');
+      ok(!Reign.R().plots.length, 'sem reino, o reinado manteve complôs');
 
       // 4. guerra: o reino que ataca você suspende as vantagens do título; declarar guerra a ele tira o título
       Game.becomeRuler(A, 'teste.');

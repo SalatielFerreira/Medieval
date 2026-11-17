@@ -171,7 +171,7 @@ const UIP = {
     const mine = War.armyOf(wc.side, wc.own ? wc.cfg : null), foe = War.armyOf(wc.enemy);
     if (!wc.own) mine.cats += wc.cfg.cats;
     let pm = War.power(mine, wc.cfg.capangas ? War.heroPower() : 2), pf = War.power(foe);
-    if (typeof Reign !== 'undefined' && G.civs[wc.side].ruler === 'player') { const A = Reign.R().army; pm *= 1 + A.training / 350 + (A.morale - 50) / 300 + Reign.generals().length * 0.04; }
+    if (typeof Reign !== 'undefined' && G.civs[wc.side].ruler === 'player') { const A = Reign.R().army; pm *= 1 + A.training / 350 + (A.morale - 50) / 300; }
     if (typeof Heroes !== 'undefined') { pm += Heroes.of(wc.side).slice(0, 2).length * 3; pf += Heroes.of(wc.enemy).slice(0, 2).length * 3; }
     if (War.weather) { const wx = War.weather(wc); pm *= wx.mine; pf *= wx.foe; }
     const walls = 1.5;

@@ -28,7 +28,7 @@ module.exports = async () => {
       Soc2.monthTick(); ok(S.inv.terras >= 1000, 'o investimento em terras perdeu dinheiro');
       // networking e cargos
       Soc2.network(); ok(!Soc2.netOk() && (Progress.S().soc_net || 0) >= 1, 'o networking não aconteceu');
-      const bro = Secret.brothers(k).find(p => p.age >= 18); if (bro) { bro.met = true; bro.aff = 60; Soc2.appoint('orador'); ok(Soc2.holder('orador'), 'não nomeou o orador'); }
+      const bro = Secret.brothers(k).find(p => p.age >= 18); if (bro) { bro.met = true; bro.aff = 60; Soc2.appoint('orador', bro.id); ok(Soc2.holder('orador'), 'não nomeou o orador'); }
       // recrutar alguém importante (com sorte)
       const cand = G.people.find(p => p.alive && p.age >= 18 && p.rank === 'knight' && !Secret.ssoc(p) && !Commerce.guildOf(p));
       if (cand) { cand.met = true; cand.aff = 100; const r0 = Math.random; Math.random = () => 0.01; Soc2.recruit(cand.id); Math.random = r0; ok(Secret.ssoc(cand) === k, 'o recrutamento com amizade 100 falhou'); }

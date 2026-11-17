@@ -9,16 +9,15 @@
 //  • Herdeiros: tutor de guerra, diplomacia, administração ou fé; filhos preteridos guardam rancor.
 //  • Diplomacia: não agressão e reinos vassalos (casamento, comércio, tributo e reféns são os Tratados, pacts.js).
 //  • Economia de Estado: orçamento por área, a moeda (desvalorizar dá ouro e traz inflação) e alfândega.
-//  • Exército: generais com traços, moral, treinamento e deserção.
+//  • Exército: moral, treinamento e deserção (o general do reino é o da Corte).
 //  • Corte e legado: o baile real, o bobo da corte, o castelo crescendo em níveis, títulos de Alto Rei e Imperador e a
 //    crônica do reinado. (O torneio real é o Grande Torneio da coroa, crown.js.)
 
-const GEN_TRAITS = { agressivo: ['Agressivo', '+10% de dano'], defensor: ['Defensor', '+12% de vida'], estrategista: ['Estrategista', '+2 catapultas de graça'], veterano: ['Veterano', '+15 de moral'] };
 const TUTORS = { guerra: ['⚔️', 'Guerra', 'força e liderança: vira general'], diplomacia: ['🤝', 'Diplomacia', 'adulto, melhora as relações com todos os reinos'], admin: ['💰', 'Administração', 'adulto, aumenta a renda do reino em 3%'], fe: ['⛪', 'Fé', 'adulto, agrada o clero todo mês'] };
 const CASTLE_LV = [null, null, { stone_block: 60, gold: 400 }, { stone_block: 100, marble_block: 20, gold: 800 }, { marble_block: 40, glass: 20, gold: 1500 }, { marble_block: 80, gold_bar: 10, gold: 3000 }];
 
 const Reign = {
-  R() { G.urban = G.urban || {}; return G.urban.reign || (G.urban.reign = { dilemma: null, aud: [], fiefs: {}, spies: {}, plots: [], tutors: {}, heir: null, treaties: [], claims: {}, budget: { army: 1, court: 1, works: 1, church: 1 }, debase: 0, inflUntil: 0, customs: 0, army: { morale: 60, training: 30 }, generals: [], court: { jester: false, ball: -9, castle: {} }, chron: [], title: 0 }); },
+  R() { G.urban = G.urban || {}; return G.urban.reign || (G.urban.reign = { dilemma: null, aud: [], fiefs: {}, spies: {}, plots: [], tutors: {}, heir: null, treaties: [], claims: {}, budget: { army: 1, court: 1, works: 1, church: 1 }, debase: 0, inflUntil: 0, customs: 0, army: { morale: 60, training: 30 }, court: { jester: false, ball: -9, castle: {} }, chron: [], title: 0 }); },
   realms() { return G.civs.filter(c => c.ruler === 'player'); },
   main() { const m = G.mainRealm; return (m !== undefined && m !== null && G.civs[m] && G.civs[m].ruler === 'player') ? G.civs[m] : this.realms()[0] || null; },
   isKing() { return this.realms().length > 0; },
@@ -198,9 +197,7 @@ const Reign = {
   budgetCost() { const b = this.R().budget; return (b.army + b.court + b.works + b.church) * 40; },
   customsIncome() { const R = this.R(); return R.customs ? Math.round(R.customs / 100 * (this.realms().reduce((a, x) => a + x.pop, 0) * 0.4 + (G.caravans || []).length * 25)) : 0; },
   // ---------------------------------------------------------------- exército
-  genTrait(p) { const ks = Object.keys(GEN_TRAITS); return ks[Math.floor(U.hash2(p.id, 21, 3) * ks.length)]; },
-  generals() { return this.R().generals.map(id => G.people[id]).filter(p => p && p.alive); },
-  genCands() { const cs = this.realms().map(c => c.id); return G.people.filter(p => p.alive && p.age >= 20 && !this.R().generals.includes(p.id) && ((p.hero && cs.includes(p.hero.civ)) || (p.rank === 'knight' && p.home && cs.includes(p.home.civ)) || (this.R().tutors[p.id] === 'guerra' && p.age >= 16))).slice(0, 6); },
+  // (o general do reino é o da Corte: Politics, cargo "general"; a antiga lista de três generais saiu)
   // ---------------------------------------------------------------- corte
   // o baile real: um só evento da corte (o banquete da coroa entrou nele). Agrada a nobreza, os vassalos, o conselho de
   // cada reino seu e as grandes casas, e o povo festeja junto. O torneio é o Grande Torneio da coroa (crown.js).
@@ -240,7 +237,7 @@ const Reign = {
     const b = R.budget, cost = this.budgetCost();
     if (c.treasury >= cost) { c.treasury -= cost; R.army.training = Math.min(100, R.army.training + b.army * 4); R.army.morale = Math.min(100, R.army.morale + b.army * 3); for (const f of Object.values(R.fiefs)) f.loyal = Math.min(100, f.loyal + b.court * 2); this.rep('nobreza', b.court * 0.5); this.rep('clero', b.church); G.piety = (G.piety || 0) + b.church; for (const x of this.realms()) for (const v of Diplo.villagesOf(x.id)) v.prosper = (v.prosper || 0) + b.works * 0.6; }
     else { R.army.morale -= 10; UI.msg('👑 O tesouro não cobriu o orçamento: soldo atrasado e obras paradas.', 'bad', true); }
-    R.army.training = Math.max(0, R.army.training - 2); R.army.morale = U.clamp(R.army.morale + this.generals().filter(g => this.genTrait(g) === 'veterano').length * 2 - (b.army === 0 && c.garrison > 15 ? 5 : 0), 0, 100);
+    R.army.training = Math.max(0, R.army.training - 2); R.army.morale = U.clamp(R.army.morale - (b.army === 0 && c.garrison > 15 ? 5 : 0), 0, 100);
     if (R.army.morale < 25 && c.garrison > 4) { const n = U.rint(2, 4); c.garrison -= n; UI.msg(`🏃 ${n} soldados desertaram: a moral da tropa está no chão (${Math.round(R.army.morale)}).`, 'bad', true); }
     // moeda e alfândega
     // (a inflação é o contador c.inflation de cada reino, descontado pelo Crown.monthCiv: aqui não se zera nada)
@@ -361,11 +358,6 @@ const Reign = {
     return `<div class="card rn-troop"><div class="sec">⚔️ Tropa <span>o orçamento do exército sustenta</span></div><div class="rn-meter"><span>Moral</span>${bar(A.morale)}<b class="${A.morale < 30 ? 'bad' : ''}">${Math.round(A.morale)}</b></div><div class="rn-meter"><span>Treino</span>${bar(A.training)}<b>${Math.round(A.training)}</b></div>
       <small class="muted">Treino deixa os soldados mais fortes; moral baixa faz parte da tropa fugir e, abaixo de 25, soldados desertam.</small></div>`;
   },
-  generalsHtml() {
-    const esc = UI.esc.bind(UI), gs = this.generals();
-    return `<div class="card rn-gens"><div class="sec">🎖️ Generais <span>${gs.length}/3 · bônus no campo de batalha</span></div>${gs.map(g => `<div class="rn-row"><span><b>${esc(People.full(g))}</b><small>${GEN_TRAITS[this.genTrait(g)][0]} (${GEN_TRAITS[this.genTrait(g)][1]})${g.hero ? ` · ⭐ ${esc(g.hero.epi)}` : ''}</small></span><span class="act-row">${this.btn('rgGenOff', 'Dispensar', `data-p="${g.id}"`)}</span></div>`).join('') || '<p class="muted">Nenhum general.</p>'}
-      ${gs.length < 3 && this.genCands().length ? `<div class="act-row">${this.genCands().slice(0, 4).map(p => this.btn('rgGen', `Nomear ${esc(p.name)} (${GEN_TRAITS[this.genTrait(p)][0]})`, `data-p="${p.id}"`)).join('')}</div>` : ''}</div>`;
-  },
   // o baile e o bobo entram na grade das festas e cerimônias da Corte (uma linha cada)
   ballHtml() { return `<div class="rn-it"><span class="rn-ic">💃</span><span class="rn-t"><b>Baile real</b><small>Nobreza, vassalos, conselho e grandes casas mais leais; o povo festeja (+4) · ${this.BALL_COST} 🪙 · a cada 3 meses</small></span>${this.btn('rgBall', 'Dar um baile', '', false, 'primary')}</div>`; },
   jesterHtml() { const R = this.R(); return `<div class="rn-it ${R.court.jester ? 'on' : ''}"><span class="rn-ic">🃏</span><span class="rn-t"><b>Bobo da corte</b><small>O povo ri (+felicidade) e ele ouve tudo nos corredores (descobre complôs) · 15 🪙/mês</small></span><button class="${R.court.jester ? '' : 'primary'}" data-act="rgJester">${R.court.jester ? '✔ Contratado' : 'Contratar'}</button></div>`; },
@@ -394,19 +386,19 @@ const Reign = {
     if (pa && !pb) { const t = Reign.treaty(a, b, 'nonagg'); if (t) Reign.breakTreaty(b, 'nonagg'); }
     return dw0(a, b, why);
   };
-  // exército: vassalos mandam soldados; treino, moral e generais no campo
+  // exército: vassalos mandam soldados; treino e moral no campo
   const ar0 = War.armyOf.bind(War);
   War.armyOf = function (ci, cfg) {
     const a = ar0(ci, cfg);
-    if (G.civs[ci] && G.civs[ci].ruler === 'player') { a.soldiers += Reign.levy(); for (const v of G.civs) if (v.overlord === ci && v.ruler !== 'player') a.soldiers += Math.min(6, Math.floor(v.garrison / 3)); if (Reign.generals().some(g => Reign.genTrait(g) === 'estrategista')) a.cats += 2; }
+    if (G.civs[ci] && G.civs[ci].ruler === 'player') { a.soldiers += Reign.levy(); for (const v of G.civs) if (v.overlord === ci && v.ruler !== 'player') a.soldiers += Math.min(6, Math.floor(v.garrison / 3)); }
     return a;
   };
   const dp0 = War.deploy.bind(War);
   War.deploy = function (ci, a, x0, cy, dir) {
     dp0.apply(War, arguments);
     if (!G.civs[ci] || G.civs[ci].ruler !== 'player') return;
-    const R = Reign.R(), gs = Reign.generals(), tr = R.army.training, mo = R.army.morale + gs.filter(g => Reign.genTrait(g) === 'veterano').length * 15 + gs.reduce((s, g) => s + (g.hero ? g.hero.fame / 20 : 0), 0);
-    const hpM = 1 + tr / 300 + (gs.some(g => Reign.genTrait(g) === 'defensor') ? 0.12 : 0), dmM = 1 + tr / 400 + (gs.some(g => Reign.genTrait(g) === 'agressivo') ? 0.1 : 0);
+    const R = Reign.R(), tr = R.army.training, mo = R.army.morale;
+    const hpM = 1 + tr / 300, dmM = 1 + tr / 400;
     const units = War.units(ci).filter(e => e.faction !== 'engine' && !e.battleKing && e.heroP === undefined && !e.recruitDone);
     for (const e of units) { e.recruitDone = true; e.maxHp = Math.round(e.maxHp * hpM); e.hp = e.maxHp; e.dmg = Math.round(e.dmg * dmM); }
     if (mo < 30) { const flee = units.slice(0, Math.floor(units.length * 0.15)); for (const e of flee) e.dead = true; if (flee.length) UI.msg(`🏃 Moral baixa: ${flee.length} soldados fugiram antes da batalha.`, 'bad'); }
@@ -453,8 +445,6 @@ const Reign = {
       case 'rgDebase': Reign.debase(); break;
       case 'rgStrong': Reign.strongCoin(); break;
       case 'rgCustoms': R.customs = +d.t; break;
-      case 'rgGen': if (R.generals.length < 3) { R.generals.push(+d.p); People.addAff(G.people[+d.p], 10); } break;
-      case 'rgGenOff': R.generals = R.generals.filter(id => id !== +d.p); break;
       case 'rgBall': Reign.ball(); break;
       case 'rgJester': R.court.jester = !R.court.jester; break;
       case 'rgCastle': Reign.upgradeCastle(+d.c); break;
@@ -462,3 +452,4 @@ const Reign = {
     Reinado.refresh(); // a mesma página do Reinado, com o que mudou
   };
 }
+{ const r0 = Reign.R.bind(Reign); Reign.R = function () { const r = r0(); if (r.generals) delete r.generals; return r; }; } // jogos salvos antigos: a lista de três generais saiu (o general é o da Corte)

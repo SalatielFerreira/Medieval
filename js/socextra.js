@@ -12,7 +12,6 @@
 SECRET_SOC.thule = { name: 'Sociedade Thule', icon: '❄️', col: '#1e3a5a', cross: '#cfe8ff', mat: 'silver', lvl: 4, fame: 30,
   oath: 'Guardar as runas do norte e nunca revelar o caminho para Thule.', likes: ['beast', 'guardians', 'wolves', 'soc_net'], motto: 'Além do gelo, a ilha perdida.' };
 KORDERS.thule = SECRET_SOC.thule;
-{ const mi0 = KOrders.makeItems.bind(KOrders); KOrders.makeItems = function (k, d) { const r = mi0(k, d); for (const x of ['ko_tabard_' + k, 'ko_helm_' + k]) if (ITEMS[x]) ITEMS[x].key = x; return r; }; }
 KOrders.makeItems('thule', SECRET_SOC.thule);
 for (const k in ITEMS) if (ITEMS[k] && ITEMS[k].key !== k) ITEMS[k].key = k; // (os mantos e elmos novos com o próprio código)
 if (typeof Commerce !== 'undefined') {

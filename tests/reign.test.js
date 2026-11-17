@@ -36,7 +36,7 @@ module.exports = async () => {
       const td = c.treasury; Reign.debase(); ok(c.treasury > td && c.inflation, 'desvalorizar não deu ouro nem inflação'); Reign.strongCoin(); ok(!c.inflation, 'moeda forte não acabou a inflação');
       UI.act('rgCustoms', { t: 10 }); ok(R.customs === 10, 'alfândega');
       // exército e corte
-      const gc = Reign.genCands()[0]; if (gc) { UI.act('rgGen', { p: gc.id }); ok(Reign.generals().length, 'general não nomeado'); }
+      ok(typeof Reign.genCands === 'undefined', 'a escolha de três generais ainda existe');
       Reign.ball(); ok(R.court.ball === G.day, 'o baile não aconteceu');
       Object.assign(P.inv, { stone_block: 200, marble_block: 100, glass: 50, gold_bar: 20 }); Reign.upgradeCastle(1); ok(Reign.castleLv(1) === 2, 'o castelo não subiu de nível');
       const cs = World.structs.find(s => s.type === 'castle' && s.owner === 1); if (cs) World.drawStruct(document.createElement('canvas').getContext('2d'), cs, 10, 10, 1);

@@ -198,7 +198,7 @@ const People = {
     return {
       scale: child ? 0.55 + p.age * 0.03 : 1,
       body: torso ? torso.color : (p.sex === 'f' && p.rank === 'peasant' ? '#9a5a6a' : RANK_LOOK[p.rank] || '#8a6d4a'),
-      armor: torso && torso.def >= 3 ? torso.color : (p.rank === 'knight' ? '#8d949c' : null),
+      armor: torso && torso.def >= 3 ? torso.color : (p.rank === 'knight' ? '#8d949c' : null), crest: torso && torso.def >= 3 && torso.crest || null, hcrest: head && head.def >= 2 && head.crest || null,
       legs: it('legs') ? it('legs').color : '#4a3a2a', boots: it('feet') ? it('feet').color : null,
       helmet: head && head.def >= 2 ? head.color : (p.rank === 'knight' ? '#9aa0a8' : null),
       cap: head && head.def < 2 ? head.color : (p.rank === 'hunter' ? '#3a4a20' : p.rank === 'peasant' && !child && p.id % 4 === 0 ? '#d8c070' : null),

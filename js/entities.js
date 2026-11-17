@@ -539,6 +539,7 @@ function humanBody(ctx, o, dir, t) {
     ctx.fillStyle = S(a, 0.45); for (const [rx, ry] of [[-4.5, -21.5], [4.5, -21.5], [-4.5, -15], [4.5, -15]]) ctx.fillRect(rx, ry, 0.9, 0.9);
     ell(ctx, -5.2, -22.6, 3.2, 2.3, S(a, -0.2)); ell(ctx, 4.8, -22.6, 3.3, 2.5, S(a, 0.06)); ell(ctx, 5.2, -23.6, 1.2, 0.55, S(a, 0.32));
     limb(ctx, 2, -21.4, 7.6, -21.4, 0.5, S(a, -0.25));                          // lâmina da ombreira
+    if (o.crest) { ctx.fillStyle = S(o.crest, -0.35); ctx.fillRect(-1.3, -22.4, 3, 8.6); ctx.fillRect(-3.8, -20.2, 8, 2.8); ctx.fillStyle = C(o.crest); ctx.fillRect(-0.9, -22, 2.2, 7.8); ctx.fillRect(-3.4, -19.8, 7.2, 2); } // o símbolo da sociedade no peito
   }
   // ---- roupa do ofício (por cima da roupa comum)
   if (o.outfit && !o.armor) {
@@ -861,6 +862,7 @@ function humanBody(ctx, o, dir, t) {
     rr(ctx, 3.6, -32, 1.3, 4.6, 0.5, S(hm, -0.1));
     limb(ctx, 0.4, -37.2, 0.6, -32.2, 0.6, S(hm, -0.18));                         // crista
     rr(ctx, -2.2, -36.6, 4.4, 1.3, 0.6, S(hm, 0.4)); ctx.fillStyle = S(hm, 0.55); ctx.fillRect(-1.4, -36.3, 1.4, 0.6);
+    if (o.hcrest) { limb(ctx, -3.6, -37.4, 3.8, -37.6, 1.6, C(o.hcrest)); limb(ctx, 0.2, -38.8, 0.4, -32.4, 1.2, C(o.hcrest)); } // a crista nas cores da sociedade
   }
   if (o.crown) {
     const g = C('#e8b923'), gd = shd(g, -0.3);
@@ -921,7 +923,7 @@ function drawHuman(ctx, x, y, o) {
   const tf = ctx.getTransform(), res = Math.max(1, Math.min(10, Math.round(Math.hypot(tf.a, tf.b) * s * 2) / 2));
   // a figura é a mesma para as duas direções (a da esquerda é o espelho): metade das figuras na memória
   const look = [res, o.body, o.legs, o.skin, o.hair, o.hairStyle, o.beardStyle, o.beard, o.armor, o.helmet, o.cap, o.hood, o.crown, o.cape, o.outfit,
-    o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, o.regalia, !!(o.weapon || o.swing > 0 || o.rod)].join('|'), key = fr.key + '|' + look;
+    o.skirt, o.fem, o.boots, o.shield, o.shieldUp, o.seated, o.hurt, o.regalia, !!(o.weapon || o.swing > 0 || o.rod), o.crest, o.hcrest].join('|'), key = fr.key + '|' + look;
   let cv = HUMAN_CACHE.get(key);
   if (cv) { HUMAN_CACHE.delete(key); HUMAN_CACHE.set(key, cv); } // a mais usada fica (as esquecidas saem primeiro)
   if (!cv) {
@@ -1135,7 +1137,7 @@ function playerLook() {
     hair: People.hairAt(P.hairBase || '#4a2a12', P.age || 25), hairStyle: (P.style && P.style.hair) || (female ? 'long' : 'short'),
     beardStyle: female ? 'none' : ((P.style && P.style.beard) || ((P.age || 25) >= 22 ? 'short' : 'none')), fem: female, skirt: female && !legs && !(P.style && P.style.noSkirt), skin: P.skin || '#f0c896',
     shield: P.equip.shield ? ITEMS[P.equip.shield].color : null, shieldUp: !!P.blocking,
-    armor: torso && torso.def >= 3 ? torso.color : null,
+    armor: torso && torso.def >= 3 ? torso.color : null, crest: torso && torso.def >= 3 && torso.crest || null, hcrest: head && head.crest || null,
     boots: feet ? feet.color : null,
     helmet: metalHead && P.equip.head !== 'royal_helm' ? head.color : null,
     cap: head && !metalHead ? head.color : null,
