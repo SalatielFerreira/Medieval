@@ -3598,7 +3598,7 @@ body.small #surrenderBtn { top: calc(8px + env(safe-area-inset-top)); padding: 0
 .mir-sw { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .4); }
 
 /* livro do portão */
-.glog { margin: 4px 0 0; padding-left: 18px; max-height: 240px; overflow: auto; }
+.glog { margin: 4px 0 0; padding-left: 18px; max-height: max(240px, calc(100vh - 480px)); overflow: auto; }
 .glog li { margin: 2px 0; }
 
 /* Empreendimentos em duas páginas (abas): contas e painel / seus empreendimentos */
@@ -6531,8 +6531,8 @@ body:not(.small) .kpage.kd2 > .card.pc-wed { grid-column: 1 / -1; }
 /* aquecendo as janelas escondido (logo depois de o jogo começar): nada aparece */
 html.uiwarm #panel, html.uiwarm #mapview, html.uiwarm .mapview { visibility: hidden !important; }
 /* listas que crescem com o jogo: rolam dentro do quadro (no computador) */
-.kscroll { max-height: 230px; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
-.rn-chron .kscroll, .rn-heirs .kscroll { max-height: 200px; }
+.kscroll { max-height: max(230px, calc(100vh - 490px)); overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
+.rn-chron .kscroll, .rn-heirs .kscroll { max-height: max(200px, calc(100vh - 520px)); }
 /* obras reais em quatro colunas (são doze) */
 body:not(.small) .rn-works .rn-grid3 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 body:not(.small) .rn-works .rn-it small, body:not(.small) .rn-works .rn-t small { font-size: 10.5px; }
@@ -6563,11 +6563,11 @@ body:not(.small) .rn-works .cr-prog { display: block; height: 4px; }
 body.small .bty-wrap { grid-template-columns: 210px 1fr; height: auto; gap: 8px; }
 body.small .bty-me .sv-poster { max-height: 230px; } body.small .bty-me .bty-por.me { width: 52px; height: 58px; }
 body.small .bty-grid { max-height: 196px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-.vj .va-shopgrid.kscroll { max-height: 132px; }
+.vj .va-shopgrid.kscroll { max-height: max(132px, calc(100vh - 588px)); }
 /* Diplomacia em colunas (umapagina.js): nome · relação · situação · ações */
 .dpx-head, .dpx { display: grid; grid-template-columns: 175px 185px 235px minmax(0, 1fr); align-items: center; gap: 10px; }
 .dpx-head { padding: 0 10px 3px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #a8987a; } 
-.dpx-list { display: flex; flex-direction: column; gap: 4px; max-height: 372px; padding-right: 4px; }
+.dpx-list { display: flex; flex-direction: column; gap: 4px; max-height: max(372px, calc(100vh - 348px)); padding-right: 4px; }
 .dpx { padding: 4px 10px; min-height: 40px; border-radius: 8px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 174, 96, .12); }
 .dpx.war { border-color: rgba(220, 80, 60, .55); background: rgba(120, 20, 10, .2); }
 .dpx.mine { opacity: .7; } .dpx-me { grid-column: 2 / -1; font-size: 12px; color: #e2cfa6; }
@@ -6582,9 +6582,57 @@ body.small .bty-grid { max-height: 196px; grid-template-columns: repeat(auto-fil
 /* três colunas numa página (Reinado no computador) */
 .k3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: start; }
 .k3-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; } .k3-col > .card { margin: 0 !important; }
-.k3-tes .fin-cols { display: flex !important; flex-direction: column; gap: 6px; max-height: 250px; }
+
 .k3-tes .rn-hist small { font-size: 10px; } .k3-tes .rn-fin > p { font-size: 11.5px; margin: 4px 0 0; }
 .k3-tes .rn-pocket .act-row { flex-wrap: wrap; gap: 4px; } .k3-tes .rn-pocket .act-row button { padding: 3px 7px; font-size: 11.5px; }
 .k3-tes .rn-res .rn-r { grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 6px; } .k3-tes .rn-res .rn-r > small:nth-of-type(2) { display: none; }
 .k3-tes .rn-budget .rn-grid2 { grid-template-columns: 1fr 1fr; gap: 4px; } .k3-tes .rn-budget .sec span { display: none; } .k3-tes .rn-fin .sec span { display: none; }
 body:not(.small) .ct-list.kscroll { overflow-y: auto !important; max-height: none; padding-right: 3px; } body:not(.small) .ct-list.sm.kscroll { max-height: 34%; }
+/* ================= Reinado emoldurado (molduras.js, computador) ================= */
+.rx { height: calc(100vh - 278px); box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.rx-top { display: flex; flex-direction: column; gap: 10px; flex: none; }
+.rx-cols { flex: 1 1 0; min-height: 0; display: grid; gap: 10px; }
+.rx-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; max-height: none !important; overflow-y: auto; scrollbar-width: thin; }
+.rx .card { margin: 0 !important; flex: 0 0 auto; }
+.rx .card.rx-fill { flex: 1 1 0; min-height: 90px; max-height: none !important; overflow-y: auto; scrollbar-width: thin; }
+.rx .card.rx-fill > .sec { position: sticky; top: -10px; z-index: 2; }
+.rx .kscroll .kscroll { max-height: none; overflow: visible; }
+.rx .card.rx-fill > .act-row:last-child, .rx .card.rx-fill > p:last-child { margin-top: auto; }
+/* o estilo único dos quadros do Reinado */
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) .card:not(.lj, .lj *, .vj *) { position: relative; border-radius: 12px !important; border: 1px solid rgba(214, 174, 96, .24) !important;
+  background: linear-gradient(180deg, rgba(62, 45, 26, .62), rgba(26, 19, 11, .72)) !important; box-shadow: inset 0 1px 0 rgba(255, 230, 170, .07), 0 6px 16px rgba(0, 0, 0, .32) !important; padding: 0 12px 10px !important; }
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) .card:not(.lj, .lj *, .vj *) > .sec { display: flex; align-items: center; gap: 8px; margin: 0 -12px 8px !important; padding: 8px 12px 7px !important; border-bottom: 1px solid rgba(214, 174, 96, .2);
+  background: linear-gradient(90deg, rgba(214, 174, 96, .2), rgba(214, 174, 96, .04) 60%, transparent); border-radius: 12px 12px 0 0; font-family: 'Cinzel', serif; font-size: 12px !important; letter-spacing: .1em; color: #f0d48a !important; }
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) .card > .sec > span { margin-left: auto; font-family: var(--ui-font); font-size: 10.5px !important; letter-spacing: 0; text-transform: none; font-variant: normal; color: #b9a57e !important; text-align: right; }
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) .card > .sec.kcont { display: none; }
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) :is(.rn-row, .crow, .fin-r, .rn-r, .rn-it, .rn-bud, .rn-fief, .rn-aud, .ju-row, .law) { border-radius: 8px; background: rgba(255, 235, 200, .04); border: 1px solid rgba(214, 174, 96, .09); }
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) :is(.rn-row, .crow, .rn-it):hover { background: rgba(255, 235, 200, .075); border-color: rgba(214, 174, 96, .22); }
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) .fin-r { padding: 3px 8px; margin-bottom: 3px; }
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) .rn-r { padding: 3px 8px; margin-bottom: 4px; }
+/* Reino: os números grandes */
+.rx-reino .rn-stats .kv, .rx-reino .rn-stats .tiles { gap: 8px !important; }
+.rx-reino .rn-stats .kv > div, .rx-reino .rn-stats .stile { border-radius: 10px !important; background: rgba(0, 0, 0, .28) !important; border: 1px solid rgba(214, 174, 96, .14); padding: 8px 10px !important; }
+.rx-reino .rn-tax .card, .rx-reino .rn-tax b { font-size: inherit; }
+/* Exército: as forças dos reinos */
+.rx-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
+.rx-tile { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 10px; background: rgba(0, 0, 0, .28); border: 1px solid rgba(214, 174, 96, .14); }
+.rx-tile span { font-size: 18px; } .rx-tile b { font-size: 16px; color: #fff3d6; } .rx-tile small { font-size: 10px; color: #b9a57e; }
+.rx-pws { display: flex; flex-direction: column; gap: 4px; }
+.rx-pw { display: grid; grid-template-columns: 28px 170px 1fr 40px; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; background: rgba(255, 235, 200, .04); border: 1px solid rgba(214, 174, 96, .09); font-size: 12px; }
+.rx-pw em { font-style: normal; color: #b9a57e; font-size: 11px; } .rx-pw span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; white-space: nowrap; } .rx-pw span small { font-size: 10px; color: #b9a57e; }
+.rx-pw > b { text-align: right; color: #fff3d6; } .rx-pw.me { border-color: rgba(240, 212, 138, .55); background: rgba(214, 174, 96, .12); } .rx-pw.war { border-color: rgba(220, 80, 60, .45); }
+.rx-bar { display: block; height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .4); overflow: hidden; } .rx-bar > i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8a6a2a, #f0d48a); }
+.rx-pw.war .rx-bar > i { background: linear-gradient(90deg, #7a2a1a, #e06a4a); } .rx-pw.me .rx-bar > i { background: linear-gradient(90deg, #4a7a2a, #9ad86a); }
+/* Diplomacia: a lista de reinos estica com o quadro */
+.rx-diplo .rn-dips .dpx-list { max-height: none; }
+body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) .card > .sec { white-space: nowrap; flex-wrap: wrap; row-gap: 2px; } body:not(.small) :is(.kpage[data-nav="x:reign"], .kpg[data-nav="crown"]) .card > .sec > span { white-space: normal; max-width: none; line-height: 1.2; }
+.rx .act-row button { white-space: nowrap; }
+.rx-tesouro .fin-cols { display: flex !important; flex-direction: column; gap: 6px; }
+.rx-tesouro .rn-r { display: grid !important; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 6px; } .rx-tesouro .rn-r > small:not(.ok) { display: none; } .rx-tesouro .rn-r > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rx-tesouro .rn-budget .rn-grid2 { grid-template-columns: 1fr 1fr; gap: 4px; } .rx-tesouro .rn-bud b { font-size: 12px; }
+.rx-tesouro .rn-fin > p { font-size: 11.5px; margin: 6px 0 0; }
+/* Títulos e corte: o título do quadro fica colado no alto, o conteúdo se distribui embaixo */
+body:not(.small) .kpg[data-nav="crown"] .card:has(> .sec) { padding-top: 46px !important; }
+body:not(.small) .kpg[data-nav="crown"] .card > .sec { position: absolute; top: 0; left: 0; right: 0; margin: 0 !important; }
+body:not(.small) .vj-col > .card { border-radius: 12px !important; border: 1px solid rgba(214, 174, 96, .24) !important; background: linear-gradient(180deg, rgba(62, 45, 26, .62), rgba(26, 19, 11, .72)) !important; }
+body:not(.small) .vj-col > .card > .sec, body:not(.small) .lj .sec { font-family: 'Cinzel', serif; color: #f0d48a !important; letter-spacing: .08em; }

@@ -124,23 +124,3 @@ const OnePage = {
     } catch (e) { console.error(e); return html; }
   };
 }
-
-// Tesouro numa página, em três colunas: o mês do tesouro (entradas e saídas uma embaixo da outra, a lista rola se
-// crescer) · o banco e o seu bolso · os armazéns e o orçamento
-{
-  const ts0 = Reinado.T.tesouro.bind(Reinado.T);
-  Reinado.T.tesouro = function (...a) {
-    const html = ts0(...a);
-    if (document.body.classList.contains('small')) return html;
-    try {
-      const t = document.createElement('template'); t.innerHTML = html;
-      const take = sel => { const e = t.content.querySelector(sel); if (e) e.remove(); return e; };
-      const fin = take('.card.rn-fin'), store = take('.card.rn-store'), bud = take('.card.rn-budget'), bank = [...t.content.children].find(e => e.matches('.card') || e.querySelector('.card')); if (bank) bank.remove();
-      if (!fin) return html;
-      const cols = fin.querySelector('.fin-cols'); if (cols) cols.classList.add('kscroll');
-      const col = list => `<div class="k3-col">${list.filter(Boolean).map(e => e.outerHTML).join('')}</div>`;
-      const rest = [...t.content.childNodes].map(n => n.outerHTML || n.textContent || '').join('');
-      return `<div class="k3 k3-tes">${col([fin])}${col([bank])}${col([store, bud])}</div>${rest}`;
-    } catch (e) { console.error(e); return html; }
-  };
-}
