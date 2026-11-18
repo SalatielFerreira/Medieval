@@ -11,7 +11,7 @@ const G = {
   groups: {}, timers: { spawn: 0, amb: 0, regrow: 0, hud: 0 }, name: 'Aventureiro',
   darkness: 0, realTime: 0, lastWarn: 0, ping: null,
   people: [], family: { spouse: null, tryChild: false, dueDay: 0 }, spawned: new Map(),
-  settings: { uiScale: 'auto', streets: 'normal', minimap: true, ambience: true, miniSize: 180, numbers: true, keysbar: false, music: 0.5, sfx: 0.7, mute: false, touch: 'auto' },
+  settings: { uiScale: 'auto', streets: 'few', minimap: true, ambience: true, miniSize: 180, numbers: true, keysbar: false, music: 0.5, sfx: 0.7, mute: false, touch: 'auto' },
   storage: {}, dungeons: {}, dungeon: null, diplo: null, weather: null, slot: 1,
   plots: {}, order: 'follow', battles: [], caravans: [], stats: {}, ach: {}, diary: [], dynasty: [], diff: 'normal', hoverNpc: null,
 };
@@ -249,6 +249,8 @@ const Game = {
 
   // o mundo é gerado num Web Worker (a tela de carregamento continua animada)
   async newGame(opts, onProgress) {
+    // jogo novo começa leve: 20 pessoas por vila na rua (Ajustes → Tela → Pessoas nas ruas muda depois)
+    G.settings.streets = 'few'; try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(G.settings)); } catch (e) { /* vale só nesta sessão */ }
     Realm.reset(); G.realms = [];
     const name = opts.name;
     G.name = name;

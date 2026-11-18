@@ -38,7 +38,7 @@ const Families = {
   members(f, all) { return G.people.filter(p => p.fam === f.id && (all || p.alive)); },
   adults(f) { return this.members(f).filter(p => p.age >= 16); },
   name(f) { return f.player ? `Casa ${f.surname} (sua)` : `Casa ${f.surname}`; },
-  // governador: o adulto mais velho com ofício, ou o mais velho
+  // o chefe da família: o adulto mais velho com ofício, ou o mais velho
   head(f) {
     if (f.player) return null;
     const a = this.adults(f);

@@ -753,7 +753,7 @@ const UI = {
     // Quadro maior que o espaço: ele "escorre" para as páginas seguintes. O quadro é desmontado em peças (os filhos dele;
     // um filho grande — uma lista, uma grade — é desmontado nas linhas dele) e remontado página a página numa cópia vazia
     // do quadro, com o título (.sec) repetido na continuação. Um subtítulo nunca fica sozinho no pé da página.
-    const keep = '.og-apage, .rn-cpick, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour';
+    const keep = '.og-apage, .rn-cpick, .ct, .fm-crest, .at-main, .at-people, .gc-top, .gc-rank, .gc-risk, .ln-tree, .ln-map, .dy-ach-top, .dy-gens, .dy-chart, .dy-stats, .st-play, .st-sound, .st-touch, .st-card, .st-screen, .aj-box, .ar-bet, .ar-tier, .ar-vs, .ar-tour';
     const solid = 'select, svg, canvas, button, .ju-cells, .seg, .chips, .swatches, .tabs, .act-row, .titles, .rn-it, .rn-row, .rn-dip, .law, .rn-seat';
     // (desmonta-se uma lista — filhos parecidos — ou o que não cabe numa página inteira; um quadro dentro de uma grade vai inteiro)
     const homog = c => { const k = [...c.children], m = {}; if (k.length < 3) return false; for (const x of k) { const t = x.tagName + '.' + String(x.className).split(' ')[0]; m[t] = (m[t] || 0) + 1; } return Math.max(...Object.values(m)) >= k.length * 0.6; };
@@ -1226,8 +1226,8 @@ const UI = {
         <div class="stile"><small>Vila fundada</small><b>${f.founded !== null && World.villages[f.founded] ? this.esc(World.villages[f.founded].name) : '—'}</b></div>
       </div>
       <div class="kgrid two">
-        <div class="card"><div class="sec">👪 Membros <span>governador: ${h ? this.esc(h.name) : '—'}</span></div><div class="scroll" style="max-height:260px">
-          ${mem.map(p => `<div class="crow2">${this.personLine(p, p.maiden && p.maiden !== p.surname ? 'nascid' + (p.sex === 'f' ? 'a ' : 'o ') + p.maiden : '')}${p === h ? ' <span class="tag">governador</span>' : ''}${Families.isChief(p) ? ' <span class="tag gold">governador da vila</span>' : ''}</div>`).join('')}</div></div>
+        <div class="card"><div class="sec">👪 Membros <span>chefe da família: ${h ? this.esc(h.name) : '—'}</span></div><div class="scroll" style="max-height:260px">
+          ${mem.map(p => `<div class="crow2">${this.personLine(p, p.maiden && p.maiden !== p.surname ? 'nascid' + (p.sex === 'f' ? 'a ' : 'o ') + p.maiden : '')}${p === h ? ` <span class="tag">chefe da família</span>` : ''}${Families.isChief(p) ? ' <span class="tag gold">governador da vila</span>' : ''}</div>`).join('')}</div></div>
         <div class="card"><div class="sec">🏗️ Empreendimentos</div>
           ${bizs.map(s => `<div class="crow2">${FAMILY_BIZ[s.type].icon} <b>${FAMILY_BIZ[s.type].name}</b> <small class="muted">rende ${FAMILY_BIZ[s.type].income} 🪙/dia</small></div>`).join('') || '<p class="muted">Ainda nenhum. Famílias ricas abrem moinhos, empórios, oficinas, quintas e vinhedos.</p>'}
           <div class="act-row" style="margin-top:8px"><button data-act="tree" data-f="${f.id}">🌳 Árvore e relações</button>${typeof f.seat === 'number' ? `<button data-act="fping" data-f="${f.id}">📍 Marcar a sede no mapa</button>` : ''}
