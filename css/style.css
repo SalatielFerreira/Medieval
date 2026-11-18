@@ -6298,3 +6298,8 @@ body.small .kpg[data-nav="x:reign"] .ju-ch { font-size: 10.5px; }
 .tp-seat .act-row { flex-wrap: wrap; justify-content: flex-end; }
 body.small .tp-duesf input { width: 90px; padding: 3px 6px; font-size: 12px; }
 body.small .tp-seat .act-row button { padding: 3px 6px; font-size: 11px; }
+/* árvore da casa: todos os filhos e netos; com muitos, a árvore rola dentro do quadro (sem cortar o topo) */
+.av-trunk { overflow-y: auto; justify-content: flex-start; scrollbar-width: thin; }
+.av-trunk > :first-child { margin-top: auto; } .av-trunk > :last-child { margin-bottom: auto; }
+.av-lab i { display: block; font-style: normal; font-size: 10px; color: #c8b890; }
+body.small .av-trunk { justify-content: flex-start; }

@@ -35,9 +35,9 @@ const Arvore = {
       : '<div class="av-empty">🌱 Você é a primeira geração da Casa: a árvore começa aqui.</div>';
     const me = { name: `${G.name} ${G.surname || ''}`.trim(), sex: P.sex, age: P.age };
     const trunk = this.card(me, { cls: 'hero', sub: `${P.age} anos · ${dyn.length + 1}ª geração` }) + `<span class="av-ring">${sp ? '💍' : '·'}</span>` + (sp ? this.card(sp, { cls: 'spouse', sub: `${sp.age} anos${sp.alive === false ? ' · ✝' : ''}` }) : '<div class="av-ghost">💍 sem cônjuge</div>');
-    const K = 6, GR = 7;
-    const kidsHtml = kids.length ? kids.slice(0, K).map(k => this.card(k, { heir: heir && heir.id === k.id, sub: `${k.age} anos${k.alive ? '' : ' · ✝'}` })).join('') + this.more(kids.length - K) : '<div class="av-ghost">👶 ainda sem filhos</div>';
-    const grandHtml = grand.length ? grand.slice(0, GR).map(g => this.card(g, { sub: `${g.age} anos`, cls: 'small' })).join('') + this.more(grand.length - GR) : '';
+    // todos os filhos e todos os netos (muitos: cartões mais compactos, e a árvore rola dentro do quadro)
+    const kidsHtml = kids.length ? kids.map(k => this.card(k, { heir: heir && heir.id === k.id, sub: `${k.age} anos${k.alive ? '' : ' · ✝'}`, cls: kids.length > 8 ? 'small' : '' })).join('') : '<div class="av-ghost">👶 ainda sem filhos</div>';
+    const grandHtml = grand.length ? grand.map(g => this.card(g, { sub: `${g.age} anos`, cls: 'small' })).join('') : '';
     // casas ligadas pelo casamento (as dos cônjuges)
     const inlaws = [...new Set([sp, ...kids.map(k => k.spouse !== undefined && k.spouse !== null && k.spouse !== 'player' ? People.get(k.spouse) : null)].filter(Boolean).map(q => Families.of(q)).filter(x => x && !x.player))];
     const crest = `<span class="av-crest" style="--c:${f.color || PLAYER_COLOR}">${esc((G.surname || '?')[0])}</span>`;
@@ -47,7 +47,7 @@ const Arvore = {
         <div class="sec">💍 Casas ligadas pelo casamento</div><div class="av-houses">${inlaws.length ? inlaws.map(x => `<button class="ln-house" data-act="famview" data-f="${x.id}"><i style="background:${x.color}"></i>${esc(Families.name(x))}</button>`).join('') : '<small class="muted">Nenhuma ainda.</small>'}</div>
         ${btns ? `<div class="av-btns">${btns}</div>` : ''}</div>`;
     const tree = `<div class="card av-tree"><div class="sec">🌳 Árvore da Casa ${esc(G.surname || '')} <span>clique numa pessoa para conversar</span></div><div class="av-trunk">
-        ${tier('Antepassados', ancHtml, 'anc')}${tier('Você', trunk, 'me')}${tier('Filhos', kidsHtml, 'kids')}${grand.length ? tier('Netos', grandHtml, 'grand') : ''}</div></div>`;
+        ${tier('Antepassados', ancHtml, 'anc')}${tier('Você', trunk, 'me')}${tier(`Filhos <i>${kids.length}</i>`, kidsHtml, 'kids')}${grand.length ? tier(`Netos <i>${grand.length}</i>`, grandHtml, 'grand') : ''}</div></div>`;
     return `<div class="av">${tree}${side}</div>`;
   },
 };

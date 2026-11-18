@@ -54,6 +54,13 @@ module.exports = async () => {
         ok(civ2.rulerId === king2 && (!ana.alive || ana.jail > G.day), 'o golpe fracassado não teve consequência');
         // 8. a página da família mostra a vida de cada um
         UI.sel.knav = 'family'; UI.showKingdom(); ok(/Rei de/.test(UI.panel.innerHTML), 'a família não mostra o que os filhos fazem');
+        // 9. a árvore mostra todos os filhos e todos os netos, sem "+N"
+        for (let i = 0; i < 9; i++) Game.birth('Filho' + i, i % 2 ? 'f' : 'm');
+        for (let i = 0; i < 10; i++) People.child(w, beto, {});
+        UI.sel.knav = 'family'; UI.showKingdom();
+        const nk = G.people.filter(p => p.kin === 'child').length, ng = G.people.filter(g => (g.parents || []).some(id => G.people[id] && G.people[id].kin === 'child')).length;
+        ok(UI.panel.querySelectorAll('.av-tier.kids .av-card').length === nk && UI.panel.querySelectorAll('.av-tier.grand .av-card').length === ng && !UI.panel.querySelector('.av-more'), `a árvore não mostra todos (${nk} filhos, ${ng} netos)`);
+        { const b = UI.panel.querySelector('.snav-body'); ok(b.scrollHeight <= b.clientHeight + 2, 'a página da árvore passou da janela'); }
       } finally { Math.random = r0; }
       return bad;
     });
