@@ -6303,3 +6303,23 @@ body.small .tp-seat .act-row button { padding: 3px 6px; font-size: 11px; }
 .av-trunk > :first-child { margin-top: auto; } .av-trunk > :last-child { margin-bottom: auto; }
 .av-lab i { display: block; font-style: normal; font-size: 10px; color: #c8b890; }
 body.small .av-trunk { justify-content: flex-start; }
+/* conselho do seu reino: escolher quem chamar (a família primeiro), com filtros e a lista rolando dentro do quadro */
+.rn-cpick { display: flex; flex-direction: column; min-height: 0; }
+.rn-cfilt { align-items: center; margin: 2px 0 6px; } .rn-cfilt button { padding: 4px 10px; font-size: 12px; } .rn-cfilt button.on { background: linear-gradient(180deg, #f2cf7d, #c0913c); color: #2a1a08; } .rn-cfilt .muted { margin-left: auto; font-size: 11px; }
+.rn-plist { max-height: min(52vh, 420px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scrollbar-width: thin; }
+.rn-pick { display: grid !important; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 9px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 174, 96, .12); }
+.rn-pick .ri { font-size: 18px; text-align: center; } .rn-pick b { display: block; } .rn-pick small { display: block; font-size: 11px; color: #b5a07a; }
+.rn-pick.fam { border-color: rgba(255, 213, 74, .4); background: linear-gradient(90deg, rgba(255, 213, 74, .1), rgba(0, 0, 0, .22)); }
+.rn-pick.on { border-color: rgba(140, 220, 120, .55); }
+.rn-rel { font-style: normal; font-size: 10px; padding: 0 6px; border-radius: 999px; background: linear-gradient(180deg, #f2cf7d, #c0913c); color: #2a1a08; font-weight: 700; vertical-align: 1px; }
+.rn-pbar { justify-content: flex-end; margin-top: 6px; }
+body.small .rn-plist { max-height: 46vh; }
+body.small .rn-pick { padding: 3px 6px; gap: 5px; } body.small .rn-pick small { font-size: 9.5px; } body.small .rn-cfilt button { padding: 2px 7px; font-size: 10.5px; }
+body.small .rn-cpick > .sec span { display: none; }
+.rn-rel { display: inline-block !important; width: auto !important; height: auto !important; flex: none !important; margin-left: 6px; }
+.kpg .rn-cpick, .rn-cpick { grid-column: 1 / -1; }
+.rn-plist { max-height: calc(100vh - 400px); min-height: 90px; }
+body.small .rn-plist { max-height: calc(100vh - 250px); min-height: 60px; }
+body.small .rn-cfilt { margin: 0 0 3px; } body.small .rn-pbar { margin-top: 3px; } body.small .rn-pbar button { padding: 2px 8px; font-size: 11px; }
+body.small .rn-cfilt button, body.small .rn-pick .act-row button, body.small .rn-pbar button { min-height: 0 !important; padding: 2px 8px !important; font-size: 11px !important; }
+body.small .rn-plist { max-height: calc(100vh - 262px); }

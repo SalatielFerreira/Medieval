@@ -71,6 +71,8 @@ function hostile(a, b) {
   // soldados de lados opostos numa batalha em campo aberto
   if (a.battle && a.battle === b.battle && a.civ !== b.civ) return true;
   const fa = fac(a), fb = fac(b);
+  // os seus capangas defendem você dos moradores de um reino em guerra que estão atacando
+  if (b.kind === 'villager' && fa === 'player' && a !== P && b.dmg > 0 && (b.target === P || (b.target && fac(b.target) === 'player'))) return true;
   // predadores (lobo, urso, crocodilo) atacam moradores e viajantes, podendo matá-los (não dentro dos lugares fechados)
   if (PREDATORS.includes(a.kind) && b.kind === 'villager' && b.npc && !b.placeNpc) return true;
   if (fa === fb || a.dmg <= 0 || b.kind === 'villager') return false;
@@ -102,6 +104,7 @@ function canHit(e) {
   if (e.angry || e.hostileToPlayer) return true;
   if (e.npc && e.npc.hostile) return true;
   if (e.npc && Court.enemyPerson(e.npc)) return true;
+  if (e.kind === 'villager' && (e.target === P || hostile(e, P))) return true; // quem ataca você (ex.: os moradores de um reino em guerra) pode levar o troco
   if (e.kind === 'villager') return false;
   const f = fac(e);
   if (f === 'player') return false;

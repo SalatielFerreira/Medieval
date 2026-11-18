@@ -46,6 +46,8 @@ const Justice = {
     if (p.home && p.home.type === 'village') Rumors.atV(p.home.idx, `${People.full(p)} foi levad${p.sex === 'f' ? 'a' : 'o'} para a prisão de ${CIV_DEFS[ci].short} (${why || 'ordem do rei'}).`);
     return true;
   },
+  // condenado agora: vai direto para a cadeia do reino (lotada: espera vaga, mas já fica preso)
+  toJail(p, ci, why, months) { if (!p || !p.alive) return false; if (ci >= 0 && G.civs[ci] && this.arrest(p, ci, why, months, true)) return true; p.jail = G.day + (months || 6); const e = G.spawned.get(p.id); if (e) { e.dead = true; G.spawned.delete(p.id); } return false; },
   release(p, ci, quiet) {
     const L = this.jail(ci), i = L.findIndex(x => x.pid === p.id); if (i < 0) return;
     L.splice(i, 1); p.jail = 0; if (p.band && typeof Bands !== 'undefined') { p.band = null; p.rank = p.rank === 'bandit' ? 'peasant' : p.rank; this.home(p); }

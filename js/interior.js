@@ -305,16 +305,28 @@ const Places = {
     const pick = (list, n, salt) => list.map(p => ({ p, h: U.hash2(p.id, G.day, salt) })).sort((a, b) => a.h - b.h).slice(0, n).map(o => o.p);
     const wanderers = (n, salt) => { let k = 0; for (const p of pick(locals(), n, salt)) put(take(p), L.wander[k++ % L.wander.length], { leash: 2.2 }); };
     if (d.lay === 'throne') {
-      const ci = src.owner, ruled = G.civs[ci] && G.civs[ci].ruler === 'player';
-      const court = G.people.filter(p => p.alive && !p.capanga && p.rank !== 'soldier' && (p.home.type === 'castle' && p.home.civ === ci || (p.council && Families.civOf(p) === ci)));
-      const ruler = ruled ? null : (court.find(p => p.id === G.civs[ci].rulerId) || court.find(p => p.rank === 'ruler')); // o soberano de agora
+      // junto ao trono fica a corte (os quatro cargos: o conselho do seu reino ou o círculo do rei); mais afastados, a
+      // família real (cônjuge e filhos) e, no fundo da sala, os cavaleiros e os soldados do castelo
+      const ci = src.owner, cv = G.civs[ci], ruled = cv && cv.ruler === 'player';
+      const here = p => p && p.alive && !p.capanga && !(p.jail > G.day) && !used.has(p.id);
+      const atCastle = p => here(p) && p.home.type === 'castle' && p.home.civ === ci;
+      const ruler = ruled ? null : (G.people.find(p => p.alive && p.id === cv.rulerId) || G.people.find(p => atCastle(p) && p.rank === 'ruler')); // o soberano de agora
       // o soberano é bem defendido: muito mais vida e golpes pesados (um golpe de estado exige o melhor equipamento e todos os capangas)
       if (ruler) { const k0 = put(take(ruler), L.keeper, { still: true }); if (k0) { k0.maxHp = k0.hp = 900; k0.dmg = 28; k0.royal = true; } }
-      let k = 0;
-      for (const p of court.filter(p => p !== ruler).sort((a, b) => (b.rank === 'consort') - (a.rank === 'consort') || (b.rank === 'heir') - (a.rank === 'heir')).slice(0, L.staff.length)) put(take(p), L.staff[k++], { leash: 0.6 });
-      // guarda real: de 4 a 8 soldados de elite, conforme a guarnição do reino (2 se o castelo é seu)
-      const spots = [[3, 9], [12, 9], [3, 5], [12, 5], [3, 3], [12, 3], [5, 9], [10, 9]]; // fora das colunas
-      const n = ruled ? 2 : Math.min(spots.length, 4 + Math.floor(((G.civs[ci] && G.civs[ci].garrison) || 0) / 4));
+      const court = (ruled ? Object.keys(COUNCIL).map(s2 => Court.member(ci, s2)) : typeof Politics !== 'undefined' ? Politics.circlePeople(ci).map(x => x.p) : []).filter(q => here(q) && !away(q));
+      const COURT = [[6, 1.7], [9.4, 1.7], [5.1, 3.1], [10.3, 3.1]];
+      court.slice(0, COURT.length).forEach((q, k) => { const e = put(take(q), COURT[k], { still: true, dir: k % 2 ? -1 : 1 }); if (e) e.court = true; });
+      const fam = (ruled ? G.people.filter(q => here(q) && (q.spouse === 'player' || (q.kin === 'child' && !q.grown)) && q.age >= 4)
+        : [...G.people.filter(q => atCastle(q) && q.rank === 'consort'), ...G.people.filter(q => atCastle(q) && q.rank === 'heir'), ...(ruler ? (ruler.children || []).map(id => G.people[id]).filter(atCastle) : [])])
+        .filter((q, k, a) => a.indexOf(q) === k && !used.has(q.id)).sort((a, b) => (b.spouse === 'player' || b.rank === 'consort') - (a.spouse === 'player' || a.rank === 'consort') || b.age - a.age);
+      const FAM = [[5.6, 5.4], [9.9, 5.4], [4.6, 6.8], [10.9, 6.8], [5.8, 8.1], [9.7, 8.1], [4.4, 9.2], [11.1, 9.2]];
+      fam.slice(0, FAM.length).forEach((q, k) => put(take(q), FAM[k], { leash: 0.6, dir: k % 2 ? -1 : 1 }));
+      // os cavaleiros que moram no castelo, no fundo da sala
+      const KN = [[6.8, 10.1], [8.7, 10.1]];
+      G.people.filter(q => atCastle(q) && q.rank === 'knight' && !used.has(q.id)).slice(0, KN.length).forEach((q, k) => put(take(q), KN[k], { still: true, dir: k ? -1 : 1 }));
+      // guarda real: de 4 a 8 soldados de elite, conforme a guarnição do reino (2 se o castelo é seu), longe do trono
+      const spots = [[3, 9.6], [12.6, 9.6], [3, 7.6], [12.6, 7.6], [3, 4.4], [12.6, 4.4], [5, 10.2], [10.6, 10.2]];
+      const n = ruled ? 2 : Math.min(spots.length, 4 + Math.floor(((cv && cv.garrison) || 0) / 4));
       for (const [x, y] of spots.slice(0, n)) {
         const [tx, ty] = at([x, y]); const g = Game.spawn('guard', (tx + 0.5) * TILE, (ty + 0.8) * TILE, { civ: ci, leash: 0.5, tag: 'room' }); g.placeNpc = true;
         if (!ruled) { g.maxHp = g.hp = Math.round(g.maxHp * 2.2); g.dmg = Math.round(g.dmg * 1.6); g.royalGuard = true; }

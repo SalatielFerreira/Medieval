@@ -24,8 +24,9 @@ module.exports = async () => {
       // gente importante se muda para a capital
       const cap = Capital.of(ci), cvi = World.villages.indexOf(cap), src = World.villages.findIndex((v, i) => v && !v.free && v.civ === ci && i !== cvi);
       if (src >= 0) {
-        const k = People.create({ rank: 'knight', civ: ci, home: { type: 'village', idx: src }, age: 35 }); Families.attach && Families.attach(k);
-        const r0 = Math.random; Math.random = () => 0.01; for (let m = 0; m < 4 && k.home.idx !== cvi; m++) Capital.monthTick(); Math.random = r0;
+        for (const q of People.residents(cvi)) if (q.exiled !== undefined) q.home = { type: 'village', idx: src }; // (a corte do rei de antes, expulsa do castelo, foi morar na vila que depois virou a capital)
+        const k = People.create({ rank: 'knight', civ: ci, home: { type: 'village', idx: src }, age: 35 }); Families.attach && Families.attach(k); if (Families.of(k)) Families.of(k).wealth = 1e6; // (a família mais rica muda primeiro)
+        const r0 = Math.random; Math.random = () => 0.01; for (let m = 0; m < 16 && k.home.idx !== cvi; m++) Capital.monthTick(); Math.random = r0;
         ok(k.home.idx === cvi, 'o cavaleiro não se mudou para a capital');
       }
       return out;

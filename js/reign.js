@@ -152,7 +152,7 @@ const Reign = {
   unseat(p) { if (p && p.council && G.civs[p.council.civ]) { const cn = Court.council(p.council.civ); if (cn[p.council.seat] === p.id) cn[p.council.seat] = null; } if (p) p.council = null; },
   resolvePlot(i, how) {
     const R = this.R(), pl = R.plots[i]; if (!pl) return; const p = G.people[pl.pid], c = G.civs[pl.ci], f = p && Families.of(p);
-    if (how === 'arrest') { if (p) { p.jail = G.day + 6; People.addAff(p, -40); this.unseat(p); } this.rep('nobreza', -4); UI.msg(`⛓️ ${p ? p.name : 'O conspirador'} foi preso.`, 'gold'); }
+    if (how === 'arrest') { if (p) { this.unseat(p); Justice.toJail(p, pl.ci, 'complô contra o rei', 6); People.addAff(p, -40); } this.rep('nobreza', -4); UI.msg(`⛓️ ${p ? p.name : 'O conspirador'} foi preso.`, 'gold'); }
     if (how === 'exile') { if (p) { p.home = { type: 'wild' }; People.addAff(p, -60); this.unseat(p); if (f) f.loyalty = Math.max(0, f.loyalty - 20); } this.rep('nobreza', -2); UI.msg(`🚪 ${p ? p.name : 'O conspirador'} foi exilado.`, 'gold'); }
     if (how === 'execute') { if (p && p.alive) { this.unseat(p); People.die(p, 'executado por traição'); } if (f) f.loyalty = Math.max(0, f.loyalty - 40); if (c) c.happy = Math.max(0, c.happy - 4); this.rep('nobreza', -5); UI.msg(`⚔️ ${p ? People.full(p) : 'O conspirador'} foi executado. A família está furiosa.`, 'bad'); }
     if (how === 'pardon') { if (p) { p.aff = Math.max(p.aff || 0, 40); p.amb = Math.max(0, (p.amb || 50) - 30); } this.rep('nobreza', 2); UI.msg(`🕊️ Você perdoou ${p ? p.name : ''}: a lealdade voltou.`, 'gold'); }

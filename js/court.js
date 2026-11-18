@@ -148,7 +148,20 @@ const Court = {
       (Families.civOf(p) === ci || p.home.type === 'player')).map(p => this.traits(p))
       .sort((a, b) => b.comp - a.comp || b.aff - a.aff).slice(0, 8);
   },
+  // quem pode ser chamado para o conselho do seu reino: a sua família (filhos, netos e cônjuge, onde quer que morem),
+  // quem você conhece (amizade 10+) e a gente do reino. Filtros: 'fam', 'met', 'realm' (ou todos)
+  isFam(p) { return !!p && (p.kin === 'child' || p.spouse === 'player' || (typeof Grown !== 'undefined' && Grown.grand(p))); },
+  relLabel(p) { const f = p.sex === 'f'; return p.kin === 'child' ? (f ? 'Sua filha' : 'Seu filho') : p.spouse === 'player' ? (f ? 'Sua esposa' : 'Seu marido') : typeof Grown !== 'undefined' && Grown.grand(p) ? (f ? 'Sua neta' : 'Seu neto') : ''; },
+  pool(ci, filt) {
+    const L = G.people.filter(p => p.alive && p.age >= 18 && !p.capanga && !(p.jail > G.day) && p.rank !== 'ruler' && !(p.rank === 'consort' && p.spouse !== 'player') && !G.civs.some(c => c.rulerId === p.id)
+      && (this.isFam(p) || ((p.job === undefined || p.job === null) && (Families.civOf(p) === ci || p.home.type === 'player' || (p.met && (p.aff || 0) >= 10)))));
+    const F = filt === 'fam' ? L.filter(p => this.isFam(p)) : filt === 'met' ? L.filter(p => p.met) : filt === 'realm' ? L.filter(p => Families.civOf(p) === ci) : L;
+    return F.map(p => this.traits(p)).sort((a, b) => this.isFam(b) - this.isFam(a) || b.comp - a.comp || b.aff - a.aff).slice(0, 60);
+  },
   appoint(ci, seat, p) {
+    if (!p || !p.alive) return;
+    if (p.council && (p.council.civ !== ci || p.council.seat !== seat)) { const oc = G.civs[p.council.civ]; if (oc && oc.council && oc.council[p.council.seat] === p.id) oc.council[p.council.seat] = null; p.council = null; }
+    if (typeof Politics !== 'undefined') for (const cc of Object.values(Politics.S().circle || {})) for (const s in cc) if (cc[s] === p.id) delete cc[s]; // sai da corte de outro rei
     const old = this.member(ci, seat);
     if (old) old.council = null;
     this.traits(p);

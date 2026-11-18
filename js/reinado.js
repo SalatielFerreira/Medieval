@@ -179,6 +179,19 @@ const Reinado = {
         h += `<div class="act-row">${p ? `<button data-act="tk" data-op="open" data-id="${p.id}">💬 Falar</button><button data-act="cdismiss" data-c="${ci}" data-s="${seat}">Dispensar</button>` : ''}${S.cseat === seat ? '' : `<button data-act="cpick" data-s="${seat}">${p ? 'Trocar' : 'Nomear alguém'}</button>`}</div></div>`;
         return h;
       }).join('');
+      if (S.cseat && COUNCIL[S.cseat]) {
+        // escolher quem chamar para a cadeira: a família primeiro, depois quem você conhece e a gente do reino
+        const seat = S.cseat, d = COUNCIL[seat], cur = Court.member(ci, seat), f = ['fam', 'met', 'realm'].includes(S.cfilt) ? S.cfilt : 'all', L = Court.pool(ci, f);
+        const chip = (k, l) => `<button class="${f === k ? 'on' : ''}" data-act="cfilt" data-k="${k}">${l}</button>`;
+        const icon = q => Court.relLabel(q) ? (q.spouse === 'player' ? '💍' : '👪') : NOBLE_RANKS.includes(q.rank) ? '🎖️' : q.rank === 'knight' ? '🛡️' : '🧑';
+        const rows = L.map(q => { const rel = Court.relLabel(q), inC = q.council && COUNCIL[q.council.seat] ? q.council : null;
+          return `<div class="rn-row rn-pick ${rel ? 'fam' : ''} ${cur === q ? 'on' : ''}"><span class="ri">${icon(q)}</span><span><b>${esc(People.full(q))}${rel ? ` <i class="rn-rel">${rel}</i>` : ''}</b><small>${esc(People.title(q))} · ${q.age} anos · ${esc(People.homeName(q))}</small><small>⭐ ${q.comp} competência · 💛 ${Math.round(q.aff)} lealdade · 🔥 ${Math.round(q.amb || 0)} ambição${inC ? ` · hoje é ${COUNCIL[inC.seat].m}${inC.civ !== ci ? ` de ${CIV_DEFS[inC.civ].short}` : ''}` : ''}</small></span><span class="act-row">${cur === q ? '<b class="ok">✓ no cargo</b>' : `<button class="primary" data-act="appoint" data-c="${ci}" data-s="${seat}" data-id="${q.id}">Nomear</button>`}</span></div>`; }).join('');
+        const pick = `<div class="card wide rn-council rn-cpick"><div class="sec">${d.icon} Escolher ${d.m} de ${CIV_DEFS[ci].short} <span>${cur ? `hoje: ${esc(People.full(cur))}` : 'cargo vago'} · ${d.desc}</span></div>
+          <div class="act-row rn-cfilt">${chip('all', '👥 Todos')}${chip('fam', '👪 Sua família')}${chip('met', '🤝 Quem você conhece')}${chip('realm', `🏰 Gente de ${CIV_DEFS[ci].short}`)}<span class="muted">${L.length} ${L.length === 1 ? 'pessoa' : 'pessoas'}</span></div>
+          <div class="rn-plist">${rows || '<p class="muted">Ninguém nesta lista. Converse com as pessoas para conhecê-las.</p>'}</div>
+          <div class="act-row rn-pbar"><button data-act="cpickx">◀ Voltar ao conselho</button></div></div>`;
+        return pick;
+      }
       const council = `<div class="card rn-council"><div class="sec">🎩 O conselho de ${CIV_DEFS[ci].short} <span>competência ⭐, lealdade (a amizade com você) e ambição${c.stolen && Court.member(ci, 'spy') ? ` · desvios descobertos: ${c.stolen} 🪙` : ''}</span></div><div class="rn-seats">${seats}</div></div>`;
       return (main ? Reign.dilemmaHtml() + Reign.plotsHtml() : '') + council + (main ? Reign.spyHtml() : Reinado.elsewhere('Os dilemas, o julgamento dos complôs e os espiões'));
     },
