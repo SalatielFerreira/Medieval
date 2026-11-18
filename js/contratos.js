@@ -119,7 +119,8 @@ const Contracts = {
     // as listas viram páginas (◀ 1/5 ▶) para caber no quadro sem rolar
     const small = document.body.classList.contains('small'), PG = sel.ctPg || (sel.ctPg = { t: 0, a: 0 });
     const page = (L, k, n) => { const pages = Math.max(1, Math.ceil(L.length / n)); PG[k] = U.clamp(PG[k] || 0, 0, pages - 1); return { list: L.slice(PG[k] * n, PG[k] * n + n), nav: pages > 1 ? `<div class="ct-pg"><button data-act="ct" data-op="pg" data-k="${k}" data-d="-1" ${PG[k] ? '' : 'disabled'}>◀</button><span>${PG[k] + 1}/${pages}</span><button data-act="ct" data-op="pg" data-k="${k}" data-d="1" ${PG[k] < pages - 1 ? '' : 'disabled'}>▶</button></div>` : '' }; };
-    const pT = page(T, 't', small ? 2 : 7), pA = page(A, 'a', small ? 2 : 6);
+    // (no computador, as listas rolam por dentro em vez de virar páginas)
+    const pT = page(T, 't', small ? 2 : 80), pA = page(A, 'a', small ? 2 : 80);
     const icon = p => this.isKing(p) ? '👑' : NOBLE_RANKS.includes(p.rank) ? '🎖️' : p.rank === 'knight' ? '🛡️' : Chiefdom.vilOf(p) >= 0 ? '🏘️' : p.sex === 'f' ? '👩' : '🧔';
     const tRows = pT.list.map(x => kind === 'kill'
       ? `<button class="ct-row ${t === x ? 'on' : ''}" data-act="ct" data-op="t" data-i="${x.id}"><span>${icon(x)}</span><span><b>${esc(People.full(x))}</b><small>${esc(People.title(x))} · ${esc(People.homeName(x))} · amizade ${Math.round(x.aff || 0)}</small></span><em>${this.killCost(x).toLocaleString('pt-BR')} 🪙</em></button>`
@@ -130,10 +131,10 @@ const Contracts = {
     const act = S.list.map(c => { const x = this.target(c.kind, c.tid), y = People.get(c.aid); return `<div class="ct-run"><span>${CONTRACT_KINDS[c.kind].icon}</span><span><b>${x ? esc(this.tName(c.kind, x)) : '?'}</b><small>${y ? esc(People.full(y)) : '?'} · no mês que vem · chance ${Math.round(c.ch * 100)}%</small></span></div>`; }).join('');
     return `<div class="ct">
       <div class="card ct-c"><div class="sec">1️⃣ O serviço</div><div class="act-row ct-k">${Object.entries(CONTRACT_KINDS).map(([k, d]) => `<button class="${k === kind ? 'on' : ''}" data-act="ct" data-op="k" data-k="${k}">${d.icon} ${d.name}</button>`).join('')}</div>
-        <div class="ct-list">${pT.nav}${tRows || `<p class="muted">${kind === 'kill' ? 'Converse com as pessoas para conhecê-las: só dá para mandar matar quem você conhece.' : 'Nenhuma família rica por perto.'}</p>`}</div></div>
-      <div class="card ct-c"><div class="sec">2️⃣ Quem faz <span>bandidos e matadores de aluguel</span></div><div class="ct-list">${pA.nav}${aRows || '<p class="muted">Ninguém aceita agora. Chegue perto de um acampamento de bandidos.</p>'}</div>${go}</div>
-      <div class="card ct-c"><div class="sec">📜 Em andamento <span>${S.list.length}</span></div><div class="ct-list sm">${act || '<p class="muted">Nenhum serviço encomendado.</p>'}</div>
-        <div class="sec" style="margin-top:6px">📒 O que aconteceu</div><div class="ct-list sm">${S.log.slice(0, small ? 2 : 6).map(l => `<div class="ct-log"><em>${Calendar.short(l.day)}</em> ${esc(l.t)}</div>`).join('') || '<p class="muted">Nada ainda.</p>'}</div>
+        <div class="ct-list${small ? '' : ' kscroll'}">${pT.nav}${tRows || `<p class="muted">${kind === 'kill' ? 'Converse com as pessoas para conhecê-las: só dá para mandar matar quem você conhece.' : 'Nenhuma família rica por perto.'}</p>`}</div></div>
+      <div class="card ct-c"><div class="sec">2️⃣ Quem faz <span>bandidos e matadores de aluguel</span></div><div class="ct-list${small ? '' : ' kscroll'}">${pA.nav}${aRows || '<p class="muted">Ninguém aceita agora. Chegue perto de um acampamento de bandidos.</p>'}</div>${go}</div>
+      <div class="card ct-c"><div class="sec">📜 Em andamento <span>${S.list.length}</span></div><div class="ct-list sm${small ? '' : ' kscroll'}">${act || '<p class="muted">Nenhum serviço encomendado.</p>'}</div>
+        <div class="sec" style="margin-top:6px">📒 O que aconteceu</div><div class="ct-list sm${small ? '' : ' kscroll'}">${S.log.slice(0, small ? 2 : 20).map(l => `<div class="ct-log"><em>${Calendar.short(l.day)}</em> ${esc(l.t)}</div>`).join('') || '<p class="muted">Nada ainda.</p>'}</div>
         <small class="muted">Deu errado? O contratado é preso ou morto e pode contar quem pagou: a família vira sua inimiga e a sua cabeça vai a prêmio.</small></div></div>`;
   },
 };

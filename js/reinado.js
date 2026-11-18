@@ -218,7 +218,7 @@ const Reinado = {
           <span class="act-row">${tags}${acts}</span></div>`;
       }).join('');
       return `<div class="card rn-dips wide"><div class="sec">🤝 ${CIV_DEFS[ci].short} e os outros reinos <span>relação entre reinos · os custos saem do tesouro${main ? ' · 📦 comércio por 12 meses (relação 15+) · 💰 tributo só de um reino bem mais fraco' : ''}</span></div>${rows}</div>`
-        + (main ? Pacts.wedCard() + Pacts.hostCard() + Pacts.worldCard() : Reinado.elsewhere('Os tratados (casamento, comércio, tributo, reféns, não agressão e vassalagem)'));
+        + (main ? Pacts.wedCard() + Pacts.hostCard() : Reinado.elsewhere('Os tratados (casamento, comércio, tributo, reféns, não agressão e vassalagem)'));
     },
     // ---- Exército: a guarnição, a escolta, a tropa e os guardas do castelo
     exercito(ci, c, main) {

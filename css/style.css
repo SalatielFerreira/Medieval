@@ -4035,8 +4035,6 @@ body.small .tr-t { font-size: 16px; }
 .pc-row .act-row { flex-wrap: wrap; justify-content: flex-end; }
 .pc-row small b.ok { color: #7fdc7f; } .pc-row small b.bad { color: #ef7a6a; }
 .tag.bad { background: #6a2a22; }
-.pc-world { display: flex; flex-wrap: wrap; gap: 6px; }
-.pc-world span { padding: 4px 9px; border-radius: 999px; background: rgba(0, 0, 0, .25); border: 1px solid rgba(214, 174, 96, .2); font-size: 12px; }
 
 /* ---------------------------------------------------------------- árvore da dinastia */
 .lg-head { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
@@ -6566,3 +6564,27 @@ body.small .bty-wrap { grid-template-columns: 210px 1fr; height: auto; gap: 8px;
 body.small .bty-me .sv-poster { max-height: 230px; } body.small .bty-me .bty-por.me { width: 52px; height: 58px; }
 body.small .bty-grid { max-height: 196px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .vj .va-shopgrid.kscroll { max-height: 132px; }
+/* Diplomacia em colunas (umapagina.js): nome · relação · situação · ações */
+.dpx-head, .dpx { display: grid; grid-template-columns: 175px 185px 235px minmax(0, 1fr); align-items: center; gap: 10px; }
+.dpx-head { padding: 0 10px 3px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #a8987a; } 
+.dpx-list { display: flex; flex-direction: column; gap: 4px; max-height: 372px; padding-right: 4px; }
+.dpx { padding: 4px 10px; min-height: 40px; border-radius: 8px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 174, 96, .12); }
+.dpx.war { border-color: rgba(220, 80, 60, .55); background: rgba(120, 20, 10, .2); }
+.dpx.mine { opacity: .7; } .dpx-me { grid-column: 2 / -1; font-size: 12px; color: #e2cfa6; }
+.dpx .rn-dn { min-width: 0; } .dpx .rn-dn small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dpx-st { display: flex; flex-wrap: wrap; gap: 4px; }
+.dpx-st i { font-style: normal; display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 12px; background: rgba(80, 130, 40, .35); border: 1px solid rgba(120, 180, 70, .5); color: #eaf6d8; cursor: help; }
+.dpx-st i b { font-size: 11px; } .dpx-st i.war, .dpx-st i.bad { background: rgba(160, 40, 30, .4); border-color: rgba(220, 80, 60, .6); }
+.dpx-ac { display: flex; justify-content: flex-start; gap: 4px; flex-wrap: nowrap; }
+.dpx-ac button { padding: 3px 7px; min-width: 32px; min-height: 0; font-size: 12px; white-space: nowrap; }
+.dpx-ac button.undo small { color: #ff8a7a; font-weight: 900; margin-left: 1px; }
+.dpx > * { grid-area: auto !important; grid-row: auto !important; grid-column: auto; } .dpx > .dpx-me { grid-column: 2 / -1; }
+/* três colunas numa página (Reinado no computador) */
+.k3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: start; }
+.k3-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; } .k3-col > .card { margin: 0 !important; }
+.k3-tes .fin-cols { display: flex !important; flex-direction: column; gap: 6px; max-height: 250px; }
+.k3-tes .rn-hist small { font-size: 10px; } .k3-tes .rn-fin > p { font-size: 11.5px; margin: 4px 0 0; }
+.k3-tes .rn-pocket .act-row { flex-wrap: wrap; gap: 4px; } .k3-tes .rn-pocket .act-row button { padding: 3px 7px; font-size: 11.5px; }
+.k3-tes .rn-res .rn-r { grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 6px; } .k3-tes .rn-res .rn-r > small:nth-of-type(2) { display: none; }
+.k3-tes .rn-budget .rn-grid2 { grid-template-columns: 1fr 1fr; gap: 4px; } .k3-tes .rn-budget .sec span { display: none; } .k3-tes .rn-fin .sec span { display: none; }
+body:not(.small) .ct-list.kscroll { overflow-y: auto !important; max-height: none; padding-right: 3px; } body:not(.small) .ct-list.sm.kscroll { max-height: 34%; }

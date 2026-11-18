@@ -221,12 +221,7 @@ const Pacts = {
     const row = (h, mineHeld) => { const p = G.people[h.pid]; if (!p) return ''; return `<div class="rn-row"><span><b>${mineHeld ? '🔐' : '🤲'} ${esc(People.full(p))}</b><small>${mineHeld ? `refém de ${CIV_DEFS[h.from] ? CIV_DEFS[h.from].short : '?'} no seu castelo` : `seu refém em ${CIV_DEFS[h.to].short}`} · volta em ${h.until - G.day} ${h.until - G.day === 1 ? 'mês' : 'meses'}</small></span>${mineHeld ? `<span class="act-row">${this.btn('free', S.host.indexOf(h), '🕊️ Libertar (+15 relação)', true)}</span>` : ''}</div>`; };
     return held.length || given.length ? `<div class="card pc-host"><div class="sec">🕊️ Reféns</div>${held.map(h => row(h, true)).join('')}${given.map(h => row(h, false)).join('')}</div>` : '';
   },
-  worldCard() {
-    const S = this.S(), ai = x => !this.mine(x);
-    const lines = [...S.trade.filter(t => ai(t.a) && ai(t.b)).map(t => `📦 ${CIV_DEFS[t.a].short} ⇄ ${CIV_DEFS[t.b].short}`), ...S.trib.filter(t => ai(t.from) && ai(t.to)).map(t => `💰 ${CIV_DEFS[t.from].short} paga ${t.amt} a ${CIV_DEFS[t.to].short}`),
-      ...S.host.filter(h => ai(h.from) && ai(h.to)).map(h => `🕊️ ${G.people[h.pid] ? UI.esc(G.people[h.pid].name) : '?'} (${CIV_DEFS[h.from].short}) refém em ${CIV_DEFS[h.to].short}`)];
-    return `<div class="card pc-world"><div class="sec">🌍 Tratados entre os outros reinos <span>${lines.length}</span></div>${lines.length ? `<div class="pc-world">${lines.map(l => `<span>${l}</span>`).join('')}</div>` : '<p class="muted">Nenhum tratado em vigor entre os reinos da IA.</p>'}</div>`;
-  },
+
 };
 
 {

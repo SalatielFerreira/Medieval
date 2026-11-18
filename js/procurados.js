@@ -90,8 +90,7 @@ const Bounty = {
         : `<div class="bty-v war">⚔️ ${G.civs[b.ci] && G.civs[b.ci].atWar ? 'em guerra: não paga' : 'não paga'}</div>`;
     return `<div class="bty-card ${b.crown ? 'crown' : ''}"><div class="bty-h">PROCURAD${f ? 'A' : 'O'}</div>
       <canvas class="bty-por" data-bp="${p.id}" width="56" height="64"></canvas>
-      <b class="bty-n" title="${esc(People.full(p))}">${esc(People.full(p))}</b><small>${p.age} anos · ${esc(People.homeName(p))}</small>
-      <div class="bty-why">${esc(b.why)}</div>${val}
+      <b class="bty-n" title="${esc(People.full(p))}">${esc(People.full(p))}</b><small>${p.age} anos · ${esc(People.homeName(p))}</small>${val}
       <div class="bty-f"><span title="${CIV_DEFS[b.ci] ? CIV_DEFS[b.ci].name : ''}">${G.civs[b.ci] ? Heraldry.armsSvg(b.ci, 14) : ''} ${CIV_DEFS[b.ci] ? CIV_DEFS[b.ci].short : ''}</span><span>${x.d < 9999 ? `📍 ${x.d} passos` : ''}</span>
         <button data-act="bty" data-op="star" data-p="${p.id}" title="${p.starred ? 'Tirar a estrela do mapa' : 'Marcar no mapa com uma estrela'}">${p.starred ? '★' : '☆'}</button></div></div>`;
   },
@@ -113,7 +112,7 @@ const Bounty = {
   },
 };
 
-if (typeof SVX_GUIDE !== 'undefined') SVX_GUIDE.procurado = { name: 'Procurados', tip: 'Os cartazes dos reinos: quem está a prêmio, por qual crime e quanto pagam — a sua cabeça também.',
+if (typeof SVX_GUIDE !== 'undefined') SVX_GUIDE.procurado = { name: 'Procurados', tip: 'Os cartazes dos reinos: quem está a prêmio, o reino que paga e quanto — a sua cabeça também.',
   use: 'Caçar recompensas: achar um procurado, prender (vale tudo) ou matar (vale a metade); e limpar o seu nome com o perdão.',
   how: ['Marque a pessoa com ☆ para ver onde ela está no mapa.', 'Converse com ela e use ⛓️ Prender.', 'Se for você no cartaz, pague o perdão do reino.'],
   when: 'Quando precisar de ouro — ou antes de entrar num reino onde a sua cabeça vale ouro.' };

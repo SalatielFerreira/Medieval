@@ -97,18 +97,7 @@ const Oil = {
     const f0 = Reinado.T[tab].bind(Reinado.T);
     Reinado.T[tab] = function (...a) { const h = f0(...a); if (document.body.classList.contains('small')) return h; try { return scrollify(h, sels); } catch (e) { console.error(e); return h; } };
   }
-  // Diplomacia: botões só com o ícone (o texto inteiro fica na dica) para cada reino caber numa linha
-  const ICON = [[/^(\S+)\s*Não agressão$/, '$1'], [/^(\S+)\s*Vassal(o|agem)$/, '$1'], [/^(\S+)\s*Tributo$/, '$1'], [/^(\S+)\s*Guerra$/, '⚔️']];
-  const dp0 = Reinado.T.diplo.bind(Reinado.T);
-  Reinado.T.diplo = function (...a) {
-    const html = dp0(...a); if (document.body.classList.contains('small')) return html;
-    try {
-      const t = document.createElement('template'); t.innerHTML = html;
-      for (const b of t.content.querySelectorAll('.rn-dip .act-row button')) { const txt = b.textContent.trim(); for (const [re, to] of ICON) if (re.test(txt)) { if (!b.title) b.title = txt.replace(/^\S+\s*/, ''); b.textContent = txt.replace(re, to); b.classList.add('dp-ic'); break; } }
-      for (const s of t.content.querySelectorAll('.rn-dip .act-row .tag')) { s.title = s.textContent.trim(); s.classList.add('dp-tag'); }
-      return [...t.content.childNodes].map(n => n.outerHTML || n.textContent || '').join('');
-    } catch (e) { console.error(e); return html; }
-  };
+
 }
 
 // os caldeirões de óleo nas ameias, sobre o portão (só no castelo que tem óleo)

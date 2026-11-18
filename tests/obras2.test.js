@@ -40,7 +40,7 @@ module.exports = async () => {
       for (const vi of vs.slice(0, 1)) R.fiefs[vi] = { pid: nb[0].id, loyal: 60, rank: 0 };
       UI.showKingdom(); ok(UI.panel.querySelector('.rn-fiefs .kscroll') && UI.panel.querySelectorAll('.kpg.kpage').length === 1, 'Vassalos não rola por dentro ou passou de uma página');
       // 5. diplomacia: botões curtos
-      UI.sel.rnTab = 'diplo'; UI.showKingdom(); ok(UI.panel.querySelector('.rn-dip button.dp-ic[title]'), 'a diplomacia não tem os botões curtos com dica');
+      UI.sel.rnTab = 'diplo'; UI.showKingdom(); ok(UI.panel.querySelector('.dpx button.dp-ic[title]') && UI.panel.querySelector('.dpx-list.kscroll'), 'a diplomacia não tem os botões curtos com dica');
       return bad;
     });
     fails.push(...r);

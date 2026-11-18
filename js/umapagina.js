@@ -78,29 +78,69 @@ const OnePage = {
   };
 }
 
-// Diplomacia numa página: os botões de cada reino com rótulos curtos (o texto inteiro fica na dica) e um só botão de
-// refém por reino; assim cada reino cabe numa linha, mesmo em guerra
+// Diplomacia numa página: cada reino numa linha em colunas — nome · relação · a situação em selos de ícone (aliado,
+// guerra, não agressão, comércio +renda, tributo, vassalo, direito ao trono) · os botões só com o ícone e o valor
+// (o texto inteiro fica na dica). Na guerra, o que não dá para fazer sai; um só botão de refém. A lista rola por dentro.
 {
-  const SHORT = [[/^(\S+)\s*Presente (\d+)$/, '$1 $2'], [/^(\S+)\s*Aliança (\d+)$/, '$1 $2'], [/^(\S+)\s*Comércio (\d+)$/, '$1 $2'], [/^(\S+)\s*Tributo \((\d+%)\)$/, '$1 $2'],
-    [/^(\S+)\s*Mensageiro de paz$/, '$1 Paz'], [/^(\S+)\s*Paz com tributo.*$/, '$1 + tributo'], [/^(\S+)\s*Paz por um refém$/, '$1 + refém'], [/^(\S+)\s*Não agressão$/, '$1 Não agressão'], [/^(\S+)\s*Vassalagem$/, '$1 Vassalo']];
+  const ST = t => {
+    if (/^GUERRA/i.test(t)) return ['⚔️', '', 'war', 'Em guerra'];
+    if (/^ALIADO/i.test(t)) return ['🤝', '', 'ok', 'Aliado'];
+    const ic = t.split(/\s+/)[0]; let v = '';
+    if (/comércio/.test(t)) v = '+' + ((t.match(/\+(\d+)/) || [])[1] || '');
+    else if (/recebe (\d+)/.test(t)) v = '+' + t.match(/recebe (\d+)/)[1];
+    else if (/paga (\d+)/.test(t)) v = '−' + t.match(/paga (\d+)/)[1];
+    return [ic, v, /paga/.test(t) ? 'bad' : '', t];
+  };
   const dp0 = Reinado.T.diplo.bind(Reinado.T);
   Reinado.T.diplo = function (...a) {
     const html = dp0(...a);
     if (document.body.classList.contains('small')) return html;
     try {
-      const t = document.createElement('template'); t.innerHTML = html;
-      for (const row of t.content.querySelectorAll('.rn-dip .act-row')) {
-        let hostage = 0; const war = !!row.querySelector('.badge');
-        for (const b of [...row.querySelectorAll('button')]) {
-          if (war && b.disabled) { b.remove(); continue; } // na guerra, o que não dá para fazer sai da linha
-          const txt = b.textContent.trim();
-          if (/^\S+\s*Entregar /.test(txt)) { if (hostage++) { b.remove(); continue; } b.title = `${txt} como refém (os outros filhos também podem ir: escolha na conversa)`; b.textContent = txt.replace(/^(\S+)\s*Entregar (.+)$/, '$1 Refém: $2'); continue; }
-          for (const [re, to] of SHORT) if (re.test(txt)) { if (!b.title) b.title = txt; b.textContent = txt.replace(re, to); break; }
+      const t = document.createElement('template'), esc = UI.esc.bind(UI); t.innerHTML = html;
+      const card = t.content.querySelector('.card.rn-dips'); if (!card) return html;
+      const rows = [...card.querySelectorAll(':scope > .rn-dip')].map(row => {
+        const nm = row.querySelector('.rn-dn'), ar = row.querySelector('.act-row'), gauge = [...row.children].find(e => e !== nm && e !== ar);
+        if (row.classList.contains('mine') || !ar) return `<div class="dpx mine">${nm ? nm.outerHTML : ''}<span class="dpx-me">👑 seu reino</span></div>`;
+        const tags = [...ar.querySelectorAll('.tag, .badge')].map(s => ST(s.textContent.trim())), war = tags.some(x => x[2] === 'war');
+        let hostage = 0; const btns = [];
+        for (const b of ar.querySelectorAll('button')) {
+          const txt = b.textContent.trim(), x = b.dataset.x;
+          if (war && b.disabled) continue;
+          if (x === 'ally' && tags.some(g => g[2] === 'ok')) continue;
+          if (/Entregar /.test(txt) && hostage++) continue;
+          const ic = txt.split(/\s+/)[0], num = (txt.match(/(\d+%|\d[\d.]*)(?!.*\d)/) || [])[1] || '';
+          let lab = ic + (num && !/Entregar|refém/.test(txt) ? ' ' + num : '');
+          if (x === 'war') lab = '⚔️';
+          if (/Romper/.test(txt)) { lab = ic + '<small>✕</small>'; b.classList.add('undo'); }
+          b.title = (b.title && b.title !== txt ? `${txt} — ${b.title}` : txt);
+          b.innerHTML = lab; b.classList.add('dp-ic'); btns.push(b.outerHTML);
         }
-      }
-      // tratados entre os outros reinos: sem nenhum, o quadro sai (abre espaço para os casamentos)
-      const w = t.content.querySelector('.card.pc-world'); if (w && !w.querySelector('div.pc-world')) w.remove();
+        return `<div class="dpx ${war ? 'war' : ''}">${nm ? nm.outerHTML : ''}${gauge ? gauge.outerHTML : ''}<span class="dpx-st">${tags.map(([ic, v, cls, tt]) => `<i class="${cls}" title="${esc(tt)}">${ic}${v ? `<b>${v}</b>` : ''}</i>`).join('') || '<small class="muted">sem tratados</small>'}</span><span class="dpx-ac">${btns.join('')}</span></div>`;
+      });
+      const sec = card.querySelector(':scope > .sec'); if (sec) { const sp = sec.querySelector('span'); if (sp) sp.textContent = 'os custos saem do tesouro · passe o mouse nos ícones para ver o que fazem'; }
+      card.classList.add('dpx-card');
+      card.innerHTML = (sec ? sec.outerHTML : '') + `<div class="dpx-head"><span>Reino</span><span>Relação</span><span>Situação</span><span>Ações</span></div><div class="dpx-list kscroll">${rows.join('')}</div>`;
       return [...t.content.childNodes].map(n => n.outerHTML || n.textContent || '').join('');
+    } catch (e) { console.error(e); return html; }
+  };
+}
+
+// Tesouro numa página, em três colunas: o mês do tesouro (entradas e saídas uma embaixo da outra, a lista rola se
+// crescer) · o banco e o seu bolso · os armazéns e o orçamento
+{
+  const ts0 = Reinado.T.tesouro.bind(Reinado.T);
+  Reinado.T.tesouro = function (...a) {
+    const html = ts0(...a);
+    if (document.body.classList.contains('small')) return html;
+    try {
+      const t = document.createElement('template'); t.innerHTML = html;
+      const take = sel => { const e = t.content.querySelector(sel); if (e) e.remove(); return e; };
+      const fin = take('.card.rn-fin'), store = take('.card.rn-store'), bud = take('.card.rn-budget'), bank = [...t.content.children].find(e => e.matches('.card') || e.querySelector('.card')); if (bank) bank.remove();
+      if (!fin) return html;
+      const cols = fin.querySelector('.fin-cols'); if (cols) cols.classList.add('kscroll');
+      const col = list => `<div class="k3-col">${list.filter(Boolean).map(e => e.outerHTML).join('')}</div>`;
+      const rest = [...t.content.childNodes].map(n => n.outerHTML || n.textContent || '').join('');
+      return `<div class="k3 k3-tes">${col([fin])}${col([bank])}${col([store, bud])}</div>${rest}`;
     } catch (e) { console.error(e); return html; }
   };
 }

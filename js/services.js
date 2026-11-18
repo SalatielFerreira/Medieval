@@ -17,7 +17,7 @@ const Services = {
     const W = OutLaw.wanted(), tb = OutLaw.totalBounty();
     if (!W.length) return `<div class="sv-poster calm"><div class="sv-ph">Ninguém procura você</div><div class="sv-pface">🕊️</div><small>O seu nome está limpo em todos os reinos. Um crime e a cabeça vai a prêmio.</small></div>`;
     return `<div class="sv-poster"><div class="sv-ph">PROCURADO</div><div class="sv-pname">${this.esc(G.name)}</div><div class="sv-preward">${tb.toLocaleString('pt-BR')} 🪙</div><small>pela sua cabeça${tb > 300 ? ' · caçadores de recompensa estão atrás de você' : ''}</small>
-      <div class="sv-plist">${W.map(x => `<div class="sv-prow"><span>${Heraldry.armsSvg(x.ci, 18)}</span><span><b>${CIV_DEFS[x.ci].short} · ${x.w.bounty} 🪙</b><small>${this.esc(x.w.crimes.join(', '))}${x.w.resist ? ' · os guardas atacam' : ''}</small></span>
+      <div class="sv-plist">${W.map(x => `<div class="sv-prow"><span>${Heraldry.armsSvg(x.ci, 18)}</span><span><b>${CIV_DEFS[x.ci].short}</b><small>paga ${x.w.bounty.toLocaleString('pt-BR')} 🪙</small></span>
         <button data-act="ol" data-op="pardon" data-c="${x.ci}" ${P.gold >= OutLaw.pardonCost(x.ci) ? '' : 'disabled'}>📜 Perdão — ${OutLaw.pardonCost(x.ci)} 🪙</button></div>`).join('')}</div></div>`;
   },
   // os acampamentos perto de você e quem está em cada bando
