@@ -67,3 +67,23 @@ const RX = {
     };
   }
 }
+
+// Portfólio inteiro, no computador: a lista que crescia em partes (◀ 1/9 ▶) agora rola por dentro e vai até a base da
+// janela (a altura acompanha a tela). Só quando rolar não resolve (uma tabela, por exemplo) ela volta a se dividir.
+{
+  const pl0 = UI.pageList.bind(UI);
+  UI.pageList = function (o) {
+    const { items, over } = o;
+    if (document.body.classList.contains('small') || !items || items.length < 2 || !over()) return pl0(o);
+    const list = items[0].parentElement;
+    if (!list || list.tagName === 'TBODY' || list.tagName === 'TABLE' || !items.every(c => c.parentElement === list)) return pl0(o);
+    const h = Math.ceil(list.getBoundingClientRect().height);
+    list.classList.add('kscroll', 'pl-scroll'); list.style.maxHeight = '90px';
+    if (over()) { list.classList.remove('kscroll', 'pl-scroll'); list.style.maxHeight = ''; return pl0(o); }
+    // a maior altura que ainda cabe (medida em poucos passos)
+    let lo = 90, hi = h;
+    while (hi - lo > 6) { const mid = (lo + hi) >> 1; list.style.maxHeight = mid + 'px'; if (over()) hi = mid; else lo = mid; }
+    list.style.maxHeight = lo + 'px';
+    return 1;
+  };
+}
