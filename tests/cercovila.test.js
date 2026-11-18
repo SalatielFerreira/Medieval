@@ -18,7 +18,7 @@ module.exports = async () => {
         ok(/Defesa da vila/.test(Reinado.village(myV.vi)), 'a página da vila não mostra a defesa');
         const other = VillageAssault.targets(side, enemy)[0]; const w0 = VillageDef.D(other.v).walls + VillageDef.D(other.v).towers + VillageDef.D(other.v).militia;
         ok(!VillageDef.upgrade(other.vi, 'walls'), 'quem não é governador mudou a defesa de outra vila');
-        Math.random = () => 0; VillageDef.npcTick(); Math.random = r0;
+        Era.S().start = G.day - 700; Math.random = () => 0; VillageDef.npcTick(); Math.random = r0; Era.S().start = G.day; // (as defesas da IA acompanham as eras)
         ok(VillageDef.D(other.v).walls + VillageDef.D(other.v).towers + VillageDef.D(other.v).militia > w0, 'o governador da IA não melhorou a defesa');
         // 2. atacar uma vila do inimigo
         const t = VillageAssault.targets(side, enemy)[0];

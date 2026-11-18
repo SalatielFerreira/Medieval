@@ -26,10 +26,11 @@ module.exports = async () => {
       ok(!World.solid.some(x => x), 'ficaram bloqueios das muralhas no mapa');
       UI.close(); const foe2 = 3; G.civs[foe2].garrison = 30; G.civs[foe2].treasury = 3000; c.garrison = 24; G.warRest = {};
       Diplo.declareWar(foe2, me, 'teste'); G.warCall = null; War.summon(me, foe2, true); G.warCall.assault = 'defend'; G.warCall.shown = true;
-      UI.act('wassault', {});
+      const sa0 = SiegeArms.setup; SiegeArms.setup = () => {}; // (as armas de cerco do inimigo têm o teste delas: aqui é a defesa das muralhas)
+      try { UI.act('wassault', {}); } finally { SiegeArms.setup = sa0; }
       ok(G.place && G.place.assault && G.place.assault.mode === 'defend' && Assault.inside(P), 'a defesa não começou com você no pátio');
       t = 0; while (G.place && t < 420) { P.hp = P.maxHp; Game.update(1 / 20); t += 1 / 20; }
-      ok(!G.place, 'a defesa não terminou em 420 s');
+      { const A2 = Assault.A(); ok(!G.place, 'a defesa não terminou em 420 s' + (A2 ? ` (portão ${Math.round(A2.gateHp)}, seus ${War.fighters(me).length}, inimigos ${War.fighters(foe2).map(e => (e.battleKing ? 'K' : e.archer ? 'a' : 'i') + '@' + Math.round(e.x / TILE - A2.x0) + ',' + Math.round(e.y / TILE - A2.gy)).join(' ')}, você @${Math.round(P.x / TILE - A2.x0)},${Math.round(P.y / TILE - A2.gy)})` : '')); }
       return bad;
     });
     fails.push(...r);

@@ -30,7 +30,7 @@ const SiegeArms = {
       const pay = n => { const c = G.civs[B.side]; if (c && c.treasury >= n) { c.treasury -= n; return true; } if (P.gold >= n) { P.gold -= n; return true; } return false; };
       for (let k = 0; k < Math.min(3, cfg.rams || 0); k++) if (pay(RAM_COST)) rams++;
       fire = !!cfg.fire && pay(FIRE_COST); sap = Math.min(12, cfg.sappers || 0);
-    } else { rams = Math.min(2, 1 + Math.floor(((ac && ac.treasury) || 0) / 1500)); fire = Math.random() < 0.5; sap = 4; }
+    } else { rams = ((ac && ac.treasury) || 0) >= 2500 ? 1 : 0; fire = Math.random() < 0.3; sap = 2; } // o inimigo traz menos (a defesa continua possível)
     A.fire = fire; A.burn = 0;
     const gm = Assault.gateMid();
     for (let k = 0; k < rams; k++) {

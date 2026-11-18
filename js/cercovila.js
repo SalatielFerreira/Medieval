@@ -42,7 +42,8 @@ const VillageDef = {
     World.villages.forEach((v, vi) => {
       if (!v || v.ruin || this.mine(vi)) return;
       if (Math.random() > 0.05 + Math.min(0.1, (v.prosper || 0) / 300)) return;
-      const D = this.D(v), k = ['walls', 'towers', 'militia'].filter(q => D[q] < VDEF[q].max).sort((a, b) => D[a] - D[b])[0]; if (k) D[k]++;
+      const top = typeof Era !== 'undefined' ? Era.defMax() : 3; // as defesas acompanham as eras
+      const D = this.D(v), k = ['walls', 'towers', 'militia'].filter(q => D[q] < Math.min(VDEF[q].max, top)).sort((a, b) => D[a] - D[b])[0]; if (k) D[k]++;
     });
   },
 };
@@ -187,7 +188,7 @@ const VillageAssault = {
       if (wc.assault === 'vdefend' && World.villages[wc.vi]) {
         // (o conselho do castelo troca os botões do pé: a defesa da vila entra depois de a janela abrir)
         const v = World.villages[wc.vi], r = op0(title, body, fn, args, sub), go = UI.panel && UI.panel.querySelector('.wc-go');
-        if (go) { for (const c of [...UI.panel.querySelectorAll('.card')].filter(c => /Duas estratégias|Cerco ao seu castelo/.test(c.textContent))) c.remove(); go.insertAdjacentHTML('beforebegin', `<div class="card"><div class="sec">🏘️ ${esc(v.name)} sob ataque</div><p class="dt-desc">${CIV_DEFS[wc.enemy].short} vem arrombar o portão de ${esc(v.name)}. ${VillageDef.summary(wc.vi)}. Se a vila cair, passa para o inimigo.</p></div>`); go.innerHTML = `<button class="primary" data-act="vdefgo">🛡️ Defender ${esc(v.name)}</button>`; }
+        if (go) { for (const c of [...UI.panel.querySelectorAll('.card')].filter(c => /Duas estratégias|Cerco ao seu castelo/.test(c.textContent))) c.remove(); go.insertAdjacentHTML('beforebegin', `<div class="card"><div class="sec">🏘️ ${esc(v.name)} sob ataque</div><p class="dt-desc">${CIV_DEFS[wc.enemy].short} vem arrombar o portão de ${esc(v.name)}. ${VillageDef.summary(wc.vi)}. Se a vila cair, passa para o inimigo.</p></div>`); go.querySelectorAll('[data-act="wfield"], [data-act="wassault"]').forEach(b => b.remove()); go.insertAdjacentHTML('afterbegin', `<button class="primary" data-act="vdefgo">🛡️ Defender ${esc(v.name)}</button>`); }
         return r;
       } else if (wc.assault !== 'defend') {
         const L = VillageAssault.targets(wc.side, wc.enemy).slice(0, 5);

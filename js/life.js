@@ -485,7 +485,7 @@ const NpcRoads = {
   },
   // por mês: as vilas (e os castelos) dos NPCs evoluem as próprias estradas, um nível por vez, até o nível que a vila sustenta
   // (vila 1–2: cascalho · 3–4: pedra · 5–6: calçada · 7+: Estrada Real; castelos chegam à real). As vilas em que você é o governador ficam com você.
-  upgradeTick(per = 8) {
+  upgradeTick(per = 3) { // (as estradas melhoram devagar: o teto de cada era vem de eras.js)
     if (G.dungeon) return 0;
     if (!World.roadLv || World.roadLv.length !== WORLD_W * WORLD_H) World.roadLv = new Uint8Array(WORLD_W * WORLD_H);
     const E = Urban.E(); E.rlv = E.rlv || {};
@@ -508,14 +508,14 @@ const NpcRoads = {
     };
     World.villages.forEach(v => {
       if (v.lord === 'player' || v.removed) return;
-      const lv = v.level || 1, max = Math.min(5, 1 + Math.floor((lv + 1) / 2)), c = G.civs[v.civ];
+      const lv = v.level || 1, max = Math.min(typeof Era !== 'undefined' ? Era.roadMax() : 5, 1 + Math.floor((lv + 1) / 2)), c = G.civs[v.civ];
       // vila livre paga com a própria prosperidade; vila de um reino, com o tesouro do rei (no seu reino, a vila paga sozinha e não tira do seu tesouro)
       const pay = L => { if (v.free || !c || c.ruler === 'player') return true; const p = 4 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; };
       total += work(v.x, v.y, VILLAGE_R, max, pay);
     });
     World.capitals.forEach((cp, ci) => {
       const c = G.civs[ci]; if (!c || c.ruler === 'player' || c.dead) return;
-      total += work(cp.x, cp.y, 12, 5, L => { const p = 4 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; });
+      total += work(cp.x, cp.y, 12, typeof Era !== 'undefined' ? Era.roadMax() : 5, L => { const p = 4 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; });
     });
     return total; // cada bloco evoluído já foi redesenhado (setTile)
   },
@@ -545,13 +545,13 @@ const NpcRoads = {
   travelCiv(ci, tiles, up) {
     const c = G.civs[ci]; if (!c || c.dead) return 0;
     const vs = World.villages.filter(v => v && !v.free && v.civ === ci && !v.ruin), avg = vs.length ? vs.reduce((a, v) => a + (v.level || 1), 0) / vs.length : 1;
-    const max = Math.min(5, 1 + Math.floor((avg + 1) / 2)), cp = World.capitals[ci];
+    const max = Math.min(typeof Era !== 'undefined' ? Era.roadMax() : 5, 1 + Math.floor((avg + 1) / 2)), cp = World.capitals[ci];
     // no seu reino os moradores fazem por conta própria; nos outros, o rei paga
     const pay = L => { if (c.ruler === 'player') return true; const p = 3 * L; if (c.treasury < 300 + p) return false; c.treasury -= p; return true; };
     // a ordem (nível, distância, bloco) vira um número só: a ordenação de números é bem mais rápida que a de listas
     const keys = []; for (const i of tiles) { if (World.tiles[i] !== T.ROAD) continue; const L = World.roadLv[i] || 1; if (L >= max) continue; const dx = cp ? i % WORLD_W - cp.x : 0, dy = cp ? ((i / WORLD_W) | 0) - cp.y : 0; keys.push(L * 1e13 + (dx * dx + dy * dy) * 1e6 + i); }
     const cand = Float64Array.from(keys).sort();
-    let n = 0; for (const k of cand) { if (n >= 40) break; const i = k % 1e6; if (up(i, max, pay)) n++; else if (c.ruler !== 'player' && c.treasury < 310) break; }
+    let n = 0; for (const k of cand) { if (n >= 12) break; const i = k % 1e6; if (up(i, max, pay)) n++; else if (c.ruler !== 'player' && c.treasury < 310) break; }
     return n;
   },
   // por mês: cada vila liga até n construções (as que não acharam caminho tentam de novo daqui a um ano)
