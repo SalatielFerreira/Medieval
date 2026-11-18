@@ -745,10 +745,12 @@ const UI = {
     // da altura dele e o seguinte sobe para o buraco que ficar ao lado de um quadro mais baixo)
     const mas = two;
     const gap = small ? 3 : 8, span = el => { el.style.gridRowEnd = 'span ' + Math.max(1, Math.ceil((el.getBoundingClientRect().height + gap) / 2)); };
+    // (mede todos os quadros primeiro e só depois escreve: o navegador refaz a página uma vez, não uma vez por quadro)
+    const spanAll = list => { const L = [...list], hs = L.map(c => c.getBoundingClientRect().height); L.forEach((c, i) => { c.style.gridRowEnd = 'span ' + Math.max(1, Math.ceil((hs[i] + gap) / 2)); }); };
     const fresh = () => { cur = document.createElement('div'); cur.className = 'kpg kpage' + (two ? ' kd2' : '') + (mas ? ' kmas' : ''); cur.style.width = W + 'px'; cur.style.boxSizing = 'border-box'; cur.style.paddingRight = '6px'; cur.dataset.nav = nav; for (const h of head) cur.appendChild(h.cloneNode(true)); body.innerHTML = ''; body.appendChild(cur); };
-    const fits = () => { if (mas) for (const c of cur.children) span(c); return cur.scrollHeight <= H + 1; };
+    const fits = () => { if (mas) spanAll(cur.children); return cur.scrollHeight <= H + 1; };
     const hasContent = () => cur.children.length > head.length;
-    const push = () => { if (mas) for (const c of cur.children) span(c); pages.push(cur); fresh(); };
+    const push = () => { if (mas) spanAll(cur.children); pages.push(cur); fresh(); };
     const used = () => { const top = cur.getBoundingClientRect().top; let b = top; for (const c of cur.children) b = Math.max(b, c.getBoundingClientRect().bottom); return b - top; };
     // Quadro maior que o espaço: ele "escorre" para as páginas seguintes. O quadro é desmontado em peças (os filhos dele;
     // um filho grande — uma lista, uma grade — é desmontado nas linhas dele) e remontado página a página numa cópia vazia
@@ -812,6 +814,8 @@ const UI = {
     };
     fresh();
     const queue = units.slice();
+    // atalho: no Reinado, se tudo cabe numa página só (o caso comum), monta de uma vez em vez de conferir quadro a quadro
+    if (desk2 && !units.some(u => u.matches('.kalone'))) { for (const u of units) cur.appendChild(u); if (fits()) queue.length = 0; else { for (const u of units) u.remove(); fresh(); } }
     while (queue.length) {
       const u = queue.shift();
       // um quadro marcado com .kalone fica sozinho na página dele
@@ -825,7 +829,7 @@ const UI = {
       }
       push(); queue.unshift(u);
     }
-    if (mas) for (const c of cur.children) span(c);
+    if (mas) spanAll(cur.children);
     if (hasContent() || !pages.length) pages.push(cur);
     body.innerHTML = '';
     const track = document.createElement('div'); track.className = 'kpages';
@@ -834,7 +838,7 @@ const UI = {
     dots.innerHTML = pages.length > 1 ? (desk2 ? '<button class="kd-arr" data-d="-1" title="Página anterior">‹</button>' : '') + pages.map((_, i) => `<i data-i="${i}"></i>`).join('') + (desk2 ? `<span class="kd-n"></span><button class="kd-arr" data-d="1" title="Próxima página">›</button>` : '') : '';
     if (desk2) body.classList.add('kd2b');
     body.appendChild(track); body.appendChild(dots);
-    if (mas) for (const p of pages) for (const c of p.children) span(c); // (a altura de cada quadro já na página de verdade)
+    if (mas) { const all = []; for (const p of pages) all.push(...p.children); spanAll(all); } // (a altura de cada quadro já na página de verdade)
     // textos cortados (uma ou duas linhas): o texto inteiro fica na dica
     for (const p of pages) for (const el of p.querySelectorAll('small:not([title]), .rn-t b:not([title]), .sec > span:not([title]), .law > b:not([title]), .dt-desc:not([title])')) if (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) el.title = el.textContent.trim();
     // quadros dois a dois: o que ficar sozinho na linha ocupa a largura toda (sem meia linha vazia)

@@ -6530,3 +6530,5 @@ body:not(.small) .pc-wed .rn-row { padding: 3px 6px; } body:not(.small) .pc-wed 
 body:not(.small) .pc-wed { padding: 6px 9px !important; } body:not(.small) .pc-wed .sec { margin-bottom: 3px; }
 body:not(.small) .pc-wed .rn-row { gap: 4px; } body:not(.small) .pc-wed .rn-row small { font-size: 10px; } body:not(.small) .pc-wed .rn-row .act-row { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; }
 body:not(.small) .kpage.kd2 > .card.pc-wed { grid-column: 1 / -1; }
+/* aquecendo as janelas escondido (logo depois de o jogo começar): nada aparece */
+html.uiwarm #panel, html.uiwarm #mapview, html.uiwarm .mapview { visibility: hidden !important; }
