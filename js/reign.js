@@ -122,7 +122,7 @@ const Reign = {
   tribute(vi) { const n = People.residents(vi).length; return Math.round(5 + n * 0.6); },
   levy() { return Math.min(15, Object.values(this.R().fiefs).filter(f => !f.rebel).length * 3); },
   // ---------------------------------------------------------------- espionagem e complôs
-  plantSpy(ci) { const c = this.main(); if (c.treasury < 80) { UI.msg('Um espião custa 80 🪙 do tesouro.', 'bad'); return; } c.treasury -= 80; this.R().spies[ci] = { since: G.day }; UI.msg(`🗡️ Um espião se infiltrou na corte de ${CIV_DEFS[ci].short}.`, 'gold'); },
+  plantSpy(ci) { const c = this.main(); if (c.treasury < 100) { UI.msg('Um espião custa 100 🪙 do tesouro.', 'bad'); return; } c.treasury -= 100; this.R().spies[ci] = { since: G.day }; UI.msg(`🗡️ Um espião se infiltrou na corte de ${CIV_DEFS[ci].short}.`, 'gold'); },
   // força da espionagem (chance por mês de descobrir cada complô): o espião-mor do conselho (competência e lealdade),
   // os espiões nos outros reinos, o bobo da corte e a vigilância pedida no dilema
   spySkill(ci) { const s = this.member('spy', ci), R = this.R(); return (s ? (s.comp || 3) * 4 + U.clamp(s.aff || 0, 0, 100) / 10 : 10) + Object.keys(R.spies).length * 4 + (R.court.jester ? 10 : 0) + (R.watch >= G.day ? 20 : 0); },
@@ -310,7 +310,7 @@ const Reign = {
     const R = this.R(), c = this.main(), b = this.btn.bind(this);
     const rows = G.civs.filter(o => o.ruler !== 'player').map(o => { const s = R.spies[o.id];
       return `<div class="rn-row"><span><b>${Heraldry.armsSvg(o.id, 14)} ${CIV_DEFS[o.id].short}</b><small>${s ? `🛡️ ${o.garrison} · 🪙 ${o.treasury} · 😊 ${Math.round(o.happy)} · ${Diplo.warsOf(o.id).length ? 'em guerra' : 'em paz'} · ${Diplo.rel(o.id, c.id) < -35 ? '<b class="bad">planejam guerra contra você</b>' : 'sem planos contra você'}` : 'sem espião'}</small></span>
-        <span class="act-row">${s ? b('rgMis', '🔥 Sabotar 100', `data-c="${o.id}" data-k="sabotage"`) + b('rgMis', '💰 Roubar 60', `data-c="${o.id}" data-k="steal"`) + b('rgMis', '☠️ Herdeiro 300', `data-c="${o.id}" data-k="kill"`, false, 'danger') : b('rgSpy', '🗡️ Infiltrar (80 🪙)', `data-c="${o.id}"`)}</span></div>`; }).join('');
+        <span class="act-row">${s ? b('rgMis', '🔥 Sabotar 100', `data-c="${o.id}" data-k="sabotage"`) + b('rgMis', '💰 Roubar 60', `data-c="${o.id}" data-k="steal"`) + b('rgMis', '☠️ Herdeiro 300', `data-c="${o.id}" data-k="kill"`, false, 'danger') : b('rgSpy', '🗡️ Infiltrar (100 🪙)', `data-c="${o.id}"`)}</span></div>`; }).join('');
     return `<div class="card rn-spy"><div class="sec">🕵️ Espionagem nos outros reinos <span>${Object.keys(R.spies).length} espião(ões)</span></div><div class="rn-grid3">${rows}</div></div>`;
   },
   audHtml() {

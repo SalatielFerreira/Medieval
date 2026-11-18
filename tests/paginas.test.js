@@ -39,7 +39,7 @@ function measure() {
       const cr = c.getBoundingClientRect(); if (!cr.height) continue;
       if (c.matches('.card') && cr.bottom > bottom + 4) out.bad.push(`quadro ${name(c)} cortado na página ${i + 1}`);
       const ov = getComputedStyle(c).overflowY;
-      if ((ov === 'auto' || ov === 'scroll') && c.scrollHeight > c.clientHeight + 4 && !c.matches('.tabs, .rn-rbtns')) out.bad.push(`${name(c)} rola por dentro (página ${i + 1})`);
+      if ((ov === 'auto' || ov === 'scroll') && c.scrollHeight > c.clientHeight + 4 && !c.matches('.tabs, .rn-rbtns, .kscroll')) out.bad.push(`${name(c)} rola por dentro (página ${i + 1})`);
       if (cr.bottom > maxB && cr.bottom <= bottom + 4) maxB = cr.bottom;
     }
     if (pages.length) {

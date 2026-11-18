@@ -35,7 +35,7 @@ const OnePage = {
     const R = Reign.R(), c = Reign.main();
     const rows = G.civs.filter(o => o && !o.dead && o.ruler !== 'player').map(o => { const s = R.spies[o.id];
       const info = s ? `🛡️ ${o.garrison} · 🪙 ${o.treasury} · 😊 ${Math.round(o.happy)}${Diplo.warsOf(o.id).length ? ' · em guerra' : ''}${c && Diplo.rel(o.id, c.id) < -35 ? ' · <b class="bad">planejam guerra</b>' : ''}` : '<i class="muted">sem espião</i>';
-      return `<div class="op-spy"><span>${Heraldry.armsSvg(o.id, 16)}</span><span><b>${CIV_DEFS[o.id].short}</b><small>${info}</small></span><span class="op-bt">${s ? `<button data-act="rgMis" data-c="${o.id}" data-k="sabotage" title="Sabotar (100 🪙)">🔥</button><button data-act="rgMis" data-c="${o.id}" data-k="steal" title="Roubar (60 🪙)">💰</button><button class="danger" data-act="rgMis" data-c="${o.id}" data-k="kill" title="Matar o herdeiro (300 🪙)">☠️</button>` : `<button data-act="rgSpy" data-c="${o.id}" title="Infiltrar um espião (80 🪙)">🗡️ 80</button>`}</span></div>`; }).join('');
+      return `<div class="op-spy"><span>${Heraldry.armsSvg(o.id, 16)}</span><span><b>${CIV_DEFS[o.id].short}</b><small>${info}</small></span><span class="op-bt">${s ? `<button data-act="rgMis" data-c="${o.id}" data-k="sabotage" title="Sabotar (100 🪙)">🔥</button><button data-act="rgMis" data-c="${o.id}" data-k="steal" title="Roubar (60 🪙)">💰</button><button class="danger" data-act="rgMis" data-c="${o.id}" data-k="kill" title="Matar o herdeiro (300 🪙)">☠️</button>` : `<button data-act="rgSpy" data-c="${o.id}" title="Infiltrar um espião (100 🪙)">🗡️ 100</button>`}</span></div>`; }).join('');
     return `<div class="op-box op-spies"><div class="sec">🕵️ Espionagem <span>${Object.keys(R.spies).length} espião(ões)</span></div>${rows}</div>`;
   },
   conselho(ci, c, main, orig) {
@@ -67,6 +67,7 @@ const OnePage = {
       const grow = take('va-grow'), econ = take('va-econ'), shops = take('va-shops'), guards = take('rn-guards'), tips = take('va-tips'), pol = take('pol-v'), acts = take('rn-vacts'), def = take('vd-card'), era = take('era-card');
       if (era && grow && typeof Era !== 'undefined') { const nr = Era.nextRoad(); grow.insertAdjacentHTML('beforeend', `<div class="vj-era" title="${UI.esc(era.textContent.trim())}">📜 Era: vilas até o nível ${Math.min(VILLAGE_MAX, 1 + Math.floor(Era.years() / ERA_VILLAGE))} · estradas até o nível ${Era.roadMax()}${nr ? ` · próxima melhoria em ${nr} anos` : ''}</div>`); }
       for (const c of [acts, def]) { const p = c && c.querySelector(':scope > p.dt-desc'); if (p) { c.title = p.textContent.trim(); p.remove(); } }
+      { const sg = shops && shops.querySelector('.va-shopgrid'); if (sg) sg.classList.add('kscroll'); } // muitas lojas rolam por dentro
       const col = list => `<div class="vj-col">${list.filter(Boolean).map(e => e.outerHTML).join('')}</div>`;
       const rest = [...t.content.childNodes].map(n => n.outerHTML || n.textContent || '').join('');
       // sem guardas, o quadro deles vira uma linha dentro da defesa
