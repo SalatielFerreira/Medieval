@@ -6467,3 +6467,66 @@ body:not(.small) .rn-dip { grid-template-columns: 160px 210px minmax(0, 1fr) !im
 body.small .kpg[data-nav="x:reign"] .rn-dip .act-row { flex-wrap: nowrap; gap: 3px; } body.small .kpg[data-nav="x:reign"] .rn-dip .act-row button { padding: 2px 5px !important; min-height: 0 !important; font-size: 10px !important; white-space: nowrap; }
 .dpv small { display: none; } .dpv b { padding: 1px 6px; }
 body:not(.small) .rn-dip { grid-template-columns: 160px 190px minmax(0, 1fr) !important; }
+/* Conselho numa página: as cadeiras, o dilema e os complôs, a espionagem */
+.op { height: calc(100vh - 280px); box-sizing: border-box; padding: 8px !important; margin: 0 !important; display: flex; flex-direction: column; }
+.op-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 10px; }
+.op-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.op-box { display: flex; flex-direction: column; gap: 5px; min-height: 0; overflow: hidden; padding: 8px 10px; border-radius: 12px; background: linear-gradient(180deg, rgba(255, 235, 200, .05), rgba(0, 0, 0, .18)); border: 1px solid rgba(214, 174, 96, .2); }
+.op-box > .sec { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; } .op-box > .sec span { flex: 1; }
+.op-seats, .op-spies { height: 100%; box-sizing: border-box; } .op-plots { flex: 1; }
+.op-seat { flex: 1; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 9px; background: rgba(0, 0, 0, .25); border: 1px solid rgba(214, 174, 96, .12); }
+.op-seat.empty { border-style: dashed; } .op-ic { font-size: 20px; text-align: center; }
+.op-who { min-width: 0; display: flex; flex-direction: column; } .op-who em { font-style: normal; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #c8a24a; font-weight: 700; }
+.op-who b { font-size: 13px; color: #f8ecd0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .op-who small { font-size: 10.5px; color: #a89a78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.op-st { display: flex; gap: 8px; font-size: 11px; } .op-st i { font-style: normal; }
+.op-bt { display: flex; gap: 3px; flex: none; } .op-bt button { padding: 2px 7px; min-height: 0; font-size: 12px; }
+.op-dil p { margin: 0; font-size: 12.5px; line-height: 1.35; } .op-ans { display: flex; flex-wrap: wrap; gap: 4px; } .op-ans button { padding: 3px 9px; font-size: 12px; min-height: 0; }
+.op-plot, .op-spy { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 5px 7px; border-radius: 8px; background: rgba(0, 0, 0, .25); }
+.op-spy { grid-template-columns: 20px minmax(0, 1fr) auto; flex: 1; }
+.op-plot b, .op-spy b { display: block; font-size: 12.5px; } .op-plot small, .op-spy small { display: block; font-size: 10.5px; color: #a89a78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.op-risk { margin-top: auto; font-size: 10.5px; color: #c8b890; } .op-risk small { font-size: 10.5px; } .op-none { margin: 4px 0; }
+/* Tesouro numa página: o orçamento sem as frases de explicação (ficam nas dicas) */
+.rn-budget .rn-bud small, .rn-budget .rn-money .dt-desc { display: none; }
+.op-risk .pol-throne > small.muted { display: none; } .op-risk .pol-throne::before { content: '⚠️ Podem tramar:'; display: block; font-size: 10.5px; color: #e8c06a; margin-bottom: 3px; }
+.op-risk .rn-fams { display: flex; flex-wrap: wrap; gap: 3px; } .op-risk .rn-fams span { font-size: 10.5px; padding: 1px 6px; } .op-risk .rn-fams span:nth-child(n+4) { display: none; }
+/* Mercenários numa página: as seis companhias em cartões mais baixos (o lema vira dica) */
+body:not(.small) .sv-cogrid { gap: 8px 10px; }
+body:not(.small) .sv-co { padding: 0 10px 8px; gap: 2px; }
+body:not(.small) .sv-flag { width: 44px; height: 50px; font-size: 22px; }
+body:not(.small) .sv-motto { display: none; } body:not(.small) .sv-cn { font-size: 14px; margin-top: 2px; }
+body:not(.small) .sv-cs { margin: 3px 0 1px; gap: 2px 10px; font-size: 11px; }
+body:not(.small) .sv-co .sv-fee { font-size: 13px; margin: 0; } body:not(.small) .sv-co .sv-ca button { padding: 3px 10px; font-size: 12px; min-height: 0; }
+body:not(.small) .sv-co .sv-ord { margin: 2px 0; padding: 3px 6px; } body:not(.small) .sv-co .sv-warn { font-size: 10.5px; padding: 2px 6px; }
+body:not(.small) .sv-co { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; grid-template-areas: "flag name fee" "flag cap rib" "cs cs cs" "warn warn warn" "ord ord ord" "ca ca ca"; align-items: center; column-gap: 8px; text-align: left; padding: 6px 10px 8px; }
+body:not(.small) .sv-co .sv-flag { grid-area: flag; margin: 0; align-self: start; } body:not(.small) .sv-co .sv-cn { grid-area: name; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body:not(.small) .sv-co .sv-cap { grid-area: cap; } body:not(.small) .sv-co .sv-fee { grid-area: fee; justify-self: end; }
+body:not(.small) .sv-co .sv-rib { grid-area: rib; position: static !important; justify-self: end; font-size: 10px; padding: 1px 7px; margin: 0; transform: none !important; }
+body:not(.small) .sv-co .sv-cs { grid-area: cs; } body:not(.small) .sv-co .sv-warn { grid-area: warn; } body:not(.small) .sv-co .sv-ord { grid-area: ord; } body:not(.small) .sv-co .sv-ca { grid-area: ca; justify-content: center; margin: 2px 0 0; }
+/* a vila que você governa numa página */
+.vj { height: calc(100vh - 262px); box-sizing: border-box; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.vj-col { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; } .vj-col > .card { margin: 0 !important; padding: 7px 9px !important; }
+.vj .sec { margin-bottom: 4px; } .vj .sec span { font-size: 10px; }
+.vj-era { margin-top: 5px; font-size: 11px; color: #e8d29a; padding: 3px 6px; border-radius: 6px; background: rgba(0, 0, 0, .22); }
+.vj .va-econ .stile, .vj .va-econ > div > div { padding: 3px 6px !important; } .vj .va-econ small { font-size: 10px; line-height: 1.15; } .vj .va-econ b { font-size: 12px; }
+.vj .va-grow small { font-size: 10px; } .vj .va-grow b { font-size: 12px; } .vj .va-grow > div > div { padding: 3px 6px !important; }
+.vj .va-tips li { font-size: 11px; margin: 1px 0; } .vj .va-tips ul { margin: 2px 0; padding-left: 16px; }
+.vj .pol-v p, .vj .pol-v small { font-size: 11px; } .vj .pol-v button, .vj .rn-vacts button, .vj .vd-card button { padding: 3px 8px !important; font-size: 11.5px !important; min-height: 0 !important; }
+.vj .rn-vacts .act-row { gap: 4px; } .vj .vd-row { padding: 3px 6px; margin-bottom: 3px; } .vj .vd-row b { font-size: 11.5px; }
+.vj .va-shops .va-shop, .vj .va-shops > div > * { padding: 2px 5px !important; } .vj .va-shops small { font-size: 10px; }
+.vj .kv { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 3px !important; }
+.vj .kv > div { padding: 2px 5px !important; font-size: 9.5px !important; line-height: 1.15; display: flex; flex-direction: column; } .vj .kv > div b { font-size: 11.5px !important; }
+.vj .va-grow > small.muted, .vj .va-grow > p { display: none; }
+.vj .va-tips li:nth-child(n+4) { display: none; }
+.vj .va-shopgrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 3px !important; } .vj .va-shopgrid .crow { padding: 2px 5px !important; } .vj .va-shopgrid b { font-size: 11px; } .vj .va-shopgrid small { font-size: 9.5px; }
+.vj .va-shops .sec span, .vj .pol-v .sec span { display: none; }
+.vj .pol-v > p { margin: 2px 0; } .vj .rn-guards p { margin: 2px 0; font-size: 11px; }
+.vj-col > .card { flex: 0 0 auto; overflow: visible !important; }
+/* Diplomacia numa página */
+body:not(.small) .rn-dip .act-row { flex-wrap: nowrap; gap: 4px; } body:not(.small) .rn-dip .act-row button { padding: 3px 8px; font-size: 11.5px; white-space: nowrap; min-height: 0; }
+body:not(.small) .rn-dip { padding: 3px 8px; margin-bottom: 3px; }
+body:not(.small) .pc-wed .crow:nth-child(n+5), body:not(.small) .pc-wed .rn-row:nth-child(n+5) { display: none; }
+body:not(.small) .pc-wed > .dt-desc { display: none; } body:not(.small) .pc-wed .rn-grid3 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 4px !important; }
+body:not(.small) .pc-wed .rn-row { padding: 3px 6px; } body:not(.small) .pc-wed .rn-row button { padding: 2px 6px; font-size: 11px; min-height: 0; }
+body:not(.small) .pc-wed { padding: 6px 9px !important; } body:not(.small) .pc-wed .sec { margin-bottom: 3px; }
+body:not(.small) .pc-wed .rn-row { gap: 4px; } body:not(.small) .pc-wed .rn-row small { font-size: 10px; } body:not(.small) .pc-wed .rn-row .act-row { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; }
+body:not(.small) .kpage.kd2 > .card.pc-wed { grid-column: 1 / -1; }
