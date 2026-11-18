@@ -50,7 +50,7 @@ const BF = {
 const BF_STONE = '#a49d90';
 // propriedades dos enfeites novos: no chão (por baixo das pessoas) ou de pé (na ordem de profundidade, sem bloquear)
 if (typeof FURN !== 'undefined') Object.assign(FURN, { bf_mud: { flat: true }, bf_crater: { flat: true }, bf_arrows: { flat: true }, bf_yard: { flat: true }, bf_road: { flat: true },
-  bf_banner: {}, bf_hay: {}, bf_wagon: {}, bf_rack: {}, bf_stakes: {} });
+  bf_banner: {}, bf_hay: {}, bf_wagon: {}, bf_rack: {}, bf_stakes: {}, bf_house: { block: true }, bf_well: { block: true } });
 
 // ------------------------------------------------------------------ o terreno e os enfeites, depois de montar a batalha
 const BFField = {
@@ -206,10 +206,55 @@ const BFDraw = {
     ctx.restore();
     ctx.restore();
   },
+  // a vila cercada: paliçada de madeira, torre de vigia e portão de madeira (com muralha de pedra, o desenho é o do castelo)
+  palisade(ctx, f) {
+    const w = f.w * TILE, h = f.h * TILE;
+    BF.sprite(ctx, `pw|${f.w}|${f.h}|${f.vert ? 1 : 0}`, w, h, 34, 2, (g) => {
+      if (f.vert) { for (let y = -20; y < h; y += 7) { g.fillStyle = '#6a4626'; g.fillRect(4, y, w - 8, 6); g.fillStyle = '#8a5e34'; g.fillRect(4, y, w - 8, 2); } g.fillStyle = '#4a2e16'; g.fillRect(w / 2 - 1, -20, 2, h + 20); return; }
+      for (let x = 0; x < w; x += 7) { const tall = 26 + (x * 13 % 5); g.fillStyle = '#6e4a28'; g.fillRect(x, -tall + 6, 6, h + tall - 8); g.fillStyle = '#8e6236'; g.fillRect(x, -tall + 6, 2, h + tall - 8); g.fillStyle = '#5a3a1e'; g.beginPath(); g.moveTo(x, -tall + 6); g.lineTo(x + 3, -tall); g.lineTo(x + 6, -tall + 6); g.fill(); }
+      g.fillStyle = '#4a2e16'; g.fillRect(0, -8, w, 3); g.fillRect(0, h - 10, w, 3); g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0, h - 2, w, 4);
+    });
+  },
+  watchtower(ctx, f, X, Y, time) {
+    const w = f.w * TILE, h = f.h * TILE, col = f.civ >= 0 ? Game.civColor(f.civ) : '#8e1f2a';
+    BF.sprite(ctx, `wt|${f.w}|${col}`, w, h, 80, 4, (g) => {
+      g.fillStyle = 'rgba(0,0,0,0.3)'; g.beginPath(); g.ellipse(w / 2, h - 6, w / 2, 8, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#5a3a1e'; g.lineWidth = 4; for (const x of [10, w - 10]) { g.beginPath(); g.moveTo(x, h - 6); g.lineTo(x + (x < w / 2 ? 6 : -6), -36); g.stroke(); }
+      g.lineWidth = 2; g.beginPath(); g.moveTo(12, h - 20); g.lineTo(w - 12, -20); g.moveTo(w - 12, h - 20); g.lineTo(12, -20); g.stroke();
+      g.fillStyle = '#7a5230'; g.fillRect(6, -48, w - 12, 14); g.fillStyle = '#5a3a1e'; for (let x = 8; x < w - 8; x += 6) g.fillRect(x, -48, 2, 14);
+      g.fillStyle = col; g.beginPath(); g.moveTo(2, -48); g.lineTo(w / 2, -74); g.lineTo(w - 2, -48); g.fill(); g.fillStyle = shd(col, -0.3); g.beginPath(); g.moveTo(w / 2, -74); g.lineTo(w - 2, -48); g.lineTo(w / 2, -48); g.fill();
+    });
+    BF.flag(ctx, w / 2, -96, col, time, 14);
+  },
+  woodgate(ctx, f) {
+    const w = f.w * TILE, h = f.h * TILE, A = Assault.A(), dmg = A && A.gateMax ? 1 - A.gateHp / A.gateMax : 0, step = f.broken ? 9 : Math.min(3, Math.floor(dmg * 4));
+    BF.sprite(ctx, `wg|${f.w}|${f.h}|${step}`, w, h, 40, 6, (g) => {
+      g.fillStyle = '#5a3a1e'; g.fillRect(-2, -34, 8, h + 32); g.fillRect(w - 6, -34, 8, h + 32); g.fillRect(-2, -36, w + 4, 8);
+      if (step === 9) { for (let k = 0; k < 8; k++) { g.fillStyle = '#6a4423'; g.save(); g.translate(8 + (k * 11) % (w - 14), h - 10 - (k * 7) % 20); g.rotate(k); g.fillRect(-5, -2, 10, 4); g.restore(); } return; }
+      for (let x = 6; x < w - 6; x += 6) { g.fillStyle = '#7a5230'; g.fillRect(x, -26, 5, h + 22); g.fillStyle = '#93673a'; g.fillRect(x, -26, 1.5, h + 22); }
+      g.fillStyle = '#4a2e16'; g.fillRect(6, -10, w - 12, 4); g.fillRect(6, h * 0.55, w - 12, 4); g.save(); g.translate(w / 2, h * 0.25); g.rotate(0.9); g.fillRect(-2, -h * 0.4, 4, h * 0.8); g.restore();
+      g.strokeStyle = '#1e140a'; g.lineWidth = 2;
+      if (step >= 1) { g.beginPath(); g.moveTo(12, 10); g.lineTo(20, 26); g.stroke(); }
+      if (step >= 2) { g.fillStyle = '#120c06'; g.fillRect(w - 24, h * 0.6, 12, 10); }
+      if (step >= 3) { g.fillStyle = '#120c06'; g.fillRect(14, h * 0.3, 14, 14); }
+    });
+  },
+  house(ctx, f) {
+    const w = f.w * TILE, h = f.h * TILE, roof = ['#8e3a2a', '#6a4a2a', '#7a5a3a', '#5a4a6a'][f.seed % 4];
+    BF.sprite(ctx, `hs|${f.w}|${f.h}|${roof}`, w, h, 40, 4, (g) => {
+      g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(2, h - 4, w - 4, 6);
+      g.fillStyle = '#d8c8a4'; g.fillRect(4, -6, w - 8, h + 2); g.fillStyle = '#6a4a2a'; for (const x of [4, w / 2 - 2, w - 8]) g.fillRect(x, -6, 4, h + 2); g.fillRect(4, -6, w - 8, 3);
+      g.fillStyle = '#4a2e16'; g.fillRect(w / 2 + 6, h - 24, 12, 22); g.fillStyle = '#2a2a3a'; g.fillRect(12, 8, 10, 9); g.fillStyle = 'rgba(255,220,140,0.6)'; g.fillRect(13, 9, 8, 7);
+      g.fillStyle = roof; g.beginPath(); g.moveTo(-4, -4); g.lineTo(w / 2, -36); g.lineTo(w + 4, -4); g.fill(); g.fillStyle = shd(roof, -0.3); g.beginPath(); g.moveTo(w / 2, -36); g.lineTo(w + 4, -4); g.lineTo(w / 2, -4); g.fill();
+      g.strokeStyle = shd(roof, -0.45); g.lineWidth = 1; for (let k = 1; k < 4; k++) { const yy = -4 - k * 8, hw = (w / 2 + 4) * (1 - k / 4.4); g.beginPath(); g.moveTo(w / 2 - hw, yy); g.lineTo(w / 2 + hw, yy); g.stroke(); }
+    });
+  },
   // enfeites
   furn(ctx, f, X, Y, time) {
     const w = f.w * TILE;
     switch (f.k) {
+      case 'bf_house': ctx.save(); ctx.translate(Math.round(X), Math.round(Y)); BFDraw.house(ctx, f); ctx.restore(); return;
+      case 'bf_well': ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 26, 14, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#8e877a'; ctx.fillRect(X + 4, Y + 8, 24, 16); ctx.fillStyle = '#2a3a4a'; ctx.beginPath(); ctx.ellipse(X + 16, Y + 9, 11, 4, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#5a3a1e'; ctx.fillRect(X + 5, Y - 14, 3, 22); ctx.fillRect(X + 24, Y - 14, 3, 22); ctx.fillStyle = '#7a3a2a'; ctx.beginPath(); ctx.moveTo(X + 1, Y - 12); ctx.lineTo(X + 16, Y - 24); ctx.lineTo(X + 31, Y - 12); ctx.fill(); return;
       case 'bf_mud': { const t = f.tone; ctx.fillStyle = `rgba(${70 + t * 20 | 0},${52 + t * 10 | 0},${30},0.32)`; ctx.beginPath(); ctx.ellipse(X + 16, Y + 16, f.rx, f.ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(40,28,16,0.18)'; ctx.beginPath(); ctx.ellipse(X + 16 + f.rx * 0.2, Y + 18, f.rx * 0.55, f.ry * 0.5, 0, 0, Math.PI * 2); ctx.fill(); return; }
       case 'bf_crater': { const cx = X + f.ox, cy = Y + f.oy; ctx.fillStyle = 'rgba(30,22,14,0.45)'; ctx.beginPath(); ctx.ellipse(cx, cy, f.r, f.r * 0.55, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(120,96,64,0.4)'; ctx.beginPath(); ctx.ellipse(cx, cy - f.r * 0.15, f.r * 1.2, f.r * 0.7, 0, Math.PI, Math.PI * 2); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(120,96,64,0.35)'; ctx.stroke(); return; }
       case 'bf_arrows': { for (let k = 0; k < f.n; k++) { const ax = X + 4 + BF.hash(f.seed, k) * 24, ay = Y + 6 + BF.hash(k, f.seed) * 20; ctx.strokeStyle = '#5a3a1e'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax - 4, ay - 9); ctx.stroke(); ctx.fillStyle = '#e8e0d0'; ctx.fillRect(ax - 5, ay - 11, 3, 3); } return; }
@@ -341,7 +386,10 @@ const BFHud = {
     if (k === 'cwall' || k === 'ctower' || k === 'cgate' || k === 'ckeep') {
       if (!BF.seen(ctx, X, Y, f.w * TILE, f.h * TILE, 160)) return;
       ctx.save(); ctx.translate(Math.round(X), Math.round(Y));
-      try { if (k === 'cwall') BFDraw.wall(ctx, f, 0, 0); else if (k === 'ctower') BFDraw.tower(ctx, f, 0, 0, time); else if (k === 'cgate') BFDraw.gate(ctx, f, 0, 0); else BFDraw.keep(ctx, f, 0, 0, time); }
+      try {
+        if (f.wood && k === 'cwall') BFDraw.palisade(ctx, f); else if (f.wood && k === 'ctower') BFDraw.watchtower(ctx, f, 0, 0, time); else if (f.wood && k === 'cgate') BFDraw.woodgate(ctx, f);
+        else if (k === 'cwall') BFDraw.wall(ctx, f, 0, 0); else if (k === 'ctower') BFDraw.tower(ctx, f, 0, 0, time); else if (k === 'cgate') BFDraw.gate(ctx, f, 0, 0); else BFDraw.keep(ctx, f, 0, 0, time);
+      }
       finally { ctx.restore(); }
       return;
     }
@@ -356,3 +404,5 @@ const BFHud = {
     BFDraw.catapult(ctx, x, y, dir, anim, hurt, swing, side, civ);
   };
 }
+// na batalha, os soldados não mostram nome e idade ao passar o mouse (só poluíam a tela no meio da luta)
+{ const tk0 = Game.talkable.bind(Game); Game.talkable = function (e) { if (e && e.battle && G.place && G.place.kind === 'battle') return false; return tk0(e); }; }
