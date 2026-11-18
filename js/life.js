@@ -403,14 +403,17 @@ const NPCWork = {
       }
       const C = G.civs[civ]; if (C) for (const k in got) C.stock[k] = Math.min(3000, (C.stock[k] || 0) + got[k]);
     };
+    // cada vila e cada castelo é um pedaço próprio do mês (durante o jogo, a virada não trava o quadro)
+    const jobs = [];
     World.villages.forEach((v, vi) => {
       if (!v || v.ruin >= 3) return;
-      const workers = People.residents(vi).filter(p => p.age >= 16 && p.age <= 65 && !p.capanga).length;
-      clear(v.x, v.y, this.settledR(v), Math.min(40, 6 + workers), v.free ? -1 : v.civ);
+      jobs.push(() => { const workers = People.residents(vi).filter(p => p.age >= 16 && p.age <= 65 && !p.capanga).length; clear(v.x, v.y, this.settledR(v), Math.min(40, 6 + workers), v.free ? -1 : v.civ); });
     });
-    World.capitals.forEach((c, ci) => { if (c && G.civs[ci]) clear(c.x, c.y, 24, 20, ci); });
+    World.capitals.forEach((c, ci) => { if (c && G.civs[ci]) jobs.push(() => clear(c.x, c.y, 24, 20, ci)); });
     // o que já tinha sido cortado na terra ocupada não volta mais
-    World.regrow = World.regrow.filter(r => !this.settled(r.i % WORLD_W, (r.i / WORLD_W) | 0));
+    jobs.push(() => { World.regrow = World.regrow.filter(r => !this.settled(r.i % WORLD_W, (r.i / WORLD_W) | 0)); });
+    if (typeof Perf !== 'undefined' && Perf.slicing) { for (const j of jobs) Perf.queue.push(Object.assign(j, { label: 'NPCWork.clearTick(vila)' })); return 0; }
+    for (const j of jobs) j();
     return total;
   },
   toolOf(e) { const w = e.work; return w && w.mode === 'work' && World.obj[w.i] ? OBJ[World.obj[w.i]].tool : null; },

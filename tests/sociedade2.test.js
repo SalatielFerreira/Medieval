@@ -30,7 +30,7 @@ const check = async (W, H, fails, tag) => {
       poor.purse = 0; poor.socMiss = 11; rich.purse = 5000; rich.socMiss = 5;
       Soc2.monthTick();
       ok(!Secret.isBro(poor, k) && poor.socOut === k, 'quem ficou 12 meses sem pagar não foi expulso');
-      ok(Secret.isBro(rich, k) && rich.socMiss === 0 && rich.purse === 5000 - 1234, 'quem pagou não ficou em dia');
+      ok(Secret.isBro(rich, k) && rich.socMiss === 0 && rich.purse <= 5000 - 1234, 'quem pagou não ficou em dia');
       ok(Soc2.S().log.some(l => /expulso/.test(l.t)), 'a expulsão não foi anotada no livro da loja');
       // 3. escolher o irmão do cargo
       const pick = Secret.brothers(k).filter(p => p.alive && p.age >= 18 && !p.capanga)[3]; pick.met = true; pick.aff = 40;

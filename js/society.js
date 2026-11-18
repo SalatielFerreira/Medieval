@@ -288,7 +288,7 @@ const Society = {
     for (const p of G.people) if (p.alive && p.vendetta && p.age >= 16 && !p.rival) { p.rival = true; UI.msg(`🗡️ ${People.full(p)} cresceu e jurou vingar ${p.vendetta}.`, 'bad', true); }
     const rv = this.rivals(); if (rv.length && Math.random() < 0.35) this.challenge(U.pick(rv));
     // eleições
-    World.villages.forEach((v, vi) => { if (G.day >= this.E(vi).next) this.election(vi); });
+    World.villages.forEach((v, vi) => { if (G.day < this.E(vi).next) return; if (typeof Perf !== 'undefined' && Perf.slicing) Perf.queue.push(Object.assign(() => { if (G.day >= this.E(vi).next) this.election(vi); }, { label: 'Society.election' })); else this.election(vi); });
     // reinos do jogador com imposto alto irritam o povo e agradam a nobreza
     for (const c of G.civs) if (c.ruler === 'player') { if (c.tax > 0.15) { this.rep('povo', -1); this.rep('nobreza', 0.5); } else if (c.tax < 0.08) this.rep('povo', 0.7); }
     // a reputação volta devagar para o neutro
