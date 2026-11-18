@@ -15,8 +15,14 @@ module.exports = async () => {
       const m0 = Crown.incomeMul(c); c.works = c.works || {}; c.works.mercado = { paid: 6, done: false }; Crown.finishWork(c, 'mercado');
       ok(Crown.incomeMul(c) > m0 * 1.05, 'o Grande Mercado não aumentou os impostos');
       c.works.estabulos = { paid: 7, done: true }; ok(War.armyOf(1).cav >= 3, 'os Estábulos Reais não deram cavaleiros');
+      ok(['moeda', 'oficinas', 'termas', 'arqueiros'].every(k => WORKS[k]) && Object.keys(WORKS).length >= 16, 'faltam as quatro obras reais mais novas');
+      c.works.moeda = { paid: 8, done: true }; c.works.oficinas = { paid: 6, done: true }; c.works.arqueiros = { paid: 7, done: true };
+      const t1 = c.treasury, w1 = c.stock.wood || 0, ar = War.armyOf(1).archers; Crown.worksMonth(c);
+      ok(c.treasury - t1 === 60 && (c.stock.wood || 0) - w1 === 12, `Casa da Moeda/Oficinas não renderam: ${c.treasury - t1} 🪙, ${(c.stock.wood || 0) - w1} madeira`);
+      ok(ar >= 40 && Treasury.month(c).inc.some(x => /Casa da Moeda/.test(x[0])), 'a Escola de Arqueiros ou a linha da Casa da Moeda no tesouro faltam');
+      ok(/🪙\/mês/.test(Crown.workGain(c, 'mercado')) && /🌾/.test(Crown.workGain(c, 'celeiro')), 'o lucro das obras não aparece');
       UI.sel.knav = 'x:reign'; UI.sel.rnRole = 'k:1'; UI.sel.rnTab = 'obras'; UI.showKingdom();
-      ok(UI.panel.querySelector('[data-act="oilbuy"]') && UI.panel.querySelectorAll('.kpg.kpage').length === 1, 'a janela de Obras não mostra o óleo ou passou de uma página');
+      ok(UI.panel.querySelector('[data-act="oilbuy"]') && UI.panel.querySelector('.rn-works .wk-gain') && UI.panel.querySelectorAll('.kpg.kpage').length === 1, 'a janela de Obras não mostra o óleo ou passou de uma página');
       // 2. óleo quente
       UI.act('oilbuy', { c: 1 }); UI.act('oilbuy', { c: 1 }); ok(Oil.lvl(1) === 2, 'não deu para instalar e melhorar o óleo: ' + Oil.lvl(1));
       G.warCall = { side: 1, enemy: 2, own: true, day: G.day, shown: true, deadline: null, cfg: War.defaults(1, true), assault: 'defend' };

@@ -6648,3 +6648,6 @@ body:not(.small) .iconnav .snav-body :is(.crow, .sv-vil):hover { background: rgb
 /* a página com um quadro só ocupa a altura toda */
 body:not(.small) .sv-pg > :is(.card, .sv-hero):only-child { min-height: calc(100% - 2px); box-sizing: border-box; }
 body:not(.small) .iconnav .snav-body .card:has(> .sec):not(.lj, .lj *, .vj *, .op *) > .sec:not(:first-child) { border-radius: 0; margin-top: 8px !important; border-top: 1px solid rgba(214, 174, 96, .2); }
+.wk-gain { font-style: normal; font-size: 10.5px; font-weight: 700; color: #9ad86a; margin-left: 4px; white-space: nowrap; }
+.rx .rn-works .wk-desc { display: none; } .rx .rn-works .rn-it { cursor: help; } .rx .rn-works .rn-t > b { line-height: 1.25; }
+.rx .rn-works .wk-gain { display: block; margin: 1px 0 0; font-size: 11px; white-space: normal; }

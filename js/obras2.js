@@ -121,3 +121,41 @@ const Oil = {
     ctx.fillStyle = '#ff9a30'; ctx.fillRect(cx - 8, cy + 6, 4, 3); ctx.fillRect(cx + 3, cy + 6, 4, 3);
   };
 }
+
+// Mais quatro Grandes Obras reais, e o que cada obra rende ao reino (no título do cartão: ouro por mês calculado com os
+// impostos de agora, trigo, soldados, felicidade...)
+Object.assign(WORKS, {
+  moeda:     { icon: '🪙', name: 'Casa da Moeda', gold: 2000, months: 8, desc: 'A coroa cunha as próprias moedas: +60 🪙 por mês no tesouro.' },
+  oficinas:  { icon: '⚒️', name: 'Oficinas Reais', gold: 1500, months: 6, desc: 'Lenhadores e canteiros da coroa: +12 de madeira e +8 de pedra por mês nos armazéns.' },
+  termas:    { icon: '♨️', name: 'Termas Reais', gold: 1100, months: 5, desc: 'Banhos quentes abertos ao povo na capital: +4 de felicidade.' },
+  arqueiros: { icon: '🏹', name: 'Escola de Arqueiros', gold: 1700, months: 7, desc: 'Arqueiros treinados pela coroa: +10% de arqueiros em cada batalha.' },
+});
+const MINT_GOLD = 60, SHOP_WOOD = 12, SHOP_STONE = 8;
+// quanto a obra rende (ou renderia) ao reino
+Crown.workGain = function (c, k) {
+  const fc = Game.civForecast(c), base = fc.income / Math.max(0.1, this.incomeMul(c));
+  const pct = { estrada: 0.06, porto: 0.08, universidade: 0.05, mercado: 0.06 }[k];
+  const gold = pct ? Math.round(base * pct) : k === 'moeda' ? MINT_GOLD : 0;
+  const wheat = k === 'celeiro' ? Math.round(((fc.prod && fc.prod.wheat) || 0) * (this.built(c, 'celeiro') ? 0.15 / 1.15 : 0.15)) : 0;
+  const extra = { celeiro: `+${wheat} 🌾/mês`, muralhas: '+1 nível de muralha', quartel: '+1 🛡️/mês', jardins: '+3 😊 · +10 fama', universidade: '+3 😊', catedral: '+5 😊 · +3 🙏/mês',
+    arsenal: 'portão +30%', hospital: '+3 😊 · +½ 🛡️/mês', estabulos: '+3 🐎 na guerra', oficinas: `+${SHOP_WOOD} 🪵 +${SHOP_STONE} 🪨/mês`, termas: '+4 😊', arqueiros: '+10% 🏹 na guerra' }[k];
+  return [gold ? `+${gold.toLocaleString('pt-BR')} 🪙/mês` : '', extra || ''].filter(Boolean).join(' · ');
+};
+{
+  const hb1 = Crown.happyBonus.bind(Crown); Crown.happyBonus = function (c) { return hb1(c) + (c && c.ruler === 'player' && this.built(c, 'termas') ? 4 : 0); };
+  const wm1 = Crown.worksMonth.bind(Crown);
+  Crown.worksMonth = function (c) {
+    const r = wm1(c);
+    if (this.built(c, 'moeda')) c.treasury += MINT_GOLD;
+    if (this.built(c, 'oficinas')) { c.stock.wood = (c.stock.wood || 0) + SHOP_WOOD; c.stock.stone = (c.stock.stone || 0) + SHOP_STONE; }
+    return r;
+  };
+  const ar1 = War.armyOf.bind(War); War.armyOf = function (ci, cfg) { const a = ar1(ci, cfg); if (Crown.built(G.civs[ci], 'arqueiros')) a.archers = Math.min(70, (a.archers || 0) + 10); return a; };
+  // a Casa da Moeda aparece nas entradas do mês do tesouro
+  const tm0 = Treasury.month.bind(Treasury);
+  Treasury.month = function (c) {
+    const f = tm0(c);
+    if (c && c.ruler === 'player' && !c.anarchy && Crown.built(c, 'moeda')) { f.inc.push(['🪙 Casa da Moeda', MINT_GOLD, false]); f.tin += MINT_GOLD; f.net += MINT_GOLD; f.netMust += MINT_GOLD; }
+    return f;
+  };
+}

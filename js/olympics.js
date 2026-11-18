@@ -5,7 +5,7 @@
 //  ⚔️ As provas: as dez provas, em ordem (cada uma liberada depois da anterior), com a classificação e o botão de competir;
 //  📜 Registros: cada edição já disputada (ano, anfitrião, grande campeão) com o pódio de cada prova;
 //  🏆 Medalhas e lendas: o quadro de medalhas de todos os tempos, os atletas com mais medalhas e as suas medalhas (todas
-//     as edições, mesmo as que já saíram dos Registros, que guardam só as 12 mais recentes).
+//     as edições, mesmo as que já saíram dos Registros, que guardam só as 5 mais recentes).
 // As provas, os prêmios e o histórico são os de games.js.
 const Olympics = {
   esc(s) { return UI.esc(s); },
@@ -60,6 +60,7 @@ const Olympics = {
         : canHere ? `<button class="${me === undefined ? 'primary' : ''}" data-act="gPlay" data-k="${ev}" ${Games.canPlay(ev) ? '' : 'disabled'}>${me !== undefined ? '✔ Você já competiu' : `${ic} Competir na ${n}ª prova`}</button>` : `<small class="muted og-wait">${me !== undefined ? '✔ Você já competiu' : `Compita na arena de ${esc(Games.hostName())}`}</small>`}</div>`;
   },
   html() {
+    Games.trim(); // jogos salvos com mais edições: os Registros ficam com as 5 últimas (as medalhas continuam nas lendas)
     const S = Games.S(), esc = this.esc.bind(this), cd = Calendar.of(G.day), evKeys = GAMES_ORDER;
     const host = S.on ? S.host : Games.nextHost(), done = evKeys.filter(ev => S.me[ev] !== undefined).length;
     const inArena = S.on && Arena.inColiseum(S.host);

@@ -14,7 +14,7 @@ const { open } = require('./harness');
 // (o primeiro que casar vale; "*" é o padrão). Os do celular são folgados para as listas de um jogo de alguns meses.
 const LIMITES = [
   ['x:reign | k:1/leis', [3, 10]], ['x:reign | k:1/tesouro', [1, 5]], ['x:reign | k:1/conselho', [1, 5]], ['x:reign | k:1/diplo', [1, 5]],
-  ['x:reign | k:1/brasao', [1, 5]], ['x:reign | k:1/obras', [1, 4]], ['x:reign | k:1/corte', [1, 4]], ['x:reign | k:1', [1, 3]],
+  ['x:reign | k:1/brasao', [1, 5]], ['x:reign | k:1/obras', [1, 6]], ['x:reign | k:1/corte', [1, 4]], ['x:reign | k:1', [1, 3]],
   ['x:reign | v:', [3, 8]], ['x:reign | t/titulos', [1, 6]], ['x:reign | t', [1, 4]],
   ['families | ranking', [1, 16]], ['families | reinos', [1, 8]], ['families | inquietas', [1, 8]],
   ['biz | painel', [1, 7]], ['biz | nb_biz', [1, 5]], ['biz | nb_contracts', [1, 6]], ['biz | rival', [1, 8]], ['biz', [1, 5]],

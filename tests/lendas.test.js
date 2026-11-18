@@ -15,9 +15,9 @@ module.exports = async () => {
       delete S.alltime;
       const me0 = Olympics.legends().find(x => x.who === 'player');
       ok(me0 && me0.m[0] === 2 * GAMES_ORDER.length, 'jogo antigo: as medalhas das edições dos Registros não entraram nas lendas');
-      // mais 13 edições: os Registros guardam 12, as lendas somam as 15
+      // mais 13 edições: os Registros guardam 5, as lendas somam as 15
       for (let n = 0; n < 13; n++) { Games.start(); for (const ev of GAMES_ORDER) S.me[ev] = 9999; Games.resolve(); }
-      ok(S.history.length === 12, `os Registros deviam guardar 12 edições (${S.history.length})`);
+      ok(S.history.length === GAMES_KEEP && GAMES_KEEP === 5, `os Registros deviam guardar 5 edições (${S.history.length})`);
       const me = Olympics.legends().find(x => x.who === 'player');
       ok(me && me.m[0] === 15 * GAMES_ORDER.length, `as lendas perderam edições antigas (${me && me.m[0]} ouros, eram ${15 * GAMES_ORDER.length})`);
       // a aba Medalhas e lendas mostra o total
