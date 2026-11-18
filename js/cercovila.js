@@ -86,7 +86,7 @@ const VillageAssault = {
     const put = (k, x, y, w, h, extra) => { const f = Object.assign({ k, x, y, w, h, id: Places.furn.length, block: true, civ: def, wood }, extra || {}); Places.furn.push(f); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) World.solid[World.idx(x + i, y + j)] = 1; return f; };
     for (let x = x0; x < x0 + CW; x += 4) { put('cwall', x, y0, Math.min(4, x0 + CW - x), 2); put('cwall', x, y0 + CH - 2, Math.min(4, x0 + CW - x), 2); }
     for (let y = y0 + 2; y < y0 + CH - 2; y++) { put('cwall', x0 + CW - 2, y, 2, 1, { vert: true }); if (y < gy || y > gy + 2) put('cwall', x0, y, 2, 1, { vert: true }); }
-    const tw = [[x0 - 1, gy - 3], [x0 - 1, gy + 3], [x0 - 1, y0 - 1], [x0 - 1, y0 + CH - 2], [x0 + CW - 2, y0 - 1], [x0 + CW - 2, y0 + CH - 2]].slice(0, D.towers * 2);
+    const tw = [[x0 - 1, gy - 4], [x0 - 1, gy + 6], [x0 - 1, y0 - 1], [x0 - 1, y0 + CH - 2], [x0 + CW - 2, y0 - 1], [x0 + CW - 2, y0 + CH - 2]].slice(0, D.towers * 2);
     for (const [tx, ty] of tw) put('ctower', tx, ty, 3, 3);
     A.gate = put('cgate', x0, gy, 2, 3);
     // as casas e o poço da vila, lá dentro

@@ -6378,3 +6378,37 @@ body.small #bfOrders { top: calc(102px + env(safe-area-inset-top)); bottom: auto
 .vd-row > span:first-child { font-size: 18px; text-align: center; } .vd-row b { font-size: 12.5px; } .vd-row button { padding: 3px 9px; font-size: 11.5px; }
 .vd-pips { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; } .vd-pips i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .12); border: 1px solid rgba(214, 174, 96, .4); } .vd-pips i.on { background: #e8c06a; }
 body.small .vd-row { padding: 3px 5px; gap: 5px; } body.small .vd-row b { font-size: 11px; } body.small .vd-row button { padding: 2px 6px !important; font-size: 10.5px !important; min-height: 0 !important; }
+/* Conselho de Guerra em três colunas (tela cheia) */
+.wcx { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 10px; align-items: start; margin: 8px 0; }
+.wcx-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; } .wcx-col > .card, .wcx-col > div > .card { margin: 0 !important; }
+.wcx-col.b > div { display: flex; flex-direction: column; gap: 8px; }
+.wc3 .wc-row { padding: 3px 0; gap: 6px; } .wc3 .wc-row .wc-l b { font-size: 12.5px; } .wc3 .wc-row .wc-l small { font-size: 10.5px; line-height: 1.2; }
+.wc3 .wc-step button { padding: 2px 8px; min-height: 0; } .wc3 .wc-row > button { padding: 3px 10px; min-height: 0; font-size: 12px; }
+.wc3 .wc-forms button { padding: 4px 6px; } .wc3 .wc-forms small { display: none; }
+.wc3 .wc-units span { padding: 3px 2px; } .wc3 .wc-units b { font-size: 14px; } .wc3 .wc-units small { font-size: 9.5px; }
+.wc3 .war-odds p, .wc3 .wcx-col.c .dt-desc { font-size: 11.5px; line-height: 1.3; margin: 2px 0; }
+.wc3 .wc-head { padding: 6px 10px; } .wc3 .wc-head small { font-size: 11px; }
+.wc3 .wc-vils .crow { padding: 3px 6px; } .wc3 .wc-vils small { font-size: 10px; }
+body.small .wcx { gap: 5px; margin: 4px 0; } body.small .wc3 .wc-row .wc-l small { display: none; } body.small .wc3 .wc-row .wc-l b { font-size: 11px; }
+body.small .wc3 .wc-step button, body.small .wc3 .wc-row > button { padding: 1px 6px !important; min-height: 0 !important; font-size: 11px !important; }
+body.small .wc3 .wc-units small { display: none; } body.small .wc3 .wc-units b { font-size: 12px; } body.small .wc3 .wcx-col.c .dt-desc, body.small .wc3 .war-odds p { font-size: 10px; }
+body.small .wc3 .wc-forms button b { font-size: 10.5px; } body.small .wc3 .wc-head small { display: none; } body.small .wc3 .wc-vils small { display: none; }
+.wc3 .wc-forms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; } .wc3 .wc-forms button b { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wc3 .wc-units { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 4px !important; } .wc3 .wc-units span { padding: 2px 1px !important; }
+.wc3 .war-odds > small, .wc3 .war-odds .muted { display: none; }
+.wc3 .wc-go { margin-top: 0; }
+body.small .wc3 .wcx-col.c > .card:not(.war-odds):not(.wc-vils) { display: none; }
+body.small .wc3 .wcx-col .sec { font-size: 10px; } body.small .wc3 .wcx-col .sec span { display: none; }
+body.small .wc3 .wc-units span { font-size: 11px; } 
+body.small .wc3 .wc-vils .crow { padding: 2px 4px; } body.small .wc3 .wc-vils .crow button { padding: 1px 6px !important; min-height: 0 !important; font-size: 10.5px !important; }
+body.small .wc3 .wc-go button { padding: 4px 10px !important; min-height: 0 !important; font-size: 11.5px !important; }
+body.small .wc3 .wc-step button, body.small .wc3 .wc-forms button, body.small .wc3 .wc-row > button { min-height: 0 !important; height: auto !important; padding: 1px 7px !important; line-height: 1.3 !important; }
+body.small .wc3 .wc-row { padding: 1px 0 !important; } body.small .wc3 .wc-step b { font-size: 12px; min-width: 30px; }
+body.small .wc3 .wcx-col.b > div > .card:last-child { display: none; }
+.wc3 .wcx { margin: 4px 0; } .wc3 .wcx-col > .card { padding-top: 6px; padding-bottom: 6px; }
+body.small .wc3 .wcx-col > .card, body.small .wc3 .wcx-col > div > .card { padding: 4px 6px !important; }
+body.small .wc3 .wc-head { padding: 2px 8px !important; } body.small .wc3 .wc-head b { font-size: 12px; }
+body.small .wc3 .wc-arms .wc-row { min-height: 0 !important; } body.small .wc3 .wc-arms .wc-step b { font-size: 11px; }
+body.small .wc3 .wc-go { padding: 0 !important; gap: 6px; }
+body.small .wc3 .wc-arms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 6px; } body.small .wc3 .wc-arms > .sec { grid-column: 1 / -1; }
+body.small .wc3 .wc-arms .wc-row { flex-direction: column; align-items: center; gap: 1px; border: 0; } body.small .wc3 .wc-arms .wc-l { text-align: center; }

@@ -69,7 +69,7 @@ const Assault = {
     const put = (k, x, y, w, h, extra) => { const f = Object.assign({ k, x, y, w, h, id: Places.furn.length, block: true, civ: def }, extra || {}); Places.furn.push(f); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) World.solid[World.idx(x + i, y + j)] = 1; return f; };
     for (let x = x0; x < x0 + CW; x += 4) { put('cwall', x, y0, Math.min(4, x0 + CW - x), 2); put('cwall', x, y0 + CH - 2, Math.min(4, x0 + CW - x), 2); }
     for (let y = y0 + 2; y < y0 + CH - 2; y++) { put('cwall', x0 + CW - 2, y, 2, 1, { vert: true }); if (y < gy || y > gy + 2) put('cwall', x0, y, 2, 1, { vert: true }); }
-    for (const [tx, ty] of [[x0 - 1, y0 - 1], [x0 + CW - 2, y0 - 1], [x0 - 1, y0 + CH - 2], [x0 + CW - 2, y0 + CH - 2], [x0 - 1, gy - 3], [x0 - 1, gy + 3]]) put('ctower', tx, ty, 3, 3);
+    for (const [tx, ty] of [[x0 - 1, y0 - 1], [x0 + CW - 2, y0 - 1], [x0 - 1, y0 + CH - 2], [x0 + CW - 2, y0 + CH - 2], [x0 - 1, gy - 4], [x0 - 1, gy + 6]]) put('ctower', tx, ty, 3, 3); // (as torres do portão ficam afastadas: o portão e quem bate nele aparecem)
     A.gate = put('cgate', x0, gy, 2, 3);
     put('ckeep', x0 + CW - 12, y0 + (CH >> 1) - 4, 8, 7);
     for (const [bx, by] of [[x0 + 6, y0 + 3], [x0 + 6, y0 + CH - 5], [x0 + CW - 16, y0 + 3], [x0 + CW - 16, y0 + CH - 5]]) Places.furn.push(Object.assign({ k: 'brazier', x: bx, y: by, w: 1, h: 1, id: Places.furn.length }, FURN.brazier || {}));

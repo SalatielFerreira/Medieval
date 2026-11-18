@@ -249,6 +249,21 @@ const BFDraw = {
       g.strokeStyle = shd(roof, -0.45); g.lineWidth = 1; for (let k = 1; k < 4; k++) { const yy = -4 - k * 8, hw = (w / 2 + 4) * (1 - k / 4.4); g.beginPath(); g.moveTo(w / 2 - hw, yy); g.lineTo(w / 2 + hw, yy); g.stroke(); }
     });
   },
+  // o aríete coberto: telhado de couro nas cores de quem ataca, o tronco com a cabeça de ferro e as rodas raiadas
+  ram(ctx, x, y, dir, anim, moving, hurt, swing, side) {
+    const B = G.place, civ = B ? (side === 'player' ? B.side : B.enemy) : -1, col = civ >= 0 && G.civs[civ] ? Game.civColor(civ) : '#8e1f2a';
+    ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(dir, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, 30, 7, 0, 0, Math.PI * 2); ctx.fill();
+    const push = swing > 0 ? 10 * Math.min(1, swing / 0.4) : 0;
+    ctx.fillStyle = '#4e321a'; ctx.fillRect(-12 + push, -22, 50, 7); ctx.fillStyle = '#6e4a28'; ctx.fillRect(-12 + push, -22, 50, 2);
+    ctx.fillStyle = '#5a5f66'; ctx.fillRect(36 + push, -25, 9, 13); ctx.fillStyle = '#9aa0a8'; ctx.fillRect(36 + push, -25, 9, 3); ctx.fillStyle = '#3a3e44'; ctx.fillRect(43 + push, -23, 2, 9);
+    ctx.fillStyle = hurt > 0 ? '#c07060' : '#7a5230'; ctx.fillRect(-26, -16, 50, 6); ctx.fillStyle = '#5a3a1e'; for (const px of [-24, -6, 12]) ctx.fillRect(px, -34, 3, 20);
+    ctx.fillStyle = shd(col, -0.15); ctx.beginPath(); ctx.moveTo(-30, -30); ctx.lineTo(-2, -46); ctx.lineTo(28, -30); ctx.lineTo(28, -26); ctx.lineTo(-30, -26); ctx.fill();
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-30, -30); ctx.lineTo(-2, -46); ctx.lineTo(-2, -26); ctx.lineTo(-30, -26); ctx.fill();
+    ctx.strokeStyle = shd(col, -0.45); ctx.lineWidth = 1; for (let k = -24; k < 26; k += 8) { ctx.beginPath(); ctx.moveTo(k, -27); ctx.lineTo(k < -2 ? k + (-2 - k) * 0.5 : k - (k + 2) * 0.5, -38); ctx.stroke(); }
+    for (const wx of [-18, 16]) { ctx.fillStyle = '#3a2a1a'; ctx.beginPath(); ctx.arc(wx, -7, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#7a5230'; ctx.beginPath(); ctx.arc(wx, -7, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = 1.2; const r = (anim || 0) * (moving ? 5 : 0); for (let k = 0; k < 3; k++) { const a = r + k * Math.PI / 3; ctx.beginPath(); ctx.moveTo(wx - Math.cos(a) * 4.5, -7 - Math.sin(a) * 4.5); ctx.lineTo(wx + Math.cos(a) * 4.5, -7 + Math.sin(a) * 4.5); ctx.stroke(); } }
+    ctx.restore();
+  },
   // enfeites
   furn(ctx, f, X, Y, time) {
     const w = f.w * TILE;
@@ -399,6 +414,7 @@ const BFHud = {
   const de0 = drawEngine;
   // eslint-disable-next-line no-global-assign
   drawEngine = function (ctx, x, y, kind, dir, anim, moving, hurt, swing, side) {
+    if (kind === 'ram_e' && G.place && G.place.kind === 'battle') { BFDraw.ram(ctx, x, y, dir, anim, moving, hurt, swing, side); return; }
     if (kind !== 'catapult_e') return de0(ctx, x, y, kind, dir, anim, moving, hurt, swing, side);
     const B = G.place, civ = B && B.kind === 'battle' ? (side === 'player' ? (B.assault ? (B.assault.mode === 'defend' ? B.assault.def : B.assault.att) : B.side) : (B.assault ? (B.assault.mode === 'defend' ? B.assault.att : B.assault.def) : B.enemy)) : -1;
     BFDraw.catapult(ctx, x, y, dir, anim, hurt, swing, side, civ);
