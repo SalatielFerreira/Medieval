@@ -181,11 +181,11 @@ const Reinado = {
       }).join('');
       if (S.cseat && COUNCIL[S.cseat]) {
         // escolher quem chamar para a cadeira: a família primeiro, depois quem você conhece e a gente do reino
-        const seat = S.cseat, d = COUNCIL[seat], cur = Court.member(ci, seat), f = ['fam', 'met', 'realm'].includes(S.cfilt) ? S.cfilt : 'all', L = Court.pool(ci, f);
+        const seat = S.cseat, d = COUNCIL[seat], cur = Court.member(ci, seat), f = ['fam', 'met', 'realm'].includes(S.cfilt) ? S.cfilt : 'all', L = Court.pool(ci, f, seat);
         const chip = (k, l) => `<button class="${f === k ? 'on' : ''}" data-act="cfilt" data-k="${k}">${l}</button>`;
         const icon = q => Court.relLabel(q) ? (q.spouse === 'player' ? '💍' : '👪') : NOBLE_RANKS.includes(q.rank) ? '🎖️' : q.rank === 'knight' ? '🛡️' : '🧑';
         const rows = L.map(q => { const rel = Court.relLabel(q), inC = q.council && COUNCIL[q.council.seat] ? q.council : null;
-          return `<div class="rn-row rn-pick ${rel ? 'fam' : ''} ${cur === q ? 'on' : ''}"><span class="ri">${icon(q)}</span><span><b>${esc(People.full(q))}${rel ? ` <i class="rn-rel">${rel}</i>` : ''}</b><small>${esc(People.title(q))} · ${q.age} anos · ${esc(People.homeName(q))}</small><small>⭐ ${q.comp} competência · 💛 ${Math.round(q.aff)} lealdade · 🔥 ${Math.round(q.amb || 0)} ambição${inC ? ` · hoje é ${COUNCIL[inC.seat].m}${inC.civ !== ci ? ` de ${CIV_DEFS[inC.civ].short}` : ''}` : ''}</small></span><span class="act-row">${cur === q ? '<b class="ok">✓ no cargo</b>' : `<button class="primary" data-act="appoint" data-c="${ci}" data-s="${seat}" data-id="${q.id}">Nomear</button>`}</span></div>`; }).join('');
+          return `<div class="rn-row rn-pick ${rel ? 'fam' : ''} ${cur === q ? 'on' : ''}"><span class="ri">${icon(q)}</span><span><b>${esc(People.full(q))}${rel ? ` <i class="rn-kin">${rel}</i>` : ''}</b><small>${esc(People.title(q))} · ${q.age} anos · ${esc(People.homeName(q))}</small><small>⭐ ${q.comp} competência · 💛 ${Math.round(q.aff)} lealdade · 🔥 ${Math.round(q.amb || 0)} ambição${inC ? ` · hoje é ${COUNCIL[inC.seat].m}${inC.civ !== ci ? ` de ${CIV_DEFS[inC.civ].short}` : ''}` : ''}</small></span><span class="act-row">${cur === q ? '<b class="ok">✓ no cargo</b>' : `<button class="primary" data-act="appoint" data-c="${ci}" data-s="${seat}" data-id="${q.id}">Nomear</button>`}</span></div>`; }).join('');
         const pick = `<div class="card wide rn-council rn-cpick"><div class="sec">${d.icon} Escolher ${d.m} de ${CIV_DEFS[ci].short} <span>${cur ? `hoje: ${esc(People.full(cur))}` : 'cargo vago'} · ${d.desc}</span></div>
           <div class="act-row rn-cfilt">${chip('all', '👥 Todos')}${chip('fam', '👪 Sua família')}${chip('met', '🤝 Quem você conhece')}${chip('realm', `🏰 Gente de ${CIV_DEFS[ci].short}`)}<span class="muted">${L.length} ${L.length === 1 ? 'pessoa' : 'pessoas'}</span></div>
           <div class="rn-plist">${rows || '<p class="muted">Ninguém nesta lista. Converse com as pessoas para conhecê-las.</p>'}</div>
@@ -214,7 +214,7 @@ const Reinado = {
             : `<button data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="ally" ${!al && r >= 40 && c.treasury >= 200 ? '' : 'disabled'} title="Exige relação 40+">🤝 Aliança 200</button><button class="danger" data-act="dipl" data-c="${ci}" data-o="${o.id}" data-x="war">📜 Guerra</button>`)
           + (main ? Reign.diploActs(o) + pk.acts : '');
         return `<div class="rn-dip"><span class="rn-dn">${Heraldry.armsSvg(o.id, 20)}<b>${CIV_DEFS[o.id].short}</b><small>${esc(o.rulerName)}${main ? ' · ' + pk.power : ''}</small></span>
-          <span class="rn-rel"><span class="pbar"><i style="left:50%;width:${Math.abs(r) / 2}%;${r < 0 ? 'transform:translateX(-100%);background:#c0392b' : 'background:#5fd35f'}"></i><em></em></span><b class="${r < 0 ? 'bad' : r >= 40 ? 'ok' : ''}">${r > 0 ? '+' : ''}${r}</b></span>
+          ${UI.relGauge(r)}
           <span class="act-row">${tags}${acts}</span></div>`;
       }).join('');
       return `<div class="card rn-dips wide"><div class="sec">🤝 ${CIV_DEFS[ci].short} e os outros reinos <span>relação entre reinos · os custos saem do tesouro${main ? ' · 📦 comércio por 12 meses (relação 15+) · 💰 tributo só de um reino bem mais fraco' : ''}</span></div>${rows}</div>`

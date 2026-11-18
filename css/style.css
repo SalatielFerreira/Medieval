@@ -6311,12 +6311,12 @@ body.small .av-trunk { justify-content: flex-start; }
 .rn-pick .ri { font-size: 18px; text-align: center; } .rn-pick b { display: block; } .rn-pick small { display: block; font-size: 11px; color: #b5a07a; }
 .rn-pick.fam { border-color: rgba(255, 213, 74, .4); background: linear-gradient(90deg, rgba(255, 213, 74, .1), rgba(0, 0, 0, .22)); }
 .rn-pick.on { border-color: rgba(140, 220, 120, .55); }
-.rn-rel { font-style: normal; font-size: 10px; padding: 0 6px; border-radius: 999px; background: linear-gradient(180deg, #f2cf7d, #c0913c); color: #2a1a08; font-weight: 700; vertical-align: 1px; }
+.rn-kin { font-style: normal; font-size: 10px; padding: 0 6px; border-radius: 999px; background: linear-gradient(180deg, #f2cf7d, #c0913c); color: #2a1a08; font-weight: 700; vertical-align: 1px; }
 .rn-pbar { justify-content: flex-end; margin-top: 6px; }
 body.small .rn-plist { max-height: 46vh; }
 body.small .rn-pick { padding: 3px 6px; gap: 5px; } body.small .rn-pick small { font-size: 9.5px; } body.small .rn-cfilt button { padding: 2px 7px; font-size: 10.5px; }
 body.small .rn-cpick > .sec span { display: none; }
-.rn-rel { display: inline-block !important; width: auto !important; height: auto !important; flex: none !important; margin-left: 6px; }
+.rn-kin { display: inline-block !important; width: auto !important; height: auto !important; flex: none !important; margin-left: 6px; }
 .kpg .rn-cpick, .rn-cpick { grid-column: 1 / -1; }
 .rn-plist { max-height: calc(100vh - 400px); min-height: 90px; }
 body.small .rn-plist { max-height: calc(100vh - 250px); min-height: 60px; }
@@ -6412,3 +6412,58 @@ body.small .wc3 .wc-arms .wc-row { min-height: 0 !important; } body.small .wc3 .
 body.small .wc3 .wc-go { padding: 0 !important; gap: 6px; }
 body.small .wc3 .wc-arms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 6px; } body.small .wc3 .wc-arms > .sec { grid-column: 1 / -1; }
 body.small .wc3 .wc-arms .wc-row { flex-direction: column; align-items: center; gap: 1px; border: 0; } body.small .wc3 .wc-arms .wc-l { text-align: center; }
+
+/* diplomacia: a relação entre reinos (−100 a +100) num medidor legível: o centro é neutro, a barra cresce para a direita
+   (verde, amizade) ou para a esquerda (vermelho, hostilidade), com o número num selo colorido e a palavra embaixo */
+.rn-rel { grid-template-columns: minmax(0, 1fr) 58px !important; gap: 8px !important; }
+.dpg { position: relative; display: block; height: 14px; border-radius: 7px; background: linear-gradient(90deg, rgba(192, 57, 43, .28), rgba(0, 0, 0, .45) 45%, rgba(0, 0, 0, .45) 55%, rgba(95, 211, 95, .25)); border: 1px solid rgba(214, 174, 96, .35); overflow: hidden; }
+.dpg > i { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; }
+.dpg > i.p { left: 50%; background: linear-gradient(180deg, #8ee88e, #3fa84f); box-shadow: 0 0 6px rgba(95, 211, 95, .5); }
+.dpg > i.n { right: 50%; background: linear-gradient(180deg, #f07a6a, #b0362a); box-shadow: 0 0 6px rgba(240, 90, 70, .45); }
+.dpg > em { position: absolute; left: calc(50% - 1px); top: -1px; bottom: -1px; width: 2px; background: #ffe9b0; opacity: .8; }
+.dpg > s { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, .12); }
+.dpv { display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+.dpv b { min-width: 46px; text-align: center; padding: 2px 6px; border-radius: 999px; font-size: 13px; font-weight: 800; color: #1a1208; }
+.dpv b.pos { background: linear-gradient(180deg, #a6f0a0, #4fb85a); } .dpv b.neg { background: linear-gradient(180deg, #f6a08e, #c2483a); color: #fff; } .dpv b.neu { background: linear-gradient(180deg, #e8dcc0, #a89a78); }
+.dpv small { font-size: 9.5px; color: #d8c8a4; margin-top: 1px; white-space: nowrap; }
+body.small .rn-rel { grid-template-columns: minmax(0, 1fr) 46px !important; gap: 4px !important; } body.small .dpg { height: 10px; } body.small .dpv b { min-width: 38px; font-size: 11px; padding: 1px 4px; } body.small .dpv small { display: none; }
+/* Leis e justiça em duas páginas: os decretos e as leis; o tribunal, a prisão e os procurados lado a lado */
+.lj { height: calc(100vh - 280px); box-sizing: border-box; }
+.lj1 > .card { height: 100%; margin: 0 !important; box-sizing: border-box; overflow: hidden; }
+.lj2 { display: flex; flex-direction: column; padding: 8px !important; margin: 0 !important; }
+.lj-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.15fr 1.1fr 1fr; gap: 10px; }
+.lj-c { display: flex; flex-direction: column; gap: 6px; min-height: 0; min-width: 0; overflow: hidden; padding: 8px 10px; border-radius: 12px; background: linear-gradient(180deg, rgba(255, 235, 200, .05), rgba(0, 0, 0, .18)); border: 1px solid rgba(214, 174, 96, .2); }
+.lj-c > .sec { display: flex; align-items: center; gap: 6px; margin: 0; } .lj-c > .sec span { flex: 1; }
+.lj-nav { display: inline-flex; align-items: center; gap: 4px; } .lj-nav button { padding: 0 7px; min-height: 0; font-size: 11px; } .lj-nav b { font-size: 11px; color: #e8d8b0; }
+.lj-case { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 10px; background: rgba(0, 0, 0, .25); border-left: 3px solid #c8a24a; } .lj-case.grave { border-left-color: #c0392b; }
+.lj-case > b { font-size: 14px; color: #f8ecd0; } .lj-case > small { color: #b5a07a; font-size: 11px; } .lj-case p { margin: 2px 0; font-size: 12px; line-height: 1.35; color: #e0d2b0; }
+.lj-ev { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px; font-size: 11.5px; } .lj-ev > i { height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .4); overflow: hidden; } .lj-ev > i > i { display: block; height: 100%; border-radius: 4px; }
+.lj-vs { margin-top: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; } .lj-vs button { padding: 4px 4px; font-size: 11.5px; min-height: 0; }
+.lj-last { font-size: 10.5px; color: #c8b890; border-top: 1px solid rgba(214, 174, 96, .15); padding-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lj-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 28px; opacity: .85; text-align: center; } .lj-empty small { font-size: 12px; color: #c8b890; }
+.lj-cells { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.lj-cell { display: flex; flex-direction: column; gap: 3px; min-height: 0; padding: 5px; border-radius: 9px; background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .35) 0 10px, rgba(60, 60, 70, .35) 10px 12px); border: 1px solid rgba(140, 140, 150, .35); }
+.lj-ch { font-size: 10.5px; font-weight: 700; color: #c8c8d0; }
+.lj-pr { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 2px 5px; border-radius: 6px; background: rgba(20, 16, 12, .75); font-size: 11px; }
+.lj-pr span:first-child { min-width: 0; display: flex; flex-direction: column; } .lj-pr b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11.5px; } .lj-pr small { font-size: 9.5px; color: #a89a78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lj-pr.wait { box-shadow: inset 2px 0 0 #e8c06a; } .lj-pr.free { justify-content: center; color: #6a6a72; background: rgba(20, 16, 12, .35); font-size: 10px; }
+.lj-pr button { padding: 0 4px; min-height: 0; font-size: 11px; line-height: 1.5; }
+.lj-q { font-size: 10.5px; color: #e8c06a; }
+.lj-list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+.lj-back { margin: 0; justify-content: center; } .lj-back button { padding: 4px 10px; font-size: 12px; min-height: 0; }
+.lj-want .rn-cfilt { margin: 0; } .lj-want .rn-pick { padding: 4px 6px; }
+body.small .lj { height: calc(100vh - 176px); }
+body.small .lj-cols { gap: 5px; } body.small .lj-c { padding: 4px 5px; gap: 3px; } body.small .lj-c > .sec { font-size: 10px; } body.small .lj-c > .sec span { display: none; }
+body.small .lj-case { padding: 4px 6px; gap: 2px; } body.small .lj-case > b { font-size: 11.5px; } body.small .lj-case p { display: none; } body.small .lj-vs button { padding: 2px !important; font-size: 10px !important; min-height: 0 !important; }
+body.small .lj-pr { padding: 1px 3px; } body.small .lj-pr small { display: none; } body.small .lj-pr b { font-size: 10px; } body.small .lj-pr button { padding: 0 2px !important; min-height: 0 !important; font-size: 10px !important; }
+body.small .lj-ch { font-size: 9px; } body.small .lj-cell { padding: 3px; gap: 2px; }
+body.small .lj-want .rn-pick small:last-of-type { display: none; } body.small .lj-want .rn-cfilt button { padding: 1px 6px !important; min-height: 0 !important; font-size: 10px !important; }
+body.small .lj-back button, body.small .lj-nav button { padding: 1px 6px !important; min-height: 0 !important; font-size: 10.5px !important; }
+body.small .lj1 .law small, body.small .lj1 .law .law-g { display: none; } body.small .lj1 .law-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 3px !important; }
+body.small .lj1 .law { padding: 3px 5px !important; } body.small .lj1 .law b { font-size: 10px; } body.small .lj1 .law button { padding: 1px 4px !important; min-height: 0 !important; font-size: 10px !important; }
+body.small .lj1 .sec span { display: none; }
+body:not(.small) .rn-dip { grid-template-columns: 160px 210px minmax(0, 1fr) !important; }
+.lj-pr > span:last-child { display: flex; flex-wrap: nowrap; gap: 2px; flex: none; } .lj-pr button { padding: 0 3px !important; font-size: 10.5px !important; }
+body.small .kpg[data-nav="x:reign"] .rn-dip .act-row { flex-wrap: nowrap; gap: 3px; } body.small .kpg[data-nav="x:reign"] .rn-dip .act-row button { padding: 2px 5px !important; min-height: 0 !important; font-size: 10px !important; white-space: nowrap; }
+.dpv small { display: none; } .dpv b { padding: 1px 6px; }
+body:not(.small) .rn-dip { grid-template-columns: 160px 190px minmax(0, 1fr) !important; }
