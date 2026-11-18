@@ -196,7 +196,7 @@ const MercOrders = {
   },
   html(id) {
     const cur = this.of(id);
-    return `<div class="sv-ord"><small>Ordem: <b>${MERC_ORDERS[cur].icon} ${MERC_ORDERS[cur].name}</b> · ${MERC_ORDERS[cur].desc}</small><span>${Object.entries(MERC_ORDERS).map(([k, o]) => { const why = this.why(id, k); return `<button class="${k === cur ? 'on' : ''}" data-act="mercOrd" data-k="${id}" data-o="${k}" ${why && k !== cur ? `disabled title="${UI.esc(why)}"` : `title="${UI.esc(o.desc)}"`}>${o.icon}</button>`; }).join('')}</span></div>`;
+    return `<div class="sv-ord"><small title="${UI.esc(MERC_ORDERS[cur].desc)}">Ordem: <b>${MERC_ORDERS[cur].icon} ${MERC_ORDERS[cur].name}</b></small><span>${Object.entries(MERC_ORDERS).map(([k, o]) => { const why = this.why(id, k); return `<button class="${k === cur ? 'on' : ''}" data-act="mercOrd" data-k="${id}" data-o="${k}" ${why && k !== cur ? `disabled title="${UI.esc(why)}"` : `title="${UI.esc(o.desc)}"`}>${o.icon}</button>`; }).join('')}</span></div>`;
   },
 };
 

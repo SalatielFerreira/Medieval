@@ -43,7 +43,7 @@ const SVX_GUIDE = {
     const L = list.map(([k, ic, l, body]) => [k, ic, SVX_GUIDE[k] ? SVX_GUIDE[k].name : l, body]);
     let h = sb0(g, L);
     const cur = (UI.sel.svSub || {})[g], k = (L.find(x => x[0] === cur) || L[0])[0], gd = SVX_GUIDE[k];
-    if (gd) { const i = h.indexOf('class="tabs subtabs sv-sub">'); const j = i >= 0 ? h.indexOf('</div>', i) : -1; if (j > 0) h = h.slice(0, j + 6) + `<div class="svx-band"><span>💡</span><div><b>${UI.esc(gd.name)}</b><small>${UI.esc(gd.tip)} ${UI.esc(gd.when)}</small></div></div>` + h.slice(j + 6); }
+    if (gd && g !== 'mc') { const i = h.indexOf('class="tabs subtabs sv-sub">'); const j = i >= 0 ? h.indexOf('</div>', i) : -1; if (j > 0) h = h.slice(0, j + 6) + `<div class="svx-band"><span>💡</span><div><b>${UI.esc(gd.name)}</b><small>${UI.esc(gd.tip)} ${UI.esc(gd.when)}</small></div></div>` + h.slice(j + 6); }
     return h;
   };
   // as duas áreas explicam a que vieram

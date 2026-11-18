@@ -54,7 +54,7 @@ module.exports = async () => {
       ok(UI.panel.querySelector('.av .av-card.hero') && UI.panel.querySelector('.av-side'), 'a Árvore da casa nova não apareceu');
       // 10. serviços explicados
       UI.sel.knav = 'x:outlaw'; UI.sel.olTab = 'merc'; UI.showKingdom();
-      ok(UI.panel.querySelector('.svx-band') && UI.panel.querySelector('.svx-area.merc.on') && !UI.panel.querySelector('[data-act="svhelp"]') && /Contratar soldados/.test(html()), 'os Serviços não explicam as páginas (ou ainda têm o botão de ajuda)');
+      ok(!UI.panel.querySelector('.svx-band') && UI.panel.querySelector('.svx-area.merc.on') && !UI.panel.querySelector('[data-act="svhelp"]') && /Contratar soldados/.test(html()), 'os Serviços não explicam as páginas (ou ainda têm o botão de ajuda)');
       // castelo, dinastia, sociedades (quem não é membro) e a conversa numa página
       UI.close(); UI.showCastle(G.civs.findIndex(c => c && !c.dead && c.ruler !== 'player'));
       ok(UI.panel.querySelector('.cs3-hero') && UI.panel.querySelectorAll('.cs3-act').length >= 3, 'o Castelo não foi redesenhado');

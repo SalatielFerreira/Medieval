@@ -6651,3 +6651,4 @@ body:not(.small) .iconnav .snav-body .card:has(> .sec):not(.lj, .lj *, .vj *, .o
 .wk-gain { font-style: normal; font-size: 10.5px; font-weight: 700; color: #9ad86a; margin-left: 4px; white-space: nowrap; }
 .rx .rn-works .wk-desc { display: none; } .rx .rn-works .rn-it { cursor: help; } .rx .rn-works .rn-t > b { line-height: 1.25; }
 .rx .rn-works .wk-gain { display: block; margin: 1px 0 0; font-size: 11px; white-space: normal; }
+body:not(.small) .sv-co .sv-ord { display: flex; align-items: center; justify-content: space-between; gap: 6px; } body:not(.small) .sv-co .sv-ord small { cursor: help; white-space: nowrap; }
